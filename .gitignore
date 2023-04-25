@@ -17,9 +17,7 @@ __pycache__
 # Sphinx
 /docs/_build
 
-# Django
-/media
-/static
+# I18n
 *.mo
 
 # Node
