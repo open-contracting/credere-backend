@@ -1,6 +1,3 @@
-import pytest
-import requests
-
 required_packages = [
     "fastapi>=0.95.1",
     "pydantic>=1.10.7",
