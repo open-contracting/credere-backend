@@ -1,5 +1,5 @@
-from sqlmodel import SQLModel
 from database import engine
+from sqlmodel import SQLModel
 
 print("Generating database")
 

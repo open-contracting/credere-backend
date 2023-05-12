@@ -1,8 +1,10 @@
-from fastapi import FastAPI, Depends
-from .routers import users
-from .core.settings import Settings
 from functools import lru_cache
 from typing import Annotated
+
+from fastapi import Depends, FastAPI
+
+from .core.settings import Settings
+from .routers import users
 
 app = FastAPI()
 app.include_router(users.router)

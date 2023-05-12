@@ -1,5 +1,6 @@
-from sqlmodel import create_engine
 import os
+
+from sqlmodel import create_engine
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 

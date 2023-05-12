@@ -1,7 +1,8 @@
-from typing import Optional
-from sqlmodel import Field, SQLModel
-from sqlalchemy import BigInteger, Column, DateTime
 from datetime import datetime
+from typing import Optional
+
+from sqlalchemy import BigInteger, Column, DateTime
+from sqlmodel import Field, SQLModel
 
 
 class User(SQLModel, table=True):
