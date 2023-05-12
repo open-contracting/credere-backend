@@ -1,0 +1,8 @@
+{
+  "Source": "Credere_mail_test <credere@noreply.open-contracting.org>",
+  "Template": "credere-newApplicationSubmission",
+  "Destination": {
+    "ToAddresses": ["aomm24@gmail.com"]
+  },
+  "TemplateData": "{\"FONT_GTEestIProDisplay-regular\": \"https://drive.google.com/uc?id=1GyW-eC9uiAQZ_oXr2zJMedJBIKIfrwQp\", \"OCP_USER\":\"Adrian\", \"{{MIRROR-WEB}}\":\"www.google.com\",\"OCP_LOGO\":\"https://drive.google.com/uc?id=15yzfZcEU2ubKAZPDJ24LeM4Aek43FkhW\", \"OCP_LOGO\":\"https://drive.google.com/uc?id=15yzfZcEU2ubKAZPDJ24LeM4Aek43FkhW\", \"F1\": \"Banco Acme\", \"ARROW_LINK_BUTTON\": \"https://drive.google.com/uc?id=1oPJ5cMsIdXUqrCtEnYofIq8AYeDDrxt7\", \"loginURL\": \"www.google.com\", \"TWITER_LOGO\": \"https://drive.google.com/uc?id=1W10AyWGZpeWd6hBhEAehtEEQAFG9fPwM\", \"FB_LOGO\": \"https://drive.google.com/uc?id=1W5DRRmIO2xzSPqYDGzpr2deoQ1hEdaZV\",\"LINK_LOGO\": \"https://drive.google.com/uc?id=1IVwMnjXwZqQZDL3-XCy9UByHkYz4vXg2\" }"
+}

@@ -1,0 +1,8 @@
+{
+	"Template": {
+		"TemplateName": "credere-newApplicationSubmission",
+		"SubjectPart": "Greetings, {{OCP_USER}}!",
+		"HtmlPart": "",
+		"TextPart": "Greetings {{OCP_USER}},\r\n{{F1}} has received a new credit application from a MSME."
+	}
+}
