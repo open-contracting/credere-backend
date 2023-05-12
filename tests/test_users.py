@@ -5,6 +5,7 @@ from app.main import app
 from app.schema.user_tables.users import User
 
 user = User(
+    id=1,
     type="customer",
     email="jane@example.com",
     external_id="12345",
@@ -17,3 +18,4 @@ def test_read_user():
     response = client.get("/users/")
 
     assert response.status_code == 200
+    assert response.json() == user
