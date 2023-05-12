@@ -11,7 +11,7 @@ config_env = {
 
 class Settings(BaseSettings):
     app_name: str = "Credere API"
-    version: str = config_env["VERSION"] or "0.0.1"
+    version: str = config_env.get("VERSION", "0.01.1")
 
     class Config:
         env_file = ".env"
