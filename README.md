@@ -23,9 +23,7 @@ uvicorn app.main:app --reload
 -versioning will be handled
 
 
-Cognito SDK https://docs.aws.amazon.com/code-library/latest/ug/
-
-python_3_cognito-identity-provider_code_examples.html
+Cognito SDK https://docs.aws.amazon.com/code-library/latest/ug/python_3_cognito-identity-provider_code_examples.html
 
 Scheduled processes https://pypi.org/project/fastapi-scheduler/
 
