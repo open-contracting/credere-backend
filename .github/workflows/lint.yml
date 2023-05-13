@@ -18,3 +18,4 @@ jobs:
       - shell: bash
         run: curl -s -S --retry 3 $BASEDIR/tests/script.sh | bash -
       - run: pip install -r requirements_dev.txt
+      - run: pytest test -W error
