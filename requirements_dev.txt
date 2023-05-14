@@ -52,6 +52,8 @@ filelock==3.12.0
     # via virtualenv
 flake8==6.0.0
     # via -r requirements_dev.in
+greenlet==2.0.2
+    # via sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -102,6 +104,7 @@ pydantic==1.10.7
     # via
     #   -r requirements.txt
     #   fastapi
+    #   sqlmodel
 pyflakes==3.0.1
     # via flake8
 pyproject-hooks==1.0.0
@@ -124,6 +127,12 @@ sniffio==1.3.0
     #   anyio
     #   httpcore
     #   httpx
+sqlalchemy==1.4.41
+    # via sqlmodel
+sqlalchemy2-stubs==0.0.2a34
+    # via sqlmodel
+sqlmodel==0.0.8
+    # via -r requirements_dev.in
 starlette==0.26.1
     # via
     #   -r requirements.txt
@@ -138,6 +147,7 @@ typing-extensions==4.5.0
     # via
     #   -r requirements.txt
     #   pydantic
+    #   sqlalchemy2-stubs
 urllib3==1.26.15
     # via requests
 uvicorn==0.22.0
