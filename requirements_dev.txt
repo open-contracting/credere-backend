@@ -7,30 +7,23 @@
 anyio==3.6.2
     # via
     #   -r requirements.txt
-    #   httpcore
     #   starlette
 black==23.3.0
     # via -r requirements_dev.in
 build==0.10.0
     # via pip-tools
 certifi==2023.5.7
-    # via
-    #   httpcore
-    #   httpx
-    #   requests
+    # via requests
 cfgv==3.3.1
     # via pre-commit
 charset-normalizer==3.1.0
     # via requests
 click==8.1.3
     # via
-    #   -r requirements.txt
     #   black
     #   pip-tools
-    #   uvicorn
 colorama==0.4.6
     # via
-    #   -r requirements.txt
     #   build
     #   click
     #   pytest
@@ -54,22 +47,12 @@ flake8==6.0.0
     # via -r requirements_dev.in
 greenlet==2.0.2
     # via sqlalchemy
-h11==0.14.0
-    # via
-    #   -r requirements.txt
-    #   httpcore
-    #   uvicorn
-httpcore==0.17.0
-    # via httpx
-httpx==0.24.0
-    # via -r requirements_dev.in
 identify==2.5.22
     # via pre-commit
 idna==3.4
     # via
     #   -r requirements.txt
     #   anyio
-    #   httpx
     #   requests
 iniconfig==2.0.0
     # via pytest
@@ -125,8 +108,6 @@ sniffio==1.3.0
     # via
     #   -r requirements.txt
     #   anyio
-    #   httpcore
-    #   httpx
 sqlalchemy==1.4.41
     # via sqlmodel
 sqlalchemy2-stubs==0.0.2a34
@@ -150,8 +131,6 @@ typing-extensions==4.5.0
     #   sqlalchemy2-stubs
 urllib3==1.26.15
     # via requests
-uvicorn==0.22.0
-    # via -r requirements.txt
 virtualenv==20.22.0
     # via pre-commit
 wheel==0.40.0
