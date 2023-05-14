@@ -1,2 +1,3 @@
-fastapi>=0.95
-python-dotenv>=0.19
+fastapi
+python-dotenv
+httpx
