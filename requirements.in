@@ -1,2 +1,5 @@
 fastapi
+pydantic
 python-dotenv
+sqlalchemy
+sqlmodel
