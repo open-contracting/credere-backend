@@ -14,6 +14,6 @@ def test_info_endpoint():
     assert response.json() == {"Title": "Credence backend", "version": settings.version}
 
 
-def test_httpx_client():
-    response = httpx.get("https://www.google.com/")
+with httpx.Client() as client:
+    response = client.get("https://www.google.com/")
     assert response.status_code == 200
