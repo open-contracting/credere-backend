@@ -1,5 +1,6 @@
-from fastapi.testclient import TestClient
 import httpx
+from fastapi.testclient import TestClient
+
 from app.core.settings import Settings
 from app.main import app
 
