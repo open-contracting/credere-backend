@@ -104,6 +104,7 @@ pycodestyle==2.10.0
 pydantic==1.10.7
     # via
     #   -r requirements.txt
+    #   -r requirements_dev.in
     #   fastapi
     #   sqlmodel
 pyflakes==3.0.1
@@ -129,7 +130,9 @@ sniffio==1.3.0
     #   httpcore
     #   httpx
 sqlalchemy==1.4.41
-    # via sqlmodel
+    # via
+    #   -r requirements_dev.in
+    #   sqlmodel
 sqlalchemy2-stubs==0.0.2a34
     # via sqlmodel
 sqlmodel==0.0.8

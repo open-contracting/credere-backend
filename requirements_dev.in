@@ -9,3 +9,5 @@ pytest
 pytest-cov
 sqlmodel
 httpx
+pydantic
+sqlalchemy
