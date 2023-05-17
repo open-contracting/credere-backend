@@ -6,13 +6,7 @@
   <title>New Credit Application</title>
   <meta name='description' content='Figma htmlGenerator' />
   <meta name='author' content='htmlGenerator' />
-  <link rel='stylesheet' href='styles.css' />
   <style>
-    @font-face {
-      font-family: 'GTEestiProText-Regular';
-      src: url('{{FONT_GTEestIProDisplay-regular}}') format('woff2');
-    }
-
     * {
       margin: 0;
       padding: 0;
@@ -63,7 +57,7 @@
 
     .main_content {
       margin-left: 2.5rem;
-      margin-right: 2.5rem;;
+      margin-right: 2.5rem;
       margin-top: 2.5rem;
       margin-bottom: 2rem;
       border-bottom: 1px solid lightgray;
@@ -81,36 +75,10 @@
       font-weight: 700;
     }
 
-    .login_table {
-      font-size: 18px;
-      font-family: 'GTEestiProText-Regular';
-      font-weight: 500;
-      display: table;
-      height: 24px;
+    .login_complete_image {
       padding-top: 1rem;
-      width: auto;
     }
 
-    .login_table_cell {
-      display: table-cell;
-      text-align: center;
-    }
-
-    .login_items {
-      display: inline-block;
-      vertical-align: middle;
-    }
-
-    .login_arrow {
-      width: 24px;
-      height: 24px;
-    }
-
-    .login_text {
-      margin-left: 0.5rem;
-      color: #000;
-      border-bottom: 2px solid #e0e83d;
-    }
 
     .footer {
       background-color: #e0e6ee;
@@ -150,7 +118,7 @@
   <div class='wrapperGlobal'>
     <div class='pre_header_table'>
       <div class='pre_header_table_cell'>
-        <a href='{{MIRROR-WEB}}'>
+        <a href='{{LINK-TO-WEB-VERSION}}'>
           <p>View this email in your browser</p>
         </a>
       </div>
@@ -159,42 +127,42 @@
       <img class='logoOCP' title='OCPlogo' src='{{OCP_LOGO}}' alt='OCP logo' />
     </div>
     <div class='main_content'>
-      <div class='title main_content_item'>New application submission</div>
+      <div class='title main_content_item'>Welcome to Credere</div>
       <div class='main_content_item'>
-        <p>{{F1}} has received a new credit application from a MSME</p>
+        <p>Your user account has been created.</p>
       </div>
       <div class='action main_content_item'>
         <p>
-          Please log into Credere to review the application and update any
-          missing data from SECOP II.
+          Set your password to start using Credere to approve credit applications for MSMEs.
         </p>
       </div>
-
-      <div class='login_table'>
-        <div class='login_table_cell'>
-          <img class='login_items login_arrow' src='{{ARROW_LINK_BUTTON}}'
-            alt='link to login' />
-          <a href='{{LOGIN_URL}}' class='login_items'>
-            <p class='login_text''>Log into Credere</p>
-          </a>
-        </div>
+      <div class=' login_complete_image'>
+        <a href='{{LOGIN_URL}}'>
+          <img src='{{SET_PASSWORD_IMAGE_LINK}}' alt='link to login' />
+        </a>
       </div>
     </div>
     <div class=' footer'>
-              <div class='footer_icons_div_table'>
-                <div class='footer_icons_div_table_cell'>
-                  <img class='icons_img' title='Twitter' src='{{TWITTER_LOGO}}' alt='Twitter logo' />
-                  <img class='icons_img' title='Facebook' src='{{FB_LOGO}}' alt='facebook logo' />
-                  <img class='icons_img' title='link' src='{{LINK_LOGO}}' alt='link logo' />
-                </div>
-              </div>
-              <div class='footer_copyrigth_div'>
-                <p class='footer_copyrigth'>
-                  Copyright © 2023 Open Contracting Partnership. All rights reserved.
-                </p>
-              </div>
+      <div class='footer_icons_div_table'>
+        <div class='footer_icons_div_table_cell'>
+          <a href='{{TWITTER_LINK}}'>
+            <img class=' icons_img' title='Twitter' src='{{TWITTER_LOGO}}' alt='Twitter logo' />
+          </a>
+          <a href='{{FACEBOOK_LINK}}'>
+            <img class='icons_img' title='Facebook' src='{{FB_LOGO}}' alt='facebook logo' />
+          </a>
+          <a href='{{LINK_LINK}}'>
+            <img class='icons_img' title='link' src='{{LINK_LOGO}}' alt='link logo' />
+          </a>
         </div>
       </div>
+      <div class='footer_copyrigth_div'>
+        <p class='footer_copyrigth'>
+          Copyright © 2023 Open Contracting Partnership. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
