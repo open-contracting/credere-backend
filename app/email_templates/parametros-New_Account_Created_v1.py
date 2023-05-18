@@ -12,7 +12,6 @@ data = {
     "TWITTER_LINK": "www.google.com",
     "FACEBOOK_LINK": "www.google.com",
     "LINK_LINK": "www.google.com",
-
 }
 
 # Convert it into a JSON string
