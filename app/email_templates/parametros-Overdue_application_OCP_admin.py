@@ -1,7 +1,7 @@
 import json
 
 data = {
-    "OCP_USER": "Adrian",
+    "USER": "Adrian",
     "LINK-TO-WEB-VERSION": "www.google.com",
     "OCP_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg",
     "F1": "Bank of America",

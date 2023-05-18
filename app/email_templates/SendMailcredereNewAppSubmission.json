@@ -1,8 +1,0 @@
-{
-  "Source": "Credere_mail_test <credere@noreply.open-contracting.org>",
-  "Template": "credere-newApplicationSubmission",
-  "Destination": {
-    "ToAddresses": ["aomm24@gmail.com"]
-  },
-  "TemplateData": "{\"OCP_USER\": \"Adrian\", \"LINK-TO-WEB-VERSION\": \"www.google.com\", \"OCP_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg\", \"F1\": \"Bank of America\", \"LOGIN_IMAGE_LINK\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/logincompleteimage.png\", \"LOGIN_URL\": \"www.google.com\", \"TWITTER_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/twiterlogo.png\", \"FB_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/facebook.png\", \"LINK_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/link.png\", \"TWITTER_LINK\": \"www.google.com\", \"FACEBOOK_LINK\": \"www.google.com\", \"LINK_LINK\": \"www.google.com\"}"
-}

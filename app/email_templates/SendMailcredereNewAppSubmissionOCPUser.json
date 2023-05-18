@@ -1,6 +1,6 @@
 {
   "Source": "Credere_mail_test <credere@noreply.open-contracting.org>",
-  "Template": "credere-OverdueApplicationOCPadmin",
+  "Template": "credere-newApplicationSubmissionOCPUser",
   "Destination": {
     "ToAddresses": ["aomm24@gmail.com"]
   },
