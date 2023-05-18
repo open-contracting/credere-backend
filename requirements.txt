@@ -8,13 +8,30 @@ anyio==3.6.2
     # via starlette
 fastapi==0.95.1
     # via -r requirements.in
+greenlet==2.0.2
+    # via sqlalchemy
 idna==3.4
     # via anyio
 pydantic==1.10.7
-    # via fastapi
+    # via
+    #   -r requirements.in
+    #   fastapi
+    #   sqlmodel
+python-dotenv==1.0.0
+    # via -r requirements.in
 sniffio==1.3.0
     # via anyio
+sqlalchemy==1.4.41
+    # via
+    #   -r requirements.in
+    #   sqlmodel
+sqlalchemy2-stubs==0.0.2a34
+    # via sqlmodel
+sqlmodel==0.0.8
+    # via -r requirements.in
 starlette==0.26.1
     # via fastapi
 typing-extensions==4.5.0
-    # via pydantic
+    # via
+    #   pydantic
+    #   sqlalchemy2-stubs

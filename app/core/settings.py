@@ -1,0 +1,20 @@
+import os
+
+from dotenv import dotenv_values
+from pydantic import BaseSettings
+
+VERSION: str = "0.1.0"
+
+
+config_env = {
+    **dotenv_values(".env"),  # load local file development variables
+    **os.environ,  # override loaded values with system environment variables
+}
+
+
+class Settings(BaseSettings):
+    app_name: str = "Credere API"
+    version: str = VERSION
+
+    class Config:
+        env_file = ".env"
