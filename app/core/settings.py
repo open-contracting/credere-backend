@@ -24,6 +24,5 @@ class Settings(BaseSettings):
     access_key: str = config_env.get("ACCESS_KEY", None)
     client_secret: str = config_env.get("CLIENT_SECRET", None)
 
-
     class Config:
         env_file = ".env"
