@@ -4,7 +4,7 @@ coveralls
 flake8
 httpx
 isort
-moto
+moto[cognitoidp]
 pip-tools
 pre-commit
 pydantic
