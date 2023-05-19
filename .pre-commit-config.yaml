@@ -23,4 +23,5 @@ repos:
       - id: pip-compile
         name: pip-compile requirements_dev.in
         files: ^requirements(_dev)?\.(in|txt)$
+        args: [requirements_dev.in]
 exclude: /migrations/
