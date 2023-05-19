@@ -5,375 +5,50 @@
 #    pip-compile
 #
 anyio==3.6.2
-    # via
-    #   -r requirements.in
-    #   httpcore
-    #   starlette
-    #   watchfiles
-attrs==23.1.0
-    # via
-    #   -r requirements.in
-    #   jsonschema
-black==23.3.0
+    # via starlette
+boto3==1.26.136
     # via -r requirements.in
-boto3==1.26.133
-    # via
-    #   -r requirements.in
-    #   moto
-botocore==1.29.133
+botocore==1.29.136
     # via
     #   -r requirements.in
     #   boto3
-    #   moto
     #   s3transfer
-build==0.10.0
-    # via
-    #   -r requirements.in
-    #   pip-tools
-certifi==2023.5.7
-    # via
-    #   -r requirements.in
-    #   httpcore
-    #   httpx
-    #   requests
-cffi==1.15.1
-    # via
-    #   -r requirements.in
-    #   cryptography
-cfgv==3.3.1
-    # via
-    #   -r requirements.in
-    #   pre-commit
-charset-normalizer==3.1.0
-    # via
-    #   -r requirements.in
-    #   requests
-click==8.1.3
-    # via
-    #   -r requirements.in
-    #   black
-    #   pip-tools
-    #   uvicorn
-colorama==0.4.6
-    # via
-    #   -r requirements.in
-    #   build
-    #   click
-    #   pytest
-coverage[toml]==6.5.0
-    # via
-    #   -r requirements.in
-    #   coveralls
-    #   pytest-cov
-coveralls==3.3.1
-    # via -r requirements.in
-cryptography==40.0.2
-    # via
-    #   -r requirements.in
-    #   moto
-distlib==0.3.6
-    # via
-    #   -r requirements.in
-    #   virtualenv
-dnspython==2.3.0
-    # via
-    #   -r requirements.in
-    #   email-validator
-docopt==0.6.2
-    # via
-    #   -r requirements.in
-    #   coveralls
-    #   pipreqs
-ecdsa==0.18.0
-    # via
-    #   -r requirements.in
-    #   python-jose
-email-validator==2.0.0.post2
-    # via -r requirements.in
-exceptiongroup==1.1.1
-    # via
-    #   -r requirements.in
-    #   pytest
 fastapi==0.95.1
     # via -r requirements.in
-filelock==3.12.0
-    # via
-    #   -r requirements.in
-    #   virtualenv
-flake8==6.0.0
-    # via -r requirements.in
-greenlet==2.0.2
-    # via
-    #   -r requirements.in
-    #   sqlalchemy
-h11==0.14.0
-    # via
-    #   -r requirements.in
-    #   httpcore
-    #   uvicorn
-httpcore==0.17.0
-    # via
-    #   -r requirements.in
-    #   httpx
-httptools==0.5.0
-    # via -r requirements.in
-httpx==0.24.0
-    # via -r requirements.in
-identify==2.5.22
-    # via
-    #   -r requirements.in
-    #   pre-commit
 idna==3.4
-    # via
-    #   -r requirements.in
-    #   anyio
-    #   email-validator
-    #   httpx
-    #   requests
-iniconfig==2.0.0
-    # via
-    #   -r requirements.in
-    #   pytest
-isort==5.12.0
-    # via -r requirements.in
-itsdangerous==2.1.2
-    # via -r requirements.in
-jinja2==3.1.2
-    # via
-    #   -r requirements.in
-    #   moto
+    # via anyio
 jmespath==1.0.1
     # via
-    #   -r requirements.in
     #   boto3
     #   botocore
-jose==1.0.0
-    # via -r requirements.in
-jsonref==1.1.0
-    # via
-    #   -r requirements.in
-    #   ocdskit
-    #   ocdsmerge
-jsonschema==4.17.3
-    # via
-    #   -r requirements.in
-    #   ocdskit
-markupsafe==2.1.2
-    # via
-    #   -r requirements.in
-    #   jinja2
-    #   werkzeug
-mccabe==0.7.0
-    # via
-    #   -r requirements.in
-    #   flake8
-moto==4.1.9
-    # via -r requirements.in
-mypy-extensions==1.0.0
-    # via
-    #   -r requirements.in
-    #   black
-nodeenv==1.7.0
-    # via
-    #   -r requirements.in
-    #   pre-commit
-ocdskit==0.0.3
-    # via -r requirements.in
-ocdsmerge==0.6.6
-    # via
-    #   -r requirements.in
-    #   ocdskit
-orjson==3.8.12
-    # via -r requirements.in
-packaging==23.1
-    # via
-    #   -r requirements.in
-    #   black
-    #   build
-    #   pytest
-pathspec==0.11.1
-    # via
-    #   -r requirements.in
-    #   black
-pip-tools==6.13.0
-    # via -r requirements.in
-pipreqs==0.4.13
-    # via -r requirements.in
-platformdirs==3.3.0
-    # via
-    #   -r requirements.in
-    #   black
-    #   virtualenv
-pluggy==1.0.0
-    # via
-    #   -r requirements.in
-    #   pytest
-pre-commit==3.2.2
-    # via -r requirements.in
-pyasn1==0.5.0
-    # via
-    #   -r requirements.in
-    #   python-jose
-    #   rsa
-pycodestyle==2.10.0
-    # via
-    #   -r requirements.in
-    #   flake8
-pycparser==2.21
-    # via
-    #   -r requirements.in
-    #   cffi
 pydantic==1.10.7
     # via
     #   -r requirements.in
     #   fastapi
     #   sqlmodel
-pyflakes==3.0.1
-    # via
-    #   -r requirements.in
-    #   flake8
-pyproject-hooks==1.0.0
-    # via
-    #   -r requirements.in
-    #   build
-pyrsistent==0.19.3
-    # via
-    #   -r requirements.in
-    #   jsonschema
-pytest==7.3.1
-    # via
-    #   -r requirements.in
-    #   pytest-asyncio
-    #   pytest-cov
-pytest-asyncio==0.21.0
-    # via -r requirements.in
-pytest-cov==4.0.0
-    # via -r requirements.in
 python-dateutil==2.8.2
-    # via
-    #   -r requirements.in
-    #   botocore
-    #   moto
-    #   ocdskit
+    # via botocore
 python-dotenv==1.0.0
     # via -r requirements.in
-python-jose==3.3.0
-    # via -r requirements.in
-python-multipart==0.0.6
-    # via -r requirements.in
-pytz==2023.3
-    # via
-    #   -r requirements.in
-    #   ocdskit
-pyyaml==6.0
-    # via
-    #   -r requirements.in
-    #   pre-commit
-    #   responses
-requests==2.28.2
-    # via
-    #   -r requirements.in
-    #   coveralls
-    #   moto
-    #   ocdskit
-    #   ocdsmerge
-    #   responses
-    #   yarg
-responses==0.23.1
-    # via
-    #   -r requirements.in
-    #   moto
-rfc3987==1.3.8
-    # via
-    #   -r requirements.in
-    #   ocdskit
-rsa==4.9
-    # via
-    #   -r requirements.in
-    #   python-jose
 s3transfer==0.6.1
-    # via
-    #   -r requirements.in
-    #   boto3
+    # via boto3
 six==1.16.0
-    # via
-    #   -r requirements.in
-    #   ecdsa
-    #   python-dateutil
+    # via python-dateutil
 sniffio==1.3.0
-    # via
-    #   -r requirements.in
-    #   anyio
-    #   httpcore
-    #   httpx
+    # via anyio
 sqlalchemy==1.4.41
     # via
     #   -r requirements.in
-    #   ocdskit
     #   sqlmodel
 sqlalchemy2-stubs==0.0.2a34
-    # via
-    #   -r requirements.in
-    #   sqlmodel
+    # via sqlmodel
 sqlmodel==0.0.8
     # via -r requirements.in
 starlette==0.26.1
-    # via
-    #   -r requirements.in
-    #   fastapi
-strict-rfc3339==0.7
-    # via
-    #   -r requirements.in
-    #   ocdskit
-tomli==2.0.1
-    # via
-    #   -r requirements.in
-    #   black
-    #   build
-    #   pyproject-hooks
-    #   pytest
-types-pyyaml==6.0.12.9
-    # via
-    #   -r requirements.in
-    #   responses
+    # via fastapi
 typing-extensions==4.5.0
     # via
-    #   -r requirements.in
     #   pydantic
     #   sqlalchemy2-stubs
-ujson==5.7.0
-    # via -r requirements.in
 urllib3==1.26.15
-    # via
-    #   -r requirements.in
-    #   botocore
-    #   requests
-    #   responses
-uvicorn==0.22.0
-    # via -r requirements.in
-virtualenv==20.22.0
-    # via
-    #   -r requirements.in
-    #   pre-commit
-watchfiles==0.19.0
-    # via -r requirements.in
-websockets==11.0.3
-    # via -r requirements.in
-werkzeug==2.3.4
-    # via
-    #   -r requirements.in
-    #   moto
-wheel==0.40.0
-    # via pip-tools
-xmltodict==0.13.0
-    # via
-    #   -r requirements.in
-    #   moto
-yarg==0.1.9
-    # via
-    #   -r requirements.in
-    #   pipreqs
-
-# The following packages are considered to be unsafe in a requirements file:
-# pip
-# setuptools
+    # via botocore

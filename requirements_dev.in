@@ -4,14 +4,11 @@ coveralls
 flake8
 httpx
 isort
+moto
 pip-tools
 pre-commit
+pydantic
 pytest
 pytest-cov
-sqlmodel
-httpx
-pydantic
 sqlalchemy
-moto
-boto3
-jose
+sqlmodel
