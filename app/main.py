@@ -8,8 +8,8 @@ from .core.settings import Settings
 from .routers import users
 
 sentry_sdk.init(
-    # todo: replace with .env.SentryDSNProd
-    dsn="https://37290b3456f744d889b80c59136c6f5d@o288126.ingest.sentry.io/4505195811766272",
+    # todo: replace with correct env variables once .env file and use its added to the project
+    dsn="env.SentryDSNProd",
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production,
