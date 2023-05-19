@@ -88,6 +88,8 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
+jose==1.0.0
+    # via -r .\requirements_dev.in
 markupsafe==2.1.2
     # via
     #   jinja2

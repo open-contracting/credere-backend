@@ -13,3 +13,4 @@ pydantic
 sqlalchemy
 moto
 boto3
+jose
