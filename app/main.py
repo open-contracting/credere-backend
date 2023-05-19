@@ -1,20 +1,24 @@
+import os
 from functools import lru_cache
 from typing import Annotated
 
+import dotenv
 import sentry_sdk
 from fastapi import Depends, FastAPI
 
 from .core.settings import Settings
 from .routers import users
 
-sentry_sdk.init(
-    # todo: replace with correct env variables once .env file and use its added to the project
-    dsn="env.SentryDSNProd",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production,
-    traces_sample_rate=1.0,
-)
+dotenv.load_dotenv()
+
+if "SENTRY_DSN" in os.environ:
+    sentry_sdk.init(
+        dsn=os.environ["SENTRY_DNS"],
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production,
+        traces_sample_rate=1.0,
+    )
 
 app = FastAPI()
 app.include_router(users.router)
