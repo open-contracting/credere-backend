@@ -1,4 +1,5 @@
 import os
+from functools import lru_cache
 
 from dotenv import dotenv_values
 from pydantic import BaseSettings
@@ -9,9 +10,10 @@ config_env = {
 }
 
 
+@lru_cache()
 class Settings(BaseSettings):
     app_name: str = "Credere API"
-    version: str = config_env.get("VERSION", "0.01.1")
+    version: str = config_env.get("VERSION", "0.1.1")
     cognito_aws_region: str = config_env.get("COGNITO_AWS_REGION", None)
     cognito_pool_id: str = config_env.get("COGNITO_POOL_ID", None)
     cognito_client_id: str = config_env.get("COGNITO_CLIENT_ID", None)
