@@ -2,6 +2,7 @@
 black
 coveralls
 flake8
+httpx
 isort
 pip-tools
 pre-commit
