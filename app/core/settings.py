@@ -17,7 +17,7 @@ config_env = {
 class Settings(BaseSettings):
     app_name: str = "Credere API"
     version: str = config_env.get("VERSION", "0.1.1")
-    cognito_aws_region: str = config_env.get("COGNITO_AWS_REGION", None)
+    cognito_aws_region: str = config_env.get("COGNITO_AWS_REGION", "us-east-1")
     cognito_pool_id: str = config_env.get("COGNITO_POOL_ID", None)
     cognito_client_id: str = config_env.get("COGNITO_CLIENT_ID", None)
     cognito_secret_key: str = config_env.get("COGNITO_SECRET_KEY", None)
