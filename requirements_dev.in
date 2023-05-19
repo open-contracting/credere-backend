@@ -11,3 +11,5 @@ sqlmodel
 httpx
 pydantic
 sqlalchemy
+moto
+boto3
