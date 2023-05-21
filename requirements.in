@@ -5,3 +5,4 @@ sqlalchemy
 sqlmodel
 boto3
 botocore
+pyotp

@@ -1,60 +1,24 @@
-import base64
-import hashlib
-import hmac
-import random
-import string
-
-import boto3
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, HTTPException
-from sqlmodel import Session
+from fastapi import APIRouter, Header, HTTPException
 
 from ..core.settings import Settings
-from ..db.database import engine
-from ..schema.user_tables.users import ChangePassword, Login, OnlyUsername
+from ..core.user_dependencies import (
+    admin_create_user,
+    client,
+    get_secret_hash,
+    initiate_auth,
+    logout_user,
+    respond_to_auth_challenge,
+)
+from ..schema.user_tables.users import BasicUser
 
 router = APIRouter()
-session = Session(bind=engine)
-
-
-client = boto3.client(
-    "cognito-idp",
-    region_name=Settings().cognito_aws_region,
-    aws_access_key_id=Settings().access_key,
-    aws_secret_access_key=Settings().client_secret,
-)
-
-
-def get_secret_hash(username):
-    app_client_id = Settings().cognito_client_id
-    key = Settings().cognito_secret_key
-    message = bytes(username + app_client_id, "utf-8")
-    key = bytes(key, "utf-8")
-    return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
-
-
-def generate_password():
-    excluded_chars = "/\\|_-"
-    characters = string.ascii_letters + string.digits + string.punctuation
-    password = ""
-
-    while len(password) < 14:
-        char = random.choice(characters)
-        if char not in excluded_chars:
-            password += char
-
-    return password
 
 
 @router.post("/users/register/")
-def register_user(user: OnlyUsername):
+def register_user(user: BasicUser):
     try:
-        client.admin_create_user(
-            UserPoolId=Settings().cognito_pool_id,
-            Username=user.username,
-            TemporaryPassword=generate_password(),
-            UserAttributes=[{"Name": "email", "Value": user.username}],
-        )
+        admin_create_user(user.username)
     except client.exceptions.UsernameExistsException as e:
         print(e)
         raise HTTPException(status_code=400, detail="Username already exists")
@@ -66,29 +30,15 @@ def register_user(user: OnlyUsername):
 
 
 @router.put("/users/change-password/")
-def change_password(user: ChangePassword):
+def change_password(user: BasicUser):
     try:
-        secret_hash = get_secret_hash(user.username)
-        response = client.admin_initiate_auth(
-            UserPoolId=Settings().cognito_pool_id,
-            ClientId=Settings().cognito_client_id,
-            AuthFlow="ADMIN_NO_SRP_AUTH",
-            AuthParameters={"USERNAME": user.username, "PASSWORD": user.temp_password, "SECRET_HASH": secret_hash},
-        )
+        response = initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             session = response["Session"]
-            client.respond_to_auth_challenge(
-                ClientId=Settings().cognito_client_id,
-                ChallengeName="NEW_PASSWORD_REQUIRED",
-                ChallengeResponses={
-                    "USERNAME": user.username,
-                    "NEW_PASSWORD": user.new_password,
-                    "SECRET_HASH": secret_hash,
-                },
-                Session=session,
-            )
+            response = respond_to_auth_challenge(user.username, session, "NEW_PASSWORD_REQUIRED", user.password)
         return {"message": "Password changed"}
-    except client.exceptions.passwordExpired as e:
+    except ClientError as e:
+        print(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             return {"message": "Temporal password is expired, please request a new one"}
         else:
@@ -96,40 +46,41 @@ def change_password(user: ChangePassword):
 
 
 @router.post("/users/login/")
-def login(user: Login):
+def login(user: BasicUser):
     try:
-        secret_hash = get_secret_hash(user.username)
-        client.admin_initiate_auth(
-            UserPoolId=Settings().cognito_pool_id,
-            ClientId=Settings().cognito_client_id,
-            AuthFlow="ADMIN_NO_SRP_AUTH",
-            AuthParameters={"USERNAME": user.username, "PASSWORD": user.password, "SECRET_HASH": secret_hash},
-        )
-        return {"message": "User logged on successfully"}
+        response = initiate_auth(user.username, user.password)
+        if "ChallengeName" in response:
+            print(response["ChallengeName"])
+            session = response["Session"]
+            respond_to_auth_challenge(user.username, session, response["ChallengeName"])
+        return {"message": "Logged in"}
     except ClientError as e:
+        print(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             return {"message": "Temporal password is expired, please request a new one"}
         else:
             return {"message": "There was an error trying to login"}
 
 
-@router.post("/users/logoff/")
-def logoff(user: OnlyUsername):
+@router.get("/users/logout/")
+def logout(AccessToken: str = Header(None)):
     try:
-        client.admin_user_global_sign_out(UserPoolId=Settings().cognito_pool_id, Username=user.username)
+        response = logout_user(AccessToken)
+        print(response)
     except ClientError as e:
         print(e)
         return {"message": "User was unable to log off"}
     return {"message": "User logged off successfully"}
 
 
-@router.post("/users/reset-password/")
-def reset_password(user: OnlyUsername):
+@router.post("/users/forgot-password/")
+def forgot_password(user: BasicUser):
     try:
-        client.admin_reset_user_password(
-            UserPoolId=Settings().cognito_pool_id, Username=user.username, ClientMetadata={"string": "string"}
+        response = client.forgot_password(
+            ClientId=Settings().cognito_client_id, SecretHash=get_secret_hash(user.username), Username=user.username
         )
-        return {"message": "Password reset successfully"}
+        print(response)
+        return {"message": "An email with a reset link was sent to end user"}
     except Exception as e:
-        print(e.message)
+        print(e)
         return {"message": "There was an issue trying to change the password"}

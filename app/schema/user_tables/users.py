@@ -16,16 +16,7 @@ class User(SQLModel, table=True):
         arbitrary_types_allowed = True
 
 
-class Login(BaseModel):
+class BasicUser(BaseModel):
     username: str
-    password: str
-
-
-class OnlyUsername(BaseModel):
-    username: str
-
-
-class ChangePassword(BaseModel):
-    username: str
-    new_password: str
-    temp_password: str
+    password: Optional[str]
+    temp_password: Optional[str]
