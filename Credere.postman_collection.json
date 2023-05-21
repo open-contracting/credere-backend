@@ -1,270 +1,260 @@
 {
-  "info": {
-    "_postman_id": "01b37b1e-3706-43d4-a18b-6a34a5a880f0",
-    "name": "Credere",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "15689195"
-  },
-  "item": [
-    {
-      "name": "http://127.0.0.1:8000/users/register",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "Credential",
-            "value": "AKIAQJHNKG5JU6EYV2GB",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "secret",
-            "value": "",
-            "type": "text",
-            "disabled": true
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"username\": \"hernan.lombardo+9@willdom.com\",\r\n    \"password\": \"eRt7iqyn7h2NmCtvjMpxh\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://127.0.0.1:8000/users/register/",
-          "protocol": "http",
-          "host": [
-            "127",
-            "0",
-            "0",
-            "1"
-          ],
-          "port": "8000",
-          "path": [
-            "users",
-            "register",
-            ""
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "http://127.0.0.1:8000/users/login/",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "Credential",
-            "value": "AKIAQJHNKG5JU6EYV2GB",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "secret",
-            "value": "",
-            "type": "text",
-            "disabled": true
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"username\": \"hernan.lombardo+8@willdom.com\",\r\n    \"password\": \"eRt7iqyn7h2NmCtvjMpxh\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://127.0.0.1:8000/users/login/",
-          "protocol": "http",
-          "host": [
-            "127",
-            "0",
-            "0",
-            "1"
-          ],
-          "port": "8000",
-          "path": [
-            "users",
-            "login",
-            ""
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "http://127.0.0.1:8000/users/logoff/",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "Credential",
-            "value": "AKIAQJHNKG5JU6EYV2GB",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "secret",
-            "value": "",
-            "type": "text",
-            "disabled": true
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"username\": \"hernan.lombardo+8@willdom.com\",\r\n    \"password\": \"eRt7iqyn7h2NmCtvjMpxh\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://127.0.0.1:8000/users/logoff/",
-          "protocol": "http",
-          "host": [
-            "127",
-            "0",
-            "0",
-            "1"
-          ],
-          "port": "8000",
-          "path": [
-            "users",
-            "logoff",
-            ""
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "http://127.0.0.1:8000/users/change-password/",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "Credential",
-            "value": "AKIAQJHNKG5JU6EYV2GB",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "secret",
-            "value": "",
-            "type": "text",
-            "disabled": true
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"username\": \"hernan.lombardo+10@willdom.com\",\r\n    \"new_password\": \"qweqw12asqweASD\",\r\n    \"temp_password\": \"Czt$tkqqcgAe*^#TDX)E\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://127.0.0.1:8000/users/change-password/",
-          "protocol": "http",
-          "host": [
-            "127",
-            "0",
-            "0",
-            "1"
-          ],
-          "port": "8000",
-          "path": [
-            "users",
-            "change-password",
-            ""
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "http://127.0.0.1:8000/users/reset-password",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "Credential",
-            "value": "AKIAQJHNKG5JU6EYV2GB",
-            "type": "text",
-            "disabled": true
-          },
-          {
-            "key": "secret",
-            "value": "",
-            "type": "text",
-            "disabled": true
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"username\": \"hernan.lombardo+8@willdom.com\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://127.0.0.1:8000/users/reset-password/",
-          "protocol": "http",
-          "host": [
-            "127",
-            "0",
-            "0",
-            "1"
-          ],
-          "port": "8000",
-          "path": [
-            "users",
-            "reset-password",
-            ""
-          ]
-        }
-      },
-      "response": []
-    }
-  ]
+	"info": {
+		"_postman_id": "01b37b1e-3706-43d4-a18b-6a34a5a880f0",
+		"name": "Credere",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15689195"
+	},
+	"item": [
+		{
+			"name": "http://127.0.0.1:8000/users/register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Credential",
+						"value": "AKIAQJHNKG5JU6EYV2GB",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "secret",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"hernan.lombardo+15@willdom.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/users/register/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"register",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/users/change-password/",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Credential",
+						"value": "AKIAQJHNKG5JU6EYV2GB",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "secret",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"hernan.lombardo+15@willdom.com\",\r\n    \"password\": \"passwordpassword\",\r\n    \"temp_password\": \"5M4#<uS;NV;%bw\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/users/change-password/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"change-password",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/users/login/",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Credential",
+						"value": "AKIAQJHNKG5JU6EYV2GB",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "secret",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"hernan.lombardo+15@willdom.com\",\r\n    \"password\": \"passwordpassword\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/users/login/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/users/logoff/",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "AccessToken",
+						"value": "eyJraWQiOiJDMmo4M0lTRWVrN0xmK0I4Y0VDbktUN21IdnFHZ01XdGxwUDJhS1BWQmNNPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIxMjdjMzhiZS1kZTdiLTRlYmMtOTk0Yi1jMzk1OTgwNzcyMTQiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9neldvNkFQbkwiLCJjbGllbnRfaWQiOiIxaXY0dXNpczMzcWVkMDYzN3JlNGN2cWIzbSIsIm9yaWdpbl9qdGkiOiI2MjEyMzEzYS00ZjdjLTRkOGItOTc1MC1kYWM2MDUyMjMxMDIiLCJldmVudF9pZCI6ImQ5NTEyYjk1LWNlOWUtNDExNC04MjM4LWQwOTUyNmNjZTQwYSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE2ODQ2OTg0MDUsImV4cCI6MTY4NDcwMjAwNSwiaWF0IjoxNjg0Njk4NDA1LCJqdGkiOiI1YWMyYTM4Yi1kYzY4LTQ2MjQtODJiOS04NTJlZWUxNTUyYzgiLCJ1c2VybmFtZSI6IjEyN2MzOGJlLWRlN2ItNGViYy05OTRiLWMzOTU5ODA3NzIxNCJ9.D6NV0mAnXL7Q0-dZ1FQVHwaOhbDLZvXcjCvfzJxFo37H7Rq4U7IEg1N6KGlmN-688OmPnV_HxCHjWIfXMbY9a_5bn9JWzWHVDm59T0YJ6iYDOmXOMCspNOvWP_AyVRvYJDRyX72BRmmd7p_ZL7sUL6xjMo-IwOl-wgj8QMsdrJf1PsDVNISCXfoIkblIvQ4crcM_zpiHyDIrqJ59Dm8ebIREJza77HQ5erWkkeX2xsox6AAXD_UfU98BIkilRYwh4r_Isb__sHO4RXGFhwZul7xYA6KLfOSVWflX6hrIDwrFH9S4_axrZ1b5GVvi_HqE1wCgMVdCNsZxvf1ypJgOhQ",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/users/logout/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"logout",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/users/forgot-password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "AWS4-HMAC-SHA256 Credential=AKIAQJHNKG5JU6EYV2GB secret: BBL4gcPjsv+92Rv1HRQp5qVPxabA5azgilyU83YUXz/e/20230516/us-east-1/cognito-idp/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=2d462d62639727959651311cd798de73dd330d16519950a30e05ebca947bb885",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Credential",
+						"value": "AKIAQJHNKG5JU6EYV2GB",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "secret",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"hernan.lombardo+15@willdom.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/users/forgot-password/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"forgot-password",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
 }

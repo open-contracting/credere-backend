@@ -143,8 +143,6 @@ pydantic==1.10.7
     #   sqlmodel
 pyflakes==3.0.1
     # via flake8
-pyotp==2.8.0
-    # via -r requirements.txt
 pyproject-hooks==1.0.0
     # via build
 pytest==7.3.1

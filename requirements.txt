@@ -28,8 +28,6 @@ pydantic==1.10.7
     #   -r requirements.in
     #   fastapi
     #   sqlmodel
-pyotp==2.8.0
-    # via -r requirements.in
 python-dateutil==2.8.2
     # via botocore
 python-dotenv==1.0.0
