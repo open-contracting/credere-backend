@@ -18,7 +18,8 @@ router = APIRouter()
 @router.post("/users/register/")
 def register_user(user: BasicUser):
     try:
-        admin_create_user(user.username)
+        response = admin_create_user(user.username, user.name)
+        print(response)
     except client.exceptions.UsernameExistsException as e:
         print(e)
         raise HTTPException(status_code=400, detail="Username already exists")

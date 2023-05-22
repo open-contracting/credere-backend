@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import json
 import random
 import string
 
@@ -10,22 +11,22 @@ from ..core.settings import Settings
 
 client = boto3.client(
     "cognito-idp",
-    region_name=Settings().cognito_aws_region,
-    aws_access_key_id=Settings().access_key,
-    aws_secret_access_key=Settings().client_secret,
+    region_name=Settings().aws_region,
+    aws_access_key_id=Settings().aws_access_key,
+    aws_secret_access_key=Settings().aws_client_secret,
 )
 
 ses = boto3.client(
     "ses",
-    region_name=Settings().cognito_aws_region,
-    aws_access_key_id=Settings().access_key,
-    aws_secret_access_key=Settings().client_secret,
+    region_name=Settings().aws_region,
+    aws_access_key_id=Settings().aws_access_key,
+    aws_secret_access_key=Settings().aws_client_secret,
 )
 
 
 def get_secret_hash(username):
     app_client_id = Settings().cognito_client_id
-    key = Settings().cognito_secret_key
+    key = Settings().aws_client_secret
     message = bytes(username + app_client_id, "utf-8")
     key = bytes(key, "utf-8")
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
@@ -44,13 +45,37 @@ def generate_password():
     return password
 
 
-def admin_create_user(username):
-    return client.admin_create_user(
+def admin_create_user(username, name):
+    temp_password = generate_password()
+    data = {
+        "USER": name,
+        "LINK-TO-WEB-VERSION": "www.google.com",
+        "OCP_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg",
+        "SET_PASSWORD_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/set_password.png",
+        "LOGIN_URL": Settings().frontend_url + "create-password/" + temp_password,
+        "TWITTER_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/twiterlogo.png",
+        "FB_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/facebook.png",
+        "LINK_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/link.png",
+        "TWITTER_LINK": "www.google.com",
+        "FACEBOOK_LINK": "www.google.com",
+        "LINK_LINK": "www.google.com",
+    }
+
+    response = client.admin_create_user(
         UserPoolId=Settings().cognito_pool_id,
         Username=username,
-        TemporaryPassword=generate_password(),
+        TemporaryPassword=temp_password,
+        MessageAction="SUPPRESS",
         UserAttributes=[{"Name": "email", "Value": username}],
     )
+
+    response = ses.send_templated_email(
+        Source=Settings().email_sender_address,
+        Destination={"ToAddresses": [Settings().email_sender_address]},
+        Template="credere-NewAccountCreated",
+        TemplateData=json.dumps(data),
+    )
+    return response
 
 
 def initiate_auth(username, temp_password):

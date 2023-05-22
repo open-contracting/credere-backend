@@ -18,5 +18,6 @@ class User(SQLModel, table=True):
 
 class BasicUser(BaseModel):
     username: str
+    name: Optional[str]
     password: Optional[str]
     temp_password: Optional[str]
