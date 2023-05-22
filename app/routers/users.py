@@ -49,11 +49,24 @@ def change_password(user: BasicUser):
 def login(user: BasicUser):
     try:
         response = initiate_auth(user.username, user.password)
+        return {"access_token": response["AuthenticationResult"]["AccessToken"]}
+    except ClientError as e:
+        print(e)
+        if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
+            return {"message": "Temporal password is expired, please request a new one"}
+        else:
+            return {"message": "There was an error trying to login"}
+
+
+@router.post("/users/login-mfa/")
+def login_mfa(user: BasicUser):
+    try:
+        response = initiate_auth(user.username, user.password)
         if "ChallengeName" in response:
             print(response["ChallengeName"])
             session = response["Session"]
-            respond_to_auth_challenge(user.username, session, response["ChallengeName"])
-        return {"message": "Logged in"}
+            access_token = respond_to_auth_challenge(user.username, session, response["ChallengeName"])
+            return {"access_token": access_token}
     except ClientError as e:
         print(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
@@ -71,6 +84,21 @@ def logout(AccessToken: str = Header(None)):
         print(e)
         return {"message": "User was unable to log off"}
     return {"message": "User logged off successfully"}
+
+
+@router.get("/users/me/")
+def me(AccessToken: str = Header(None)):
+    try:
+        response = client.get_user(AccessToken=AccessToken)
+        for item in response["UserAttributes"]:
+            if item["Name"] == "email":
+                email_value = item["Value"]
+                break
+
+        return {"username": email_value}
+    except ClientError as e:
+        print(e)
+        return {"message": "User not found"}
 
 
 @router.post("/users/forgot-password/")
