@@ -71,7 +71,7 @@ def admin_create_user(username, name):
 
     response = ses.send_templated_email(
         Source=Settings().email_sender_address,
-        Destination={"ToAddresses": [Settings().email_sender_address]},
+        Destination={"ToAddresses": [username]},
         Template="credere-NewAccountCreated",
         TemplateData=json.dumps(data),
     )
