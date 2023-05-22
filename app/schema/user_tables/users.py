@@ -26,7 +26,7 @@ class ApplicationAction(SQLModel, table=True):
     application_id: str
     user_id: int = Field(sa_column=Column(BigInteger(), ForeignKey("user.id")))
 
-    author: Optional[User] = Relationship(back_populates="application_actions")
+    user: Optional[User] = Relationship(back_populates="application_actions")
 
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
 
