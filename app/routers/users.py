@@ -66,6 +66,7 @@ def login_mfa(user: BasicUser):
             print(response["ChallengeName"])
             session = response["Session"]
             access_token = respond_to_auth_challenge(user.username, session, response["ChallengeName"])
+            print(access_token)
             return {"access_token": access_token}
     except ClientError as e:
         print(e)
