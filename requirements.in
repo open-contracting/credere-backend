@@ -3,3 +3,6 @@ pydantic
 python-dotenv
 sqlalchemy
 sqlmodel
+alembic
+boto3
+botocore
