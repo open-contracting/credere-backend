@@ -1,10 +1,7 @@
-import os
-
 from sqlmodel import create_engine
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+from app.core.settings import Settings
 
-conn_str = "sqlite:///" + os.path.join(BASE_DIR, "credere.db")
-print(conn_str)
+SQLALCHEMY_DATABASE_URL = Settings().DB_URL
 
-engine = create_engine(conn_str, echo=True)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)

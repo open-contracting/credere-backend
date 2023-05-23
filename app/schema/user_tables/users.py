@@ -10,6 +10,7 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(sa_column=Column(BigInteger(), primary_key=True, autoincrement=True))
     application_actions: List["ApplicationAction"] = Relationship(back_populates="user")
     type: str
+    language: str = Field(default=None)
     email: str
     external_id: str
     fl_id: Optional[int] = Field(default=None)

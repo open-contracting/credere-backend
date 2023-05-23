@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
-from sqlalchemy import Column, DateTime
+from sqlalchemy import DECIMAL, Column, DateTime
 from sqlalchemy.dialects.postgresql import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -10,10 +10,10 @@ from sqlmodel import Field, Relationship, SQLModel
 class BorrowerDocument(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     application_id: int = Field(foreign_key="application.id")
-    application: Optional["Application"] = Relationship(foreign_key="borrower_document")
+    application: Optional["Application"] = Relationship(back_populates="borrower_document")
     type: str
     verified: bool
-    key: str
+    file: bytes
     name: str
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
@@ -22,17 +22,19 @@ class BorrowerDocument(SQLModel, table=True):
 
 class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    borrowed_documents: List["BorrowerDocument"] = Relationship(back_populates="application")
+    borrower_documents: List["BorrowerDocument"] = Relationship(back_populates="application")
     award_id: int = Field(foreign_key="award.id")
     uuid: str
     primary_email: str
     status: str
     stage: str
     award_borrowed_identifier: str
-    borrowed_id: Optional[int] = Field(foreign_key="borrowed.id")
+    borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id")
-    contract_amount_submitted: Optional[Decimal] = Field(default=None, precision=12, scale=2)
-    amount_requested: Optional[Decimal] = Field(default=None, precision=12, scale=2)
+    contract_amount_submitted: Optional[Decimal] = Field(
+        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False)
+    )
+    amount_requested: Optional[Decimal] = Field(sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False))
     currency: str
     repayment_months: int
     calculator_data: dict = Field(default={}, sa_column=Column(JSON))
@@ -96,7 +98,7 @@ class Award(SQLModel, table=True):
     title: str
     description: str
     award_date: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    award_amount: Optional[Decimal] = Field(default=None, precision=12, scale=2)
+    award_amount: Optional[Decimal] = Field(sa_column=Column(DECIMAL(precision=10, scale=2), nullable=False))
     award_currency: str
     contractperiod_startdate: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     contractperiod_enddate: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
