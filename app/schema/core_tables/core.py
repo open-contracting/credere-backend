@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from typing import List, Optional
 
 from sqlalchemy import DECIMAL, Column, DateTime
@@ -7,11 +8,35 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 
+class BorrowerDocumentType(Enum):
+    INCORPORATION_DOCUMENT = "Incorporation Document"
+    SUPPLIER_REGISTRATION_DOCUMENT = "Supplier Registration Document"
+    BANK_NAME = "Bank Name"
+    BANK_CERTIFICATION_DOCUMENT = "Bank Certification Document"
+    FINANCIAL_STATEMENT = "Financial Statement"
+    SIGNED_CONTRACT = "Signed Contract"
+    COMPLIANCE_REPORT = "Compliance Report"
+
+
+class ApplicationStatus(Enum):
+    PENDING = "Pending"
+    ACCEPTED = "Accepted"
+    LAPSED = "Lapsed"
+    DECLINED = "Declined"
+    SUBMITTED = "Submitted"
+    STARTED = "Started"
+    APPROVED = "Approved"
+    CONTRACT_UPLOADED = "Contract Uploaded"
+    COMPLETED = "Completed"
+    REJECTED = "Rejected"
+    INFORMATION_REQUESTED = "Information Requested"
+
+
 class BorrowerDocument(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="borrower_document")
-    type: str = Field(default="")
+    type: BorrowerDocumentType = Field(default=BorrowerDocumentType.INCORPORATION_DOCUMENT)
     verified: bool
     file: bytes
     name: str = Field(default="")
@@ -24,9 +49,9 @@ class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     borrower_documents: List["BorrowerDocument"] = Relationship(back_populates="application")
     award_id: int = Field(foreign_key="award.id")
-    uuid: str = Field(unique=True, default="")
+    uuid: str = Field(unique=True, default="", nullable=False)
     primary_email: str = Field(default="")
-    status: str = Field(default="")
+    status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, nullable=False)
     stage: str = Field(default="")
     award_borrowed_identifier: str = Field(default="")
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
@@ -37,17 +62,17 @@ class Application(SQLModel, table=True):
     amount_requested: Optional[Decimal] = Field(sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False))
     currency: str = Field(default="")
     repayment_months: int
-    calculator_data: dict = Field(default={}, sa_column=Column(JSON))
+    calculator_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     borrower_submitted_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     borrower_accepted_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     borrower_declined_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    borrower_declined_preferences_data: dict = Field(default={}, sa_column=Column(JSON))
-    borrower_declined_data: dict = Field(default={}, sa_column=Column(JSON))
+    borrower_declined_preferences_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    borrower_declined_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     lender_started_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    secop_data_verification: dict = Field(default={}, sa_column=Column(JSON))
+    secop_data_verification: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     lender_approved_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    lender_approved_data: dict = Field(default={}, sa_column=Column(JSON))
-    lender_rejected_data: Optional[dict] = Field(default={}, sa_column=Column(JSON))
+    lender_approved_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    lender_rejected_data: Optional[dict] = Field(default={}, sa_column=Column(JSON), nullable=False)
     borrewed_uploaded_contracted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False)
     )
@@ -56,6 +81,8 @@ class Application(SQLModel, table=True):
     updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     expired_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     archived_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    pending_documents: bool = Field(default=True)
+    pending_email_confirmation: bool = Field(default=True)
 
 
 class Borrower(SQLModel, table=True):
@@ -78,11 +105,11 @@ class Borrower(SQLModel, table=True):
 class Lender(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     applications: List["Application"] = Relationship(back_populates="lender")
-    name: str = Field(default="")
+    name: str = Field(default="", nullable=False, unique=True)
     status: str = Field(default="")
     type: str = Field(default="")
-    borrowed_type_preferences: dict = Field(default={}, sa_column=Column(JSON))
-    limits_preferences: dict = Field(default={}, sa_column=Column(JSON))
+    borrowed_type_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    limits_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     sla_days: Optional[int]
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
@@ -112,7 +139,7 @@ class Award(SQLModel, table=True):
     procurement_method: str = Field(default="")
     contracting_process_id: str = Field(default="")
     procurement_category: str = Field(default="")
-    source_data: dict = Field(default={}, sa_column=Column(JSON))
+    source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
 
