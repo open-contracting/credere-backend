@@ -24,9 +24,4 @@ repos:
         name: pip-compile requirements_dev.in
         files: ^requirements(_dev)?\.(in|txt)$
         args: [requirements_dev.in]
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.0-alpha.9-for-vscode"
-    hooks:
-      - id: prettier
-        types_or: [json]
 exclude: /migrations/
