@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     cognito_client_id: str = config_env.get("COGNITO_CLIENT_ID", None)
     cognito_client_secret: str = config_env.get("COGNITO_CLIENT_SECRET", None)
     frontend_url: str = config_env.get("FRONTEND_URL", None)
+    sentry_dsn: str = config_env.get("SENTRY_DNS", None)
 
     class Config:
         env_file = ".env"
