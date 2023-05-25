@@ -15,7 +15,10 @@ config_env = {
 class Settings(BaseSettings):
     app_name: str = "Credere API"
     version: str = VERSION
-    DB_URL: str = config_env.get("DB_URL", None)
+    DB_URL: str = config_env.get("DB_URL", "test_db_url")
 
     class Config:
         env_file = ".env"
+
+
+settings = Settings()

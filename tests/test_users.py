@@ -1,37 +1,75 @@
-from datetime import datetime
+import json
+from typing import Any, Generator
 
+import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from app.main import app
-from app.schema.user_tables.users import ApplicationAction, User
+from app.db.session import get_db
+from app.routers import users
+from app.schema.user_tables.users import User
 
-test_time = datetime.now()
-
-application_action = ApplicationAction(
-    type="action_type",
-    data={"key1": "value1", "key2": "value2"},
-    application_id="application_id_value",
-    user_id=123,
-    created_at=test_time,
-)
-
-user = User(
-    id=1,
-    type="customer",
-    email="jane@example.com",
-    external_id="12345",
-    fl_id=10,
-)
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def test_read_user():
-    client = TestClient(app)
-    response = client.get("/users/")
+def start_application():
+    app = FastAPI()
+    app.include_router(users.router)
+    return app
 
-    response_json = response.json()
+
+@pytest.fixture(scope="function")
+def app() -> Generator[FastAPI, Any, None]:
+    """
+    Create a fresh database on each test case.
+    """
+    User.metadata.create_all(engine)  # Create the tables.
+    _app = start_application()
+    yield _app
+    User.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="function")
+def db_session(app: FastAPI) -> Generator[SessionTesting, Any, None]:
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = SessionTesting(bind=connection)
+    yield session  # use the session in tests.
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+
+@pytest.fixture(scope="function")
+def client(app: FastAPI, db_session: SessionTesting) -> Generator[TestClient, Any, None]:
+    """
+    Create a new FastAPI TestClient that uses the `db_session` fixture to override
+    the `get_db` dependency that is injected into routes.
+    """
+
+    def _get_test_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = _get_test_db
+    with TestClient(app) as client:
+        yield client
+
+
+def test_create_user(client):
+    data = {
+        "type": "FI User",
+        "language": "testuser@nofoobar.com",
+        "email": "testing",
+        "external_id": "external_id",
+        "fl_id": 123,
+    }
+    response = client.post("/users/", json=json.dumps(data))
+    response = client.get("/users/1")
     assert response.status_code == 200
-    assert response_json["id"] == user.id
-    assert response_json["type"] == user.type
-    assert response_json["email"] == user.email
-    assert response_json["external_id"] == user.external_id
-    assert response_json["fl_id"] == user.fl_id

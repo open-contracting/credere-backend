@@ -29,7 +29,7 @@ class User(SQLModel, table=True):
     email: str = Field(default="")
     external_id: str = Field(default="")
     fl_id: Optional[int] = Field(default=None)
-    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    created_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
 
 
 class ApplicationAction(SQLModel, table=True):

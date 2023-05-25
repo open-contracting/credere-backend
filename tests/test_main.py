@@ -1,17 +1,16 @@
 import httpx
 from fastapi.testclient import TestClient
 
-from app.core.settings import Settings
 from app.main import app
 
-settings = Settings()
+VERSION: str = "0.1.0"
 
 
 def test_info_endpoint():
     client = TestClient(app)
     response = client.get("/info")
     assert response.status_code == 200
-    assert response.json() == {"Title": "Credence backend", "version": settings.version}
+    assert response.json() == {"Title": "Credence backend", "version": VERSION}
 
 
 with httpx.Client() as client:
