@@ -22,34 +22,6 @@ docker rmi <your-image-id>
 
 ## Basic setup for development
 
-### Poetry
-
-To ease development around virtualenv and dependencies, [Poetry](https://python-poetry.org/docs/) is configured. You can [install Poetry](https://python-poetry.org/docs/#installation) and the install the dependencies in the virtualenv managed by Poetry
-
-```
-poetry install
-```
-
-You should configure the pre-commit for the repo one time
-
-```
-poetry run pre-commit install
-```
-
-To activate the virtualenv with run, this is needed to run the commands installed as dependencies, such as pre-commit or pytest.
-
-```
-poetry shell
-```
-
-Run the uvicorn server in the virtualenv, use
-
-```
-uvicorn app.main:app --reload
-```
-
-### Without Poetry
-
 First create an env with virtualenv, then activate and this the following command inside the virtual environment:
 
 ```
@@ -79,7 +51,7 @@ uvicorn app.main:app --reload
 
 you can use .envtest as an example, it has the following keys:
 
-COGNITO_CLIENT_ID  -> your client id inside cognito
+COGNITO_CLIENT_ID -> your client id inside cognito
 AWS_ACCESS_KEY -> AWS key from the account that owns the users pool
 AWS_CLIENT_SECRET -> AWS secret from the account that owns the users pool
 AWS_REGION -> conigot pool region
