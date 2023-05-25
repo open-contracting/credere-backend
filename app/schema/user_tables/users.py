@@ -21,3 +21,9 @@ class BasicUser(BaseModel):
     name: Optional[str]
     password: Optional[str]
     temp_password: Optional[str]
+
+
+class SetupMFA(BaseModel):
+    temp_password: str
+    session: str
+    secret: str

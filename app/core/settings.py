@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     aws_client_secret: str = config_env.get("AWS_CLIENT_SECRETAWS_CLIENT_SECRET", None)
     email_sender_address: str = config_env.get("EMAIL_SENDER_ADDRESS", None)
     cognito_client_id: str = config_env.get("COGNITO_CLIENT_ID", None)
+    cognito_client_secret: str = config_env.get("COGNITO_CLIENT_SECRET", None)
     frontend_url: str = config_env.get("FRONTEND_URL", None)
 
     class Config:

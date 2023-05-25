@@ -52,9 +52,10 @@ uvicorn app.main:app --reload
 you can use .envtest as an example, it has the following keys:
 
 COGNITO_CLIENT_ID -> your client id inside cognito
+COGNITO_CLIENT_SECRET -> your client secret from cognito client app
 AWS_ACCESS_KEY -> AWS key from the account that owns the users pool
 AWS_CLIENT_SECRET -> AWS secret from the account that owns the users pool
-AWS_REGION -> conigot pool region
+AWS_REGION -> conigo and SES pool region
 COGNITO_POOL_ID -> cognito pool id
 EMAIL_SENDER_ADDRESS -> authorized sender in cognito
 FRONTEND_URL -> frontend url, use http://127.0.0.1:3000/ for dev
