@@ -4,7 +4,11 @@ coveralls
 flake8
 httpx
 isort
+moto[cognitoidp]
 pip-tools
 pre-commit
+pydantic
 pytest
 pytest-cov
+sqlalchemy
+sqlmodel

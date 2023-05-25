@@ -1,5 +1,6 @@
 from typing import Optional
 
+from pydantic import BaseModel
 from sqlalchemy import BigInteger, Column
 from sqlmodel import Field, SQLModel
 
@@ -13,3 +14,16 @@ class User(SQLModel, table=True):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+class BasicUser(BaseModel):
+    username: str
+    name: Optional[str]
+    password: Optional[str]
+    temp_password: Optional[str]
+
+
+class SetupMFA(BaseModel):
+    temp_password: str
+    session: str
+    secret: str

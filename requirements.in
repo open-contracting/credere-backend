@@ -3,3 +3,5 @@ pydantic
 python-dotenv
 sqlalchemy
 sqlmodel
+boto3
+botocore

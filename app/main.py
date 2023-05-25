@@ -1,18 +1,26 @@
-from functools import lru_cache
-from typing import Annotated
-
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import Settings
 from .routers import users
 
 app = FastAPI()
+
+# Configure CORS settings
+origins = [
+    Settings().frontend_url
+    # Add more allowed origins as needed
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(users.router)
-
-
-@lru_cache()
-def get_settings():
-    return Settings()
 
 
 @app.get("/")
@@ -21,5 +29,5 @@ def read_root():
 
 
 @app.api_route("/info")
-async def info(settings: Annotated[Settings, Depends(get_settings)]):
-    return {"Title": "Credence backend", "version": settings.version}
+async def info():
+    return {"Title": "Credence backend", "version": Settings().version}
