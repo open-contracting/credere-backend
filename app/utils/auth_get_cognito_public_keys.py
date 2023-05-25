@@ -7,7 +7,7 @@ from starlette.status import HTTP_403_FORBIDDEN
 
 from .verify_token import JWKS, JWTAuthorizationCredentials, verifyTokeClass
 
-load_dotenv()  # Automatically load environment variables from a '.env' file.
+load_dotenv()
 
 JsonPublicKeys = JWKS.parse_obj(
     requests.get(
@@ -16,6 +16,7 @@ JsonPublicKeys = JWKS.parse_obj(
     ).json()
 )
 
+# The section below is for username Extration from code
 authorizedCredentials = verifyTokeClass(JsonPublicKeys)
 
 
