@@ -25,7 +25,8 @@ def start_application():
 @pytest.fixture(scope="function")
 def app() -> Generator[FastAPI, Any, None]:
     """
-    Create a fresh database on each test case.
+    This will create a new test database in order to prevent extra entries
+    in the main one
     """
     User.metadata.create_all(engine)  # Create the tables.
     _app = start_application()
@@ -38,7 +39,7 @@ def db_session(app: FastAPI) -> Generator[SessionTesting, Any, None]:
     connection = engine.connect()
     transaction = connection.begin()
     session = SessionTesting(bind=connection)
-    yield session  # use the session in tests.
+    yield session
     session.close()
     transaction.rollback()
     connection.close()
@@ -46,11 +47,6 @@ def db_session(app: FastAPI) -> Generator[SessionTesting, Any, None]:
 
 @pytest.fixture(scope="function")
 def client(app: FastAPI, db_session: SessionTesting) -> Generator[TestClient, Any, None]:
-    """
-    Create a new FastAPI TestClient that uses the `db_session` fixture to override
-    the `get_db` dependency that is injected into routes.
-    """
-
     def _get_test_db():
         try:
             yield db_session
