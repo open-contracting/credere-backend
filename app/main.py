@@ -1,7 +1,5 @@
-from functools import lru_cache
-from typing import Annotated
-
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import Settings
 from .routers import users
@@ -9,13 +7,23 @@ from .utils.auth_get_cognito_public_keys import JsonPublicKeys, get_current_user
 from .utils.verify_token import verifyTokeClass
 
 app = FastAPI()
+
+# Configure CORS settings
+origins = [
+    Settings().frontend_url
+    # Add more allowed origins as needed
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(users.router)
 authorizedCredentials = verifyTokeClass(JsonPublicKeys)
-
-
-@lru_cache()
-def get_settings():
-    return Settings()
 
 
 @app.get("/")
@@ -24,8 +32,8 @@ def read_root():
 
 
 @app.api_route("/info")
-async def info(settings: Annotated[Settings, Depends(get_settings)]):
-    return {"Title": "Credence backend", "version": settings.version}
+async def info():
+    return {"Title": "Credence backend", "version": Settings().version}
 
 
 @app.get("/secure-endpoint-example", dependencies=[Depends(authorizedCredentials)])

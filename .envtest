@@ -1,0 +1,7 @@
+COGNITO_CLIENT_ID=**********
+AWS_ACCESS_KEY=**********
+AWS_CLIENT_SECRET=**********
+AWS_REGION=**********
+COGNITO_POOL_ID=**********
+EMAIL_SENDER_ADDRESS=**********
+FRONTEND_URL=**********
