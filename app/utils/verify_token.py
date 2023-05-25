@@ -1,12 +1,10 @@
 from typing import Dict, List, Optional
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwk, jwt
 from jose.utils import base64url_decode
 from pydantic import BaseModel
-from starlette.requests import Request
-from starlette.status import HTTP_403_FORBIDDEN
 
 JWK = Dict[str, str]
 
@@ -33,7 +31,7 @@ class verifyTokeClass(HTTPBearer):
         try:
             public_key = self.kid_to_jwk[jwt_credentials.header["kid"]]
         except KeyError:
-            raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="JWK public key not found")
+            raise HTTPException(status_code=403, detail="JWK public key not found")
 
         key = jwk.construct(public_key)
         decoded_signature = base64url_decode(jwt_credentials.signature.encode())
@@ -45,7 +43,7 @@ class verifyTokeClass(HTTPBearer):
 
         if credentials:
             if not credentials.scheme == "Bearer":
-                raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method")
+                raise HTTPException(status_code=403, detail="Wrong authentication method")
 
             jwt_token = credentials.credentials
 
@@ -60,9 +58,9 @@ class verifyTokeClass(HTTPBearer):
                     message=message,
                 )
             except JWTError:
-                raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="JWK invalid")
+                raise HTTPException(status_code=403, detail="JWK invalid")
 
             if not self.verify_jwk_token(jwt_credentials):
-                raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="JWK invalid")
+                raise HTTPException(status_code=403, detail="JWK invalid")
 
             return jwt_credentials
