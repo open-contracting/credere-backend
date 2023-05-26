@@ -1,17 +1,16 @@
-import os
-
 import requests
-from dotenv import load_dotenv
 from fastapi import Depends, HTTPException
+
+from app.core.settings import Settings
 
 from .verify_token import JWKS, JWTAuthorizationCredentials, verifyTokeClass
 
-load_dotenv()
+settings = Settings()
 
 JsonPublicKeys = JWKS.parse_obj(
     requests.get(
-        f"https://cognito-idp.{os.environ.get('AWS_REGION')}.amazonaws.com/"
-        f"{os.environ.get('COGNITO_POOL_ID')}/.well-known/jwks.json"
+        f"https://cognito-idp.{settings.aws_region}.amazonaws.com/"
+        f"{settings.cognito_pool_id}/.well-known/jwks.json"
     ).json()
 )
 
