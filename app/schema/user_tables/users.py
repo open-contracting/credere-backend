@@ -6,7 +6,9 @@ from sqlmodel import Field, SQLModel
 
 
 class User(SQLModel, table=True):
-    id: Optional[int] = Field(sa_column=Column(BigInteger(), primary_key=True, autoincrement=True))
+    id: Optional[int] = Field(
+        sa_column=Column(BigInteger(), primary_key=True, autoincrement=True)
+    )
     type: str
     email: str
     external_id: str

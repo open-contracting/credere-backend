@@ -19,7 +19,9 @@ JsonPublicKeys = JWKS.parse_obj(
 authorizedCredentials = verifyTokeClass(JsonPublicKeys)
 
 
-async def get_current_user(credentials: JWTAuthorizationCredentials = Depends(authorizedCredentials)) -> str:
+async def get_current_user(
+    credentials: JWTAuthorizationCredentials = Depends(authorizedCredentials),
+) -> str:
     try:
         return credentials.claims["username"]
     except KeyError:

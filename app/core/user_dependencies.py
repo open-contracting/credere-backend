@@ -30,7 +30,9 @@ def get_secret_hash(username):
     key = Settings().cognito_client_secret
     message = bytes(username + app_client_id, "utf-8")
     key = bytes(key, "utf-8")
-    return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
+    return base64.b64encode(
+        hmac.new(key, message, digestmod=hashlib.sha256).digest()
+    ).decode()
 
 
 def generate_password():
@@ -132,14 +134,18 @@ def mfa_setup(session):
 
 
 def verify_software_token(access_token, session, mfa_code):
-    response = client.verify_software_token(AccessToken=access_token, Session=session, UserCode=mfa_code)
+    response = client.verify_software_token(
+        AccessToken=access_token, Session=session, UserCode=mfa_code
+    )
 
     print("verify_software_token")
     print(response)
     return response
 
 
-def respond_to_auth_challenge(username, session, challenge_name, new_password="", mfa_code=""):
+def respond_to_auth_challenge(
+    username, session, challenge_name, new_password="", mfa_code=""
+):
     secret_hash = get_secret_hash(username)
     if challenge_name == "NEW_PASSWORD_REQUIRED":
         return client.respond_to_auth_challenge(
@@ -157,10 +163,14 @@ def respond_to_auth_challenge(username, session, challenge_name, new_password=""
         access_token = response["SecretCode"]
         session = response["Session"]
 
-        print(access_token)  # Use this code in cmd to associate google authenticator with you account
+        print(
+            access_token
+        )  # Use this code in cmd to associate google authenticator with you account
         # mfa_code = input("Enter MFA code: ")
 
-        response = client.verify_software_token(AccessToken=access_token, Session=session, UserCode=mfa_code)
+        response = client.verify_software_token(
+            AccessToken=access_token, Session=session, UserCode=mfa_code
+        )
         session = response["Session"]
         return client.respond_to_auth_challenge(
             ClientId=Settings().cognito_client_id,
@@ -195,7 +205,9 @@ def logout_user(access_token):
         if attribute["Name"] == "sub":
             username = attribute["Value"]
             break
-    response = client.admin_user_global_sign_out(UserPoolId=Settings().cognito_pool_id, Username=username)
+    response = client.admin_user_global_sign_out(
+        UserPoolId=Settings().cognito_pool_id, Username=username
+    )
     print(response)
     return response
 
@@ -222,7 +234,10 @@ def reset_password(username):
     }
 
     response = client.admin_set_user_password(
-        UserPoolId=Settings().cognito_pool_id, Username=username, Password=temp_password, Permanent=False
+        UserPoolId=Settings().cognito_pool_id,
+        Username=username,
+        Password=temp_password,
+        Permanent=False,
     )
 
     print(response)

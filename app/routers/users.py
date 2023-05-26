@@ -1,17 +1,10 @@
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Header, HTTPException, Response, status
 
-from ..core.user_dependencies import (
-    admin_create_user,
-    client,
-    initiate_auth,
-    logout_user,
-    mfa_setup,
-    reset_password,
-    respond_to_auth_challenge,
-    verified_email,
-    verify_software_token,
-)
+from ..core.user_dependencies import (admin_create_user, client, initiate_auth,
+                                      logout_user, mfa_setup, reset_password,
+                                      respond_to_auth_challenge,
+                                      verified_email, verify_software_token)
 from ..schema.user_tables.users import BasicUser, SetupMFA
 
 router = APIRouter()
@@ -38,7 +31,9 @@ def change_password(user: BasicUser, response: Response):
         response = initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             session = response["Session"]
-            response = respond_to_auth_challenge(user.username, session, "NEW_PASSWORD_REQUIRED", user.password)
+            response = respond_to_auth_challenge(
+                user.username, session, "NEW_PASSWORD_REQUIRED", user.password
+            )
 
         print(response)
 
@@ -105,7 +100,11 @@ def login_mfa(user: BasicUser):
             print(response["ChallengeName"])
             session = response["Session"]
             access_token = respond_to_auth_challenge(
-                user.username, session, response["ChallengeName"], "", mfa_code=user.temp_password
+                user.username,
+                session,
+                response["ChallengeName"],
+                "",
+                mfa_code=user.temp_password,
             )
             print(access_token)
 

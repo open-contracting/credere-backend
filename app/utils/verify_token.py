@@ -43,7 +43,9 @@ class verifyTokeClass(HTTPBearer):
 
         if credentials:
             if not credentials.scheme == "Bearer":
-                raise HTTPException(status_code=403, detail="Wrong authentication method")
+                raise HTTPException(
+                    status_code=403, detail="Wrong authentication method"
+                )
 
             jwt_token = credentials.credentials
 
