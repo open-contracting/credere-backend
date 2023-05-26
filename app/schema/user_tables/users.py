@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
+from pydantic import BaseModel
 from sqlalchemy import Column, DateTime
 from sqlalchemy.dialects.postgresql import JSON
 from sqlmodel import Field, Relationship, SQLModel
@@ -40,3 +41,19 @@ class ApplicationAction(SQLModel, table=True):
     user_id: int = Field(default=None, foreign_key="user.id")
     user: Optional[User] = Relationship(back_populates="application_actions")
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class BasicUser(BaseModel):
+    username: str
+    name: Optional[str]
+    password: Optional[str]
+    temp_password: Optional[str]
+
+
+class SetupMFA(BaseModel):
+    temp_password: str
+    session: str
+    secret: str
