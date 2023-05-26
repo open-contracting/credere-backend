@@ -47,15 +47,20 @@ class BorrowerDocument(SQLModel, table=True):
 
 class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    borrower_documents: List["BorrowerDocument"] = Relationship(back_populates="application")
+    borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(back_populates="application")
     award_id: int = Field(foreign_key="award.id")
+    award: "Award" = Relationship(back_populates="application")
     uuid: str = Field(unique=True, default="", nullable=False)
     primary_email: str = Field(default="")
     status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, nullable=False)
     stage: str = Field(default="")
     award_borrowed_identifier: str = Field(default="")
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
+    borrower: "Borrower" = Relationship(back_populates="application")
     lender_id: Optional[int] = Field(foreign_key="lender.id")
+    lender: "Lender" = Relationship(back_populates="application")
+    message_id: Optional[int] = Field(foreign_key="message.id")
+    message: "Message" = Relationship(back_populates="application")
     contract_amount_submitted: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False)
     )
@@ -87,7 +92,8 @@ class Application(SQLModel, table=True):
 
 class Borrower(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    applications: List["Application"] = Relationship(back_populates="borrower")
+    applications: Optional[List["Application"]] = Relationship(back_populates="borrower")
+    awards: List["Award"] = Relationship(back_populates="borrower")
     borrower_identifier: str = Field(default="")
     legal_name: str = Field(default="")
     email: str = Field(default="")
@@ -104,7 +110,7 @@ class Borrower(SQLModel, table=True):
 
 class Lender(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    applications: List["Application"] = Relationship(back_populates="lender")
+    applications: Optional[List["Application"]] = Relationship(back_populates="lender")
     name: str = Field(default="", nullable=False, unique=True)
     status: str = Field(default="")
     type: str = Field(default="")
@@ -118,9 +124,9 @@ class Lender(SQLModel, table=True):
 
 class Award(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    applications: List["Application"] = Relationship(back_populates="award.id")
-    borrowers: List["Borrower"] = Relationship(back_populates="award.id")
+    applications: Optional[List["Application"]] = Relationship(back_populates="award")
     borrower_id: int = Field(foreign_key="borrower.id")
+    borrower: Borrower = Relationship(back_populates="awards")
     source_contract_id: str = Field(default="")
     title: str = Field(default="")
     description: str = Field(default="")
@@ -147,7 +153,7 @@ class Award(SQLModel, table=True):
 class Message(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     type: str = Field(default="")
-    application_id: int = Field(foreign_key="application.id")
+    applications: Optional[List["Application"]] = Relationship(back_populates="message")
     body: Optional[str] = Field(default="")
     created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     sent_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
