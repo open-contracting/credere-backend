@@ -1,10 +1,17 @@
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Header, HTTPException, Response, status
 
-from ..core.user_dependencies import (admin_create_user, client, initiate_auth,
-                                      logout_user, mfa_setup, reset_password,
-                                      respond_to_auth_challenge,
-                                      verified_email, verify_software_token)
+from ..core.user_dependencies import (
+    admin_create_user,
+    client,
+    initiate_auth,
+    logout_user,
+    mfa_setup,
+    reset_password,
+    respond_to_auth_challenge,
+    verified_email,
+    verify_software_token,
+)
 from ..schema.user_tables.users import BasicUser, SetupMFA
 
 router = APIRouter()

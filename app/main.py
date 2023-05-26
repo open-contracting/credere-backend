@@ -4,8 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import Settings
 from .routers import users
-from .utils.auth_get_cognito_public_keys import (JsonPublicKeys,
-                                                 get_current_user)
+from .utils.auth_get_cognito_public_keys import JsonPublicKeys, get_current_user
 from .utils.verify_token import verifyTokeClass
 
 if Settings().sentry_dsn:
