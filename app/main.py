@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import Settings
 from .routers import users
-from .utils.auth_get_cognito_public_keys import JsonPublicKeys, get_current_user
+from .utils import auth_get_cognito_public_keys
 from .utils.verify_token import verifyTokeClass
 
 if Settings().sentry_dsn:
@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 app.include_router(users.router)
-authorizedCredentials = verifyTokeClass(JsonPublicKeys)
+authorizedCredentials = verifyTokeClass(auth_get_cognito_public_keys.JsonPublicKeys)
 
 
 @app.get("/")
@@ -56,7 +56,7 @@ def example_of_secure_endpoint():
     dependencies=[Depends(authorizedCredentials)],
 )
 def example_of_secure_endpoint_with_username(
-    usernameFromToken: str = Depends(get_current_user),
+    usernameFromToken: str = Depends(auth_get_cognito_public_keys.get_current_user),
 ):
     print(usernameFromToken)
     return {"Congrats" + usernameFromToken + " you were autorized to see this endpoint"}

@@ -1,17 +1,8 @@
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Header, HTTPException, Response, status
 
-from ..core.user_dependencies import (
-    admin_create_user,
-    client,
-    initiate_auth,
-    logout_user,
-    mfa_setup,
-    reset_password,
-    respond_to_auth_challenge,
-    verified_email,
-    verify_software_token,
-)
+from ..core import user_dependencies
+from ..core.user_dependencies import client
 from ..schema.user_tables.users import BasicUser, SetupMFA
 
 router = APIRouter()
@@ -20,7 +11,7 @@ router = APIRouter()
 @router.post("/users/register")
 def register_user(user: BasicUser):
     try:
-        response = admin_create_user(user.username, user.name)
+        response = user_dependencies.admin_create_user(user.username, user.name)
         print(response)
     except client.exceptions.UsernameExistsException as e:
         print(e)
@@ -35,18 +26,18 @@ def register_user(user: BasicUser):
 @router.put("/users/change-password")
 def change_password(user: BasicUser, response: Response):
     try:
-        response = initiate_auth(user.username, user.temp_password)
+        response = user_dependencies.initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             session = response["Session"]
-            response = respond_to_auth_challenge(
+            response = user_dependencies.respond_to_auth_challenge(
                 user.username, session, "NEW_PASSWORD_REQUIRED", user.password
             )
 
         print(response)
 
-        verified_email(user.username)
+        user_dependencies.verified_email(user.username)
         if response["ChallengeName"] == "MFA_SETUP":
-            mfa_setup_response = mfa_setup(response["Session"])
+            mfa_setup_response = user_dependencies.mfa_setup(response["Session"])
             return {
                 "message": "Password changed with MFA setup required",
                 "secret_code": mfa_setup_response["secret_code"],
@@ -67,7 +58,9 @@ def change_password(user: BasicUser, response: Response):
 @router.put("/users/setup-mfa")
 def setup_mfa(user: SetupMFA, response: Response):
     try:
-        response = verify_software_token(user.secret, user.session, user.temp_password)
+        response = user_dependencies.verify_software_token(
+            user.secret, user.session, user.temp_password
+        )
         print(response)
 
         return {"message": "MFA configured successfully"}
@@ -83,7 +76,7 @@ def setup_mfa(user: SetupMFA, response: Response):
 @router.post("/users/login")
 def login(user: BasicUser, response: Response):
     try:
-        response = initiate_auth(user.username, user.password)
+        response = user_dependencies.initiate_auth(user.username, user.password)
 
         # todo load user from db
         return {
@@ -102,11 +95,11 @@ def login(user: BasicUser, response: Response):
 @router.post("/users/login-mfa")
 def login_mfa(user: BasicUser):
     try:
-        response = initiate_auth(user.username, user.password)
+        response = user_dependencies.initiate_auth(user.username, user.password)
         if "ChallengeName" in response:
             print(response["ChallengeName"])
             session = response["Session"]
-            access_token = respond_to_auth_challenge(
+            access_token = user_dependencies.respond_to_auth_challenge(
                 user.username,
                 session,
                 response["ChallengeName"],
@@ -132,7 +125,7 @@ def login_mfa(user: BasicUser):
 @router.get("/users/logout")
 def logout(Authorization: str = Header(None)):
     try:
-        response = logout_user(Authorization)
+        response = user_dependencies.logout_user(Authorization)
         print(response)
     except ClientError as e:
         print(e)
@@ -160,7 +153,7 @@ def me(response: Response, Authorization: str = Header(None)):
 @router.post("/users/forgot-password")
 def forgot_password(user: BasicUser):
     try:
-        response = reset_password(user.username)
+        response = user_dependencies.reset_password(user.username)
         print(response)
         return {"message": "An email with a reset link was sent to end user"}
     except Exception as e:
