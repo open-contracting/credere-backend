@@ -10,7 +10,7 @@ load_dotenv()
 
 JsonPublicKeys = JWKS.parse_obj(
     requests.get(
-        f"https://cognito-idp.{os.environ.get('COGNITO_REGION')}.amazonaws.com/"
+        f"https://cognito-idp.{os.environ.get('AWS_REGION')}.amazonaws.com/"
         f"{os.environ.get('COGNITO_POOL_ID')}/.well-known/jwks.json"
     ).json()
 )
