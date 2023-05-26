@@ -59,6 +59,7 @@ AWS_REGION -> conigo and SES pool region
 COGNITO_POOL_ID -> cognito pool id
 EMAIL_SENDER_ADDRESS -> authorized sender in cognito
 FRONTEND_URL -> frontend url, use http://127.0.0.1:3000/ for dev
+SENTRY_DNS -> the DNS for sentry
 
 You should configure the pre-commit for the repo one time
 

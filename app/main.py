@@ -1,3 +1,4 @@
+import sentry_sdk
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,6 +6,15 @@ from .core.settings import Settings
 from .routers import users
 from .utils.auth_get_cognito_public_keys import JsonPublicKeys, get_current_user
 from .utils.verify_token import verifyTokeClass
+
+if Settings().sentry_dsn:
+    sentry_sdk.init(
+        dsn=Settings().sentry_dsn,
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production,
+        traces_sample_rate=1.0,
+    )
 
 app = FastAPI()
 
@@ -41,7 +51,12 @@ def example_of_secure_endpoint():
     return {"Congrats,you were autorized to see this endpoint"}
 
 
-@app.get("/secure-endpoint-example-username-extraction", dependencies=[Depends(authorizedCredentials)])
-def example_of_secure_endpoint_with_username(usernameFromToken: str = Depends(get_current_user)):
+@app.get(
+    "/secure-endpoint-example-username-extraction",
+    dependencies=[Depends(authorizedCredentials)],
+)
+def example_of_secure_endpoint_with_username(
+    usernameFromToken: str = Depends(get_current_user),
+):
     print(usernameFromToken)
     return {"Congrats" + usernameFromToken + " you were autorized to see this endpoint"}
