@@ -1,7 +1,6 @@
-from datetime import datetime
-
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..core.user_dependencies import (
@@ -16,7 +15,7 @@ from ..core.user_dependencies import (
     verify_software_token,
 )
 from ..db.session import get_db
-from ..schema.user_tables.users import BasicUser, SetupMFA, User
+from ..schema.core import BasicUser, SetupMFA, User
 
 router = APIRouter()
 
@@ -30,30 +29,24 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
     return user
 
 
-@router.post("/users/", tags=["users"], response_model=User)
-async def create_user(user: User, db: Session = Depends(get_db)):
-    user.created_at = datetime.now()
-    db_user = User(**user.dict())
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-
-    return user
-
-
-@router.post("/users/register")
-def register_user(user: BasicUser):
+@router.post("/users", tags=["users"], response_model=User)
+async def create_user(payload: User, session: Session = Depends(get_db)):
     try:
-        response = admin_create_user(user.username, user.name)
-        print(response)
-    except client.exceptions.UsernameExistsException as e:
+        print(payload)
+        user = User(**payload.dict())
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        cognitoResponse = admin_create_user(payload.email, payload.name)
+        user.external_id = cognitoResponse["User"]["Username"]
+        print(user)
+        return user
+    except (client.exceptions.UsernameExistsException, IntegrityError) as e:
         print(e)
         raise HTTPException(status_code=400, detail="Username already exists")
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
-
-    return {"message": "User created successfully"}
 
 
 @router.put("/users/change-password")

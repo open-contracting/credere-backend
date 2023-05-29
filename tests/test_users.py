@@ -1,4 +1,3 @@
-import json
 from typing import Any, Generator
 
 import boto3
@@ -12,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.session import get_db
 from app.routers import users
-from app.schema.user_tables.users import User
+from app.schema.core import User, UserType
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
@@ -31,6 +30,7 @@ def app() -> Generator[FastAPI, Any, None]:
     This will create a new test database in order to prevent extra entries
     in the main one
     """
+    print("Creating test database")
     User.metadata.create_all(engine)  # Create the tables.
     _app = start_application()
     yield _app
@@ -40,11 +40,9 @@ def app() -> Generator[FastAPI, Any, None]:
 @pytest.fixture(scope="function")
 def db_session(app: FastAPI) -> Generator[SessionTesting, Any, None]:
     connection = engine.connect()
-    transaction = connection.begin()
     session = SessionTesting(bind=connection)
     yield session
     session.close()
-    transaction.rollback()
     connection.close()
 
 
@@ -61,17 +59,22 @@ def client(app: FastAPI, db_session: SessionTesting) -> Generator[TestClient, An
         yield client
 
 
+data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.value}
+
+
 def test_create_user(client):
-    data = {
-        "type": "FI User",
-        "language": "testuser@nofoobar.com",
-        "email": "testing",
-        "external_id": "external_id",
-        "fl_id": 123,
-    }
-    response = client.post("/users/", json=json.dumps(data))
+    response = client.post("/users", json=data)
+    assert response.status_code == 200
     response = client.get("/users/1")
     assert response.status_code == 200
+
+
+def test_duplicate_user(client):
+    response = client.post("/users", json=data)
+    assert response.status_code == 200
+    # duplicate user
+    response = client.post("/users", json=data)
+    assert response.status_code == 400
 
 
 my_config = Config(region_name="us-east-1")

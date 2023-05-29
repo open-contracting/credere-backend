@@ -66,7 +66,7 @@ def admin_create_user(username, name):
         "LINK_LINK": "www.google.com",
     }
 
-    response = client.admin_create_user(
+    createUserResponse = client.admin_create_user(
         UserPoolId=Settings().cognito_pool_id,
         Username=username,
         TemporaryPassword=temp_password,
@@ -74,13 +74,14 @@ def admin_create_user(username, name):
         UserAttributes=[{"Name": "email", "Value": username}],
     )
 
-    response = ses.send_templated_email(
+    ses.send_templated_email(
         Source=Settings().email_sender_address,
         Destination={"ToAddresses": [username]},
         Template="credere-NewAccountCreated",
         TemplateData=json.dumps(data),
     )
-    return response
+
+    return createUserResponse
 
 
 def verified_email(username):
