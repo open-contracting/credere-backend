@@ -125,6 +125,7 @@ then you can construct the env variable like this
 DB_URL=postgresql://{username}:{password}@{host_adress:port}/{db_name}
 
 in order to apply migrations in tables use
+
 ```
 alembic upgrade head
 ```
@@ -137,13 +138,10 @@ If you need to create a new migration you can use
 alembic revision -m "migration name"
 ```
 
-it will look like this
+this will generate a file with a identifier and the name you picked.
+It will look like this _2ca870aa737d_migration_name.py_
 
-Inside the script you need to configure both operations, upgrade and downgrade. Upgrade will apply changes and downgrade remove them. Use the first migration as base
-
-2ca870aa737d_migration_name.py
-
-this will generate a file with a random number and the name you picked
+Inside the script you need to configure both operations, upgrade and downgrade. Upgrade will apply changes and downgrade remove them. Use the first migration as base.
 
 ## Test
 

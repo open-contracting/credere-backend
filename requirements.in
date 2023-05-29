@@ -7,3 +7,4 @@ alembic
 boto3
 botocore
 datetime
+psycopg2

@@ -20,7 +20,7 @@ branch_labels = None
 depends_on = None
 
 
-SQLALCHEMY_DATABASE_URL = Settings().DB_URL
+SQLALCHEMY_DATABASE_URL = Settings().db_url
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 

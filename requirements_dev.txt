@@ -130,6 +130,8 @@ pluggy==1.0.0
     # via pytest
 pre-commit==3.2.2
     # via -r requirements_dev.in
+psycopg2==2.9.6
+    # via -r requirements.txt
 pyasn1==0.5.0
     # via
     #   python-jose
