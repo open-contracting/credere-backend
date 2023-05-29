@@ -4,8 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import Settings
 from .routers import users
-from .utils import auth_get_cognito_public_keys
-from .utils.verify_token import verifyTokeClass
+from .utils.verify_token import get_current_user, verifyTokeClass
 
 if Settings().sentry_dsn:
     sentry_sdk.init(
@@ -33,7 +32,11 @@ app.add_middleware(
 )
 
 app.include_router(users.router)
-authorizedCredentials = verifyTokeClass(auth_get_cognito_public_keys.JsonPublicKeys)
+authorizedCredentials = verifyTokeClass()
+
+
+def get_auth_credentials() -> verifyTokeClass:
+    return verifyTokeClass(auto_error=True)
 
 
 @app.get("/")
@@ -53,10 +56,10 @@ def example_of_secure_endpoint():
 
 @app.get(
     "/secure-endpoint-example-username-extraction",
-    dependencies=[Depends(authorizedCredentials)],
+    dependencies=[Depends(get_current_user)],
 )
 def example_of_secure_endpoint_with_username(
-    usernameFromToken: str = Depends(auth_get_cognito_public_keys.get_current_user),
+    usernameFromToken: str = Depends(get_current_user),
 ):
     print(usernameFromToken)
     return {"Congrats" + usernameFromToken + " you were autorized to see this endpoint"}
