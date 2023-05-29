@@ -8,3 +8,5 @@ boto3
 botocore
 datetime
 psycopg2
+sentry-sdk[fastapi]
+

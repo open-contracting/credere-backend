@@ -27,9 +27,11 @@ build==0.10.0
     # via pip-tools
 certifi==2023.5.7
     # via
+    #   -r requirements.txt
     #   httpcore
     #   httpx
     #   requests
+    #   sentry-sdk
 cffi==1.15.1
     # via cryptography
 cfgv==3.3.1
@@ -61,7 +63,9 @@ ecdsa==0.18.0
     #   moto
     #   python-jose
 fastapi==0.95.1
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   sentry-sdk
 filelock==3.12.0
     # via virtualenv
 flake8==6.0.0
@@ -186,6 +190,8 @@ s3transfer==0.6.1
     # via
     #   -r requirements.txt
     #   boto3
+sentry-sdk[fastapi]==1.23.1
+    # via -r requirements.txt
 six==1.16.0
     # via
     #   -r requirements.txt
@@ -229,6 +235,7 @@ urllib3==1.26.15
     #   botocore
     #   requests
     #   responses
+    #   sentry-sdk
 virtualenv==20.22.0
     # via pre-commit
 werkzeug==2.3.4
