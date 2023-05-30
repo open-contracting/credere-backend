@@ -9,19 +9,14 @@ from .utils.verify_token import get_current_user, verifyTokeClass
 if Settings().sentry_dsn:
     sentry_sdk.init(
         dsn=Settings().sentry_dsn,
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        # We recommend adjusting this value in production,
+        # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
         traces_sample_rate=1.0,
     )
 
 app = FastAPI()
 
 # Configure CORS settings
-origins = [
-    Settings().frontend_url
-    # Add more allowed origins as needed
-]
+origins = [Settings().frontend_url]  # Add more allowed origins as needed
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,10 +28,6 @@ app.add_middleware(
 
 app.include_router(users.router)
 authorizedCredentials = verifyTokeClass()
-
-
-def get_auth_credentials() -> verifyTokeClass:
-    return verifyTokeClass(auto_error=True)
 
 
 @app.get("/")
@@ -56,7 +47,7 @@ def example_of_secure_endpoint():
 
 @app.get(
     "/secure-endpoint-example-username-extraction",
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(authorizedCredentials)],
 )
 def example_of_secure_endpoint_with_username(
     usernameFromToken: str = Depends(get_current_user),
