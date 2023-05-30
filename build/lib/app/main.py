@@ -4,12 +4,10 @@ from typing import Annotated
 from fastapi import Depends, FastAPI
 
 from .core.settings import Settings
-from .routers import awards, borrowers, users
+from .routers import users
 
 app = FastAPI()
 app.include_router(users.router)
-app.include_router(awards.router)
-app.include_router(borrowers.router)
 
 
 @lru_cache()

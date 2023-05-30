@@ -35,7 +35,7 @@ class ApplicationStatus(Enum):
 class BorrowerDocument(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     application_id: int = Field(foreign_key="application.id")
-    application: Optional["Application"] = Relationship(back_populates="borrower_documents")
+    application: Optional["Application"] = Relationship(back_populates="borrower_document")
     type: BorrowerDocumentType = Field(default=BorrowerDocumentType.INCORPORATION_DOCUMENT)
     verified: bool
     file: bytes
@@ -49,18 +49,18 @@ class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(back_populates="application")
     award_id: int = Field(foreign_key="award.id")
-    award: "Award" = Relationship(back_populates="applications")
+    award: "Award" = Relationship(back_populates="application")
     uuid: str = Field(unique=True, default="", nullable=False)
     primary_email: str = Field(default="")
     status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, nullable=False)
     stage: str = Field(default="")
     award_borrowed_identifier: str = Field(default="")
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
-    borrower: "Borrower" = Relationship(back_populates="applications")
+    borrower: "Borrower" = Relationship(back_populates="application")
     lender_id: Optional[int] = Field(foreign_key="lender.id")
-    lender: "Lender" = Relationship(back_populates="applications")
+    lender: "Lender" = Relationship(back_populates="application")
     message_id: Optional[int] = Field(foreign_key="message.id")
-    message: "Message" = Relationship(back_populates="applications")
+    message: "Message" = Relationship(back_populates="application")
     contract_amount_submitted: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False)
     )
@@ -93,7 +93,7 @@ class Application(SQLModel, table=True):
 class Borrower(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     applications: Optional[List["Application"]] = Relationship(back_populates="borrower")
-    awards: Optional[List["Award"]] = Relationship(back_populates="borrower")
+    awards: List["Award"] = Relationship(back_populates="borrower")
     borrower_identifier: str = Field(default="")
     legal_name: str = Field(default="")
     email: str = Field(default="")
@@ -103,15 +103,9 @@ class Borrower(SQLModel, table=True):
     sector: str = Field(default="")
     size: str = Field(default="")
     status: str = Field(default="")
-    # created_at: datetime = Field(
-    #     default_factory=datetime.utcnow(),
-    #     sa_column=Column(DateTime(timezone=True), nullable=False),
-    # )
-    # updated_at: datetime = Field(
-    #     default_factory=datetime.utcnow(),
-    #     sa_column=Column(DateTime(timezone=True), nullable=False),
-    # )
-    # declined_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    declined_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
 
 
 class Lender(SQLModel, table=True):
@@ -123,18 +117,9 @@ class Lender(SQLModel, table=True):
     borrowed_type_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     limits_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     sla_days: Optional[int]
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
-    updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
-    deleted_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
+    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    deleted_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
 
 
 class Award(SQLModel, table=True):
@@ -155,20 +140,14 @@ class Award(SQLModel, table=True):
     source_url: str = Field(default="")
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
-    source_last_updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    source_last_updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     previous: bool
-    procurement_method: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    contracting_process_id: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    procurement_method: str = Field(default="")
+    contracting_process_id: str = Field(default="")
     procurement_category: str = Field(default="")
     source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
-    updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
+    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
 
 
 class Message(SQLModel, table=True):
