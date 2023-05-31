@@ -1,19 +1,18 @@
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, Header, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 
-from ..core import user_dependencies
-from ..core.user_dependencies import client
+from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..schema.user_tables.users import BasicUser, SetupMFA
 
 router = APIRouter()
 
 
 @router.post("/users/register")
-def register_user(user: BasicUser):
+def register_user(user: BasicUser, client: CognitoClient = Depends(get_cognito_client)):
     try:
-        response = user_dependencies.admin_create_user(user.username, user.name)
+        response = client.admin_create_user(user.username, user.name)
         print(response)
-    except client.exceptions.UsernameExistsException as e:
+    except client.exceptions().UsernameExistsException as e:
         print(e)
         raise HTTPException(status_code=400, detail="Username already exists")
     except Exception as e:
@@ -24,20 +23,27 @@ def register_user(user: BasicUser):
 
 
 @router.put("/users/change-password")
-def change_password(user: BasicUser, response: Response):
+def change_password(
+    user: BasicUser,
+    response: Response,
+    client: CognitoClient = Depends(get_cognito_client),
+):
     try:
-        response = user_dependencies.initiate_auth(user.username, user.temp_password)
+        response = client.initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             session = response["Session"]
-            response = user_dependencies.respond_to_auth_challenge(
+            response = client.respond_to_auth_challenge(
                 user.username, session, "NEW_PASSWORD_REQUIRED", user.password
             )
 
         print(response)
 
-        user_dependencies.verified_email(user.username)
-        if response["ChallengeName"] == "MFA_SETUP":
-            mfa_setup_response = user_dependencies.mfa_setup(response["Session"])
+        client.verified_email(user.username)
+        if (
+            response.get("ChallengeName") is not None
+            and response["ChallengeName"] == "MFA_SETUP"
+        ):
+            mfa_setup_response = client.mfa_setup(response["Session"])
             return {
                 "message": "Password changed with MFA setup required",
                 "secret_code": mfa_setup_response["secret_code"],
@@ -56,9 +62,13 @@ def change_password(user: BasicUser, response: Response):
 
 
 @router.put("/users/setup-mfa")
-def setup_mfa(user: SetupMFA, response: Response):
+def setup_mfa(
+    user: SetupMFA,
+    response: Response,
+    client: CognitoClient = Depends(get_cognito_client),
+):
     try:
-        response = user_dependencies.verify_software_token(
+        response = client.verify_software_token(
             user.secret, user.session, user.temp_password
         )
         print(response)
@@ -74,9 +84,13 @@ def setup_mfa(user: SetupMFA, response: Response):
 
 
 @router.post("/users/login")
-def login(user: BasicUser, response: Response):
+def login(
+    user: BasicUser,
+    response: Response,
+    client: CognitoClient = Depends(get_cognito_client),
+):
     try:
-        response = user_dependencies.initiate_auth(user.username, user.password)
+        response = client.initiate_auth(user.username, user.password)
 
         # todo load user from db
         return {
@@ -93,13 +107,13 @@ def login(user: BasicUser, response: Response):
 
 
 @router.post("/users/login-mfa")
-def login_mfa(user: BasicUser):
+def login_mfa(user: BasicUser, client: CognitoClient = Depends(get_cognito_client)):
     try:
-        response = user_dependencies.initiate_auth(user.username, user.password)
+        response = client.initiate_auth(user.username, user.password)
         if "ChallengeName" in response:
             print(response["ChallengeName"])
             session = response["Session"]
-            access_token = user_dependencies.respond_to_auth_challenge(
+            access_token = client.respond_to_auth_challenge(
                 user.username,
                 session,
                 response["ChallengeName"],
@@ -123,9 +137,12 @@ def login_mfa(user: BasicUser):
 
 
 @router.get("/users/logout")
-def logout(Authorization: str = Header(None)):
+def logout(
+    Authorization: str = Header(None),
+    client: CognitoClient = Depends(get_cognito_client),
+):
     try:
-        response = user_dependencies.logout_user(Authorization)
+        response = client.logout_user(Authorization)
         print(response)
     except ClientError as e:
         print(e)
@@ -135,7 +152,11 @@ def logout(Authorization: str = Header(None)):
 
 
 @router.get("/users/me")
-def me(response: Response, Authorization: str = Header(None)):
+def me(
+    response: Response,
+    Authorization: str = Header(None),
+    client: CognitoClient = Depends(get_cognito_client),
+):
     try:
         response = client.get_user(AccessToken=Authorization)
         for item in response["UserAttributes"]:
@@ -151,9 +172,11 @@ def me(response: Response, Authorization: str = Header(None)):
 
 
 @router.post("/users/forgot-password")
-def forgot_password(user: BasicUser):
+def forgot_password(
+    user: BasicUser, client: CognitoClient = Depends(get_cognito_client)
+):
     try:
-        response = user_dependencies.reset_password(user.username)
+        response = client.reset_password(user.username)
         print(response)
         return {"message": "An email with a reset link was sent to end user"}
     except Exception as e:

@@ -1,5 +1,4 @@
 import os
-from functools import lru_cache
 
 from dotenv import dotenv_values
 from pydantic import BaseSettings
@@ -13,7 +12,6 @@ config_env = {
 }
 
 
-@lru_cache()
 class Settings(BaseSettings):
     app_name: str = "Credere API"
     version: str = config_env.get("VERSION", "0.1.1")
@@ -29,3 +27,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+
+app_settings = Settings()
