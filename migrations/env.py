@@ -11,7 +11,7 @@ from app.schema import metadata
 config = context.config
 
 section = config.config_ini_section
-config.set_section_option(section, "DB_URL", app_settings.db_url)
+config.set_section_option(section, "DATABASE_URL", app_settings.database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

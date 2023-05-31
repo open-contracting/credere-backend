@@ -123,7 +123,7 @@ Once you have the service you need to create a database
 
 then you can construct the env variable like this
 
-DB_URL=postgresql://{username}:{password}@{host_adress:port}/{db_name}
+DATABASE_URL=postgresql://{username}:{password}@{host_adress:port}/{db_name}
 
 in order to apply migrations in tables use
 

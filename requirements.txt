@@ -21,8 +21,6 @@ certifi==2023.5.7
     #   sentry-sdk
 charset-normalizer==3.1.0
     # via requests
-datetime==5.1
-    # via -r requirements.in
 fastapi==0.95.1
     # via
     #   -r requirements.in
@@ -43,8 +41,6 @@ mako==1.2.4
     # via alembic
 markupsafe==2.1.2
     # via mako
-psycopg2==2.9.6
-    # via -r requirements.in
 pydantic==1.10.7
     # via
     #   -r requirements.in
@@ -54,8 +50,6 @@ python-dateutil==2.8.2
     # via botocore
 python-dotenv==1.0.0
     # via -r requirements.in
-pytz==2023.3
-    # via datetime
 requests==2.31.0
     # via -r requirements.in
 s3transfer==0.6.1
@@ -87,8 +81,3 @@ urllib3==1.26.15
     #   botocore
     #   requests
     #   sentry-sdk
-zope-interface==6.0
-    # via datetime
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools

@@ -54,8 +54,6 @@ cryptography==40.0.2
     # via
     #   moto
     #   python-jose
-datetime==5.1
-    # via -r requirements.txt
 distlib==0.3.6
     # via virtualenv
 docopt==0.6.2
@@ -139,8 +137,6 @@ pluggy==1.0.0
     # via pytest
 pre-commit==3.2.2
     # via -r requirements_dev.in
-psycopg2==2.9.6
-    # via -r requirements.txt
 pyasn1==0.5.0
     # via
     #   python-jose
@@ -174,10 +170,6 @@ python-dotenv==1.0.0
     # via -r requirements.txt
 python-jose[cryptography]==3.3.0
     # via moto
-pytz==2023.3
-    # via
-    #   -r requirements.txt
-    #   datetime
 pyyaml==6.0
     # via
     #   pre-commit
@@ -251,10 +243,6 @@ wheel==0.40.0
     # via pip-tools
 xmltodict==0.13.0
     # via moto
-zope-interface==6.0
-    # via
-    #   -r requirements.txt
-    #   datetime
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

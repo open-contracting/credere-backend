@@ -5,15 +5,19 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.settings import app_settings
 
-SQLALCHEMY_DATABASE_URL = app_settings.db_url
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = None
+if app_settings.database_url:
+    engine = create_engine(app_settings.database_url)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db() -> Generator:  # new
     try:
-        db = SessionLocal()
+        db = None
+        if SessionLocal:
+            db = SessionLocal()
+
         yield db
     finally:
-        db.close()
+        if db:
+            db.close()
