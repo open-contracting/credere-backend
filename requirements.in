@@ -1,7 +1,7 @@
 fastapi
 pydantic
 python-dotenv
-sqlalchemy
+sqlalchemy[postgresql]
 sqlmodel
 alembic
 boto3

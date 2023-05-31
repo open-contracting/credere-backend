@@ -14,4 +14,3 @@ sqlalchemy
 sqlmodel
 jose
 requests
-psycopg2
