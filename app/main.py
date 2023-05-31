@@ -8,19 +8,14 @@ from .routers import users
 if Settings().sentry_dsn:
     sentry_sdk.init(
         dsn=Settings().sentry_dsn,
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        # We recommend adjusting this value in production,
+        # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
         traces_sample_rate=1.0,
     )
 
 app = FastAPI()
 
 # Configure CORS settings
-origins = [
-    Settings().frontend_url
-    # Add more allowed origins as needed
-]
+origins = [Settings().frontend_url]  # Add more allowed origins as needed
 
 app.add_middleware(
     CORSMiddleware,

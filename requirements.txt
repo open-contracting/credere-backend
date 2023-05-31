@@ -14,7 +14,11 @@ botocore==1.29.136
     #   boto3
     #   s3transfer
 certifi==2023.5.7
-    # via sentry-sdk
+    # via
+    #   requests
+    #   sentry-sdk
+charset-normalizer==3.1.0
+    # via requests
 fastapi==0.95.1
     # via
     #   -r requirements.in
@@ -22,11 +26,15 @@ fastapi==0.95.1
 greenlet==2.0.2
     # via sqlalchemy
 idna==3.4
-    # via anyio
+    # via
+    #   anyio
+    #   requests
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
+jose==1.0.0
+    # via -r requirements.in
 pydantic==1.10.7
     # via
     #   -r requirements.in
@@ -35,6 +43,8 @@ pydantic==1.10.7
 python-dateutil==2.8.2
     # via botocore
 python-dotenv==1.0.0
+    # via -r requirements.in
+requests==2.31.0
     # via -r requirements.in
 s3transfer==0.6.1
     # via boto3
@@ -61,4 +71,5 @@ typing-extensions==4.5.0
 urllib3==1.26.15
     # via
     #   botocore
+    #   requests
     #   sentry-sdk
