@@ -1,10 +1,9 @@
 import sentry_sdk
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import Settings
 from .routers import users
-from .utils.verify_token import get_current_user, verifyTokeClass
 
 if Settings().sentry_dsn:
     sentry_sdk.init(
@@ -32,11 +31,6 @@ app.add_middleware(
 )
 
 app.include_router(users.router)
-authorizedCredentials = verifyTokeClass()
-
-
-def get_auth_credentials() -> verifyTokeClass:
-    return verifyTokeClass(auto_error=True)
 
 
 @app.get("/")
@@ -47,19 +41,3 @@ def read_root():
 @app.api_route("/info")
 async def info():
     return {"Title": "Credence backend", "version": Settings().version}
-
-
-@app.get("/secure-endpoint-example", dependencies=[Depends(authorizedCredentials)])
-def example_of_secure_endpoint():
-    return {"Congrats,you were autorized to see this endpoint"}
-
-
-@app.get(
-    "/secure-endpoint-example-username-extraction",
-    dependencies=[Depends(get_current_user)],
-)
-def example_of_secure_endpoint_with_username(
-    usernameFromToken: str = Depends(get_current_user),
-):
-    print(usernameFromToken)
-    return {"Congrats" + usernameFromToken + " you were autorized to see this endpoint"}

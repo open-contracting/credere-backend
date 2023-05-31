@@ -7,9 +7,7 @@ from jose import JWTError, jwk, jwt
 from jose.utils import base64url_decode
 from pydantic import BaseModel
 
-from app.core.settings import Settings
-
-settings = Settings()
+from app.core.settings import app_settings
 
 JWK = Dict[str, str]
 
@@ -87,8 +85,8 @@ def get_public_keys():
     if JsonPublicKeys is None:
         JsonPublicKeys = JWKS.parse_obj(
             requests.get(
-                f"https://cognito-idp.{settings.aws_region}.amazonaws.com/"
-                f"{settings.cognito_pool_id}/.well-known/jwks.json"
+                f"https://cognito-idp.{app_settings.aws_region}.amazonaws.com/"
+                f"{app_settings.cognito_pool_id}/.well-known/jwks.json"
             ).json()
         )
     return JsonPublicKeys
