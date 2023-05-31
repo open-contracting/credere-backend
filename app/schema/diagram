@@ -18,7 +18,6 @@ Table Application {
   uuid text
   primary_email text
   status text
-  stage text
   award_borrowed_identifier text
   borrower_id int [ref: > Borrower.id]
   lender_id int [ref: > Lender.id]
@@ -27,6 +26,8 @@ Table Application {
   currency text
   repayment_months int
   calculator_data json
+  pending_documents boolean
+  pending_email_confirmation boolean
   borrower_submitted_at timestamp [not null]
   borrower_accepted_at timestamp [not null]
   borrower_declined_at timestamp [not null]
@@ -41,8 +42,8 @@ Table Application {
   completed_in_days int
   created_at timestamp [not null]
   updated_at timestamp [not null]
-  expired_at timestamp [not null]
-  archived_at timestamp [not null]
+  expired_at timestamp
+  archived_at timestamp
 }
 
 Table Borrower {

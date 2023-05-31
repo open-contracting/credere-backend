@@ -6,11 +6,21 @@ from botocore.config import Config
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
+from app.db.session import get_db
 from app.email_templates import NEW_USER_TEMPLATE_NAME
 from app.routers import security, users
+from app.schema.core import User, UserType
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.db"
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def start_application():
@@ -22,8 +32,11 @@ def start_application():
 
 @pytest.fixture(scope="function")
 def app() -> Generator[FastAPI, Any, None]:
+    print("Creating test database")
+    User.metadata.create_all(engine)  # Create the tables.
     _app = start_application()
     yield _app
+    User.metadata.drop_all(engine)
 
 
 @pytest.fixture(autouse=True)
@@ -88,27 +101,49 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
         finally:
             pass
 
-    # Override the Cognito client dependency with the mock implementation
+    connection = engine.connect()
+    session = SessionTesting(bind=connection)
+
+    def _get_test_db():
+        try:
+            yield session
+        finally:
+            session.close()
+
+    # Override the clients dependencies with the mock implementations
     app.dependency_overrides[get_cognito_client] = _get_test_cognito_client
+    app.dependency_overrides[get_db] = _get_test_db
 
     with TestClient(app) as client:
         yield client
+        connection.close()
 
 
-data = {"username": "test@example.com", "name": "Test User"}
+data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.value}
 
 
 def test_create_user(client):
-    responseCreate = client.post("/users/register", json=data)
-    assert responseCreate.status_code == 200
+    response = client.post("/users", json=data)
+    assert response.status_code == 200
+
+    response = client.get("/users/1")
+    assert response.status_code == 200
+
+
+def test_duplicate_user(client):
+    response = client.post("/users", json=data)
+    assert response.status_code == 200
+    # duplicate user
+    response = client.post("/users", json=data)
+    assert response.status_code == 400
 
 
 def test_login(client):
-    responseCreate = client.post("/users/register", json=data)
+    responseCreate = client.post("/users", json=data)
     assert responseCreate.status_code == 200
 
     setupPasswordPayload = {
-        "username": "test@example.com",
+        "username": data["email"],
         "temp_password": tempPassword,
         "password": tempPassword,
     }
@@ -118,7 +153,7 @@ def test_login(client):
     print(responseSetupPassword.json())
     assert responseSetupPassword.status_code == 200
 
-    loginPayload = {"username": "test@example.com", "password": tempPassword}
+    loginPayload = {"username": data["email"], "password": tempPassword}
     responseLogin = client.post("/users/login", json=loginPayload)
     print(responseLogin.json())
 

@@ -4,6 +4,7 @@
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true
   },
-  "python.formatting.provider": "none",
-  "python.terminal.activateEnvironment": true
+  "python.formatting.provider": "black",
+  "python.terminal.activateEnvironment": true,
+  "python.linting.flake8Enabled": true
 }

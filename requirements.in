@@ -1,11 +1,11 @@
 fastapi
 pydantic
 python-dotenv
-sqlalchemy
+sqlalchemy[postgresql]
 sqlmodel
 alembic
-sentry-sdk[fastapi]
 boto3
 botocore
+sentry-sdk[fastapi]
 jose
 requests
