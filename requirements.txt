@@ -4,6 +4,8 @@
 #
 #    pip-compile
 #
+alembic==1.11.1
+    # via -r requirements.in
 anyio==3.6.2
     # via starlette
 boto3==1.26.136
@@ -35,6 +37,12 @@ jmespath==1.0.1
     #   botocore
 jose==1.0.0
     # via -r requirements.in
+mako==1.2.4
+    # via alembic
+markupsafe==2.1.2
+    # via mako
+psycopg2==2.9.6
+    # via sqlalchemy
 pydantic==1.10.7
     # via
     #   -r requirements.in
@@ -54,9 +62,10 @@ six==1.16.0
     # via python-dateutil
 sniffio==1.3.0
     # via anyio
-sqlalchemy==1.4.41
+sqlalchemy[postgresql]==1.4.41
     # via
     #   -r requirements.in
+    #   alembic
     #   sqlmodel
 sqlalchemy2-stubs==0.0.2a34
     # via sqlmodel
@@ -66,6 +75,7 @@ starlette==0.26.1
     # via fastapi
 typing-extensions==4.5.0
     # via
+    #   alembic
     #   pydantic
     #   sqlalchemy2-stubs
 urllib3==1.26.15

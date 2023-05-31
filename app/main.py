@@ -2,12 +2,12 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .core.settings import Settings
+from .core.settings import app_settings
 from .routers import users
 
-if Settings().sentry_dsn:
+if app_settings.sentry_dsn:
     sentry_sdk.init(
-        dsn=Settings().sentry_dsn,
+        dsn=app_settings.sentry_dsn,
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
         traces_sample_rate=1.0,
     )
@@ -15,7 +15,7 @@ if Settings().sentry_dsn:
 app = FastAPI()
 
 # Configure CORS settings
-origins = [Settings().frontend_url]  # Add more allowed origins as needed
+origins = [app_settings.frontend_url]  # Add more allowed origins as needed
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,4 +35,4 @@ def read_root():
 
 @app.api_route("/info")
 async def info():
-    return {"Title": "Credence backend", "version": Settings().version}
+    return {"Title": "Credence backend", "version": app_settings.version}

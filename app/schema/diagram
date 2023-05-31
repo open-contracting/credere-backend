@@ -1,0 +1,112 @@
+#use this diagram in https://dbdiagram.io/ to check db structure
+
+Table BorrowerDocument {
+  id int [pk]
+  application_id int [ref: > Application.id]
+  type text
+  verified boolean
+  key text
+  name text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  submitted_at timestamp [not null]
+}
+
+Table Application {
+  id int [pk]
+  award_id int [ref: > Award.id]
+  uuid text
+  primary_email text
+  status text
+  award_borrowed_identifier text
+  borrower_id int [ref: > Borrower.id]
+  lender_id int [ref: > Lender.id]
+  contract_amount_submitted decimal
+  amount_requested decimal
+  currency text
+  repayment_months int
+  calculator_data json
+  pending_documents boolean
+  pending_email_confirmation boolean
+  borrower_submitted_at timestamp [not null]
+  borrower_accepted_at timestamp [not null]
+  borrower_declined_at timestamp [not null]
+  borrower_declined_preferences_data json
+  borrower_declined_data json
+  lender_started_at timestamp [not null]
+  secop_data_verification json
+  lender_approved_at timestamp [not null]
+  lender_approved_data json
+  lender_rejected_data json
+  borrewed_uploaded_contracted_at timestamp [not null]
+  completed_in_days int
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  expired_at timestamp
+  archived_at timestamp
+}
+
+Table Borrower {
+  id int [pk]
+  borrower_identifier text
+  legal_name text
+  email text
+  address text
+  legal_identifier text
+  type text
+  sector text
+  size text
+  status text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  declined_at timestamp [not null]
+}
+
+Table Lender {
+  id int [pk]
+  name text
+  status text
+  type text
+  borrowed_type_preferences json
+  limits_preferences json
+  sla_days int
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp [not null]
+}
+
+Table Award {
+  id int [pk]
+  borrower_id int [ref: > Borrower.id]
+  source_contract_id text
+  title text
+  description text
+  award_date timestamp [not null]
+  award_amount decimal
+  award_currency text
+  contractperiod_startdate timestamp [not null]
+  contractperiod_enddate timestamp [not null]
+  payment_method text
+  buyer_name text
+  source_url text
+  entity_code text
+  contract_status text
+  source_last_updated_at timestamp [not null]
+  previous boolean
+  procurement_method text
+  contracting_process_id text
+  procurement_category text
+  source_data json
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table Message {
+  id int [pk]
+  type text
+  application_id int [ref: < Application.id]
+  body text
+  created_at timestamp [not null]
+  sent_at timestamp [not null]
+}
+

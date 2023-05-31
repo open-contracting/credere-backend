@@ -115,6 +115,35 @@ Used the installed pre-commit config using the following command:
 pre-commit run
 ```
 
+## Postgress, migrations and changes in tables
+
+You need to have a postgresql service running. You can either install postgres for windows or run the proper packaging in Linux cmd
+
+Once you have the service you need to create a database
+
+then you can construct the env variable like this
+
+DATABASE_URL=postgresql://{username}:{password}@{host_adress:port}/{db_name}
+
+in order to apply migrations in tables use
+
+```
+alembic upgrade head
+```
+
+This will apply the migrations in your database
+
+If you need to create a new migration you can use
+
+```
+alembic revision -m "migration name"
+```
+
+this will generate a file with a identifier and the name you picked.
+It will look like this _2ca870aa737d_migration_name.py_
+
+Inside the script you need to configure both operations, upgrade and downgrade. Upgrade will apply changes and downgrade remove them. Use the first migration as base.
+
 ## Test
 
 To run test locally
