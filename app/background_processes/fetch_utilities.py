@@ -3,6 +3,17 @@ from datetime import datetime
 
 import httpx
 from dotenv import dotenv_values
+from sqlmodel import Session, SQLModel, create_engine
+
+from app.schema.core_tables.core import Award
+
+engine = create_engine("postgresql://postgres:valter01@localhost:5432/postgres")
+
+SQLModel.metadata.create_all(engine)
+
+with Session(engine) as db:
+    award = db.query(Award).filter(Award.id == 1).first()
+
 
 CONTRACTS_URL = "https://www.datos.gov.co/resource/jbjy-vk9h.json"
 AWARDS_URL = "https://www.datos.gov.co/resource/p6dx-8zbt.json"
@@ -27,11 +38,14 @@ existing_awards_contracting_process_id = get_awards_contracting_process_ids()
 
 
 def get_new_contracts():
-    last_fetch_date = None
-    # last_fech_date = httpx.get(f"{backend_url}/awards/last/").json()["created_at"]
+    last_fetch_date = httpx.get(f"{backend_url}/awards/get-last-award/").json()[
+        "created_at"
+    ]
 
     if last_fetch_date:
-        converted_date = datetime.strptime(last_fetch_date, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%dT00:00:00.000")
+        converted_date = datetime.strptime(
+            last_fetch_date, "%Y-%m-%dT%H:%M:%S.%f%z"
+        ).strftime("%Y-%m-%dT00:00:00.000")
         print(converted_date)
         url = (
             f"{CONTRACTS_URL}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
@@ -92,7 +106,9 @@ def complete_award(entry, borrower_id):
     fetched_award["procurement_method"] = entry["modalidad_de_contratacion"]
     fetched_award["procurement_category"] = entry["tipo_de_contrato"]
     fetched_award["source_data"] = entry["urlproceso"]
-    fetched_award["payment_method"] = entry["habilita_pago_adelantado"] + " " + entry["valor_de_pago_adelantado"]
+    fetched_award["payment_method"] = (
+        entry["habilita_pago_adelantado"] + " " + entry["valor_de_pago_adelantado"]
+    )
 
     award_url = f"{AWARDS_URL}?id_del_portafolio={entry['proceso_de_compra']}"
 
@@ -104,10 +120,16 @@ def complete_award(entry, borrower_id):
     fetched_award["description"] = award_response_json["nombre_del_procedimiento"]
     fetched_award["award_date"] = award_response_json.get("fecha_adjudicacion", None)
     print(entry)
-    fetched_award["contractperiod_startdate"] = entry.get("fecha_de_inicio_del_contrato", None)
-    fetched_award["contractperiod_enddate"] = entry.get("fecha_de_fin_del_contrato", None)
+    fetched_award["contractperiod_startdate"] = entry.get(
+        "fecha_de_inicio_del_contrato", None
+    )
+    fetched_award["contractperiod_enddate"] = entry.get(
+        "fecha_de_fin_del_contrato", None
+    )
 
     fetched_award["contract_status"] = award_response_json["estado_del_procedimiento"]
-    fetched_award["source_last_updated_at"] = award_response_json["fecha_de_ultima_publicaci"]
+    fetched_award["source_last_updated_at"] = award_response_json[
+        "fecha_de_ultima_publicaci"
+    ]
     fetched_award["borrower_id"] = borrower_id
     httpx.post(f"{backend_url}/awards/", json=fetched_award)
