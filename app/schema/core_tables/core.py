@@ -35,7 +35,7 @@ class ApplicationStatus(Enum):
 class BorrowerDocument(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     application_id: int = Field(foreign_key="application.id")
-    application: Optional["Application"] = Relationship(back_populates="borrower_documents")
+    application: "Application" = Relationship(back_populates="borrower_documents")
     type: BorrowerDocumentType = Field(default=BorrowerDocumentType.INCORPORATION_DOCUMENT)
     verified: bool
     file: bytes

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc
@@ -18,12 +19,20 @@ async def get_award(award_id: int, db: Session = Depends(get_db)):
     return award
 
 
-@router.get("/awards/last/", tags=["awards"], response_model=Award)
+@router.get("/awards/get-last-award/", tags=["awards"], response_model=Award)
 async def get_last_award(db: Session = Depends(get_db)):
     award = db.query(Award).order_by(desc(Award.created_at)).first()
     if not award:
         raise HTTPException(status_code=404, detail="Award not found")
     return award
+
+
+@router.get("/awards/get-awards-contracting-process-ids/", tags=["awards"], response_model=List[str])
+async def get_awards_contracting_process_ids(db: Session = Depends(get_db)):
+    awards = db.query(Award.contracting_process_id).order_by(desc(Award.created_at)).all()
+    if not awards:
+        raise HTTPException(status_code=404, detail="No awards found")
+    return [award[0] for award in awards]
 
 
 @router.post("/awards/", tags=["awards"], response_model=Award)
