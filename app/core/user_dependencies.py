@@ -110,8 +110,7 @@ class CognitoClient:
                 "SECRET_HASH": secret_hash,
             },
         )
-        print("USER_PASSWORD_AUTH")
-        print(response)
+
         # Extract the session expiration time from the response
         if "AuthenticationResult" in response:
             authentication_result = response["AuthenticationResult"]
@@ -123,12 +122,9 @@ class CognitoClient:
 
     def mfa_setup(self, session):
         response = self.client.associate_software_token(Session=session)
+        # Use this code in cmd to associate google authenticator with you account
         secret_code = response["SecretCode"]
         session = response["Session"]
-
-        # Use this code in cmd to associate google authenticator with you account
-        print(secret_code)
-        print(response)
 
         return {"secret_code": secret_code, "session": session}
 
@@ -137,8 +133,6 @@ class CognitoClient:
             AccessToken=access_token, Session=session, UserCode=mfa_code
         )
 
-        print("verify_software_token")
-        print(response)
         return response
 
     def respond_to_auth_challenge(
@@ -161,11 +155,6 @@ class CognitoClient:
             access_token = response["SecretCode"]
             session = response["Session"]
 
-            print(
-                access_token
-            )  # Use this code in cmd to associate google authenticator with you account
-            # mfa_code = input("Enter MFA code: ")
-
             response = self.client.verify_software_token(
                 AccessToken=access_token, Session=session, UserCode=mfa_code
             )
@@ -181,7 +170,6 @@ class CognitoClient:
                 Session=session,
             )
         if challenge_name == "SOFTWARE_TOKEN_MFA":
-            # mfa_code = input("Enter MFA code: ")
             response = self.client.respond_to_auth_challenge(
                 ClientId=app_settings.cognito_client_id,
                 ChallengeName=challenge_name,
@@ -192,8 +180,11 @@ class CognitoClient:
                 },
                 Session=session,
             )
-            print(response["AuthenticationResult"]["AccessToken"])
-            return response["AuthenticationResult"]["AccessToken"]
+
+            return {
+                "access_token": response["AuthenticationResult"]["AccessToken"],
+                "refresh_token": response["AuthenticationResult"]["RefreshToken"],
+            }
 
     def logout_user(self, access_token):
         response = self.client.get_user(AccessToken=access_token)
@@ -229,25 +220,21 @@ class CognitoClient:
             "LINK_LINK": "www.google.com",
         }
 
-        response = self.client.admin_set_user_password(
+        responseSetPassword = self.client.admin_set_user_password(
             UserPoolId=app_settings.cognito_pool_id,
             Username=username,
             Password=temp_password,
             Permanent=False,
         )
 
-        print(response)
-
-        response = self.ses.send_templated_email(
+        self.ses.send_templated_email(
             Source=app_settings.email_sender_address,
             Destination={"ToAddresses": [username]},
             Template="credere-ResetPassword",
             TemplateData=json.dumps(data),
         )
 
-        print(response)
-
-        return response
+        return responseSetPassword
 
 
 cognito = boto3.client(
@@ -272,8 +259,4 @@ cognito_client = CognitoClient(
 
 
 def get_cognito_client() -> Generator:  # new
-    try:
-        yield cognito_client
-    finally:
-        print("Closing cognito client")
-        cognito.close()
+    yield cognito_client

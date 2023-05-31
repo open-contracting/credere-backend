@@ -3,21 +3,13 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.utils.verify_token import get_current_user
+
 from ..core.user_dependencies import CognitoClient, get_cognito_client
-from ..db.session import get_db
+from ..db.session import get_db, transaction_session
 from ..schema.core import BasicUser, SetupMFA, User
 
 router = APIRouter()
-
-
-@router.get("/users/{user_id}", tags=["users"], response_model=User)
-async def get_user(user_id: int, db: Session = Depends(get_db)):
-    print(user_id)
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
 
 
 @router.post("/users", tags=["users"], response_model=User)
@@ -26,21 +18,18 @@ async def create_user(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
-    try:
-        print(payload)
-        user = User(**payload.dict())
-        print(session)
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        cognitoResponse = client.admin_create_user(payload.email, payload.name)
-        print(cognitoResponse)
-        user.external_id = cognitoResponse["User"]["Username"]
-        print(user)
-        return user
-    except (client.exceptions().UsernameExistsException, IntegrityError) as e:
-        print(e)
-        raise HTTPException(status_code=400, detail="Username already exists")
+    with transaction_session(session):
+        try:
+            user = User(**payload.dict())
+
+            session.add(user)
+            cognitoResponse = client.admin_create_user(payload.email, payload.name)
+            user.external_id = cognitoResponse["User"]["Username"]
+
+            return user
+        except (client.exceptions().UsernameExistsException, IntegrityError) as e:
+            print(e)
+            raise HTTPException(status_code=400, detail="Username already exists")
 
 
 @router.post("/users/register")
@@ -69,8 +58,6 @@ def change_password(
             response = client.respond_to_auth_challenge(
                 user.username, session, "NEW_PASSWORD_REQUIRED", user.password
             )
-
-        print(response)
 
         client.verified_email(user.username)
         if (
@@ -122,14 +109,16 @@ def login(
     user: BasicUser,
     response: Response,
     client: CognitoClient = Depends(get_cognito_client),
+    db: Session = Depends(get_db),
 ):
     try:
         response = client.initiate_auth(user.username, user.password)
+        user = db.query(User).filter(User.email == user.username).first()
 
-        # todo load user from db
         return {
-            "user": {"email": user.username, "name": "User"},
+            "user": user,
             "access_token": response["AuthenticationResult"]["AccessToken"],
+            "refresh_token": response["AuthenticationResult"]["RefreshToken"],
         }
     except ClientError as e:
         print(e)
@@ -141,25 +130,31 @@ def login(
 
 
 @router.post("/users/login-mfa")
-def login_mfa(user: BasicUser, client: CognitoClient = Depends(get_cognito_client)):
+def login_mfa(
+    user: BasicUser,
+    client: CognitoClient = Depends(get_cognito_client),
+    db: Session = Depends(get_db),
+):
     try:
         response = client.initiate_auth(user.username, user.password)
+
         if "ChallengeName" in response:
             print(response["ChallengeName"])
             session = response["Session"]
-            access_token = client.respond_to_auth_challenge(
+            mfa_login_response = client.respond_to_auth_challenge(
                 user.username,
                 session,
                 response["ChallengeName"],
                 "",
                 mfa_code=user.temp_password,
             )
-            print(access_token)
 
-            # todo load user from db
+            user = db.query(User).filter(User.email == user.username).first()
+
             return {
-                "user": {"email": user.username, "name": "User"},
-                "access_token": access_token,
+                "user": user,
+                "access_token": mfa_login_response["access_token"],
+                "refresh_token": mfa_login_response["refresh_token"],
             }
 
     except ClientError as e:
@@ -176,8 +171,7 @@ def logout(
     client: CognitoClient = Depends(get_cognito_client),
 ):
     try:
-        response = client.logout_user(Authorization)
-        print(response)
+        client.logout_user(Authorization)
     except ClientError as e:
         print(e)
         return {"message": "User was unable to logout"}
@@ -188,21 +182,11 @@ def logout(
 @router.get("/users/me")
 def me(
     response: Response,
-    Authorization: str = Header(None),
-    client: CognitoClient = Depends(get_cognito_client),
+    usernameFromToken: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    try:
-        response = client.get_user(AccessToken=Authorization)
-        for item in response["UserAttributes"]:
-            if item["Name"] == "email":
-                email_value = item["Value"]
-                break
-
-        return {"user": {"email": email_value, "name": "User"}}
-    except ClientError as e:
-        print(e)
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return {"message": "User not found"}
+    user = db.query(User).filter(User.email == usernameFromToken).first()
+    return {"user": user}
 
 
 @router.post("/users/forgot-password")
@@ -216,3 +200,12 @@ def forgot_password(
     except Exception as e:
         print(e)
         return {"message": "There was an issue trying to change the password"}
+
+
+@router.get("/users/{user_id}", tags=["users"], response_model=User)
+async def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
