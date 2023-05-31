@@ -9,4 +9,5 @@ botocore
 datetime
 psycopg2
 sentry-sdk[fastapi]
-
+jose
+requests

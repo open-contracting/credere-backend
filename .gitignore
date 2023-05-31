@@ -27,3 +27,4 @@ npm-debug.log
 
 #test dbs
 *.db
+.vscode/launch.json

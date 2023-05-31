@@ -1,9 +1,9 @@
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from alembic import context
-from app.core.settings import Settings
+from app.core.settings import app_settings
 from app.schema import metadata
 
 # this is the Alembic Config object, which provides
@@ -11,7 +11,7 @@ from app.schema import metadata
 config = context.config
 
 section = config.config_ini_section
-config.set_section_option(section, "DB_URL", Settings().db_url)
+config.set_section_option(section, "DB_URL", app_settings.db_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
