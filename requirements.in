@@ -4,3 +4,8 @@ python-dotenv
 sqlalchemy
 sqlmodel
 alembic
+sentry-sdk[fastapi]
+boto3
+botocore
+jose
+requests

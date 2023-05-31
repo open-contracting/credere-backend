@@ -14,10 +14,22 @@ config_env = {
 
 class Settings(BaseSettings):
     app_name: str = "Credere API"
-    DB_URL: str = config_env.get("DB_URL", "sqlite:///./test_db.db")
+    db_url: str = config_env.get("DB_URL", "sqlite:///./test_db.db")
+    version: str = config_env.get("VERSION", "0.1.1")
+    aws_region: str = config_env.get("AWS_REGION", "us-west-2")
+    cognito_pool_id: str = config_env.get("COGNITO_POOL_ID", None)
+    aws_access_key: str = config_env.get("AWS_ACCESS_KEY", None)
+    aws_client_secret: str = config_env.get("AWS_CLIENT_SECRETAWS_CLIENT_SECRET", None)
+    email_sender_address: str = config_env.get(
+        "EMAIL_SENDER_ADDRESS", "credere@noreply.open-contracting.org"
+    )
+    cognito_client_id: str = config_env.get("COGNITO_CLIENT_ID", None)
+    cognito_client_secret: str = config_env.get("COGNITO_CLIENT_SECRET", None)
+    frontend_url: str = config_env.get("FRONTEND_URL", "http://localhost:3000")
+    sentry_dsn: str = config_env.get("SENTRY_DNS", None)
 
     class Config:
         env_file = ".env"
 
 
-settings = Settings()
+app_settings = Settings()

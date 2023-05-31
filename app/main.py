@@ -1,20 +1,33 @@
-from functools import lru_cache
-from typing import Annotated
-
-from fastapi import Depends, FastAPI
+import sentry_sdk
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import Settings
 from .routers import awards, borrowers, users
 
+if Settings().sentry_dsn:
+    sentry_sdk.init(
+        dsn=Settings().sentry_dsn,
+        # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+    )
+
 app = FastAPI()
+
+# Configure CORS settings
+origins = [Settings().frontend_url]  # Add more allowed origins as needed
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(users.router)
 app.include_router(awards.router)
 app.include_router(borrowers.router)
-
-
-@lru_cache()
-def get_settings():
-    return Settings()
 
 
 @app.get("/")
@@ -23,5 +36,5 @@ def read_root():
 
 
 @app.api_route("/info")
-async def info(settings: Annotated[Settings, Depends(get_settings)]):
-    return {"Title": "Credence backend", "version": settings.version}
+async def info():
+    return {"Title": "Credence backend", "version": Settings().version}

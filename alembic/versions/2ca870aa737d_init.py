@@ -8,7 +8,7 @@ Create Date: 2023-05-23 13:55:40.665762
 from sqlmodel import create_engine
 
 from alembic import op
-from app.core.settings import Settings
+from app.core.settings import app_settings
 from app.schema.core_tables.core import Borrower
 from app.schema.statistic_tables.statistic import Statistic
 from app.schema.user_tables.users import User
@@ -20,7 +20,7 @@ branch_labels = None
 depends_on = None
 
 
-SQLALCHEMY_DATABASE_URL = Settings().DB_URL
+SQLALCHEMY_DATABASE_URL = app_settings.db_url
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 
