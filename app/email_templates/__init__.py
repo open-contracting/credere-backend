@@ -1,3 +1,4 @@
+NEW_USER_TEMPLATE_NAME = "credere-NewAccountCreated"
 FI_New_application_submission_FI_user = "credere-newApplicationSubmissionFIuser"
 New_Account_Created = "credere-OverdueApplicationOCPadmin"
 New_application_submission_OCP_user = "credere-newApplicationSubmissionOCPUser"

@@ -1,50 +1,70 @@
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, Header, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
-from ..core.user_dependencies import (
-    admin_create_user,
-    client,
-    initiate_auth,
-    logout_user,
-    mfa_setup,
-    reset_password,
-    respond_to_auth_challenge,
-    verified_email,
-    verify_software_token,
-)
-from ..schema.user_tables.users import BasicUser, SetupMFA
+from app.utils.verify_token import get_current_user
+
+from ..core.user_dependencies import CognitoClient, get_cognito_client
+from ..db.session import get_db, transaction_session
+from ..schema.core import BasicUser, SetupMFA, User
 
 router = APIRouter()
 
 
+@router.post("/users", tags=["users"], response_model=User)
+async def create_user(
+    payload: User,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+):
+    with transaction_session(session):
+        try:
+            user = User(**payload.dict())
+
+            session.add(user)
+            cognitoResponse = client.admin_create_user(payload.email, payload.name)
+            user.external_id = cognitoResponse["User"]["Username"]
+
+            return user
+        except (client.exceptions().UsernameExistsException, IntegrityError) as e:
+            print(e)
+            raise HTTPException(status_code=400, detail="Username already exists")
+
+
 @router.post("/users/register")
-def register_user(user: BasicUser):
+def register_user(user: BasicUser, client: CognitoClient = Depends(get_cognito_client)):
     try:
-        response = admin_create_user(user.username, user.name)
+        response = client.admin_create_user(user.username, user.name)
         print(response)
-    except client.exceptions.UsernameExistsException as e:
+    except client.exceptions().UsernameExistsException as e:
         print(e)
         raise HTTPException(status_code=400, detail="Username already exists")
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
 
-    return {"message": "User created successfully"}
-
 
 @router.put("/users/change-password")
-def change_password(user: BasicUser, response: Response):
+def change_password(
+    user: BasicUser,
+    response: Response,
+    client: CognitoClient = Depends(get_cognito_client),
+):
     try:
-        response = initiate_auth(user.username, user.temp_password)
+        response = client.initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             session = response["Session"]
-            response = respond_to_auth_challenge(user.username, session, "NEW_PASSWORD_REQUIRED", user.password)
+            response = client.respond_to_auth_challenge(
+                user.username, session, "NEW_PASSWORD_REQUIRED", user.password
+            )
 
-        print(response)
-
-        verified_email(user.username)
-        if response["ChallengeName"] == "MFA_SETUP":
-            mfa_setup_response = mfa_setup(response["Session"])
+        client.verified_email(user.username)
+        if (
+            response.get("ChallengeName") is not None
+            and response["ChallengeName"] == "MFA_SETUP"
+        ):
+            mfa_setup_response = client.mfa_setup(response["Session"])
             return {
                 "message": "Password changed with MFA setup required",
                 "secret_code": mfa_setup_response["secret_code"],
@@ -63,9 +83,15 @@ def change_password(user: BasicUser, response: Response):
 
 
 @router.put("/users/setup-mfa")
-def setup_mfa(user: SetupMFA, response: Response):
+def setup_mfa(
+    user: SetupMFA,
+    response: Response,
+    client: CognitoClient = Depends(get_cognito_client),
+):
     try:
-        response = verify_software_token(user.secret, user.session, user.temp_password)
+        response = client.verify_software_token(
+            user.secret, user.session, user.temp_password
+        )
         print(response)
 
         return {"message": "MFA configured successfully"}
@@ -79,14 +105,20 @@ def setup_mfa(user: SetupMFA, response: Response):
 
 
 @router.post("/users/login")
-def login(user: BasicUser, response: Response):
+def login(
+    user: BasicUser,
+    response: Response,
+    client: CognitoClient = Depends(get_cognito_client),
+    db: Session = Depends(get_db),
+):
     try:
-        response = initiate_auth(user.username, user.password)
+        response = client.initiate_auth(user.username, user.password)
+        user = db.query(User).filter(User.email == user.username).first()
 
-        # todo load user from db
         return {
-            "user": {"email": user.username, "name": "User"},
+            "user": user,
             "access_token": response["AuthenticationResult"]["AccessToken"],
+            "refresh_token": response["AuthenticationResult"]["RefreshToken"],
         }
     except ClientError as e:
         print(e)
@@ -98,21 +130,31 @@ def login(user: BasicUser, response: Response):
 
 
 @router.post("/users/login-mfa")
-def login_mfa(user: BasicUser):
+def login_mfa(
+    user: BasicUser,
+    client: CognitoClient = Depends(get_cognito_client),
+    db: Session = Depends(get_db),
+):
     try:
-        response = initiate_auth(user.username, user.password)
+        response = client.initiate_auth(user.username, user.password)
+
         if "ChallengeName" in response:
             print(response["ChallengeName"])
             session = response["Session"]
-            access_token = respond_to_auth_challenge(
-                user.username, session, response["ChallengeName"], "", mfa_code=user.temp_password
+            mfa_login_response = client.respond_to_auth_challenge(
+                user.username,
+                session,
+                response["ChallengeName"],
+                "",
+                mfa_code=user.temp_password,
             )
-            print(access_token)
 
-            # todo load user from db
+            user = db.query(User).filter(User.email == user.username).first()
+
             return {
-                "user": {"email": user.username, "name": "User"},
-                "access_token": access_token,
+                "user": user,
+                "access_token": mfa_login_response["access_token"],
+                "refresh_token": mfa_login_response["refresh_token"],
             }
 
     except ClientError as e:
@@ -124,10 +166,12 @@ def login_mfa(user: BasicUser):
 
 
 @router.get("/users/logout")
-def logout(Authorization: str = Header(None)):
+def logout(
+    Authorization: str = Header(None),
+    client: CognitoClient = Depends(get_cognito_client),
+):
     try:
-        response = logout_user(Authorization)
-        print(response)
+        client.logout_user(Authorization)
     except ClientError as e:
         print(e)
         return {"message": "User was unable to logout"}
@@ -136,27 +180,32 @@ def logout(Authorization: str = Header(None)):
 
 
 @router.get("/users/me")
-def me(response: Response, Authorization: str = Header(None)):
-    try:
-        response = client.get_user(AccessToken=Authorization)
-        for item in response["UserAttributes"]:
-            if item["Name"] == "email":
-                email_value = item["Value"]
-                break
-
-        return {"user": {"email": email_value, "name": "User"}}
-    except ClientError as e:
-        print(e)
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return {"message": "User not found"}
+def me(
+    response: Response,
+    usernameFromToken: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.email == usernameFromToken).first()
+    return {"user": user}
 
 
 @router.post("/users/forgot-password")
-def forgot_password(user: BasicUser):
+def forgot_password(
+    user: BasicUser, client: CognitoClient = Depends(get_cognito_client)
+):
     try:
-        response = reset_password(user.username)
+        response = client.reset_password(user.username)
         print(response)
         return {"message": "An email with a reset link was sent to end user"}
     except Exception as e:
         print(e)
         return {"message": "There was an issue trying to change the password"}
+
+
+@router.get("/users/{user_id}", tags=["users"], response_model=User)
+async def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
