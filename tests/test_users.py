@@ -43,8 +43,7 @@ tempPassword = "1234567890Abc!!"
 
 @pytest.fixture(scope="function")
 def client(app: FastAPI) -> Generator[TestClient, Any, None]:
-    my_config = Config(region_name="us-east-1")
-    app_settings.aws_region = "us-east-1"
+    my_config = Config(region_name=app_settings.aws_region)
 
     cognito_client = boto3.client("cognito-idp", config=my_config)
     ses_client = boto3.client("ses", config=my_config)
@@ -62,6 +61,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
     )["UserPoolClient"]["ClientId"]
 
     app_settings.cognito_client_id = cognito_client_id
+    app_settings.cognito_client_secret = "secret"
 
     ses_client.verify_email_identity(EmailAddress=app_settings.email_sender_address)
 
