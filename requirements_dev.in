@@ -8,6 +8,7 @@ pip-tools
 pre-commit
 pydantic
 pytest
+httpx
 pytest-cov
 sqlalchemy
 sqlmodel
