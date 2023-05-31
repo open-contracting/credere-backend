@@ -155,8 +155,12 @@ class Award(SQLModel, table=True):
     contracting_process_id: str = Field(default="", nullable=False)
     procurement_category: str = Field(default="")
     source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    created_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    updated_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    created_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True, default=datetime.utcnow)
+    )
+    updated_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True, default=datetime.utcnow)
+    )
 
 
 class Message(SQLModel, table=True):

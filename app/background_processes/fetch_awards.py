@@ -14,10 +14,14 @@ backend_url: str = config_env.get("BACKEND_URL", None)
 headers = {"X-App-Token": secop_app_token}
 
 
+last_updated_date = requests.get(f"{backend_url}/awards/last/")
+print(last_updated_date.json()["created_at"])
+
+
 today = datetime.now().date()
 eight_am = time(8, 0, 0)
 today_at_eight_am = datetime.combine(today, eight_am)
-formatted_datetime = today_at_eight_am.strftime("%Y-%m-%dT00:00:00.000")
+# formatted_datetime = last_updated_date.json()["created_at"].strftime("%Y-%m-%dT00:00:00.000")
 testing = "2023-05-29T00:00:00.000"
 url = (
     "https://www.datos.gov.co/resource/jbjy-vk9h.json?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
@@ -74,7 +78,9 @@ def complete_award(entry, borrower_id):
     fetched_award["procurement_category"] = entry["tipo_de_contrato"]  # contract
     fetched_award["source_data"] = entry["urlproceso"]
     fetched_award["contractperiod_enddate"] = entry["fecha_de_fin_del_contrato"]  # contract
-    fetched_award["payment_method"] = entry["habilita_pago_adelantado"] + entry["valor_de_pago_adelantado"]  # contract
+    fetched_award["payment_method"] = (
+        entry["habilita_pago_adelantado"] + " " + entry["valor_de_pago_adelantado"]
+    )  # contract
 
     award_url = f"https://www.datos.gov.co/resource/p6dx-8zbt.json?id_del_portafolio={entry['proceso_de_compra']}"
 
@@ -96,7 +102,6 @@ def complete_award(entry, borrower_id):
 
 
 for entry in response_json:
-    print(entry["urlproceso"]["url"])
     borrower_id = complete_borrower(entry)
     fetched_award = complete_award(entry, borrower_id)
     break

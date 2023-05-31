@@ -11,13 +11,13 @@ router = APIRouter()
 
 @router.get("/borrowers/{borrower_id}", tags=["borrowers"], response_model=Borrower)
 async def get_award(borrower_id: int, db: Session = Depends(get_db)):
-    user = db.query(Borrower).filter(Borrower.id == borrower_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    borrower = db.query(Borrower).filter(Borrower.id == borrower_id).first()
+    if not borrower:
+        raise HTTPException(status_code=404, detail="Borrower not found")
+    return borrower
 
 
-@router.post("/borrowers/")  # , tags=["borrowers"], response_model=Borrower)
+@router.post("/borrowers/", tags=["borrowers"], response_model=Borrower)
 async def create_award(borrower: Borrower, db: Session = Depends(get_db)):
     borrower.created_at = datetime.now()
     borrower.updated_at = datetime.now()
