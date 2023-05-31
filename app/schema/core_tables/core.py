@@ -103,15 +103,9 @@ class Borrower(SQLModel, table=True):
     sector: str = Field(default="")
     size: str = Field(default="")
     status: str = Field(default="")
-    # created_at: datetime = Field(
-    #     default_factory=datetime.utcnow(),
-    #     sa_column=Column(DateTime(timezone=True), nullable=False),
-    # )
-    # updated_at: datetime = Field(
-    #     default_factory=datetime.utcnow(),
-    #     sa_column=Column(DateTime(timezone=True), nullable=False),
-    # )
-    # declined_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    created_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    updated_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    declined_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
 
 
 class Lender(SQLModel, table=True):
@@ -148,27 +142,21 @@ class Award(SQLModel, table=True):
     award_date: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     award_amount: Optional[Decimal] = Field(sa_column=Column(DECIMAL(precision=10, scale=2), nullable=False))
     award_currency: str = Field(default="")
-    contractperiod_startdate: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    contractperiod_enddate: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    payment_method: str = Field(default="")
+    contractperiod_startdate: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    contractperiod_enddate: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    payment_method: str = Field(default="", nullable=False)
     buyer_name: str = Field(default="")
     source_url: str = Field(default="")
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
     source_last_updated_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     previous: bool
-    procurement_method: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    contracting_process_id: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    procurement_method: str = Field(default="", nullable=False)
+    contracting_process_id: str = Field(default="", nullable=False)
     procurement_category: str = Field(default="")
     source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
-    updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column=Column(DateTime(timezone=True), nullable=False),
-    )
+    created_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    updated_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
 
 
 class Message(SQLModel, table=True):

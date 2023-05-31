@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -18,6 +20,10 @@ async def get_award(award_id: int, db: Session = Depends(get_db)):
 
 @router.post("/awards/", tags=["awards"], response_model=Award)
 async def create_award(award: Award, db: Session = Depends(get_db)):
+    award.created_at = datetime.now()
+    award.updated_at = datetime.now()
+    award.contractperiod_startdate = datetime.now()
+    award.contractperiod_enddate = datetime.now()
     db_award = Award(**award.dict())
     db.add(db_award)
     db.commit()
