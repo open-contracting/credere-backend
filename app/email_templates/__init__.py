@@ -1,0 +1,7 @@
+FI_New_application_submission_FI_user = "credere-newApplicationSubmissionFIuser"
+New_Account_Created = "credere-OverdueApplicationOCPadmin"
+New_application_submission_OCP_user = "credere-newApplicationSubmissionOCPUser"
+Overdue_application_FI = "credere-OverdueApplicationFI"
+Overdue_application_OCP_admin = "credere-OverdueApplicationOCPadmin"
+Reset_password = "credere-ResetPassword"
+Access_to_credit_scheme_for_MSMEs = "credere-AccessToCreditSchemeForMSMEs"
