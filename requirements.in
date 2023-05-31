@@ -3,3 +3,6 @@ pydantic
 python-dotenv
 sqlalchemy
 sqlmodel
+sentry-sdk[fastapi]
+boto3
+botocore
