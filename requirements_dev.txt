@@ -82,11 +82,17 @@ greenlet==2.0.2
     #   -r requirements.txt
     #   sqlalchemy
 h11==0.14.0
-    # via httpcore
+    # via
+    #   -r requirements.txt
+    #   httpcore
 httpcore==0.17.2
-    # via httpx
+    # via
+    #   -r requirements.txt
+    #   httpx
 httpx==0.24.1
-    # via -r requirements_dev.in
+    # via
+    #   -r requirements.txt
+    #   -r requirements_dev.in
 identify==2.5.24
     # via pre-commit
 idna==3.4
