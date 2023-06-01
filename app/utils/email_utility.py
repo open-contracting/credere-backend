@@ -1,7 +1,7 @@
 import json
 from urllib.parse import quote
 
-from app.email_templates import NEW_USER_TEMPLATE_NAME
+import app.email_templates as email_templates
 
 from ..core.settings import app_settings
 
@@ -20,6 +20,12 @@ def generate_common_data():
 
 
 def send_mail_to_new_user(ses, name, username, temp_password):
+    # todo refactor required when this function receives the user language
+    #  if language == "en":
+    #         image_language = app_settings.front_public_images_en
+    #     elif language == "es":
+    #         image_language = app_settings.front_public_images_es
+    # "SET_PASSWORD_IMAGE_LINK": app_settings.frontend_url + image_language+ "/set_password.png"
     data = {
         **generate_common_data(),
         "USER": name,
@@ -34,7 +40,7 @@ def send_mail_to_new_user(ses, name, username, temp_password):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [username]},
-        Template=NEW_USER_TEMPLATE_NAME,
+        Template=email_templates.NEW_USER_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
 
@@ -55,6 +61,6 @@ def send_mail_to_reset_password(ses, username, temp_password):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [username]},
-        Template="credere-ResetPassword",
+        Template=email_templates.RESET_PASSWORD_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
