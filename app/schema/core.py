@@ -189,11 +189,13 @@ class Borrower(SQLModel, table=True):
     )
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
         )
     )
     updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+        sa_column=Column(
+            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+        )
     )
     declined_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
@@ -261,11 +263,13 @@ class Award(SQLModel, table=True):
     source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
         )
     )
     updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+        sa_column=Column(
+            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+        )
     )
 
 

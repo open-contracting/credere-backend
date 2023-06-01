@@ -1,10 +1,12 @@
 from datetime import datetime
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from ..db.session import get_db
-from ..schema.core_tables.core import Borrower
+from ..schema.core import Borrower
 
 router = APIRouter()
 
@@ -28,3 +30,19 @@ async def create_award(borrower: Borrower, db: Session = Depends(get_db)):
     db.refresh(obj_db)
 
     return obj_db
+
+
+@router.get(
+    "/borrowers/get-borrower-identifiers/",
+    tags=["awards"],
+    response_model=List[str],
+)
+async def get_awards_contracting_process_ids(session: Session = Depends(get_db)):
+    borrowers = (
+        session.query(Borrower.borrower_identifier)
+        .order_by(desc(Borrower.created_at))
+        .all()
+    )
+    if not borrowers:
+        raise HTTPException(status_code=404, detail="No borrowers found")
+    return [borrower[0] for borrower in borrowers]
