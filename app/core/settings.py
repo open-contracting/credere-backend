@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     database_url: str = config_env.get("DATABASE_URL", None)
     frontend_url: str = config_env.get("FRONTEND_URL", "http://localhost:3000")
     sentry_dsn: str = config_env.get("SENTRY_DNS", None)
+    front_public_images: str = config_env.get("FRONT_PUBLIC_IMAGES", None)
+    temporal_bucket = config_env.get("TEMPORAL_BUCKET", None)
 
     class Config:
         env_file = ".env"
