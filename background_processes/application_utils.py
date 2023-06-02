@@ -1,13 +1,15 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
-from background_config import DAYS_UNTIL_EXPIRED
-from background_utils import generate_uuid, get_secret_hash
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
 from app.schema.core import Application
+
+from .background_utils import generate_uuid, get_secret_hash
+
+DAYS_UNTIL_EXPIRED = 7
 
 
 def insert_application(application: Application):

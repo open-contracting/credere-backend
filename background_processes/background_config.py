@@ -2,23 +2,11 @@ import os
 
 from dotenv import dotenv_values
 
-# import sys
-
-
-# project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# sys.path.append(project_root)
-
-CONTRACTS_URL = "https://www.datos.gov.co/resource/jbjy-vk9h.json"
-AWARDS_URL = "https://www.datos.gov.co/resource/p6dx-8zbt.json"
-BORROWER_EMAIL_URL = "https://www.datos.gov.co/resource/vzyx-b5wf.json"
-BORROWER_URL = "https://www.datos.gov.co/resource/4ex9-j3n8.json"
-
-
 URLS = {
-    "CONTRACTS_URL": "https://www.datos.gov.co/resource/jbjy-vk9h.json",
-    "AWARDS_URL": "https://www.datos.gov.co/resource/p6dx-8zbt.json",
-    "BORROWER_EMAIL_URL": "https://www.datos.gov.co/resource/vzyx-b5wf.json",
-    "BORROWER_URL": "https://www.datos.gov.co/resource/4ex9-j3n8.json",
+    "CONTRACTS": "https://www.datos.gov.co/resource/jbjy-vk9h.json",
+    "AWARDS": "https://www.datos.gov.co/resource/p6dx-8zbt.json",
+    "BORROWER_EMAIL": "https://www.datos.gov.co/resource/vzyx-b5wf.json",
+    "BORROWER": "https://www.datos.gov.co/resource/4ex9-j3n8.json",
 }
 
 pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"

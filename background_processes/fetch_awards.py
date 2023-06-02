@@ -1,3 +1,4 @@
+from .application_utils import create_application
 from .awards_utils import create_award, get_new_contracts
 from .borrower_utils import get_or_create_borrower
 
@@ -9,6 +10,15 @@ if __name__ == "__main__":
         print("No new contracts")
     else:
         for entry in contracts_response_json:
-            borrower_id = get_or_create_borrower(entry)
-            fetched_award = create_award(entry, borrower_id)
-            break
+            borrower_id, email = get_or_create_borrower(entry)
+            award_id = create_award(entry, borrower_id)
+            if award_id:
+                create_application(
+                    borrower_id,
+                    award_id,
+                    email,
+                    entry.get("nit_entidad"),
+                    entry["id_contrato"],
+                )
+            else:
+                print("Award already exists")

@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import httpx
 from fastapi import HTTPException
@@ -9,7 +9,22 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.db.session import get_db
 from app.schema.core import Award
 
-from .background_config import AWARDS_URL, CONTRACTS_URL, headers
+from .background_config import URLS, headers
+
+
+def get_awards_list():
+    with contextmanager(get_db)() as session:
+        try:
+            awards = (
+                session.query(Award.source_contract_id)
+                .order_by(desc(Award.created_at))
+                .all()
+            )
+        except SQLAlchemyError as e:
+            raise HTTPException(
+                status_code=500, detail="Database error occurred"
+            ) from e
+    return [award[0] for award in awards] or []
 
 
 def get_last_updated_award_date():
@@ -34,36 +49,42 @@ def insert_award(award: Award):
             session.add(obj_db)
             session.commit()
             session.refresh(obj_db)
+            return obj_db.id
+
         except SQLAlchemyError as e:
             raise HTTPException(
                 status_code=500, detail="Database error occurred"
             ) from e
-
-    return obj_db
 
 
 def get_new_contracts():
     last_updated_award_date = get_last_updated_award_date()
 
     if last_updated_award_date:
-        converted_date = last_updated_award_date.strftime("%Y-%m-%dT00:00:00.000")
+        one_day = timedelta(days=1)
+        converted_date = (last_updated_award_date - one_day).strftime(
+            "%Y-%m-%dT00:00:00.000"
+        )
         url = (
-            f"{CONTRACTS_URL}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            f"{URLS['CONTRACTS']}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
 
     else:
         url = (
-            f"{CONTRACTS_URL}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            f"{URLS['CONTRACTS']}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
     return httpx.get(url, headers=headers)
 
 
 def create_award(entry, borrower_id, previous=False):
+    source_contract_id = entry["id_contrato"]
+    if source_contract_id in get_awards_list():
+        return 0
     fetched_award = {
         "borrower_id": borrower_id,
-        "source_contract_id": entry["id_contrato"],
+        "source_contract_id": source_contract_id,
         "source_url": entry["urlproceso"]["url"],
         "entity_code": entry["codigo_entidad"],
         "procurement_method": entry["modalidad_de_contratacion"],
@@ -76,7 +97,7 @@ def create_award(entry, borrower_id, previous=False):
         },
     }
 
-    award_url = f"{AWARDS_URL}?id_del_portafolio={entry['proceso_de_compra']}"
+    award_url = f"{URLS['AWARDS']}?id_del_portafolio={entry['proceso_de_compra']}"
 
     award_response = httpx.get(award_url, headers=headers)
     award_response_json = award_response.json()[0]
@@ -99,4 +120,5 @@ def create_award(entry, borrower_id, previous=False):
             "fecha_de_fin_del_contrato", None
         )
 
-    insert_award(fetched_award)
+    award_id = insert_award(fetched_award)
+    return award_id
