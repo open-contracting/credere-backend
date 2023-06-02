@@ -235,13 +235,13 @@ class Award(SQLModel, table=True):
     source_contract_id: str = Field(default="")
     title: str = Field(default="")
     description: str = Field(default="")
-    award_date: datetime = Field(
+    award_date: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     award_amount: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=10, scale=2), nullable=False)
     )
-    award_currency: str = Field(default="")
+    award_currency: str = Field(default="COP", description="ISO 4217 currency code")
     contractperiod_startdate: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )

@@ -1,8 +1,5 @@
-# fmt: off
-from fetch_utilities import (create_award, get_new_contracts,
-                             get_or_create_borrower)
-
-# fmt: on
+from awards_utils import create_award, get_new_contracts
+from borrower_utils import get_or_create_borrower
 
 contracts_response = get_new_contracts()
 contracts_response_json = contracts_response.json()
@@ -13,3 +10,4 @@ else:
     for entry in contracts_response_json:
         borrower_id = get_or_create_borrower(entry)
         fetched_award = create_award(entry, borrower_id)
+        break
