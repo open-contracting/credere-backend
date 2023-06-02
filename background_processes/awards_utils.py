@@ -1,8 +1,8 @@
 from contextlib import contextmanager
 from datetime import datetime
 
-import background_config
 import httpx
+from background_config import AWARDS_URL, CONTRACTS_URL, headers
 from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
@@ -47,16 +47,16 @@ def get_new_contracts():
     if last_updated_award_date:
         converted_date = last_updated_award_date.strftime("%Y-%m-%dT00:00:00.000")
         url = (
-            f"{background_config.CONTRACTS_URL}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            f"{CONTRACTS_URL}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
 
     else:
         url = (
-            f"{background_config.CONTRACTS_URL}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            f"{CONTRACTS_URL}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
-    return httpx.get(url, headers=background_config.headers)
+    return httpx.get(url, headers=headers)
 
 
 def create_award(entry, borrower_id, previous=False):
@@ -75,11 +75,9 @@ def create_award(entry, borrower_id, previous=False):
         },
     }
 
-    award_url = (
-        f"{background_config.AWARDS_URL}?id_del_portafolio={entry['proceso_de_compra']}"
-    )
+    award_url = f"{AWARDS_URL}?id_del_portafolio={entry['proceso_de_compra']}"
 
-    award_response = httpx.get(award_url, headers=background_config.headers)
+    award_response = httpx.get(award_url, headers=headers)
     award_response_json = award_response.json()[0]
 
     fetched_award["description"] = award_response_json["nombre_del_procedimiento"]
