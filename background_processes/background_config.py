@@ -1,5 +1,3 @@
-import os
-
 from dotenv import dotenv_values
 import os
 import sys
