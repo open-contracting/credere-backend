@@ -2,13 +2,14 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import httpx
-from background_config import AWARDS_URL, CONTRACTS_URL, headers
 from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
 from app.schema.core import Award
+
+from .background_config import AWARDS_URL, CONTRACTS_URL, headers
 
 
 def get_last_updated_award_date():

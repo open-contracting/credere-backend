@@ -151,3 +151,11 @@ To run test locally
 ```
 pytest tests -W error
 ```
+
+## Run background jobs
+
+To run test locally
+
+```
+python3 -m background_processes.fetch_awards
+```

@@ -1,10 +1,12 @@
 import os
-import sys
 
 from dotenv import dotenv_values
 
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(project_root)
+# import sys
+
+
+# project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# sys.path.append(project_root)
 
 CONTRACTS_URL = "https://www.datos.gov.co/resource/jbjy-vk9h.json"
 AWARDS_URL = "https://www.datos.gov.co/resource/p6dx-8zbt.json"

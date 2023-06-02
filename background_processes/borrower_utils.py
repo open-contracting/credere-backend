@@ -4,14 +4,15 @@ from datetime import datetime
 
 import httpx
 import sentry_sdk
-from background_config import headers, pattern
-from background_utils import get_secret_hash
 from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
 from app.schema.core import Borrower
+
+from .background_config import headers, pattern
+from .background_utils import get_secret_hash
 
 BORROWER_EMAIL_URL = "https://www.datos.gov.co/resource/vzyx-b5wf.json"
 BORROWER_URL = "https://www.datos.gov.co/resource/4ex9-j3n8.json"

@@ -2,11 +2,11 @@ import base64
 import hashlib
 import hmac
 
-import background_config
+from .background_config import hash_key
 
 
 def get_secret_hash(nit_entidad: str):
-    key = background_config.hash_key
+    key = hash_key
     message = bytes(nit_entidad, "utf-8")
     key = bytes(key, "utf-8")
     return base64.b64encode(
