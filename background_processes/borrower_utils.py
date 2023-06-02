@@ -13,6 +13,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.db.session import get_db
 from app.schema.core import Borrower
 
+print(get_db)
+
 
 def get_borrower_id(nit_entidad: str):
     with contextmanager(get_db)() as session:
@@ -29,6 +31,7 @@ def get_borrower_id(nit_entidad: str):
 
 def get_borrowers_list():
     with contextmanager(get_db)() as session:
+        print(session)
         try:
             borrowers = (
                 session.query(Borrower.borrower_identifier)
