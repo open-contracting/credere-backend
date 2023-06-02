@@ -34,7 +34,6 @@ def insert_award(award: Award):
             session.commit()
             session.refresh(obj_db)
         except SQLAlchemyError as e:
-            print(e)
             raise HTTPException(
                 status_code=500, detail="Database error occurred"
             ) from e
