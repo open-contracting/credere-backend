@@ -8,14 +8,14 @@ from ..core.settings import app_settings
 
 def generate_common_data():
     return {
-        "LINK-TO-WEB-VERSION": "www.google.com",
+        "LINK-TO-WEB-VERSION": app_settings.frontend_url,
         "OCP_LOGO": app_settings.temporal_bucket + "/logoocp.jpg",
         "TWITTER_LOGO": app_settings.temporal_bucket + "/twiterlogo.png",
         "FB_LOGO": app_settings.temporal_bucket + "/facebook.png",
         "LINK_LOGO": app_settings.temporal_bucket + "/link.png",
-        "TWITTER_LINK": "www.google.com",
-        "FACEBOOK_LINK": "www.google.com",
-        "LINK_LINK": "www.google.com",
+        "TWITTER_LINK": app_settings.twitter_link,
+        "FACEBOOK_LINK": app_settings.facebook_link,
+        "LINK_LINK": app_settings.link_link,
     }
 
 
@@ -48,7 +48,6 @@ def send_mail_to_new_user(ses, name, username, temp_password):
 def send_mail_to_reset_password(ses, username, temp_password):
     data = {
         **generate_common_data(),
-        "USER": "test user",
         "USER_ACCOUNT": username,
         "RESET_PASSWORD_URL": app_settings.frontend_url
         + "/create-password?key="

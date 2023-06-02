@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     front_public_images_en: str = config_env.get(
         "FRONT_PUBLIC_IMAGES_EN", "/public/images/es"
     )
+    facebook_link: str = config_env.get("FACEBOOK_LINK", "www.facebook.com")
+    twitter_link: str = config_env.get("TWITTER_LINK", "www.twitter.com")
+    link_link: str = config_env.get("LINK_LINK", "http://localhost:3000")
 
     class Config:
         env_file = ".env"
