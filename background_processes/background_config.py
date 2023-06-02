@@ -1,6 +1,7 @@
-from dotenv import dotenv_values
 import os
 import sys
+
+from dotenv import dotenv_values
 
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)

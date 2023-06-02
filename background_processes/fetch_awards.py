@@ -1,7 +1,6 @@
 from awards_utils import create_award, get_new_contracts
 from borrower_utils import get_or_create_borrower
 
-
 contracts_response = get_new_contracts()
 contracts_response_json = contracts_response.json()
 
