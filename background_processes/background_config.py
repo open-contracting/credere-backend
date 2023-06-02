@@ -11,6 +11,8 @@ AWARDS_URL = "https://www.datos.gov.co/resource/p6dx-8zbt.json"
 BORROWER_EMAIL_URL = "https://www.datos.gov.co/resource/vzyx-b5wf.json"
 BORROWER_URL = "https://www.datos.gov.co/resource/4ex9-j3n8.json"
 
+DAYS_UNTIL_EXPIRED = 7
+
 pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
 config_env = {

@@ -4,7 +4,7 @@ from datetime import datetime
 
 import httpx
 import sentry_sdk
-from background_config import headers, pattern
+import background_config
 from background_utils import get_secret_hash
 from fastapi import HTTPException
 from sqlalchemy import desc
@@ -12,10 +12,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
 from app.schema.core import Borrower
-
-BORROWER_EMAIL_URL = "https://www.datos.gov.co/resource/vzyx-b5wf.json"
-BORROWER_URL = "https://www.datos.gov.co/resource/4ex9-j3n8.json"
-
 
 def get_borrower_id(nit_entidad: str):
     with contextmanager(get_db)() as session:
@@ -69,16 +65,16 @@ def get_or_create_borrower(entry):
     borrower_identifier = get_secret_hash(entry.get("nit_entidad"))
     if borrower_identifier in borrowers_list:
         return get_borrower_id(borrower_identifier)
-    borrower_url_email = f"{BORROWER_EMAIL_URL}?nit={entry['documento_proveedor']}"
-    borrower_response_email = httpx.get(borrower_url_email, headers=headers)
+    borrower_url_email = f"{background_config.BORROWER_EMAIL_URL}?nit={entry['documento_proveedor']}"
+    borrower_response_email = httpx.get(borrower_url_email, headers=background_config.headers)
     borrower_response_email_json = borrower_response_email.json()[0]
 
-    if not re.match(pattern, borrower_response_email_json["correo_entidad"]):
+    if not re.match(background_config.pattern, borrower_response_email_json["correo_entidad"]):
         raise sentry_sdk.capture_exception("Borrower has no valid email address")
 
-    borrower_url = f"{BORROWER_URL}?nit_entidad={entry['documento_proveedor']}"
+    borrower_url = f"{background_config.BORROWER_URL}?nit_entidad={entry['documento_proveedor']}"
 
-    borrower_response = httpx.get(borrower_url, headers=headers)
+    borrower_response = httpx.get(borrower_url, headers=background_config.headers)
     borrower_response_json = borrower_response.json()[0]
 
     fetched_borrower = {
