@@ -1,7 +1,6 @@
+from application_utils import create_application
 from awards_utils import create_award, get_new_contracts
 from borrower_utils import get_or_create_borrower
-from application_utils import create_application
-
 
 create_application(1, 1, "asd", "asd", "asd")
 contracts_response = get_new_contracts()
