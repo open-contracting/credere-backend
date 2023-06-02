@@ -102,17 +102,17 @@ class Application(SQLModel, table=True):
     award_borrowed_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     borrower: "Borrower" = Relationship(back_populates="applications")
-    lender_id: int = Field(foreign_key="lender.id")
+    lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
     lender: "Lender" = Relationship(back_populates="applications")
     messages: Optional[List["Message"]] = Relationship(back_populates="application")
     contract_amount_submitted: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False)
+        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=True)
     )
     amount_requested: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False)
+        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=True)
     )
     currency: str = Field(default="COP", description="ISO 4217 currency code")
-    repayment_months: Optional[int]
+    repayment_months: Optional[int] = Field(nullable=True)
     calculator_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     pending_documents: bool = Field(default=False)
     pending_email_confirmation: bool = Field(default=False)
@@ -132,7 +132,7 @@ class Application(SQLModel, table=True):
         default={}, sa_column=Column(JSON), nullable=False
     )
     lender_started_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False)
+        sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     secop_data_verification: dict = Field(
         default={}, sa_column=Column(JSON), nullable=False
@@ -152,11 +152,13 @@ class Application(SQLModel, table=True):
     completed_in_days: Optional[int]
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
         )
     )
     updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+        sa_column=Column(
+            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+        )
     )
     expired_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
