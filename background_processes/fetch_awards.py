@@ -1,11 +1,12 @@
+# isort:skip_file
 import os
 import sys
 
-from awards_utils import create_award, get_new_contracts
-from borrower_utils import get_or_create_borrower
-
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
+
+from awards_utils import create_award, get_new_contracts
+from borrower_utils import get_or_create_borrower
 
 
 contracts_response = get_new_contracts()
