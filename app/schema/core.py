@@ -106,10 +106,10 @@ class Application(SQLModel, table=True):
     lender: "Lender" = Relationship(back_populates="applications")
     messages: Optional[List["Message"]] = Relationship(back_populates="application")
     contract_amount_submitted: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=True)
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
     amount_requested: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=True)
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     repayment_months: Optional[int] = Field(nullable=True)
@@ -241,7 +241,7 @@ class Award(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     award_amount: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=10, scale=2), nullable=False)
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
     )
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
     contractperiod_startdate: datetime = Field(
@@ -256,7 +256,7 @@ class Award(SQLModel, table=True):
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
     source_last_updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False)
+        sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     previous: bool = Field(default=False)
     procurement_method: str = Field(default="")

@@ -15,17 +15,21 @@ from .background_config import URLS, headers, pattern
 from .background_utils import get_secret_hash
 
 
-def get_borrower_id(nit_entidad: str):
+def get_borrower_id_and_email(nit_entidad: str):
     with contextmanager(get_db)() as session:
-        borrower_id = (
-            session.query(Borrower.id)
-            .where(Borrower.borrower_identifier == nit_entidad)
-            .first()
-        )
-
-    if not borrower_id:
-        raise HTTPException(status_code=404, detail="No borrower found")
-    return borrower_id[0]
+        try:
+            obj = (
+                session.query(Borrower)
+                .where(Borrower.borrower_identifier == nit_entidad)
+                .first()
+            )
+            if not obj:
+                raise HTTPException(status_code=404, detail="No borrower found")
+            return obj.id, obj.email
+        except SQLAlchemyError as e:
+            raise HTTPException(
+                status_code=500, detail="Database error occurred"
+            ) from e
 
 
 def get_borrowers_list():
@@ -59,14 +63,11 @@ def insert_borrower(borrower: Borrower):
             ) from e
 
 
-borrowers_list = get_borrowers_list()
-
-
 def get_or_create_borrower(entry) -> tuple[int, str]:
+    borrowers_list = get_borrowers_list()
     borrower_identifier = get_secret_hash(entry.get("nit_entidad"))
     if borrower_identifier in borrowers_list:
-        borrower_id = get_borrower_id(borrower_identifier)
-        email = ""
+        borrower_id, email = get_borrower_id_and_email(borrower_identifier)
     else:
         borrower_url_email = (
             f"{URLS['BORROWER_EMAIL']}?nit={entry['documento_proveedor']}"
@@ -103,7 +104,7 @@ def get_or_create_borrower(entry) -> tuple[int, str]:
             error_message = "Null values found for the following keys: {}".format(
                 ", ".join(null_keys)
             )
-            raise sentry_sdk.capture_exception(error_message)
+            sentry_sdk.capture_exception(error_message)
 
         borrower_id = insert_borrower(fetched_borrower)
 

@@ -19,22 +19,20 @@ def insert_application(application: Application):
             session.add(obj_db)
             session.commit()
             session.refresh(obj_db)
+            return obj_db.id
         except SQLAlchemyError as e:
-            print(e)
             raise HTTPException(
                 status_code=500, detail="Database error occurred"
             ) from e
-
-    return obj_db
 
 
 def create_application(
     award_id, borrower_id, email, legal_identifier, source_contract_id
 ):
-    new_uuid: str = generate_uuid(legal_identifier)
     award_borrowed_identifier: str = get_secret_hash(
         legal_identifier + source_contract_id
     )
+    new_uuid: str = generate_uuid(award_borrowed_identifier)
     application = {
         "award_id": award_id,
         "borrower_id": borrower_id,
@@ -44,5 +42,4 @@ def create_application(
         "expired_at": datetime.utcnow() + timedelta(days=DAYS_UNTIL_EXPIRED),
     }
 
-    insert_application(application)
-    return application
+    return insert_application(application)

@@ -11,6 +11,10 @@ def generate_uuid(string: str) -> str:
     return str(generated_uuid)
 
 
+def send_invitation_email(url, email):
+    return f"sends {url} to {email}"
+
+
 def get_secret_hash(nit_entidad: str) -> str:
     key = hash_key
     message = bytes(nit_entidad, "utf-8")
