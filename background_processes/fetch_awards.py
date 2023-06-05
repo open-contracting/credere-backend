@@ -30,6 +30,7 @@ if __name__ == "__main__":
                         entry["id_contrato"],
                     )
                     send_invitation_email("URL", email)
+                    print("Application created")
                 except Exception as e:
                     raise sentry_sdk.capture_exception(
                         "Failed to create application", e

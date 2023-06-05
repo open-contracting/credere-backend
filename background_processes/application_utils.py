@@ -21,9 +21,7 @@ def insert_application(application: Application):
             session.refresh(obj_db)
             return obj_db.id
         except SQLAlchemyError as e:
-            raise HTTPException(
-                status_code=500, detail="Database error occurred"
-            ) from e
+            raise e
 
 
 def create_application(

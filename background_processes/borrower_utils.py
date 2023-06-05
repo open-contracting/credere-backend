@@ -27,9 +27,7 @@ def get_borrower_id_and_email(nit_entidad: str):
                 raise HTTPException(status_code=404, detail="No borrower found")
             return obj.id, obj.email
         except SQLAlchemyError as e:
-            raise HTTPException(
-                status_code=500, detail="Database error occurred"
-            ) from e
+            raise e
 
 
 def get_borrowers_list():
@@ -41,9 +39,7 @@ def get_borrowers_list():
                 .all()
             )
         except SQLAlchemyError as e:
-            raise HTTPException(
-                status_code=500, detail="Database error occurred"
-            ) from e
+            raise e
     return [borrower[0] for borrower in borrowers] or []
 
 
@@ -58,9 +54,7 @@ def insert_borrower(borrower: Borrower):
             session.refresh(obj_db)
             return obj_db.id
         except SQLAlchemyError as e:
-            raise HTTPException(
-                status_code=500, detail="Database error occurred"
-            ) from e
+            raise e
 
 
 def get_or_create_borrower(entry) -> tuple[int, str]:

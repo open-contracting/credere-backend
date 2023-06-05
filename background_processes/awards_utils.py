@@ -22,9 +22,7 @@ def get_awards_list():
                 .all()
             )
         except SQLAlchemyError as e:
-            raise HTTPException(
-                status_code=500, detail="Database error occurred"
-            ) from e
+            raise e
     return [award[0] for award in awards] or []
 
 
@@ -53,9 +51,7 @@ def insert_award(award: Award):
             return obj_db.id
 
         except SQLAlchemyError as e:
-            raise HTTPException(
-                status_code=500, detail="Database error occurred"
-            ) from e
+            raise e
 
 
 def get_new_contracts(previous=False):
