@@ -102,17 +102,17 @@ class Application(SQLModel, table=True):
     award_borrowed_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     borrower: "Borrower" = Relationship(back_populates="applications")
-    lender_id: int = Field(foreign_key="lender.id")
+    lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
     lender: "Lender" = Relationship(back_populates="applications")
     messages: Optional[List["Message"]] = Relationship(back_populates="application")
     contract_amount_submitted: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False)
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
     amount_requested: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=12, scale=2), nullable=False)
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
     currency: str = Field(default="COP", description="ISO 4217 currency code")
-    repayment_months: Optional[int]
+    repayment_months: Optional[int] = Field(nullable=True)
     calculator_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     pending_documents: bool = Field(default=False)
     pending_email_confirmation: bool = Field(default=False)
@@ -132,7 +132,7 @@ class Application(SQLModel, table=True):
         default={}, sa_column=Column(JSON), nullable=False
     )
     lender_started_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False)
+        sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     secop_data_verification: dict = Field(
         default={}, sa_column=Column(JSON), nullable=False
@@ -149,14 +149,16 @@ class Application(SQLModel, table=True):
     borrewed_uploaded_contracted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    completed_in_days: Optional[int]
+    completed_in_days: Optional[int] = Field(nullable=True)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
         )
     )
     updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+        sa_column=Column(
+            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+        )
     )
     expired_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
@@ -235,17 +237,17 @@ class Award(SQLModel, table=True):
     source_contract_id: str = Field(default="")
     title: str = Field(default="")
     description: str = Field(default="")
-    award_date: datetime = Field(
+    award_date: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     award_amount: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=10, scale=2), nullable=False)
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
     )
-    award_currency: str = Field(default="")
-    contractperiod_startdate: datetime = Field(
+    award_currency: str = Field(default="COP", description="ISO 4217 currency code")
+    contractperiod_startdate: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    contractperiod_enddate: datetime = Field(
+    contractperiod_enddate: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     payment_method: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
@@ -254,7 +256,7 @@ class Award(SQLModel, table=True):
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
     source_last_updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False)
+        sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     previous: bool = Field(default=False)
     procurement_method: str = Field(default="")

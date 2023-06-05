@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import app_settings
-from .routers import awards, borrowers, users
+from .routers import applications, awards, borrowers, users
 
 if app_settings.sentry_dsn:
     sentry_sdk.init(
@@ -28,6 +28,7 @@ app.add_middleware(
 app.include_router(users.router)
 app.include_router(awards.router)
 app.include_router(borrowers.router)
+app.include_router(applications.router)
 
 
 @app.get("/")

@@ -60,6 +60,8 @@ COGNITO_POOL_ID -> cognito pool id
 EMAIL_SENDER_ADDRESS -> authorized sender in cognito
 FRONTEND_URL -> frontend url, use http://127.0.0.1:3000/ for dev
 SENTRY_DNS -> the DNS for sentry
+SECOP_APP_TOKEN -> Token from fetching SECOP data
+HASH_KEY -> hash key for hashing personal data before submitting it to Database
 
 You should configure the pre-commit for the repo one time
 
@@ -150,4 +152,12 @@ To run test locally
 
 ```
 pytest tests -W error
+```
+
+## Run background jobs
+
+To run test locally
+
+```
+python3 -m background_processes.fetch_awards
 ```
