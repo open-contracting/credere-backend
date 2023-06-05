@@ -2,8 +2,7 @@ import json
 from urllib.parse import quote
 
 import app.email_templates as email_templates
-
-from ..core.settings import app_settings
+from app.core.settings import app_settings
 
 
 def generate_common_data():
@@ -61,5 +60,34 @@ def send_mail_to_reset_password(ses, username, temp_password):
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [username]},
         Template=email_templates.RESET_PASSWORD_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )
+
+
+def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_title):
+    data = {
+        **generate_common_data(),
+        "AWARD_SUPPLIER_NAME": borrower_name,
+        "TENDER_TITLE": tender_title,
+        "BUYER_NAME": buyer_name,
+        "FIND_OUT_MORE_IMAGE_LINK": app_settings.temporal_bucket + "/findoutmore.png",
+        "REMOVE_ME_IMAGE_LINK": app_settings.temporal_bucket + "/removeme.png",
+        "FIND_OUT_MORE_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(uuid)
+        + "/intro",
+        "REMOVE_ME_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(uuid)
+        + "/decline",
+    }
+
+    print("Supposed to send email to: " + email)
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={
+            "ToAddresses": [app_settings.test_mail_receiver]
+        },  # change to email in prod
+        Template=email_templates.ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )

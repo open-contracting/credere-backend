@@ -82,10 +82,10 @@ def get_new_contracts(previous=False):
     return httpx.get(url, headers=headers)
 
 
-def get_or_create_award(entry, borrower_id, previous=False) -> int:
+def get_or_create_award(entry, borrower_id, previous=False) -> tuple[int, str, str]:
     source_contract_id = entry.get("id_contrato", "")
     if source_contract_id in get_awards_list() or not source_contract_id:
-        return 0
+        return 0, "", ""
     else:
         fetched_award = {
             "borrower_id": borrower_id,
@@ -142,4 +142,4 @@ def get_or_create_award(entry, borrower_id, previous=False) -> int:
             sentry_sdk.capture_message(error_message)
 
         award_id = insert_award(fetched_award)
-        return award_id
+        return award_id, fetched_award["buyer_name"], fetched_award["title"]

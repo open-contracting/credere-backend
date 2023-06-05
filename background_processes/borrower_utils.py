@@ -57,9 +57,10 @@ def insert_borrower(borrower: Borrower):
             raise e
 
 
-def get_or_create_borrower(entry) -> tuple[int, str]:
+def get_or_create_borrower(entry) -> tuple[int, str, str]:
     borrowers_list = get_borrowers_list()
     borrower_identifier = get_secret_hash(entry.get("nit_entidad"))
+
     if borrower_identifier in borrowers_list:
         borrower_id, email = get_borrower_id_and_email(borrower_identifier)
     else:
@@ -102,4 +103,4 @@ def get_or_create_borrower(entry) -> tuple[int, str]:
 
         borrower_id = insert_borrower(fetched_borrower)
 
-    return borrower_id, email
+    return borrower_id, email, entry.get("nombre_entidad")

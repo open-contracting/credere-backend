@@ -17,12 +17,9 @@ class ApplicationDeclinePayload(BaseModel):
 
 class ApplicationDeclineFeedbackPayload(BaseModel):
     uuid: str
-    decline_this: bool
-
-
-#         dontNeedAccessCredit: boolean(),
-# alreadyHaveAcredit: boolean(),
-# prefferToGoToBank: boolean(),
-# dontWantAccessCredit: boolean(),
-# other: boolean(),
-# otherCommnets: string(),
+    dont_need_access_credit: bool
+    already_have_acredit: bool
+    preffer_to_go_to_bank: bool
+    dont_want_access_credit: bool
+    other: bool
+    other_commnets: str
