@@ -149,7 +149,7 @@ class Application(SQLModel, table=True):
     borrewed_uploaded_contracted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    completed_in_days: Optional[int]
+    completed_in_days: Optional[int] = Field(nullable=True)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True), nullable=False, default=datetime.utcnow()
@@ -244,10 +244,10 @@ class Award(SQLModel, table=True):
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
     )
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
-    contractperiod_startdate: datetime = Field(
+    contractperiod_startdate: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    contractperiod_enddate: datetime = Field(
+    contractperiod_enddate: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     payment_method: dict = Field(default={}, sa_column=Column(JSON), nullable=False)

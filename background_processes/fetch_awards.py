@@ -37,3 +37,4 @@ if __name__ == "__main__":
 
             else:
                 print("Award already exists")
+            break
