@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 import httpx
 import sentry_sdk
-from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 

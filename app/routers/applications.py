@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, defaultload
 
 from app.schema import api
-from datetime import datetime, timezone
+
 from ..db.session import get_db
 from ..schema.core import Application, ApplicationStatus
 

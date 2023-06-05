@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
-from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
