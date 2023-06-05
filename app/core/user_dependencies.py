@@ -1,15 +1,13 @@
 import base64
 import hashlib
 import hmac
-import json
 import random
 import string
 from typing import Generator
-from urllib.parse import quote
 
 import boto3
 
-from app.email_templates import NEW_USER_TEMPLATE_NAME
+from app.utils import email_utility
 
 from ..core.settings import app_settings
 
@@ -52,23 +50,6 @@ class CognitoClient:
 
     def admin_create_user(self, username, name):
         temp_password = self.generate_password()
-        data = {
-            "USER": name,
-            "LINK-TO-WEB-VERSION": "www.google.com",
-            "OCP_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg",
-            "SET_PASSWORD_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/set_password.png",
-            "LOGIN_URL": app_settings.frontend_url
-            + "/create-password?key="
-            + quote(temp_password)
-            + "&email="
-            + quote(username),
-            "TWITTER_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/twiterlogo.png",
-            "FB_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/facebook.png",
-            "LINK_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/link.png",
-            "TWITTER_LINK": "www.google.com",
-            "FACEBOOK_LINK": "www.google.com",
-            "LINK_LINK": "www.google.com",
-        }
 
         responseCreateUser = self.client.admin_create_user(
             UserPoolId=app_settings.cognito_pool_id,
@@ -78,12 +59,7 @@ class CognitoClient:
             UserAttributes=[{"Name": "email", "Value": username}],
         )
 
-        self.ses.send_templated_email(
-            Source=app_settings.email_sender_address,
-            Destination={"ToAddresses": [username]},
-            Template=NEW_USER_TEMPLATE_NAME,
-            TemplateData=json.dumps(data),
-        )
+        email_utility.send_mail_to_new_user(self.ses, name, username, temp_password)
 
         return responseCreateUser
 
@@ -201,24 +177,6 @@ class CognitoClient:
 
     def reset_password(self, username):
         temp_password = self.generate_password()
-        data = {
-            "USER": "UserName",  # change for actual name
-            "LINK-TO-WEB-VERSION": "www.google.com",
-            "OCP_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg",
-            "USER_ACCOUNT": username,
-            "RESET_PASSWORD_URL": app_settings.frontend_url
-            + "/create-password?key="
-            + quote(temp_password)
-            + "&email="
-            + quote(username),
-            "RESET_PASSWORD_IMAGE": "https://adrian-personal.s3.sa-east-1.amazonaws.com/ResetPassword.png",
-            "TWITTER_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/twiterlogo.png",
-            "FB_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/facebook.png",
-            "LINK_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/link.png",
-            "TWITTER_LINK": "www.google.com",
-            "FACEBOOK_LINK": "www.google.com",
-            "LINK_LINK": "www.google.com",
-        }
 
         responseSetPassword = self.client.admin_set_user_password(
             UserPoolId=app_settings.cognito_pool_id,
@@ -226,13 +184,7 @@ class CognitoClient:
             Password=temp_password,
             Permanent=False,
         )
-
-        self.ses.send_templated_email(
-            Source=app_settings.email_sender_address,
-            Destination={"ToAddresses": [username]},
-            Template="credere-ResetPassword",
-            TemplateData=json.dumps(data),
-        )
+        email_utility.send_mail_to_reset_password(self.ses, username, temp_password)
 
         return responseSetPassword
 
