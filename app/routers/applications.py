@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, defaultload
 
 from app.schema import api
 
 from ..db.session import get_db
-from ..schema.core import Application
+from ..schema.core import Application, ApplicationStatus
 
 router = APIRouter()
 
@@ -14,32 +16,70 @@ router = APIRouter()
     tags=["applications"],
     response_model=api.ApplicationResponse,
 )
-async def get_application_by_uuid(uuid: str, db: Session = Depends(get_db)):
+async def get_application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     application = (
-        db.query(Application)
+        session.query(Application)
         .options(defaultload(Application.borrower), defaultload(Application.award))
         .filter(Application.uuid == uuid)
         .first()
     )
-    # validate not expired
+    expired_at = application.expired_at
+
+    current_time = datetime.now(expired_at.tzinfo)
+
+    if application.expired_at < current_time:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found or uuid expired",
+        )
     if not application:
-        raise HTTPException(status_code=404, detail="Application not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
+        )
     return api.ApplicationResponse(
         application=application, borrower=application.borrower, award=application.award
     )
 
 
 @router.post(
-    "/applications/decline",
+    "/applications/decline/",
     tags=["applications"],
     response_model=api.ApplicationResponse,
 )
 async def decline(
-    payload: api.ApplicationDeclinePayload, db: Session = Depends(get_db)
+    payload: api.ApplicationDeclinePayload,
+    session: Session = Depends(get_db),
 ):
-    # validate is pending
-    # update borrower_declined_data
-    return None
+    application = (
+        session.query(Application)
+        .options(defaultload(Application.borrower), defaultload(Application.award))
+        .filter(Application.uuid == payload.uuid)
+        .first()
+    )
+    expired_at = application.expired_at
+
+    current_time = datetime.now(expired_at.tzinfo)
+
+    if application.expired_at < current_time:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found or uuid expired",
+        )
+    if application.status != ApplicationStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application status is not pending",
+        )
+
+    application.borrower_declined_data = {
+        "decline_this": payload.decline_this,
+        "decline_all": payload.decline_all,
+    }
+
+    session.commit()
+    return api.ApplicationResponse(
+        application=application, borrower=application.borrower, award=application.award
+    )
 
 
 @router.post(
@@ -48,8 +88,34 @@ async def decline(
     response_model=api.ApplicationResponse,
 )
 async def decline_feedback(
-    payload: api.ApplicationDeclineFeedbackPayload, db: Session = Depends(get_db)
+    payload: api.ApplicationDeclineFeedbackPayload, session: Session = Depends(get_db)
 ):
-    # validate is pending
-    # update borrower_declined_preferences_data
-    return None
+    application = (
+        session.query(Application)
+        .options(defaultload(Application.borrower), defaultload(Application.award))
+        .filter(Application.uuid == payload.uuid)
+        .first()
+    )
+    expired_at = application.expired_at
+
+    current_time = datetime.now(expired_at.tzinfo)
+
+    if application.expired_at < current_time:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found or uuid expired",
+        )
+    if application.status != ApplicationStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application not found or status is not pending",
+        )
+
+    application.borrower_declined_preferences_data = {
+        "decline_this": payload.decline_this,
+    }
+
+    session.commit()
+    return api.ApplicationResponse(
+        application=application, borrower=application.borrower, award=application.award
+    )

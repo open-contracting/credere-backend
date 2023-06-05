@@ -10,12 +10,14 @@ class ApplicationResponse(BaseModel):
 
 
 class ApplicationDeclinePayload(BaseModel):
-    declineThis: bool
-    declineAll: bool
+    uuid: str
+    decline_this: bool
+    decline_all: bool
 
 
 class ApplicationDeclineFeedbackPayload(BaseModel):
-    declineThis: bool
+    uuid: str
+    decline_this: bool
 
 
 #         dontNeedAccessCredit: boolean(),

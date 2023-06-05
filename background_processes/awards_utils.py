@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 import httpx
 import sentry_sdk
-from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -22,9 +21,7 @@ def get_awards_list():
                 .all()
             )
         except SQLAlchemyError as e:
-            raise HTTPException(
-                status_code=500, detail="Database error occurred"
-            ) from e
+            raise e
     return [award[0] for award in awards] or []
 
 
@@ -53,9 +50,7 @@ def insert_award(award: Award):
             return obj_db.id
 
         except SQLAlchemyError as e:
-            raise HTTPException(
-                status_code=500, detail="Database error occurred"
-            ) from e
+            raise e
 
 
 def get_new_contracts(previous=False):
@@ -87,7 +82,7 @@ def get_new_contracts(previous=False):
     return httpx.get(url, headers=headers)
 
 
-def get_or_create_award(entry, borrower_id, previous=False):
+def get_or_create_award(entry, borrower_id, previous=False) -> int:
     source_contract_id = entry.get("id_contrato", "")
     if source_contract_id in get_awards_list() or not source_contract_id:
         return 0
