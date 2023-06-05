@@ -11,7 +11,7 @@ def generate_uuid(string: str) -> str:
     return str(generated_uuid)
 
 
-def send_invitation_email(url, email):
+def send_invitation_email(url, email, uuid):
     return f"sends {url} to {email}"
 
 

@@ -22,14 +22,14 @@ if __name__ == "__main__":
             award_id = get_or_create_award(entry, borrower_id, True)
             if award_id and borrower_id:
                 try:
-                    application_id = create_application(
+                    uuid = create_application(
                         award_id,
                         borrower_id,
                         email,
                         entry.get("nit_entidad"),
                         entry["id_contrato"],
                     )
-                    send_invitation_email("URL", email)
+                    send_invitation_email("URL", email, uuid)
                     print("Application created")
                 except Exception as e:
                     raise sentry_sdk.capture_exception(

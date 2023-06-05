@@ -82,7 +82,7 @@ def get_new_contracts(previous=False):
     return httpx.get(url, headers=headers)
 
 
-def get_or_create_award(entry, borrower_id, previous=False):
+def get_or_create_award(entry, borrower_id, previous=False) -> int:
     source_contract_id = entry.get("id_contrato", "")
     if source_contract_id in get_awards_list() or not source_contract_id:
         return 0
