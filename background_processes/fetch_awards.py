@@ -29,7 +29,7 @@ if __name__ == "__main__":
                         entry.get("nit_entidad"),
                         entry["id_contrato"],
                     )
-                    send_invitation_email("URL", email)
+                    send_invitation_email("uuid")
                 except Exception as e:
                     raise sentry_sdk.capture_exception(
                         "Failed to create application", e

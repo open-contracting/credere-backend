@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import uuid
+from urllib.parse import quote
 
 import boto3
 
@@ -43,16 +44,22 @@ def generate_common_data():
     }
 
 
-def send_invitation_email(url, email):
+def send_invitation_email(uuid):
     data = {
         **generate_common_data(),
         "AWARD_SUPPLIER_NAME": "PROVEEDOR XX",
         "TENDER_TITLE": "PROVISION_DE_COMIDA",
         "BUYER_NAME": "INSTITUCION PUBLICA XX",
-        "FIND_OUT_MORE_URL": "www.google.com",
         "FIND_OUT_MORE_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/findoutmore.png",
-        "REMOVE_ME_URL": "www.google.com",
         "REMOVE_ME_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/removeme.png",
+        "FIND_OUT_MORE_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(uuid)
+        + "/intro",
+        "REMOVE_ME_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(uuid)
+        + "/decline",
     }
 
     sesClient.send_templated_email(
