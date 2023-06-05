@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     facebook_link: str = config_env.get("FACEBOOK_LINK", "www.facebook.com")
     twitter_link: str = config_env.get("TWITTER_LINK", "www.twitter.com")
     link_link: str = config_env.get("LINK_LINK", "http://localhost:3000")
+    test_mail_receiver: str = config_env.get("TEST_MAIL_RECEIVER", "aomm24@gmail.com")
 
     class Config:
         env_file = ".env"
