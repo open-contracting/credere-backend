@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import httpx
-import sentry_sdk
+
 from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,7 +12,7 @@ from app.db.session import get_db
 from app.schema.core import Borrower
 
 from .background_config import URLS, headers, pattern
-from .background_utils import get_secret_hash
+from .background_utils import get_secret_hash, raise_sentry_error
 
 
 def get_borrower_id_and_email(nit_entidad: str):
@@ -57,49 +57,74 @@ def insert_borrower(borrower: Borrower):
             raise e
 
 
-def get_or_create_borrower(entry) -> tuple[int, str]:
+def create_new_borrower(
+    borrower_identifier: str, email: str, borrower_entry: dict
+) -> dict:
+    new_borrower = {
+        "borrower_identifier": borrower_identifier,
+        "legal_name": borrower_entry.get("nombre_entidad", ""),
+        "email": email,
+        "address": "Direccion: {}Ciudad: {}provincia{}estado{}".format(
+            borrower_entry.get("direccion", ""),
+            borrower_entry.get("ciudad", ""),
+            borrower_entry.get("provincia", ""),
+            borrower_entry.get("estado", ""),
+        ),
+        "legal_identifier": borrower_entry.get("nit_entidad", ""),
+        "type": borrower_entry.get("tipo_organizacion", ""),
+    }
+    return new_borrower
+
+
+def get_email(borrower_email, entry) -> str:
+    borrower_response_email = httpx.get(borrower_email, headers=headers)
+
+    if borrower_response_email.json() != 1:
+        error_data = {
+            "entry": entry,
+            "response": borrower_response_email.json(),
+        }
+        raise_sentry_error("Email endpoint returned an invalidad response", error_data)
+
+    borrower_response_email_json = borrower_response_email.json()[0]
+    email = borrower_response_email_json.get("correo_entidad", "")
+    if not re.match(pattern, email):
+        error_data = {
+            "entry": entry,
+            "response": borrower_response_email_json,
+        }
+        raise_sentry_error("Borrower has no valid email address", error_data)
+    return email
+
+
+def get_or_create_borrower(entry):
     borrowers_list = get_borrowers_list()
-    borrower_identifier = get_secret_hash(entry.get("nit_entidad"))
+    borrower_identifier = get_secret_hash(entry.get("documento_proveedor", ""))
+
+    # checks if hashed nit exist in our table
     if borrower_identifier in borrowers_list:
         borrower_id, email = get_borrower_id_and_email(borrower_identifier)
     else:
-        borrower_url_email = (
-            f"{URLS['BORROWER_EMAIL']}?nit={entry['documento_proveedor']}"
-        )
-        borrower_response_email = httpx.get(borrower_url_email, headers=headers)
-        borrower_response_email_json = borrower_response_email.json()[0]
-
-        if not re.match(pattern, borrower_response_email_json["correo_entidad"]):
-            raise sentry_sdk.capture_exception("Borrower has no valid email address")
-
-        borrower_url = f"{URLS['BORROWER']}?nit_entidad={entry['documento_proveedor']}"
-
+        borrower_url = f"{URLS['BORROWER']}&nit_entidad={entry['documento_proveedor']}"
         borrower_response = httpx.get(borrower_url, headers=headers)
+
+        if len(borrower_response.json()) > 1:
+            error_data = {"entry": entry, "response": borrower_response.json()}
+            raise_sentry_error(
+                "There are more than one borrowers in this borrower identifier entry",
+                error_data,
+            )
+
         borrower_response_json = borrower_response.json()[0]
 
-        legal_identifier = entry.get("nit_entidad")
-        email = borrower_response_email_json.get("correo_entidad")
-        fetched_borrower = {
-            "borrower_identifier": borrower_identifier,
-            "legal_name": entry.get("nombre_entidad"),
-            "email": email,
-            "address": "Direccion: {}Ciudad: {}provincia{}estado{}".format(
-                borrower_response_json.get("direccion", ""),
-                borrower_response_json.get("ciudad", ""),
-                borrower_response_json.get("provincia", ""),
-                borrower_response_json.get("estado", ""),
-            ),
-            "legal_identifier": legal_identifier,
-            "type": borrower_response_json.get("tipo_organizacion"),
-        }
+        borrower_email = f"{URLS['BORROWER_EMAIL']}?nit={entry['documento_proveedor']}"
 
-        null_keys = [key for key, value in fetched_borrower.items() if value is None]
-        if null_keys:
-            error_message = "Null values found for the following keys: {}".format(
-                ", ".join(null_keys)
-            )
-            sentry_sdk.capture_exception(error_message)
+        email = get_email(borrower_email, entry)
 
-        borrower_id = insert_borrower(fetched_borrower)
+        new_borrower = create_new_borrower(
+            borrower_identifier, email, borrower_response_json
+        )
+
+        borrower_id = insert_borrower(new_borrower)
 
     return borrower_id, email

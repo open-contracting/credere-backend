@@ -2,8 +2,13 @@ import base64
 import hashlib
 import hmac
 import uuid
-
+import sentry_sdk
 from .background_config import hash_key
+
+
+def raise_sentry_error(message: str, payload: dict):
+    sentry_sdk.capture_exception(message, payload)
+    raise ValueError(message)
 
 
 def generate_uuid(string: str) -> str:
@@ -12,7 +17,7 @@ def generate_uuid(string: str) -> str:
 
 
 def send_invitation_email(url, email, uuid):
-    return f"sends {url} to {email}"
+    return f"sends {url}/{uuid} to {email}"
 
 
 def get_secret_hash(nit_entidad: str) -> str:

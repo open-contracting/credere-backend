@@ -5,6 +5,6 @@ AWS_REGION=******************
 COGNITO_POOL_ID=******************
 EMAIL_SENDER_ADDRESS=******************
 DATABASE_URL=******************
-SECOP_APP_TOKEN=******************
+COLOMBIA_SECOP_APP_TOKEN=******************
 FRONTEND_URL=******************
 HASH_KEY=******************

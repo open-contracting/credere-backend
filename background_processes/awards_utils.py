@@ -2,14 +2,13 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 import httpx
-import sentry_sdk
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
 from app.schema.core import Award
 
-from .background_config import URLS, headers
+from .background_config import URLS, headers, secop_pagination_limit
 
 
 def get_awards_list():
@@ -53,14 +52,8 @@ def insert_award(award: Award):
             raise e
 
 
-def get_new_contracts(previous=False):
-    if previous:
-        url = (
-            f"{URLS['CONTRACTS']}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
-            f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
-        )
-
-        return httpx.get(url, headers=headers)
+def get_new_contracts(index: int):
+    # add handling for previous contracts using typer
 
     last_updated_award_date = get_last_updated_award_date()
 
@@ -70,13 +63,13 @@ def get_new_contracts(previous=False):
             "%Y-%m-%dT00:00:00.000"
         )
         url = (
-            f"{URLS['CONTRACTS']}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset={index}&$order=documento_proveedor&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
         return httpx.get(url, headers=headers)
 
     url = (
-        f"{URLS['CONTRACTS']}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+        f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset={index}&$order=documento_proveedor&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
         f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
     return httpx.get(url, headers=headers)
@@ -119,7 +112,7 @@ def get_or_create_award(entry, borrower_id, previous=False) -> int:
         )
         fetched_award["source_data"] = award_response_json
         fetched_award["source_last_updated_at"] = award_response_json.get(
-            "fecha_de_ultima_publicaci)", None
+            "ultima_actualizacion)", None
         )
         fetched_award["contract_status"] = award_response_json.get(
             "estado_del_procedimiento", ""
@@ -133,13 +126,6 @@ def get_or_create_award(entry, borrower_id, previous=False) -> int:
             fetched_award["contractperiod_enddate"] = entry.get(
                 "fecha_de_fin_del_contrato", None
             )
-
-        null_keys = [key for key, value in fetched_award.items() if value is None]
-        if null_keys:
-            error_message = "Null values found for the following keys: {}".format(
-                ", ".join(null_keys)
-            )
-            sentry_sdk.capture_message(error_message)
 
         award_id = insert_award(fetched_award)
         return award_id
