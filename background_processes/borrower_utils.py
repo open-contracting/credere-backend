@@ -24,7 +24,7 @@ def get_borrower_id_and_email(nit_entidad: str):
             )
             if not obj:
                 raise HTTPException(status_code=404, detail="No borrower found")
-            return obj.id, obj.email
+            return obj.id, obj.email, obj.legal_name
         except SQLAlchemyError as e:
             raise e
 
@@ -103,7 +103,7 @@ def get_or_create_borrower(entry):
 
     # checks if hashed nit exist in our table
     if borrower_identifier in borrowers_list:
-        borrower_id, email = get_borrower_id_and_email(borrower_identifier)
+        borrower_id, email, legal_name = get_borrower_id_and_email(borrower_identifier)
     else:
         borrower_url = f"{URLS['BORROWER']}&nit_entidad={entry['documento_proveedor']}"
         borrower_response = httpx.get(borrower_url, headers=headers)
@@ -116,7 +116,7 @@ def get_or_create_borrower(entry):
             )
 
         borrower_response_json = borrower_response.json()[0]
-
+        legal_name = borrower_response_json["nombre_entidad"]
         borrower_email = f"{URLS['BORROWER_EMAIL']}?nit={entry['documento_proveedor']}"
 
         email = get_email(borrower_email, entry)
@@ -127,4 +127,4 @@ def get_or_create_borrower(entry):
 
         borrower_id = insert_borrower(new_borrower)
 
-    return borrower_id, email, new_borrower["legal_name"]
+    return borrower_id, email, legal_name

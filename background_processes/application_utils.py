@@ -38,5 +38,9 @@ def create_application(
         "uuid": new_uuid,
         "expired_at": datetime.utcnow() + timedelta(days=DAYS_UNTIL_EXPIRED),
     }
-    insert_application(application)
+    try:
+        insert_application(application)
+    except Exception as e:
+        print(e)
+
     return new_uuid
