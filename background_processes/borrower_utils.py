@@ -3,7 +3,6 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import httpx
-
 from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
@@ -79,7 +78,8 @@ def create_new_borrower(
 def get_email(borrower_email, entry) -> str:
     borrower_response_email = httpx.get(borrower_email, headers=headers)
 
-    if borrower_response_email.json() != 1:
+    if len(borrower_response_email.json()) != 1:
+        print(borrower_response_email.json())
         error_data = {
             "entry": entry,
             "response": borrower_response_email.json(),
@@ -127,4 +127,4 @@ def get_or_create_borrower(entry):
 
         borrower_id = insert_borrower(new_borrower)
 
-    return borrower_id, email
+    return borrower_id, email, new_borrower["legal_name"]

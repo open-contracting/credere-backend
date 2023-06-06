@@ -2,7 +2,9 @@ import base64
 import hashlib
 import hmac
 import uuid
+
 import sentry_sdk
+
 from .background_config import hash_key
 
 

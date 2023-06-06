@@ -62,6 +62,12 @@ FRONTEND_URL -> frontend url, use http://127.0.0.1:3000/ for dev
 SENTRY_DNS -> the DNS for sentry
 COLOMBIA_SECOP_APP_TOKEN -> Token from fetching SECOP data
 HASH_KEY -> hash key for hashing personal data before submitting it to Database
+FRONT_PUBLIC_IMAGES_ES = -> Directory on the frontend server containing the Spanish version of the text in the images.
+FRONT_PUBLIC_IMAGES_EN = ->Directory on the frontend server containing the English version of the text in the images.
+TEMPORAL_BUCKET = -> Temporal S3 bucket used in develop to serve images
+FACEBOOK_LINK = -> Link to OCP Facebook account
+TWITTER_LINK = ->Link to OCP Twitter account
+LINK_LINK = -> Link to (pending to ask)
 
 You should configure the pre-commit for the repo one time
 

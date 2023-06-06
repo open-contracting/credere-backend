@@ -62,12 +62,12 @@ async def decline(
 
     if application.expired_at < current_time:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found or uuid expired",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Application expired",
         )
     if application.status != ApplicationStatus.PENDING:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Application status is not pending",
         )
 
@@ -75,6 +75,8 @@ async def decline(
         "decline_this": payload.decline_this,
         "decline_all": payload.decline_all,
     }
+    application.status = ApplicationStatus.DECLINED
+    application.borrower_declined_at = current_time
 
     session.commit()
     return api.ApplicationResponse(
@@ -102,13 +104,13 @@ async def decline_feedback(
 
     if application.expired_at < current_time:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found or uuid expired",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Application expired",
         )
-    if application.status != ApplicationStatus.PENDING:
+    if application.status != ApplicationStatus.DECLINED:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found or status is not pending",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Application is not Declined",
         )
 
     application.borrower_declined_preferences_data = {

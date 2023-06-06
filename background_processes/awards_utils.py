@@ -52,6 +52,24 @@ def insert_award(award: Award):
             raise e
 
 
+def create_new_award(borrower_id: int, source_contract_id: str, entry: dict) -> dict:
+    return {
+        "borrower_id": borrower_id,
+        "source_contract_id": source_contract_id,
+        "source_url": entry["urlproceso"]["url"],
+        "entity_code": entry["codigo_entidad"],
+        "procurement_method": entry["modalidad_de_contratacion"],
+        "buyer_name": entry["nombre_entidad"],
+        "contracting_process_id": entry["proceso_de_compra"],
+        "procurement_category": entry["tipo_de_contrato"],
+        "previous": False,
+        "payment_method": {
+            "habilita_pago_adelantado": entry["habilita_pago_adelantado"],
+            "valor_de_pago_adelantado": entry["valor_de_pago_adelantado"],
+        },
+    }
+
+
 def get_new_contracts(index: int):
     # add handling for previous contracts using typer
 
@@ -63,69 +81,55 @@ def get_new_contracts(index: int):
             "%Y-%m-%dT00:00:00.000"
         )
         url = (
-            f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset={index}&$order=documento_proveedor&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset={index}&$order=documento_proveedor&"
+            "$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
         return httpx.get(url, headers=headers)
 
     url = (
-        f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset={index}&$order=documento_proveedor&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+        f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset=100&$order=documento_proveedor&$"
+        "where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
         f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
     return httpx.get(url, headers=headers)
 
 
-def get_or_create_award(entry, borrower_id, previous=False) -> int:
+def get_or_create_award(entry, borrower_id, previous=False) -> tuple[int, str, str]:
     source_contract_id = entry.get("id_contrato", "")
     if source_contract_id in get_awards_list() or not source_contract_id:
-        return 0
+        return 0, "", ""
     else:
-        fetched_award = {
-            "borrower_id": borrower_id,
-            "source_contract_id": source_contract_id,
-            "source_url": entry["urlproceso"]["url"],
-            "entity_code": entry["codigo_entidad"],
-            "procurement_method": entry["modalidad_de_contratacion"],
-            "buyer_name": entry["nombre_entidad"],
-            "contracting_process_id": entry["proceso_de_compra"],
-            "procurement_category": entry["tipo_de_contrato"],
-            "previous": previous,
-            "payment_method": {
-                "habilita_pago_adelantado": entry["habilita_pago_adelantado"],
-                "valor_de_pago_adelantado": entry["valor_de_pago_adelantado"],
-            },
-        }
+        new_award = create_new_award(borrower_id, source_contract_id, entry)
 
         award_url = f"{URLS['AWARDS']}?id_del_portafolio={entry['proceso_de_compra']}"
 
         award_response = httpx.get(award_url, headers=headers)
         award_response_json = award_response.json()[0]
 
-        fetched_award["description"] = award_response_json.get(
+        new_award["description"] = award_response_json.get(
             "nombre_del_procedimiento", ""
         )
-        fetched_award["award_date"] = award_response_json.get(
-            "fecha_adjudicacion", None
-        )
-        fetched_award["award_amount"] = award_response_json.get(
+        new_award["award_date"] = award_response_json.get("fecha_adjudicacion", None)
+        new_award["award_amount"] = award_response_json.get(
             "valor_total_adjudicacion", 0
         )
-        fetched_award["source_data"] = award_response_json
-        fetched_award["source_last_updated_at"] = award_response_json.get(
+        new_award["source_data"] = award_response_json
+        new_award["source_last_updated_at"] = award_response_json.get(
             "ultima_actualizacion)", None
         )
-        fetched_award["contract_status"] = award_response_json.get(
+        new_award["contract_status"] = award_response_json.get(
             "estado_del_procedimiento", ""
         )
-        fetched_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
+        new_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
 
         if previous:
-            fetched_award["contractperiod_startdate"] = entry.get(
+            new_award["contractperiod_startdate"] = entry.get(
                 "fecha_de_inicio_del_contrato", None
             )
-            fetched_award["contractperiod_enddate"] = entry.get(
+            new_award["contractperiod_enddate"] = entry.get(
                 "fecha_de_fin_del_contrato", None
             )
 
-        award_id = insert_award(fetched_award)
-        return award_id
+        award_id = insert_award(new_award)
+        return award_id, new_award["buyer_name"], new_award["title"]
