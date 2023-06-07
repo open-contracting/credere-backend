@@ -1,3 +1,5 @@
+import logging
+
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
@@ -28,7 +30,7 @@ async def create_user(
 
             return user
         except (client.exceptions().UsernameExistsException, IntegrityError) as e:
-            print(e)
+            logging.error(e)
             raise HTTPException(status_code=400, detail="Username already exists")
 
 
@@ -36,12 +38,12 @@ async def create_user(
 def register_user(user: BasicUser, client: CognitoClient = Depends(get_cognito_client)):
     try:
         response = client.admin_create_user(user.username, user.name)
-        print(response)
+        logging.info(response)
     except client.exceptions().UsernameExistsException as e:
-        print(e)
+        logging.error(e)
         raise HTTPException(status_code=400, detail="Username already exists")
     except Exception as e:
-        print(e)
+        logging.error(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
 
 
@@ -74,7 +76,7 @@ def change_password(
 
         return {"message": "Password changed"}
     except ClientError as e:
-        print(e)
+        logging.error(e)
         response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             return {"message": "Temporal password is expired, please request a new one"}
@@ -92,11 +94,11 @@ def setup_mfa(
         response = client.verify_software_token(
             user.secret, user.session, user.temp_password
         )
-        print(response)
+        logging.info(response)
 
         return {"message": "MFA configured successfully"}
     except ClientError as e:
-        print(e)
+        logging.error(e)
         response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         if e.response["Error"]["Code"] == "NotAuthorizedException":
             return {"message": "Invalid session for the user, session is expired"}
@@ -121,7 +123,7 @@ def login(
             "refresh_token": response["AuthenticationResult"]["RefreshToken"],
         }
     except ClientError as e:
-        print(e)
+        logging.error(e)
         response.status_code = status.HTTP_401_UNAUTHORIZED
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             return {"message": "Temporal password is expired, please request a new one"}
@@ -139,7 +141,7 @@ def login_mfa(
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
-            print(response["ChallengeName"])
+            logging.info(response["ChallengeName"])
             session = response["Session"]
             mfa_login_response = client.respond_to_auth_challenge(
                 user.username,
@@ -158,7 +160,7 @@ def login_mfa(
             }
 
     except ClientError as e:
-        print(e)
+        logging.error(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             return {"message": "Temporal password is expired, please request a new one"}
         else:
@@ -173,7 +175,7 @@ def logout(
     try:
         client.logout_user(Authorization)
     except ClientError as e:
-        print(e)
+        logging.error(e)
         return {"message": "User was unable to logout"}
 
     return {"message": "User logged out successfully"}
@@ -195,10 +197,10 @@ def forgot_password(
 ):
     try:
         response = client.reset_password(user.username)
-        print(response)
+        logging.info(response)
         return {"message": "An email with a reset link was sent to end user"}
     except Exception as e:
-        print(e)
+        logging.error(e)
         return {"message": "There was an issue trying to change the password"}
 
 

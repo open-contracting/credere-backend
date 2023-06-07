@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Generator
 
 import boto3
@@ -32,7 +33,7 @@ def start_application():
 
 @pytest.fixture(scope="function")
 def app() -> Generator[FastAPI, Any, None]:
-    print("Creating test database")
+    logging.info("Creating test database")
     User.metadata.create_all(engine)  # Create the tables.
     _app = start_application()
     yield _app
@@ -88,7 +89,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
     )
 
     def generate_test_password():
-        print("generate_password")
+        logging.info("generate_password")
         return tempPassword
 
     def _get_test_cognito_client():
@@ -150,12 +151,12 @@ def test_login(client):
     responseSetupPassword = client.put(
         "/users/change-password", json=setupPasswordPayload
     )
-    print(responseSetupPassword.json())
+    logging.info(responseSetupPassword.json())
     assert responseSetupPassword.status_code == 200
 
     loginPayload = {"username": data["email"], "password": tempPassword}
     responseLogin = client.post("/users/login", json=loginPayload)
-    print(responseLogin.json())
+    logging.info(responseLogin.json())
 
     assert responseLogin.status_code == 200
     assert responseLogin.json()["access_token"] is not None
@@ -164,7 +165,7 @@ def test_login(client):
         "/secure-endpoint-example",
         headers={"Authorization": "Bearer " + responseLogin.json()["access_token"]},
     )
-    print(responseAccessProtectedRoute.json())
+    logging.info(responseAccessProtectedRoute.json())
 
     assert responseAccessProtectedRoute.status_code == 200
     assert (
@@ -176,10 +177,10 @@ def test_login(client):
         "/secure-endpoint-example-username-extraction",
         headers={"Authorization": "Bearer " + responseLogin.json()["access_token"]},
     )
-    print(responseAccessProtectedRouteWithUser.json())
+    logging.info(responseAccessProtectedRouteWithUser.json())
 
     assert responseAccessProtectedRouteWithUser.status_code == 200
-    print(responseAccessProtectedRouteWithUser.json())
+    logging.info(responseAccessProtectedRouteWithUser.json())
     assert (
         responseAccessProtectedRouteWithUser.json()["username"]
         == setupPasswordPayload["username"]
