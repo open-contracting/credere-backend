@@ -2,14 +2,13 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 import httpx
-import sentry_sdk
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
 from app.schema.core import Award
 
-from .background_config import URLS, headers
+from .background_config import URLS, headers, secop_pagination_limit
 
 
 def get_awards_list():
@@ -53,14 +52,26 @@ def insert_award(award: Award):
             raise e
 
 
-def get_new_contracts(previous=False):
-    if previous:
-        url = (
-            f"{URLS['CONTRACTS']}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
-            f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
-        )
+def create_new_award(borrower_id: int, source_contract_id: str, entry: dict) -> dict:
+    return {
+        "borrower_id": borrower_id,
+        "source_contract_id": source_contract_id,
+        "source_url": entry["urlproceso"]["url"],
+        "entity_code": entry["codigo_entidad"],
+        "procurement_method": entry["modalidad_de_contratacion"],
+        "buyer_name": entry["nombre_entidad"],
+        "contracting_process_id": entry["proceso_de_compra"],
+        "procurement_category": entry["tipo_de_contrato"],
+        "previous": False,
+        "payment_method": {
+            "habilita_pago_adelantado": entry["habilita_pago_adelantado"],
+            "valor_de_pago_adelantado": entry["valor_de_pago_adelantado"],
+        },
+    }
 
-        return httpx.get(url, headers=headers)
+
+def get_new_contracts(index: int):
+    # add handling for previous contracts using typer
 
     last_updated_award_date = get_last_updated_award_date()
 
@@ -70,13 +81,15 @@ def get_new_contracts(previous=False):
             "%Y-%m-%dT00:00:00.000"
         )
         url = (
-            f"{URLS['CONTRACTS']}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset={index}&$order=documento_proveedor&"
+            "$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
         return httpx.get(url, headers=headers)
 
     url = (
-        f"{URLS['CONTRACTS']}?$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+        f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset=100&$order=documento_proveedor&$"
+        "where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
         f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
     return httpx.get(url, headers=headers)
@@ -87,59 +100,36 @@ def get_or_create_award(entry, borrower_id, previous=False) -> tuple[int, str, s
     if source_contract_id in get_awards_list() or not source_contract_id:
         return 0, "", ""
     else:
-        fetched_award = {
-            "borrower_id": borrower_id,
-            "source_contract_id": source_contract_id,
-            "source_url": entry["urlproceso"]["url"],
-            "entity_code": entry["codigo_entidad"],
-            "procurement_method": entry["modalidad_de_contratacion"],
-            "buyer_name": entry["nombre_entidad"],
-            "contracting_process_id": entry["proceso_de_compra"],
-            "procurement_category": entry["tipo_de_contrato"],
-            "previous": previous,
-            "payment_method": {
-                "habilita_pago_adelantado": entry["habilita_pago_adelantado"],
-                "valor_de_pago_adelantado": entry["valor_de_pago_adelantado"],
-            },
-        }
+        new_award = create_new_award(borrower_id, source_contract_id, entry)
 
         award_url = f"{URLS['AWARDS']}?id_del_portafolio={entry['proceso_de_compra']}"
 
         award_response = httpx.get(award_url, headers=headers)
         award_response_json = award_response.json()[0]
 
-        fetched_award["description"] = award_response_json.get(
+        new_award["description"] = award_response_json.get(
             "nombre_del_procedimiento", ""
         )
-        fetched_award["award_date"] = award_response_json.get(
-            "fecha_adjudicacion", None
-        )
-        fetched_award["award_amount"] = award_response_json.get(
+        new_award["award_date"] = award_response_json.get("fecha_adjudicacion", None)
+        new_award["award_amount"] = award_response_json.get(
             "valor_total_adjudicacion", 0
         )
-        fetched_award["source_data"] = award_response_json
-        fetched_award["source_last_updated_at"] = award_response_json.get(
-            "fecha_de_ultima_publicaci)", None
+        new_award["source_data"] = award_response_json
+        new_award["source_last_updated_at"] = award_response_json.get(
+            "ultima_actualizacion)", None
         )
-        fetched_award["contract_status"] = award_response_json.get(
+        new_award["contract_status"] = award_response_json.get(
             "estado_del_procedimiento", ""
         )
-        fetched_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
+        new_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
 
         if previous:
-            fetched_award["contractperiod_startdate"] = entry.get(
+            new_award["contractperiod_startdate"] = entry.get(
                 "fecha_de_inicio_del_contrato", None
             )
-            fetched_award["contractperiod_enddate"] = entry.get(
+            new_award["contractperiod_enddate"] = entry.get(
                 "fecha_de_fin_del_contrato", None
             )
 
-        null_keys = [key for key, value in fetched_award.items() if value is None]
-        if null_keys:
-            error_message = "Null values found for the following keys: {}".format(
-                ", ".join(null_keys)
-            )
-            sentry_sdk.capture_message(error_message)
-
-        award_id = insert_award(fetched_award)
-        return award_id, fetched_award["buyer_name"], fetched_award["title"]
+        award_id = insert_award(new_award)
+        return award_id, new_award["buyer_name"], new_award["title"]

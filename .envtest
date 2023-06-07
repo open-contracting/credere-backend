@@ -6,6 +6,7 @@ COGNITO_POOL_ID=********\*\*********
 EMAIL_SENDER_ADDRESS=********\*\*********
 DATABASE_URL=********\*\*********
 SECOP_APP_TOKEN=********\*\*********
+COLOMBIA_SECOP_APP_TOKEN=********\*\*********
 FRONTEND_URL=********\*\*********
 HASH_KEY=********\*\*********
 FRONT_PUBLIC_IMAGES_ES = ********\*\*********
@@ -14,3 +15,4 @@ TEMPORAL_BUCKET = ********\*\*********
 FACEBOOK_LINK = ********\*\*********
 TWITTER_LINK = ********\*\*********
 LINK_LINK = ********\*\*********
+

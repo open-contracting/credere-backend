@@ -60,7 +60,7 @@ COGNITO_POOL_ID -> cognito pool id
 EMAIL_SENDER_ADDRESS -> authorized sender in cognito
 FRONTEND_URL -> frontend url, use http://127.0.0.1:3000/ for dev
 SENTRY_DNS -> the DNS for sentry
-SECOP_APP_TOKEN -> Token from fetching SECOP data
+COLOMBIA_SECOP_APP_TOKEN -> Token from fetching SECOP data
 HASH_KEY -> hash key for hashing personal data before submitting it to Database
 FRONT_PUBLIC_IMAGES_ES = -> Directory on the frontend server containing the Spanish version of the text in the images.
 FRONT_PUBLIC_IMAGES_EN = ->Directory on the frontend server containing the English version of the text in the images.
@@ -166,4 +166,9 @@ To run test locally
 
 ```
 python3 -m background_processes.fetch_awards
+```
+to fech previous awards you can run the command like this:
+
+```
+python3 -m background_processes.fetch_awards True
 ```
