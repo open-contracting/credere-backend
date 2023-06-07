@@ -1,12 +1,13 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session, defaultload
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from app.schema import api
+import app.utils.applications as utils
+from app.schema import api as ApiSchema
 
-from ..db.session import get_db
-from ..schema.core import Application, ApplicationStatus
+from ..db.session import get_db, transaction_session
+from ..schema.core import ApplicationStatus, BorrowerStatus
 
 router = APIRouter()
 
@@ -14,110 +15,104 @@ router = APIRouter()
 @router.get(
     "/applications/uuid/{uuid}",
     tags=["applications"],
-    response_model=api.ApplicationResponse,
+    response_model=ApiSchema.ApplicationResponse,
 )
-async def get_application_by_uuid(uuid: str, session: Session = Depends(get_db)):
-    application = (
-        session.query(Application)
-        .options(defaultload(Application.borrower), defaultload(Application.award))
-        .filter(Application.uuid == uuid)
-        .first()
-    )
-    expired_at = application.expired_at
+async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
+    application = utils.get_application_by_uuid(uuid, session)
+    utils.check_is_application_expired(application)
 
-    current_time = datetime.now(expired_at.tzinfo)
-
-    if application.expired_at < current_time:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found or uuid expired",
-        )
-    if not application:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
-        )
-    return api.ApplicationResponse(
+    return ApiSchema.ApplicationResponse(
         application=application, borrower=application.borrower, award=application.award
     )
 
 
 @router.post(
-    "/applications/decline/",
+    "/applications/access-scheme",
     tags=["applications"],
-    response_model=api.ApplicationResponse,
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def access_scheme(
+    payload: ApiSchema.ApplicationBase, session: Session = Depends(get_db)
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_is_application_expired(application)
+        utils.check_application_status(application, ApplicationStatus.PENDING)
+
+        current_time = datetime.now(application.created_at.tzinfo)
+        application.borrower_accepted_at = current_time
+        application.status = ApplicationStatus.ACCEPTED
+        application.expired_at = None
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/decline",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
 )
 async def decline(
-    payload: api.ApplicationDeclinePayload,
+    payload: ApiSchema.ApplicationDeclinePayload,
     session: Session = Depends(get_db),
 ):
-    application = (
-        session.query(Application)
-        .options(defaultload(Application.borrower), defaultload(Application.award))
-        .filter(Application.uuid == payload.uuid)
-        .first()
-    )
-    expired_at = application.expired_at
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_is_application_expired(application)
+        utils.check_application_status(application, ApplicationStatus.PENDING)
 
-    current_time = datetime.now(expired_at.tzinfo)
+        borrower_declined_data = vars(payload)
+        borrower_declined_data.pop("uuid")
 
-    if application.expired_at < current_time:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Application expired",
+        application.borrower_declined_data = borrower_declined_data
+        application.status = ApplicationStatus.DECLINED
+        current_time = datetime.now(application.created_at.tzinfo)
+        application.borrower_declined_at = current_time
+
+        # delete borrower data
+        application.borrower.legal_name = ""
+        application.borrower.legal_identifier = ""
+        application.borrower.email = ""
+        application.borrower.address = ""
+        application.borrower.declined_at = current_time
+
+        if payload.decline_all:
+            application.borrower.status = BorrowerStatus.DECLINE_OPPORTUNITIES
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
         )
-    if application.status != ApplicationStatus.PENDING:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Application status is not pending",
-        )
-
-    application.borrower_declined_data = {
-        "decline_this": payload.decline_this,
-        "decline_all": payload.decline_all,
-    }
-    application.status = ApplicationStatus.DECLINED
-    application.borrower_declined_at = current_time
-
-    session.commit()
-    return api.ApplicationResponse(
-        application=application, borrower=application.borrower, award=application.award
-    )
 
 
 @router.post(
     "/applications/decline-feedback",
     tags=["applications"],
-    response_model=api.ApplicationResponse,
+    response_model=ApiSchema.ApplicationResponse,
 )
 async def decline_feedback(
-    payload: api.ApplicationDeclineFeedbackPayload, session: Session = Depends(get_db)
+    payload: ApiSchema.ApplicationDeclineFeedbackPayload,
+    session: Session = Depends(get_db),
 ):
-    application = (
-        session.query(Application)
-        .options(defaultload(Application.borrower), defaultload(Application.award))
-        .filter(Application.uuid == payload.uuid)
-        .first()
-    )
-    expired_at = application.expired_at
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_is_application_expired(application)
+        utils.check_application_status(application, ApplicationStatus.DECLINED)
 
-    current_time = datetime.now(expired_at.tzinfo)
+        borrower_declined_preferences_data = vars(payload)
+        borrower_declined_preferences_data.pop("uuid")
 
-    if application.expired_at < current_time:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Application expired",
-        )
-    if application.status != ApplicationStatus.DECLINED:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Application is not Declined",
+        application.borrower_declined_preferences_data = (
+            borrower_declined_preferences_data
         )
 
-    application.borrower_declined_preferences_data = {
-        "decline_this": payload.decline_this,
-    }
-
-    session.commit()
-    return api.ApplicationResponse(
-        application=application, borrower=application.borrower, award=application.award
-    )
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
