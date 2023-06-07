@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     twitter_link: str = config_env.get("TWITTER_LINK", "www.twitter.com")
     link_link: str = config_env.get("LINK_LINK", "http://localhost:3000")
     test_mail_receiver: str = config_env.get("TEST_MAIL_RECEIVER", "aomm24@gmail.com")
+    colombia_secop_app_token: str = config_env.get("COLOMBIA_SECOP_APP_TOKEN", None)
+    hash_key: str = config_env.get("HASH_KEY", None)
+    secop_pagination_limit: str = config_env.get("SECOP_PAGINATION_LIMIT", None)
 
     class Config:
         env_file = ".env"

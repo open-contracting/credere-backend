@@ -60,6 +60,13 @@ class ApplicationActionType(Enum):
     BORROWER_UPDATE = "BORROWER_UPDATE"
 
 
+class BorrowerSize(Enum):
+    NOT_INFORMED = "NOT_INFORMED"
+    MICRO = "0 a 10"
+    SMALL = "11 a 50"
+    MEDIUM = "51 a 200"
+
+
 class BorrowerDocument(SQLModel, table=True):
     __tablename__ = "borrower_document"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -75,11 +82,19 @@ class BorrowerDocument(SQLModel, table=True):
     name: str = Field(default="")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
     updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
+        )
     )
     submitted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False)
@@ -152,12 +167,18 @@ class Application(SQLModel, table=True):
     completed_in_days: Optional[int] = Field(nullable=True)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
     updated_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
     expired_at: Optional[datetime] = Field(
@@ -184,19 +205,30 @@ class Borrower(SQLModel, table=True):
     legal_identifier: str = Field(default="")
     type: str = Field(default="")
     sector: str = Field(default="")
-    size: str = Field(default="")
+    size: BorrowerSize = Field(
+        sa_column=Column(
+            SAEnum(BorrowerSize, name="borrower_size"),
+        ),
+        default=BorrowerSize.NOT_INFORMED,
+    )
     status: BorrowerStatus = Field(
         sa_column=Column(SAEnum(BorrowerStatus, name="borrower_status")),
         default=BorrowerStatus.ACTIVE,
     )
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
     updated_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
     declined_at: Optional[datetime] = Field(
@@ -218,11 +250,19 @@ class Lender(SQLModel, table=True):
     sla_days: Optional[int]
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
     updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
+        )
     )
     deleted_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
@@ -265,12 +305,18 @@ class Award(SQLModel, table=True):
     source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
     updated_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, default=datetime.utcnow()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
 
@@ -285,11 +331,19 @@ class Message(SQLModel, table=True):
     body: Optional[str] = Field(default="")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
-    sent_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False)
+    updated_at: Optional[datetime] = Field(
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
+        )
     )
 
 
@@ -309,7 +363,10 @@ class User(SQLModel, table=True):
     lender: "Lender" = Relationship(back_populates="users")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
 
@@ -327,7 +384,10 @@ class ApplicationAction(SQLModel, table=True):
     user: Optional[User] = Relationship(back_populates="application_actions")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
-            DateTime(timezone=True), nullable=False, server_default=func.now()
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
         )
     )
 

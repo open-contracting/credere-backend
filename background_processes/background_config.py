@@ -1,6 +1,4 @@
-import os
-
-from dotenv import dotenv_values
+from app.db.session import app_settings
 
 URLS = {
     "CONTRACTS": "https://www.datos.gov.co/resource/jbjy-vk9h.json",
@@ -11,12 +9,5 @@ URLS = {
 
 pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
-config_env = {
-    **dotenv_values(".env"),
-    **os.environ,
-}  # config are loading separately from main app in order to avoid package dependencies
 
-colombia_secop_app_token: str = config_env.get("COLOMBIA_SECOP_APP_TOKEN", None)
-hash_key: str = config_env.get("HASH_KEY", None)
-secop_pagination_limit: str = config_env.get("SECOP_PAGINATION_LIMIT", None)
-headers = {"X-App-Token": colombia_secop_app_token}
+headers = {"X-App-Token": app_settings.colombia_secop_app_token}

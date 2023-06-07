@@ -79,7 +79,6 @@ def get_email(borrower_email, entry) -> str:
     borrower_response_email = httpx.get(borrower_email, headers=headers)
 
     if len(borrower_response_email.json()) != 1:
-        print(borrower_response_email.json())
         error_data = {
             "entry": entry,
             "response": borrower_response_email.json(),

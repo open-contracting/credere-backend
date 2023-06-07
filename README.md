@@ -61,6 +61,7 @@ EMAIL_SENDER_ADDRESS -> authorized sender in cognito
 FRONTEND_URL -> frontend url, use http://127.0.0.1:3000/ for dev
 SENTRY_DNS -> the DNS for sentry
 COLOMBIA_SECOP_APP_TOKEN -> Token from fetching SECOP data
+SECOP_PAGINATION_LIMIT -> Page size for the fected SECOP data
 HASH_KEY -> hash key for hashing personal data before submitting it to Database
 FRONT_PUBLIC_IMAGES_ES = -> Directory on the frontend server containing the Spanish version of the text in the images.
 FRONT_PUBLIC_IMAGES_EN = ->Directory on the frontend server containing the English version of the text in the images.

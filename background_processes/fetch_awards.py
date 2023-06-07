@@ -26,6 +26,9 @@ if __name__ == "__main__":
                             award_id, buyer_name, title = get_or_create_award(
                                 entry, borrower_id
                             )
+                            if award_id == 0:
+                                print("Award already exists")
+                                break
                             uuid = create_application(
                                 award_id,
                                 borrower_id,
@@ -40,6 +43,6 @@ if __name__ == "__main__":
                         except ValueError as e:
                             print("there was an error creating the application.", e)
 
-            index += 1
-            contracts_response = get_new_contracts(index)
-            contracts_response_json = contracts_response.json()
+                    index += 1
+                    contracts_response = get_new_contracts(index)
+                    contracts_response_json = contracts_response.json()

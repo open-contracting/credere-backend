@@ -5,7 +5,7 @@ import uuid
 
 import sentry_sdk
 
-from .background_config import hash_key
+from app.db.session import app_settings
 
 
 def raise_sentry_error(message: str, payload: dict):
@@ -23,7 +23,7 @@ def send_invitation_email(url, email, uuid):
 
 
 def get_secret_hash(nit_entidad: str) -> str:
-    key = hash_key
+    key = app_settings.hash_key
     message = bytes(nit_entidad, "utf-8")
     key = bytes(key, "utf-8")
     return base64.b64encode(

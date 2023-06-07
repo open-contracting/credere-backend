@@ -5,10 +5,10 @@ import httpx
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.db.session import get_db
+from app.db.session import app_settings, get_db
 from app.schema.core import Award
 
-from .background_config import URLS, headers, secop_pagination_limit
+from .background_config import URLS, headers
 
 
 def get_awards_list():
@@ -25,8 +25,6 @@ def get_awards_list():
 
 
 def get_last_updated_award_date():
-    # depends cannot be used outside of fastapp app call. In order to be able to access session and connect to database
-    # we need to create a context manager like this
     with contextmanager(get_db)() as session:
         award = (
             session.query(Award).order_by(desc(Award.source_last_updated_at)).first()
@@ -71,8 +69,6 @@ def create_new_award(borrower_id: int, source_contract_id: str, entry: dict) -> 
 
 
 def get_new_contracts(index: int):
-    # add handling for previous contracts using typer
-
     last_updated_award_date = get_last_updated_award_date()
 
     if last_updated_award_date:
@@ -81,15 +77,15 @@ def get_new_contracts(index: int):
             "%Y-%m-%dT00:00:00.000"
         )
         url = (
-            f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset={index}&$order=documento_proveedor&"
-            "$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={index}"
+            "&$order=documento_proveedor&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
         return httpx.get(url, headers=headers)
 
     url = (
-        f"{URLS['CONTRACTS']}?$limit={secop_pagination_limit}&$offset=100&$order=documento_proveedor&$"
-        "where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+        f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={index}"
+        "&$order=documento_proveedor&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
         f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
     return httpx.get(url, headers=headers)
