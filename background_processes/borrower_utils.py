@@ -1,6 +1,5 @@
 import re
 from contextlib import contextmanager
-from datetime import datetime
 
 import httpx
 from fastapi import HTTPException
@@ -45,8 +44,6 @@ def get_borrowers_list():
 def insert_borrower(borrower: Borrower):
     with contextmanager(get_db)() as session:
         try:
-            borrower["created_at"] = datetime.utcnow()
-            borrower["updated_at"] = datetime.utcnow()
             obj_db = Borrower(**borrower)
             session.add(obj_db)
             session.commit()

@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import httpx
 from sqlalchemy import desc
@@ -38,8 +38,6 @@ def get_last_updated_award_date():
 def insert_award(award: Award):
     with contextmanager(get_db)() as session:
         try:
-            award["created_at"] = datetime.utcnow()
-            award["updated_at"] = datetime.utcnow()
             obj_db = Award(**award)
             session.add(obj_db)
             session.commit()
