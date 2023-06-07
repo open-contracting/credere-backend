@@ -9,14 +9,16 @@ class ApplicationResponse(BaseModel):
     award: Award
 
 
-class ApplicationDeclinePayload(BaseModel):
+class ApplicationBase(BaseModel):
     uuid: str
+
+
+class ApplicationDeclinePayload(ApplicationBase):
     decline_this: bool
     decline_all: bool
 
 
-class ApplicationDeclineFeedbackPayload(BaseModel):
-    uuid: str
+class ApplicationDeclineFeedbackPayload(ApplicationBase):
     dont_need_access_credit: bool
     already_have_acredit: bool
     preffer_to_go_to_bank: bool
