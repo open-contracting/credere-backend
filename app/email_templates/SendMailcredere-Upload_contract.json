@@ -1,0 +1,8 @@
+{
+  "Source": "Credere_mail_test <adrian.martinez@willdom.com>",
+  "Template": "credere-UploadContract",
+  "Destination": {
+    "ToAddresses": ["adrian.martinez@willdom.com"]
+  },
+  "TemplateData": "{\"FI\": \"Bank XX\", \"AWARD_SUPPLIER_NAME\": \"PROVEEDOR XX\", \"TENDER_TITLE\": \"PROVISION_DE_COMIDA\", \"BUYER_NAME\": \"INSTITUCION PUBLICA XX\", \"LINK-TO-WEB-VERSION\": \"www.google.com\", \"UPLOAD_CONTRACT_URL\": \"www.google.com\", \"UPLOAD_CONTRACT_IMAGE_LINK\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/uploadContract.png\", \"OCP_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg\", \"TWITTER_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/twiterlogo.png\", \"FB_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/facebook.png\", \"LINK_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/link.png\", \"TWITTER_LINK\": \"www.google.com\", \"FACEBOOK_LINK\": \"www.google.com\", \"LINK_LINK\": \"www.google.com\"}"
+}
