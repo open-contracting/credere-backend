@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import logging
 import random
 import string
 from typing import Generator
@@ -72,7 +73,7 @@ class CognitoClient:
             ],
         )
 
-        print(response)
+        logging.info(response)
         return response
 
     def initiate_auth(self, username, password):
@@ -92,7 +93,7 @@ class CognitoClient:
             authentication_result = response["AuthenticationResult"]
             if "ExpiresIn" in authentication_result:
                 expiration_time = authentication_result["ExpiresIn"]
-                print("Session expiration time (in seconds):", expiration_time)
+                logging.info("Session expiration time (in seconds):", expiration_time)
 
         return response
 
@@ -172,7 +173,7 @@ class CognitoClient:
         response = self.client.admin_user_global_sign_out(
             UserPoolId=app_settings.cognito_pool_id, Username=username
         )
-        print(response)
+        logging.info(response)
         return response
 
     def reset_password(self, username):

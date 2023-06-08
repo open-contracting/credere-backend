@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 
 from app.core.user_dependencies import sesClient
@@ -14,7 +15,7 @@ if __name__ == "__main__":
     contracts_response = get_new_contracts(index)
     contracts_response_json = contracts_response.json()
     if not contracts_response_json:
-        print("No new contracts")
+        logging.info("No new contracts")
     else:
         while len(contracts_response.json()) > 0:
             with contextmanager(get_db)() as session:
@@ -41,9 +42,11 @@ if __name__ == "__main__":
                             email_utility.send_invitation_email(
                                 sesClient, uuid, email, borrower_name, buyer_name, title
                             )
-                            print("application created")
+                            logging.info("Application created")
                         except ValueError as e:
-                            print("there was an error creating the application.", e)
+                            logging.error(
+                                "There was an error creating the application.", e
+                            )
 
                     index += 1
                     contracts_response = get_new_contracts(index)
