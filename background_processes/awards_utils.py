@@ -76,14 +76,14 @@ def get_new_contracts(index: int):
         )
         url = (
             f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={index}"
-            "&$order=documento_proveedor&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+            "&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
             f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
         )
         return httpx.get(url, headers=headers)
 
     url = (
         f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={index}"
-        "&$order=documento_proveedor&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+        "&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
         f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
     return httpx.get(url, headers=headers)
@@ -91,6 +91,8 @@ def get_new_contracts(index: int):
 
 def get_or_create_award(entry, borrower_id, previous=False) -> tuple[int, str, str]:
     source_contract_id = entry.get("id_contrato", "")
+
+    # if award already exist I return 0 so it won't create an app an the entry get logged into sentry
     if source_contract_id in get_awards_list() or not source_contract_id:
         return 0, "", ""
     else:
@@ -116,14 +118,6 @@ def get_or_create_award(entry, borrower_id, previous=False) -> tuple[int, str, s
             "estado_del_procedimiento", ""
         )
         new_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
-
-        if previous:
-            new_award["contractperiod_startdate"] = entry.get(
-                "fecha_de_inicio_del_contrato", None
-            )
-            new_award["contractperiod_enddate"] = entry.get(
-                "fecha_de_fin_del_contrato", None
-            )
 
         award_id = insert_award(new_award)
         return award_id, new_award["buyer_name"], new_award["title"]

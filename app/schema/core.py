@@ -101,7 +101,7 @@ class BorrowerDocument(SQLModel, table=True):
             DateTime(timezone=True),
             nullable=False,
             default=datetime.utcnow(),
-            server_default=func.now(),
+            onupdate=func.now(),
         )
     )
     submitted_at: Optional[datetime] = Field(
@@ -186,7 +186,7 @@ class Application(SQLModel, table=True):
             DateTime(timezone=True),
             nullable=False,
             default=datetime.utcnow(),
-            server_default=func.now(),
+            onupdate=func.now(),
         )
     )
     expired_at: Optional[datetime] = Field(
@@ -236,7 +236,7 @@ class Borrower(SQLModel, table=True):
             DateTime(timezone=True),
             nullable=False,
             default=datetime.utcnow(),
-            server_default=func.now(),
+            onupdate=func.now(),
         )
     )
     declined_at: Optional[datetime] = Field(
@@ -269,7 +269,7 @@ class Lender(SQLModel, table=True):
             DateTime(timezone=True),
             nullable=False,
             default=datetime.utcnow(),
-            server_default=func.now(),
+            onupdate=func.now(),
         )
     )
     deleted_at: datetime = Field(
@@ -324,7 +324,7 @@ class Award(SQLModel, table=True):
             DateTime(timezone=True),
             nullable=False,
             default=datetime.utcnow(),
-            server_default=func.now(),
+            onupdate=func.now(),
         )
     )
 
@@ -350,7 +350,7 @@ class Message(SQLModel, table=True):
             DateTime(timezone=True),
             nullable=False,
             default=datetime.utcnow(),
-            server_default=func.now(),
+            onupdate=func.now(),
         )
     )
 

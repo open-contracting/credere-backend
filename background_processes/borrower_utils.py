@@ -1,34 +1,36 @@
 import re
 from contextlib import contextmanager
+from typing import Dict, List
 
 import httpx
-from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
-from app.schema.core import Borrower
+from app.schema.core import Borrower, BorrowerStatus
 
 from .background_config import URLS, headers, pattern
 from .background_utils import get_secret_hash, raise_sentry_error
 
 
-def get_borrower_id_and_email(nit_entidad: str):
+def get_borrower_id(borrower_identifier: str) -> int:
     with contextmanager(get_db)() as session:
         try:
             obj = (
                 session.query(Borrower)
-                .where(Borrower.borrower_identifier == nit_entidad)
+                .filter(Borrower.borrower_identifier == borrower_identifier)
                 .first()
             )
             if not obj:
-                raise HTTPException(status_code=404, detail="No borrower found")
-            return obj.id, obj.email, obj.legal_name
+                raise ValueError("Borrower not found")
+            if obj.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
+                raise ValueError("Borrower choosed to not receive any new opportunity")
+            return obj.id
         except SQLAlchemyError as e:
             raise e
 
 
-def get_borrowers_list():
+def get_borrowers_list() -> List[str]:
     with contextmanager(get_db)() as session:
         try:
             borrowers = (
@@ -41,7 +43,7 @@ def get_borrowers_list():
     return [borrower[0] for borrower in borrowers] or []
 
 
-def insert_borrower(borrower: Borrower):
+def insert_borrower(borrower: Borrower) -> int:
     with contextmanager(get_db)() as session:
         try:
             obj_db = Borrower(**borrower)
@@ -55,7 +57,7 @@ def insert_borrower(borrower: Borrower):
 
 def create_new_borrower(
     borrower_identifier: str, email: str, borrower_entry: dict
-) -> dict:
+) -> Dict[str, str]:
     new_borrower = {
         "borrower_identifier": borrower_identifier,
         "legal_name": borrower_entry.get("nombre_entidad", ""),
@@ -93,34 +95,30 @@ def get_email(borrower_email, entry) -> str:
     return email
 
 
-def get_or_create_borrower(entry):
+def get_or_create_borrower(entry) -> tuple[int, str, str]:
     borrowers_list = get_borrowers_list()
     borrower_identifier = get_secret_hash(entry.get("documento_proveedor", ""))
 
-    # checks if hashed nit exist in our table
-    if borrower_identifier in borrowers_list:
-        borrower_id, email, legal_name = get_borrower_id_and_email(borrower_identifier)
-    else:
-        borrower_url = f"{URLS['BORROWER']}&nit_entidad={entry['documento_proveedor']}"
-        borrower_response = httpx.get(borrower_url, headers=headers)
+    borrower_url = f"{URLS['BORROWER']}&nit_entidad={entry['documento_proveedor']}"
+    borrower_response = httpx.get(borrower_url, headers=headers)
 
-        if len(borrower_response.json()) > 1:
-            error_data = {"entry": entry, "response": borrower_response.json()}
-            raise_sentry_error(
-                "There are more than one borrowers in this borrower identifier entry",
-                error_data,
-            )
-
-        borrower_response_json = borrower_response.json()[0]
-        legal_name = borrower_response_json["nombre_entidad"]
-        borrower_email = f"{URLS['BORROWER_EMAIL']}?nit={entry['documento_proveedor']}"
-
-        email = get_email(borrower_email, entry)
-
-        new_borrower = create_new_borrower(
-            borrower_identifier, email, borrower_response_json
+    if len(borrower_response.json()) > 1:
+        error_data = {"entry": entry, "response": borrower_response.json()}
+        raise_sentry_error(
+            "There are more than one borrowers in this borrower identifier entry",
+            error_data,
         )
 
-        borrower_id = insert_borrower(new_borrower)
+    borrower_response_json = borrower_response.json()[0]
+    legal_name = borrower_response_json["nombre_entidad"]
+    borrower_email = f"{URLS['BORROWER_EMAIL']}?nit={entry['documento_proveedor']}"
 
-    return borrower_id, email, legal_name
+    email = get_email(borrower_email, entry)
+
+    new_borrower = create_new_borrower(
+        borrower_identifier, email, borrower_response_json
+    )
+    if borrower_identifier in borrowers_list:
+        return get_borrower_id(borrower_identifier), email, legal_name
+
+    return insert_borrower(new_borrower), email, legal_name
