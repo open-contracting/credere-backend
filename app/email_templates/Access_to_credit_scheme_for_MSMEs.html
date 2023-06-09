@@ -60,8 +60,8 @@
       margin-right: 2.5rem;
       margin-top: 2.5rem;
       padding-bottom: 2rem;
-      border-bottom: 1px solid lightgray;
       height: auto;
+      border-bottom: 1px solid lightgray;
     }
 
     .main_content_second {
@@ -90,10 +90,6 @@
       color: rgba(0, 0, 0, 1);
       font-size: 16px;
       font-weight: 700;
-    }
-
-    .login_complete_image {
-      padding-top: 1rem;
     }
 
 
@@ -166,16 +162,64 @@
         </p>
       </div>
 
-      <div class=' login_complete_image'>
-        <span>
-          <a href='{{FIND_OUT_MORE_URL}}'>
-            <img src='{{FIND_OUT_MORE_IMAGE_LINK}}' alt='link to login' />
-          </a>
-          <a style='margin-left: 2rem;' href='{{REMOVE_ME_URL}}'>
-            <img src='{{REMOVE_ME_IMAGE_LINK}}' alt='link to login' />
-          </a>
-        </span>
-      </div>
+      <table width='100%' border='0' cellspacing='0' cellpadding='0'>
+        <tr>
+          <!-- // LEFT SPACER CELL *** MUST HAVE A BACKGROUND COLOUR -->
+          <td bgcolor='#EBEBEB' style='font-size:0px'>&zwnj;</td>
+          <!-- LEFT SPACER CELL // -->
+          <!-- // MAIN CONTENT CELL -->
+          <td align='center' width='600' bgcolor='#FFFFFF'>
+            <table width='100%' border='0' cellspacing='0' cellpadding='0'>
+              <tbody>
+                <!-- STACKING SECTION -->
+                <tr>
+                  <!-- WRAPPER DICTATING THE SPACE AROUND THE STACKING SECTION -->
+                  <td ' bgcolor=' #FFFFFF' align='left'>
+                    <!-- TABLE HOLDING THE TABLE ROW -->
+                    <table border='0' cellspacing='0' cellpadding='0' align='left'>
+                      <!-- ROW HOLDING THE THREE CELLS -->
+                      <tr>
+                        <!-- LEFT CELL -->
+                        <td width='242' style='display: inline-block; margin-top: 20px'>
+                          <table border='0' cellspacing='0' cellpadding='0' align='left'>
+                            <tr>
+                              <td width='100%' valign='middle'>
+                                <a href='{{FIND_OUT_MORE_URL}}'>
+                                  <img src='{{FIND_OUT_MORE_IMAGE_LINK}}' alt='link to find out more' />
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <!-- SPACER CELL -->
+                        <td width='16px' style='display: inline-block;'>&nbsp;</td>
+                        <!-- RIGHT CELL -->
+                        <td width='242' style='display: inline-block; margin-top: 20px;'>
+                          <table border='0' cellspacing='0' cellpadding='0' align='left'>
+                            <tr>
+                              <td class='number_block' width='100%' valign=' middle'>
+                                <a href='{{REMOVE_ME_URL}}'>
+                                  <img src='{{REMOVE_ME_IMAGE_LINK}}' alt='link to remove me' />
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <!-- END OF STACKING SECTION -->
+              </tbody>
+            </table>
+
+          </td>
+          <!-- // MAIN CONTENT CELL -->
+          <!-- // RIGHT SPACER CELL *** MUST HAVE A BACKGROUND COLOUR -->
+          <td bgcolor='#EBEBEB' style='font-size:0px'>&zwnj;</td>
+          <!-- RIGHT SPACER CELL // -->
+        </tr>
+      </table>
     </div>
     <div class='main_content_second'>
       <div class='title main_content_item'>About the Open Contracting Partnership</div>
