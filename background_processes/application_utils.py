@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
+from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_db
@@ -44,3 +45,32 @@ def create_application(
         print(e)
 
     return new_uuid
+
+
+params = {"days_to_expire": 3}
+
+
+# hacer un query que me traiga todas las aplicaciones que esteen en estado
+# sin accederse por primera  vez y que su expiry date sea igual o menor a 3 dias (parametro)
+# select user email from applications where status = pending and expiry_date <= 3 days
+def get_users_to_remind_Access_to_credit():
+    with contextmanager(get_db)() as session:
+        try:
+            users = (
+                session.query(Application)
+                .filter(
+                    and_(
+                        Application.status.PENDING,
+                        Application.expired_at > datetime.now(),
+                        Application.expired_at
+                        <= datetime.now() + timedelta(days=params.days_to_expire),
+                        Application.reminder_sent is False,
+                    )
+                )
+                .all()
+            )
+            print("THIS ARE THE USERS")
+            print(users)
+        except SQLAlchemyError as e:
+            raise e
+    return users or []
