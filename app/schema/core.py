@@ -43,6 +43,7 @@ class BorrowerStatus(Enum):
 class MessageType(Enum):
     BORROWER_INVITACION = "BORROWER_INVITACION"
     BORROWER_PENDING_APPLICATION_REMINDER = "BORROWER_PENDING_APPLICATION_REMINDER"
+    BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
     SUBMITION_COMPLETE = "SUBMITION_COMPLETE"
     CONTRACT_UPLOAD_REQUEST = "CONTRACT_UPLOAD_REQUEST"
     CONTRACT_UPLOAD_CONFIRMATION = "CONTRACT_UPLOAD_CONFIRMATION"
@@ -61,18 +62,23 @@ class UserType(Enum):
 
 
 class ApplicationActionType(Enum):
-    MSME_ACCESS_FROM_LINK = "MSME_ACCESS_FROM_LINK"
-    MSME_DECLINE_INVITATION = "MSME_DECLINE_INVITATION"
-    MSME_ACCEPT_INVITATION = "MSME_ACCEPT_INVITATION"
     AWARD_UPDATE = "AWARD_UPDATE"
     BORROWER_UPDATE = "BORROWER_UPDATE"
+    FI_UPLOAD_COMPLIANCE = "FI_UPLOAD_COMPLIANCE"
+    FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
+    APPROVED_APPLICATION = "APPROVED_APPLICATION"
+    REJECTED_APPLICATION = "REJECTED_APPLICATION"
+    MSME_UPLOAD_DOCUMENT = "MSME_UPLOAD_DOCUMENT"
+    MSME_CHANGE_EMAIL = "MSME_CHANGE_EMAIL"
+    MSME_CONFIRM_EMAIL = "MSME_CONFIRM_EMAIL"
+    MSME_RETRY_APPLICATION = "MSME_RETRY_APPLICATION"
 
 
 class BorrowerSize(Enum):
     NOT_INFORMED = "NOT_INFORMED"
-    MICRO = "0 a 10"
-    SMALL = "11 a 50"
-    MEDIUM = "51 a 200"
+    MICRO = "MICRO"
+    SMALL = "SMALL"
+    MEDIUM = "MEDIUM"
 
 
 class BorrowerDocument(SQLModel, table=True):
@@ -122,7 +128,7 @@ class Application(SQLModel, table=True):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
-    award_borrowed_identifier: str = Field(default="", unique=True, nullable=False)
+    award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     borrower: "Borrower" = Relationship(back_populates="applications")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
@@ -223,6 +229,7 @@ class Borrower(SQLModel, table=True):
         sa_column=Column(SAEnum(BorrowerStatus, name="borrower_status")),
         default=BorrowerStatus.ACTIVE,
     )
+    source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -281,23 +288,23 @@ class Lender(SQLModel, table=True):
 class Award(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     applications: Optional[List["Application"]] = Relationship(back_populates="award")
-    borrower_id: int = Field(foreign_key="borrower.id")
+    borrower_id: Optional[int] = Field(foreign_key="borrower.id", nullable=True)
     borrower: Borrower = Relationship(back_populates="awards")
     source_contract_id: str = Field(default="")
     title: str = Field(default="")
     description: str = Field(default="")
     award_date: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
+        sa_column=Column(DateTime(timezone=False), nullable=True)
     )
     award_amount: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
     )
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
     contractperiod_startdate: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
+        sa_column=Column(DateTime(timezone=False), nullable=True)
     )
     contractperiod_enddate: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
+        sa_column=Column(DateTime(timezone=False), nullable=True)
     )
     payment_method: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     buyer_name: str = Field(default="")
@@ -305,13 +312,16 @@ class Award(SQLModel, table=True):
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
     source_last_updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
+        sa_column=Column(DateTime(timezone=False), nullable=True)
     )
     previous: bool = Field(default=False)
     procurement_method: str = Field(default="")
     contracting_process_id: str = Field(default="")
     procurement_category: str = Field(default="")
-    source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    source_data_contracts: dict = Field(
+        default={}, sa_column=Column(JSON), nullable=False
+    )
+    source_data_awards: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -332,8 +342,8 @@ class Award(SQLModel, table=True):
 
 class Message(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    type: BorrowerDocumentType = Field(
-        sa_column=Column(SAEnum(BorrowerDocumentType, name="borrower_document_type"))
+    type: MessageType = Field(
+        sa_column=Column(SAEnum(MessageType, name="message_type"))
     )
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="messages")

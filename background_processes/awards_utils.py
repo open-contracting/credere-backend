@@ -1,27 +1,24 @@
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import datetime, timedelta
 
-import httpx
 from sqlalchemy import desc
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.session import Session
 
 from app.db.session import app_settings, get_db
 from app.schema.core import Award
 
-from .background_config import URLS, headers
+from .background_config import URLS
+from .background_utils import make_request_with_retry, raise_sentry_error
 
 
-def get_awards_list():
-    with contextmanager(get_db)() as session:
-        try:
-            awards = (
-                session.query(Award.source_contract_id)
-                .order_by(desc(Award.created_at))
-                .all()
-            )
-        except SQLAlchemyError as e:
-            raise e
-    return [award[0] for award in awards] or []
+def get_existing_award(source_contract_id: str, session: Session):
+    award = (
+        session.query(Award)
+        .filter(Award.source_contract_id == source_contract_id)
+        .first()
+    )
+
+    return award
 
 
 def get_last_updated_award_date():
@@ -35,89 +32,85 @@ def get_last_updated_award_date():
     return award.source_last_updated_at
 
 
-def insert_award(award: Award):
-    with contextmanager(get_db)() as session:
-        try:
-            obj_db = Award(**award)
-            session.add(obj_db)
-            session.commit()
-            session.refresh(obj_db)
-            return obj_db.id
-
-        except SQLAlchemyError as e:
-            raise e
+def insert_award(award: Award, session: Session):
+    obj_db = Award(**award)
+    obj_db.created_at = datetime.utcnow()
+    session.add(obj_db)
+    session.flush()
+    return obj_db
 
 
-def create_new_award(borrower_id: int, source_contract_id: str, entry: dict) -> dict:
+def create_new_award(source_contract_id: str, entry: dict) -> dict:
     return {
-        "borrower_id": borrower_id,
         "source_contract_id": source_contract_id,
-        "source_url": entry["urlproceso"]["url"],
-        "entity_code": entry["codigo_entidad"],
-        "procurement_method": entry["modalidad_de_contratacion"],
-        "buyer_name": entry["nombre_entidad"],
-        "contracting_process_id": entry["proceso_de_compra"],
-        "procurement_category": entry["tipo_de_contrato"],
+        "source_url": entry.get("urlproceso", {}).get("url", ""),
+        "entity_code": entry.get("codigo_entidad", ""),
+        "source_last_updated_at": entry.get("ultima_actualizacion", ""),
+        "award_amount": entry.get("valor_del_contrato", ""),
+        "contractperiod_startdate": entry.get("fecha_de_inicio_del_contrato", None),
+        "contractperiod_enddate": entry.get("fecha_de_fin_del_contrato", None),
+        "procurement_method": entry.get("modalidad_de_contratacion", ""),
+        "buyer_name": entry.get("nombre_entidad", ""),
+        "contracting_process_id": entry.get("proceso_de_compra", ""),
+        "procurement_category": entry.get("tipo_de_contrato", ""),
         "previous": False,
         "payment_method": {
-            "habilita_pago_adelantado": entry["habilita_pago_adelantado"],
-            "valor_de_pago_adelantado": entry["valor_de_pago_adelantado"],
+            "habilita_pago_adelantado": entry.get("habilita_pago_adelantado", ""),
+            "valor_de_pago_adelantado": entry.get("valor_de_pago_adelantado", ""),
+            "valor_facturado": entry.get("valor_facturado", ""),
+            "valor_pendiente_de_pago": entry.get("valor_pendiente_de_pago", ""),
+            "valor_pagado": entry.get("valor_pagado", ""),
         },
+        "source_data_contracts": entry,
     }
 
 
-def get_new_contracts(index: int):
-    last_updated_award_date = get_last_updated_award_date()
+def get_new_contracts(index: int, last_updated_award_date):
+    offset = index * app_settings.secop_pagination_limit
+    delta = timedelta(days=365)
+    converted_date = (datetime.now() - delta).strftime("%Y-%m-%dT00:00:00.000")
 
     if last_updated_award_date:
-        one_day = timedelta(days=1)
-        converted_date = (last_updated_award_date - one_day).strftime(
+        delta = timedelta(days=1)
+        converted_date = (last_updated_award_date - delta).strftime(
             "%Y-%m-%dT00:00:00.000"
         )
-        url = (
-            f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={index}"
-            "&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
-            f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
-        )
-        return httpx.get(url, headers=headers)
 
     url = (
-        f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={index}"
-        "&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
-        f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
+        f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
+        "&$order=ultima_actualizacion&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+        f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
-    return httpx.get(url, headers=headers)
+
+    return make_request_with_retry(url)
 
 
-def get_or_create_award(entry, borrower_id, previous=False) -> tuple[int, str, str]:
+def create_award(entry, session: Session) -> Award:
     source_contract_id = entry.get("id_contrato", "")
 
-    # if award already exist I return 0 so it won't create an app an the entry get logged into sentry
-    if source_contract_id in get_awards_list() or not source_contract_id:
-        return 0, "", ""
-    else:
-        new_award = create_new_award(borrower_id, source_contract_id, entry)
+    if not source_contract_id:
+        raise_sentry_error("Skipping Award - No id_contrato", entry)
 
-        award_url = f"{URLS['AWARDS']}?id_del_portafolio={entry['proceso_de_compra']}"
+    # if award already exists
+    if get_existing_award(source_contract_id, session):
+        raise_sentry_error("Skipping Award - Already Exists on Database", entry)
 
-        award_response = httpx.get(award_url, headers=headers)
-        award_response_json = award_response.json()[0]
+    new_award = create_new_award(source_contract_id, entry)
+    award_url = f"{URLS['AWARDS']}?id_del_portafolio={entry['proceso_de_compra']}"
 
-        new_award["description"] = award_response_json.get(
-            "nombre_del_procedimiento", ""
-        )
-        new_award["award_date"] = award_response_json.get("fecha_adjudicacion", None)
-        new_award["award_amount"] = award_response_json.get(
-            "valor_total_adjudicacion", 0
-        )
-        new_award["source_data"] = award_response_json
-        new_award["source_last_updated_at"] = award_response_json.get(
-            "ultima_actualizacion)", None
-        )
-        new_award["contract_status"] = award_response_json.get(
-            "estado_del_procedimiento", ""
-        )
-        new_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
+    award_response = make_request_with_retry(award_url)
+    award_response_json = award_response.json()[0]
 
-        award_id = insert_award(new_award)
-        return award_id, new_award["buyer_name"], new_award["title"]
+    new_award["description"] = award_response_json.get(
+        "descripci_n_del_procedimiento", ""
+    )
+    new_award["award_date"] = award_response_json.get("fecha_adjudicacion", None)
+    new_award["source_data_awards"] = award_response_json
+
+    new_award["contract_status"] = award_response_json.get(
+        "estado_del_procedimiento", ""
+    )
+    new_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
+
+    award = insert_award(new_award, session)
+    return award

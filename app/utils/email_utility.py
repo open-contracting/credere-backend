@@ -1,4 +1,5 @@
 import json
+import logging
 from urllib.parse import quote
 
 import app.email_templates as email_templates
@@ -82,7 +83,10 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
         + "/decline",
     }
 
-    print("Supposed to send email to: " + email)
+    # change to email in prod
+    logging.info(
+        f"NON PROD - Email to: {email} sent to {app_settings.test_mail_receiver}"
+    )
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={
