@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, defaultload
 
-from ..schema.core import Application, ApplicationStatus, User
+from ..schema.core import Application, ApplicationStatus
 
 excluded_applications = [
     ApplicationStatus.PENDING,

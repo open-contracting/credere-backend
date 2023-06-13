@@ -1,6 +1,6 @@
 from functools import wraps
 
-from ..schema.core import User, UserType
+from ..schema.core import User
 
 
 def OCP_only():
