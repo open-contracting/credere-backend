@@ -1,6 +1,25 @@
 from pydantic import BaseModel
 
-from app.schema.core import Application, Award, Borrower
+from app.schema.core import Application, Award, Borrower, User
+
+
+class ResponseBase(BaseModel):
+    detail: str
+
+
+class ChangePasswordResponse(ResponseBase):
+    secret_code: str
+    session: str
+    username: str
+
+
+class UserResponse(BaseModel):
+    user: User
+
+
+class LoginResponse(UserResponse):
+    access_token: str
+    refresh_token: str
 
 
 class ApplicationResponse(BaseModel):

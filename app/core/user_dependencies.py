@@ -173,6 +173,7 @@ class CognitoClient:
         response = self.client.admin_user_global_sign_out(
             UserPoolId=app_settings.cognito_pool_id, Username=username
         )
+
         logging.info(response)
         return response
 
