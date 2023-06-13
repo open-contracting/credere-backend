@@ -64,7 +64,8 @@ def get_users_to_remind_Access_to_credit():
                         Application.expired_at > datetime.now(),
                         Application.expired_at
                         <= datetime.now() + timedelta(days=params.days_to_expire),
-                        Application.reminder_sent is False,
+                        # filtro de la tabla message
+                        # message.type == BORROWER_PENDING_APPLICATION_REMINDER
                     )
                 )
                 .all()
