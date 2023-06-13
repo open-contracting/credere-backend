@@ -64,16 +64,16 @@ async def get_application(
     tags=["applications"],
     response_model=List[core.Application],
 )
-@OCP_only()
 async def get_applications(
     page: int = Query(1, gt=0),
     page_size: int = Query(10, gt=0),
-    current_user: str = Depends(get_current_user),
+    user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
-    user: core.User = None,
 ):
-    applications = utils.get_all_active_applications(page, page_size, session)
-    return applications
+    if user.is_OCP():
+        return utils.get_all_active_applications(page, page_size, session)
+
+    return utils.get_all_FI_user_applications(page, page_size, session, user.id)
 
 
 @router.get(

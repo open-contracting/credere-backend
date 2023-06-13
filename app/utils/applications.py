@@ -90,6 +90,20 @@ def get_all_active_applications(
     return applications
 
 
+def get_all_FI_user_applications(
+    page: int, page_size: int, session: Session, user_id
+) -> List[core.Application]:
+    applications = (
+        session.query(core.Application)
+        .filter(core.Application.lender_id == user_id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return applications
+
+
 def get_application_by_uuid(uuid: str, session: Session):
     application = (
         session.query(core.Application)
