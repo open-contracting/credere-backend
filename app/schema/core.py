@@ -378,6 +378,9 @@ class User(SQLModel, table=True):
         )
     )
 
+    def is_OCP(self) -> bool:
+        return self.type == UserType.OCP
+
 
 class ApplicationAction(SQLModel, table=True):
     __tablename__ = "application_action"

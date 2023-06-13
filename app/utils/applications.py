@@ -1,9 +1,65 @@
 from datetime import datetime
+from typing import List
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, defaultload
+from fastapi.encoders import jsonable_encoder
 
-from ..schema.core import Application, ApplicationStatus
+from ..schema.core import Application, ApplicationStatus, User
+
+excluded_applications = [
+    ApplicationStatus.PENDING,
+    ApplicationStatus.REJECTED,
+    ApplicationStatus.LAPSED,
+    ApplicationStatus.DECLINED,
+]
+
+OCP_can_modify = []
+
+
+def update_application(
+    application_id: int, payload: dict, session: Session, user: User
+) -> Application:
+    application = (
+        session.query(Application).filter(Application.id == application_id).first()
+    )
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    if application.status == ApplicationStatus.APPROVED:
+        raise HTTPException(
+            status_code=409, detail="Approved applications cannot be updated"
+        )
+
+    if user.is_OCP() and application.status not in OCP_can_modify:
+        raise HTTPException(
+            status_code=409,
+            detail="Application cannot be modified by OCP admin at this time",
+        )
+
+    update_dict = jsonable_encoder(payload)
+    for field, value in update_dict.items():
+        setattr(application, field, value)
+
+    session.add(application)
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+def get_all_active_applications(
+    page: int, page_size: int, session: Session
+) -> List[Application]:
+    applications = (
+        session.query(Application)
+        .filter(Application.status.notin_(excluded_applications))
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return applications
 
 
 def get_application_by_uuid(uuid: str, session: Session):

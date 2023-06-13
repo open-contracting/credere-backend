@@ -1,0 +1,24 @@
+from functools import wraps
+from ..schema.core import User, UserType
+
+
+def OCP_only():
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            current_user = kwargs.get("current_user")
+            session = kwargs.get("session")
+
+            # Retrieve the user from the session using external_id
+            user = session.query(User).filter(User.external_id == current_user).first()
+
+            # Check if the user has the required permission
+            if user and user.is_OCP():
+                kwargs["user"] = user  # Pass the user as a keyword argument
+                return await func(*args, **kwargs)
+            else:
+                return {"message": "Insufficient permissions"}
+
+        return wrapper
+
+    return decorator
