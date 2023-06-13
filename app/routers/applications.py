@@ -10,25 +10,34 @@ from app.schema import api as ApiSchema
 from ..db.session import get_db, transaction_session
 from ..schema import core
 from ..utils.permissions import OCP_only
-from ..utils.verify_token import get_current_user
+from ..utils.verify_token import get_current_user, get_user
 
 router = APIRouter()
 
 
 @router.put(
-    "/applications/{application_id}",
+    "/applications/{application_id}/award",
     tags=["applications"],
     response_model=core.Application,
 )
-async def update_application(
+async def update_application_award(
     application_id: int,
-    payload: ApiSchema.ApplicationUpdate,
-    current_user: str = Depends(get_current_user),
+    payload: ApiSchema.AwardUpdate,
+    user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
-    application = utils.update_application(application_id, payload, session)
-
-    return application
+    with transaction_session(session):
+        application = utils.update_application_award(
+            session, application_id, payload, user
+        )
+        utils.create_application_action(
+            session,
+            user.id,
+            application_id,
+            core.ApplicationActionType.AWARD_UPDATE,
+            payload,
+        )
+        return application
 
 
 @router.get(
