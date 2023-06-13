@@ -3,6 +3,11 @@ from pydantic import BaseModel
 from app.schema.core import Application, Award, Borrower
 
 
+class ApplicationUpdate(BaseModel):
+    primary_email: str
+    uuid: str
+
+
 class ApplicationResponse(BaseModel):
     application: Application
     borrower: Borrower

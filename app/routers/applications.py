@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import List
-from sqlmodel import select
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -16,15 +15,6 @@ from ..utils.verify_token import get_current_user
 router = APIRouter()
 
 
-from pydantic import BaseModel
-from typing import Optional
-
-
-class ApplicationUpdate(BaseModel):
-    primary_email: str
-    uuid: str
-
-
 @router.put(
     "/applications/{application_id}",
     tags=["applications"],
@@ -32,10 +22,9 @@ class ApplicationUpdate(BaseModel):
 )
 async def update_application(
     application_id: int,
-    payload: ApplicationUpdate,
+    payload: ApiSchema.ApplicationUpdate,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_db),
-    user: core.User = None,
 ):
     application = utils.update_application(application_id, payload, session)
 

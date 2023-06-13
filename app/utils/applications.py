@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import List
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session, defaultload
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.orm import Session, defaultload
 
 from ..schema.core import Application, ApplicationStatus, User
 
@@ -18,7 +18,7 @@ OCP_can_modify = []
 
 
 def update_application(
-    application_id: int, payload: dict, session: Session, user: User
+    application_id: int, payload: dict, session: Session
 ) -> Application:
     application = (
         session.query(Application).filter(Application.id == application_id).first()
@@ -29,12 +29,6 @@ def update_application(
     if application.status == ApplicationStatus.APPROVED:
         raise HTTPException(
             status_code=409, detail="Approved applications cannot be updated"
-        )
-
-    if user.is_OCP() and application.status not in OCP_can_modify:
-        raise HTTPException(
-            status_code=409,
-            detail="Application cannot be modified by OCP admin at this time",
         )
 
     update_dict = jsonable_encoder(payload)

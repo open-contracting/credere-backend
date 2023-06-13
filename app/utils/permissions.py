@@ -1,4 +1,5 @@
 from functools import wraps
+
 from ..schema.core import User, UserType
 
 
