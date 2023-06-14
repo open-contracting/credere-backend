@@ -230,6 +230,7 @@ class Borrower(SQLModel, table=True):
         default=BorrowerStatus.ACTIVE,
     )
     source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -322,6 +323,7 @@ class Award(SQLModel, table=True):
         default={}, sa_column=Column(JSON), nullable=False
     )
     source_data_awards: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),

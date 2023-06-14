@@ -28,6 +28,8 @@ def get_borrower(borrower_identifier: str, session: Session) -> int:
 def insert_borrower(borrower: Borrower, session: Session) -> int:
     obj_db = Borrower(**borrower)
     obj_db.created_at = datetime.utcnow()
+    obj_db.missing_data = background_utils.get_missing_data_keys(borrower)
+
     session.add(obj_db)
     session.flush()
 
@@ -43,6 +45,7 @@ def update_borrower(
     original_borrower.legal_identifier = borrower.get("legal_identifier", "")
     original_borrower.type = borrower.get("type", "")
     original_borrower.source_data = borrower.get("source_data", "")
+    original_borrower.missing_data = background_utils.get_missing_data_keys(borrower)
 
     session.refresh(original_borrower)
     session.flush()
@@ -71,52 +74,85 @@ def create_new_borrower(
     return new_borrower
 
 
-def get_email(borrower_email, entry) -> str:
-    borrower_response_email = background_utils.make_request_with_retry(borrower_email)
+def get_email(documento_proveedor, entry) -> str:
+    borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
+    borrower_response_email = background_utils.make_request_with_retry(
+        borrower_email_url
+    )
 
-    if len(borrower_response_email.json()) != 1:
+    if len(borrower_response_email.json()) == 0:
         error_data = {
             "entry": entry,
             "response": borrower_response_email.json(),
         }
         background_utils.raise_sentry_error(
-            "Email endpoint returned an invalidad response", error_data
+            "Skipping Award - No email for borrower", error_data
         )
 
     borrower_response_email_json = borrower_response_email.json()[0]
     email = borrower_response_email_json.get("correo_entidad", "")
+
     if not re.match(pattern, email):
         error_data = {
             "entry": entry,
             "response": borrower_response_email_json,
         }
         background_utils.raise_sentry_error(
-            "Borrower has no valid email address", error_data
+            "Skipping Award - Borrower has no valid email address", error_data
         )
+
+    if len(borrower_response_email.json()) > 1:
+        same_email = True
+        for borrower_email in borrower_response_email.json():
+            if borrower_email.get("correo_entidad", "") != email:
+                same_email = False
+                break
+
+        if not same_email:
+            error_data = {
+                "entry": entry,
+                "response": borrower_response_email.json(),
+            }
+            background_utils.raise_sentry_error(
+                "Skipping Award - More than one email for borrower", error_data
+            )
 
     return email
 
 
 def get_or_create_borrower(entry, session: Session) -> Borrower:
-    borrower_identifier = background_utils.get_secret_hash(
-        entry.get("documento_proveedor", "")
-    )
+    documento_proveedor = entry.get("documento_proveedor", None)
+    if not documento_proveedor or documento_proveedor == "No Definido":
+        error_data = {"entry": entry}
+
+        background_utils.raise_sentry_error(
+            "Skipping Award - documento_proveedor is 'No Definido'",
+            error_data,
+        )
+
+    borrower_identifier = background_utils.get_secret_hash(documento_proveedor)
     original_borrower = get_borrower(borrower_identifier, session)
 
-    borrower_url = f"{URLS['BORROWER']}&nit_entidad={entry['documento_proveedor']}"
+    borrower_url = (
+        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}"
+        f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
+    )
     borrower_response = background_utils.make_request_with_retry(borrower_url)
 
     if len(borrower_response.json()) > 1:
-        error_data = {"entry": entry, "response": borrower_response.json()}
+        error_data = {
+            "entry": entry,
+            "documento_proveedor": documento_proveedor,
+            "response": borrower_response.json(),
+        }
         background_utils.raise_sentry_error(
-            "There are more than one borrowers in this borrower identifier entry",
+            "Skipping Award - There are more than one borrower for this borrower identifier",
             error_data,
         )
 
     borrower_response_json = borrower_response.json()[0]
-    borrower_email = f"{URLS['BORROWER_EMAIL']}?nit={entry['documento_proveedor']}"
 
-    email = get_email(borrower_email, entry)
+    email = get_email(documento_proveedor, entry)
 
     new_borrower = create_new_borrower(
         borrower_identifier, email, borrower_response_json

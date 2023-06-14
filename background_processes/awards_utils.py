@@ -7,8 +7,8 @@ from sqlalchemy.orm.session import Session
 from app.db.session import app_settings, get_db
 from app.schema.core import Award
 
+from . import background_utils
 from .background_config import URLS
-from .background_utils import make_request_with_retry, raise_sentry_error
 
 
 def get_existing_award(source_contract_id: str, session: Session):
@@ -35,6 +35,8 @@ def get_last_updated_award_date():
 def insert_award(award: Award, session: Session):
     obj_db = Award(**award)
     obj_db.created_at = datetime.utcnow()
+    obj_db.missing_data = background_utils.get_missing_data_keys(award)
+
     session.add(obj_db)
     session.flush()
     return obj_db
@@ -67,7 +69,7 @@ def create_new_award(source_contract_id: str, entry: dict) -> dict:
 
 def get_new_contracts(index: int, last_updated_award_date):
     offset = index * app_settings.secop_pagination_limit
-    delta = timedelta(days=365)
+    delta = timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
     converted_date = (datetime.now() - delta).strftime("%Y-%m-%dT00:00:00.000")
 
     if last_updated_award_date:
@@ -82,23 +84,41 @@ def get_new_contracts(index: int, last_updated_award_date):
         f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
 
-    return make_request_with_retry(url)
+    return background_utils.make_request_with_retry(url)
 
 
 def create_award(entry, session: Session) -> Award:
     source_contract_id = entry.get("id_contrato", "")
 
     if not source_contract_id:
-        raise_sentry_error("Skipping Award - No id_contrato", entry)
+        background_utils.raise_sentry_error("Skipping Award - No id_contrato", entry)
 
     # if award already exists
     if get_existing_award(source_contract_id, session):
-        raise_sentry_error("Skipping Award - Already Exists on Database", entry)
+        background_utils.raise_sentry_error(
+            "Skipping Award - Already exists on Database", entry
+        )
 
     new_award = create_new_award(source_contract_id, entry)
-    award_url = f"{URLS['AWARDS']}?id_del_portafolio={entry['proceso_de_compra']}"
+    award_url = (
+        f"{URLS['AWARDS']}?$where=id_del_portafolio='{entry['proceso_de_compra']}'"
+        f" AND nombre_del_proveedor='{entry['proveedor_adjudicado']}'"
+    )
 
-    award_response = make_request_with_retry(award_url)
+    award_response = background_utils.make_request_with_retry(award_url)
+
+    if len(award_response.json()) > 1 or len(award_response.json()) == 0:
+        error_data = {
+            "entry": entry,
+            "proveedor_adjudicado": entry["proveedor_adjudicado"],
+            "id_del_portafolio": entry["proceso_de_compra"],
+            "response": award_response.json(),
+        }
+        background_utils.raise_sentry_error(
+            "Skipping Award - Zero or more than one results for 'proceso_de_compra' and 'proveedor_adjudicado'",
+            error_data,
+        )
+
     award_response_json = award_response.json()[0]
 
     new_award["description"] = award_response_json.get(
@@ -113,4 +133,5 @@ def create_award(entry, session: Session) -> Award:
     new_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
 
     award = insert_award(new_award, session)
+
     return award

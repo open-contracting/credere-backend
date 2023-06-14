@@ -44,3 +44,14 @@ def make_request_with_retry(url):
         return None
     finally:
         client.close()
+
+
+def get_missing_data_keys(input_dict):
+    result_dict = {}
+    for key, value in input_dict.items():
+        if value == "" or value is None:
+            result_dict[key] = True
+        else:
+            result_dict[key] = False
+
+    return result_dict
