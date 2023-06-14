@@ -70,7 +70,8 @@ def get_applications_to_remind_intro():
     with contextmanager(get_db)() as session:
         try:
             subquery = select(core.Message.application_id).where(
-                core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
+                core.Message.type
+                == core.MessageType.BORROWER_PENDING_APPLICATION_REMINDER
             )
             users = (
                 session.query(Application)
@@ -80,6 +81,33 @@ def get_applications_to_remind_intro():
                 .filter(
                     and_(
                         Application.status == ApplicationStatus.PENDING,
+                        Application.expired_at > datetime.now(),
+                        Application.expired_at
+                        <= datetime.now() + timedelta(days=params["days_to_expire"]),
+                        ~Application.id.in_(subquery),
+                    )
+                )
+                .all()
+            )
+        except SQLAlchemyError as e:
+            raise e
+    return users or []
+
+
+def get_applications_to_remind_submit():
+    with contextmanager(get_db)() as session:
+        try:
+            subquery = select(core.Message.application_id).where(
+                core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
+            )
+            users = (
+                session.query(Application)
+                .options(
+                    joinedload(Application.borrower), joinedload(Application.award)
+                )
+                .filter(
+                    and_(
+                        Application.status == ApplicationStatus.ACCEPTED,
                         Application.expired_at > datetime.now(),
                         Application.expired_at
                         <= datetime.now() + timedelta(days=params["days_to_expire"]),

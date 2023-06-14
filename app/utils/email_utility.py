@@ -127,3 +127,37 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         Template=email_templates.INTRO_REMINDER_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
+
+
+def send_mail_submit_reminder(
+    ses, uuid, email, borrower_name, buyer_name, tender_title
+):
+    data = {
+        **generate_common_data(),
+        "AWARD_SUPPLIER_NAME": borrower_name,
+        "TENDER_TITLE": tender_title,
+        "BUYER_NAME": buyer_name,
+        "FIND_OUT_MORE_IMAGE_LINK": app_settings.temporal_bucket + "/findoutmore.png",
+        "REMOVE_ME_IMAGE_LINK": app_settings.temporal_bucket + "/removeme.png",
+        "FIND_OUT_MORE_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(uuid)
+        + "/intro",
+        "REMOVE_ME_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(uuid)
+        + "/decline",
+    }
+    # change to email in prod
+    logging.info(
+        f"NON PROD - Email to: {email} sent to {app_settings.test_mail_receiver}"
+    )
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={
+            "ToAddresses": [app_settings.test_mail_receiver]
+        },  # change to email in prod
+        Template=email_templates.APPLICATION_REMINDER_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )
