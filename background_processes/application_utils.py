@@ -13,10 +13,10 @@ from .background_utils import generate_uuid, get_secret_hash
 
 DAYS_UNTIL_EXPIRED = 7
 
-Application = core.Application()
-ApplicationStatus = core.ApplicationStatus()
-Message = core.Message()
-MessageType = core.MessageType()
+Application = core.Application
+ApplicationStatus = core.ApplicationStatus
+Message = core.Message
+MessageType = core.MessageType
 
 
 def insert_application(application: Application, session: Session):
