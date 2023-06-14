@@ -41,6 +41,6 @@ def create_application(
     try:
         insert_application(application)
     except Exception as e:
-        print(e)
+        raise e
 
     return new_uuid

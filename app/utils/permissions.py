@@ -1,5 +1,7 @@
 from functools import wraps
 
+from fastapi import HTTPException, status
+
 from ..schema.core import User
 
 
@@ -18,7 +20,10 @@ def OCP_only():
                 kwargs["user"] = user  # Pass the user as a keyword argument
                 return await func(*args, **kwargs)
             else:
-                return {"message": "Insufficient permissions"}
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Insufficient permissions",
+                )
 
         return wrapper
 

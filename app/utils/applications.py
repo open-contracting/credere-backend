@@ -1,9 +1,11 @@
 from datetime import datetime
-from typing import List
+from math import ceil
 
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, defaultload
+
+from app.schema.api import Pagination
 
 from ..schema import core
 
@@ -29,7 +31,7 @@ def create_application_action(
     type: core.ApplicationAction,
     payload: dict,
 ) -> core.ApplicationAction:
-    update_dict = jsonable_encoder(payload)
+    update_dict = jsonable_encoder(payload, exclude_unset=True)
 
     new_action = core.ApplicationAction(
         type=type,
@@ -38,10 +40,39 @@ def create_application_action(
         user_id=user_id,
     )
     session.add(new_action)
-    session.commit()
-    session.refresh(new_action)
 
     return new_action
+
+
+def update_application_borrower(
+    session: Session, application_id: int, payload: dict, user: core.User
+) -> core.Application:
+    application = (
+        session.query(core.Application)
+        .filter(core.Application.id == application_id)
+        .options(defaultload(core.Application.borrower))
+        .first()
+    )
+    if not application or not application.borrower:
+        raise HTTPException(status_code=404, detail="Application or borrower not found")
+
+    if application.status == core.ApplicationStatus.APPROVED:
+        raise HTTPException(
+            status_code=409, detail="Approved applications cannot be updated"
+        )
+
+    if user.is_OCP() and application.status not in OCP_can_modify:
+        raise HTTPException(
+            status_code=409, detail="This application cannot be updated by OCP Admins"
+        )
+
+    update_dict = jsonable_encoder(payload, exclude_unset=True)
+    for field, value in update_dict.items():
+        setattr(application.borrower, field, value)
+
+    session.add(application)
+
+    return application
 
 
 def update_application_award(
@@ -78,30 +109,51 @@ def update_application_award(
 
 def get_all_active_applications(
     page: int, page_size: int, session: Session
-) -> List[core.Application]:
-    applications = (
-        session.query(core.Application)
-        .filter(core.Application.status.notin_(excluded_applications))
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
+) -> Pagination:
+    applications_query = session.query(core.Application).filter(
+        core.Application.status.notin_(excluded_applications)
     )
 
-    return applications
+    total_count = applications_query.count()
+    total_pages = ceil(total_count / page_size)
+
+    applications = (
+        applications_query.offset((page - 1) * page_size).limit(page_size).all()
+    )
+
+    return Pagination(
+        items=applications,
+        total=total_count,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        next_page=page + 1 if page < total_pages else None,
+        previous_page=page - 1 if page > 1 else None,
+    )
 
 
 def get_all_FI_user_applications(
     page: int, page_size: int, session: Session, user_id
-) -> List[core.Application]:
+) -> Pagination:
+    applications_query = session.query(core.Application).filter(
+        core.Application.lender_id == user_id
+    )
+    total_count = applications_query.count()
+    total_pages = ceil(total_count / page_size)
+
     applications = (
-        session.query(core.Application)
-        .filter(core.Application.lender_id == user_id)
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
+        applications_query.offset((page - 1) * page_size).limit(page_size).all()
     )
 
-    return applications
+    return Pagination(
+        items=applications,
+        total=total_count,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        next_page=page + 1 if page < total_pages else None,
+        previous_page=page - 1 if page > 1 else None,
+    )
 
 
 def get_application_by_uuid(uuid: str, session: Session):

@@ -1,25 +1,47 @@
 from decimal import Decimal
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
-from app.schema.core import Application, Award, Borrower
+from app.schema import core
+
+
+class Pagination(BaseModel):
+    items: List[core.Application]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    next_page: Optional[int]
+    previous_page: Optional[int]
 
 
 class AwardUpdate(BaseModel):
-    source_contract_id: str
-    title: str
-    description: str
-    award_currency: str
-    payment_method: dict
-    buyer_name: str
-    source_url: str
-    entity_code: str
-    contract_status: str
-    previous: bool
-    procurement_method: str
-    contracting_process_id: str
-    procurement_category: str
+    source_contract_id: Optional[str]
+    title: Optional[str]
+    description: Optional[str]
+    award_currency: Optional[str]
+    payment_method: Optional[dict]
+    buyer_name: Optional[str]
+    source_url: Optional[str]
+    entity_code: Optional[str]
+    contract_status: Optional[str]
+    previous: Optional[bool]
+    procurement_method: Optional[str]
+    contracting_process_id: Optional[str]
+    procurement_category: Optional[str]
+
+
+class BorrowerUpdate(BaseModel):
+    borrower_identifier: Optional[str]
+    legal_name: Optional[str]
+    email: Optional[str]
+    address: Optional[str]
+    legal_identifier: Optional[str]
+    type: Optional[str]
+    sector: Optional[str]
+    size: Optional[core.BorrowerSize]
+    status: Optional[core.BorrowerStatus]
 
 
 class ApplicationUpdate(BaseModel):
@@ -33,9 +55,9 @@ class ApplicationUpdate(BaseModel):
 
 
 class ApplicationResponse(BaseModel):
-    application: Application
-    borrower: Borrower
-    award: Award
+    application: core.Application
+    borrower: core.Borrower
+    award: core.Award
 
 
 class ApplicationBase(BaseModel):
