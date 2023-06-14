@@ -1,58 +1,56 @@
 import re
-from contextlib import contextmanager
-from typing import Dict, List
+from datetime import datetime
+from typing import Dict
 
-import httpx
-from sqlalchemy import desc
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.session import Session
 
-from app.db.session import get_db
 from app.schema.core import Borrower, BorrowerStatus
 
-from .background_config import URLS, headers, pattern
-from .background_utils import get_secret_hash, raise_sentry_error
+from . import background_utils
+from .background_config import URLS, pattern
 
 
-def get_borrower_id(borrower_identifier: str) -> int:
-    with contextmanager(get_db)() as session:
-        try:
-            obj = (
-                session.query(Borrower)
-                .filter(Borrower.borrower_identifier == borrower_identifier)
-                .first()
-            )
-            if not obj:
-                raise ValueError("Borrower not found")
-            if obj.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
-                raise ValueError("Borrower choosed to not receive any new opportunity")
-            return obj.id
-        except SQLAlchemyError as e:
-            raise e
+def get_borrower(borrower_identifier: str, session: Session) -> int:
+    obj = (
+        session.query(Borrower)
+        .filter(Borrower.borrower_identifier == borrower_identifier)
+        .first()
+    )
+    if not obj:
+        return None
+
+    if obj.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
+        raise ValueError("Borrower choosed to not receive any new opportunity")
+
+    return obj
 
 
-def get_borrowers_list() -> List[str]:
-    with contextmanager(get_db)() as session:
-        try:
-            borrowers = (
-                session.query(Borrower.borrower_identifier)
-                .order_by(desc(Borrower.created_at))
-                .all()
-            )
-        except SQLAlchemyError as e:
-            raise e
-    return [borrower[0] for borrower in borrowers] or []
+def insert_borrower(borrower: Borrower, session: Session) -> int:
+    obj_db = Borrower(**borrower)
+    obj_db.created_at = datetime.utcnow()
+    obj_db.missing_data = background_utils.get_missing_data_keys(borrower)
+
+    session.add(obj_db)
+    session.flush()
+
+    return obj_db
 
 
-def insert_borrower(borrower: Borrower) -> int:
-    with contextmanager(get_db)() as session:
-        try:
-            obj_db = Borrower(**borrower)
-            session.add(obj_db)
-            session.commit()
-            session.refresh(obj_db)
-            return obj_db.id
-        except SQLAlchemyError as e:
-            raise e
+def update_borrower(
+    original_borrower: Borrower, borrower: dict, session: Session
+) -> int:
+    original_borrower.legal_name = borrower.get("legal_name", "")
+    original_borrower.email = borrower.get("email", "")
+    original_borrower.address = borrower.get("address", "")
+    original_borrower.legal_identifier = borrower.get("legal_identifier", "")
+    original_borrower.type = borrower.get("type", "")
+    original_borrower.source_data = borrower.get("source_data", "")
+    original_borrower.missing_data = background_utils.get_missing_data_keys(borrower)
+
+    session.refresh(original_borrower)
+    session.flush()
+
+    return original_borrower
 
 
 def create_new_borrower(
@@ -62,63 +60,106 @@ def create_new_borrower(
         "borrower_identifier": borrower_identifier,
         "legal_name": borrower_entry.get("nombre_entidad", ""),
         "email": email,
-        "address": "Direccion: {}Ciudad: {}provincia{}estado{}".format(
-            borrower_entry.get("direccion", ""),
-            borrower_entry.get("ciudad", ""),
-            borrower_entry.get("provincia", ""),
-            borrower_entry.get("estado", ""),
+        "address": "Direccion: {}\nCiudad: {}\nProvincia: {}\nEstado: {}".format(
+            borrower_entry.get("direccion", "No provisto"),
+            borrower_entry.get("ciudad", "No provisto"),
+            borrower_entry.get("provincia", "No provisto"),
+            borrower_entry.get("estado", "No provisto"),
         ),
         "legal_identifier": borrower_entry.get("nit_entidad", ""),
         "type": borrower_entry.get("tipo_organizacion", ""),
+        "source_data": borrower_entry,
     }
+
     return new_borrower
 
 
-def get_email(borrower_email, entry) -> str:
-    borrower_response_email = httpx.get(borrower_email, headers=headers)
+def get_email(documento_proveedor, entry) -> str:
+    borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
+    borrower_response_email = background_utils.make_request_with_retry(
+        borrower_email_url
+    )
 
-    if len(borrower_response_email.json()) != 1:
+    if len(borrower_response_email.json()) == 0:
         error_data = {
             "entry": entry,
             "response": borrower_response_email.json(),
         }
-        raise_sentry_error("Email endpoint returned an invalidad response", error_data)
+        background_utils.raise_sentry_error(
+            "Skipping Award - No email for borrower", error_data
+        )
 
     borrower_response_email_json = borrower_response_email.json()[0]
     email = borrower_response_email_json.get("correo_entidad", "")
+
     if not re.match(pattern, email):
         error_data = {
             "entry": entry,
             "response": borrower_response_email_json,
         }
-        raise_sentry_error("Borrower has no valid email address", error_data)
+        background_utils.raise_sentry_error(
+            "Skipping Award - Borrower has no valid email address", error_data
+        )
+
+    if len(borrower_response_email.json()) > 1:
+        same_email = True
+        for borrower_email in borrower_response_email.json():
+            if borrower_email.get("correo_entidad", "") != email:
+                same_email = False
+                break
+
+        if not same_email:
+            error_data = {
+                "entry": entry,
+                "response": borrower_response_email.json(),
+            }
+            background_utils.raise_sentry_error(
+                "Skipping Award - More than one email for borrower", error_data
+            )
+
     return email
 
 
-def get_or_create_borrower(entry) -> tuple[int, str, str]:
-    borrowers_list = get_borrowers_list()
-    borrower_identifier = get_secret_hash(entry.get("documento_proveedor", ""))
+def get_or_create_borrower(entry, session: Session) -> Borrower:
+    documento_proveedor = entry.get("documento_proveedor", None)
+    if not documento_proveedor or documento_proveedor == "No Definido":
+        error_data = {"entry": entry}
 
-    borrower_url = f"{URLS['BORROWER']}&nit_entidad={entry['documento_proveedor']}"
-    borrower_response = httpx.get(borrower_url, headers=headers)
+        background_utils.raise_sentry_error(
+            "Skipping Award - documento_proveedor is 'No Definido'",
+            error_data,
+        )
+
+    borrower_identifier = background_utils.get_secret_hash(documento_proveedor)
+    original_borrower = get_borrower(borrower_identifier, session)
+
+    borrower_url = (
+        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}"
+        f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
+    )
+    borrower_response = background_utils.make_request_with_retry(borrower_url)
 
     if len(borrower_response.json()) > 1:
-        error_data = {"entry": entry, "response": borrower_response.json()}
-        raise_sentry_error(
-            "There are more than one borrowers in this borrower identifier entry",
+        error_data = {
+            "entry": entry,
+            "documento_proveedor": documento_proveedor,
+            "response": borrower_response.json(),
+        }
+        background_utils.raise_sentry_error(
+            "Skipping Award - There are more than one borrower for this borrower identifier",
             error_data,
         )
 
     borrower_response_json = borrower_response.json()[0]
-    legal_name = borrower_response_json["nombre_entidad"]
-    borrower_email = f"{URLS['BORROWER_EMAIL']}?nit={entry['documento_proveedor']}"
 
-    email = get_email(borrower_email, entry)
+    email = get_email(documento_proveedor, entry)
 
     new_borrower = create_new_borrower(
         borrower_identifier, email, borrower_response_json
     )
-    if borrower_identifier in borrowers_list:
-        return get_borrower_id(borrower_identifier), email, legal_name
 
-    return insert_borrower(new_borrower), email, legal_name
+    # existing borrower
+    if original_borrower:
+        return update_borrower(original_borrower, new_borrower, session)
+
+    return insert_borrower(new_borrower, session)
