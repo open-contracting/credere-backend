@@ -103,12 +103,12 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "FIND_OUT_MORE_IMAGE_LINK": app_settings.temporal_bucket + "/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": app_settings.temporal_bucket + "/removeme.png",
         "FIND_OUT_MORE_URL": app_settings.frontend_url
         + "/application/"
         + quote(uuid)
         + "/intro",
+        "FIND_OUT_MORE_IMAGE_LINK": app_settings.temporal_bucket + "/findoutmore.png",
+        "REMOVE_ME_IMAGE_LINK": app_settings.temporal_bucket + "/removeme.png",
         "REMOVE_ME_URL": app_settings.frontend_url
         + "/application/"
         + quote(uuid)
@@ -137,12 +137,12 @@ def send_mail_submit_reminder(
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "FIND_OUT_MORE_IMAGE_LINK": app_settings.temporal_bucket + "/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": app_settings.temporal_bucket + "/removeme.png",
-        "FIND_OUT_MORE_URL": app_settings.frontend_url
+        "APPLY_FOR_CREDIT_URL": app_settings.frontend_url
         + "/application/"
         + quote(uuid)
         + "/intro",
+        "APPLY_FOR_CREDIT_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/applyForCredit.png",
+        "REMOVE_ME_IMAGE_LINK": app_settings.temporal_bucket + "/removeme.png",
         "REMOVE_ME_URL": app_settings.frontend_url
         + "/application/"
         + quote(uuid)

@@ -68,6 +68,7 @@ params = {"days_to_expire": 3}
 
 def get_applications_to_remind_intro():
     with contextmanager(get_db)() as session:
+        print("in the function")
         try:
             subquery = select(core.Message.application_id).where(
                 core.Message.type
@@ -89,6 +90,7 @@ def get_applications_to_remind_intro():
                 )
                 .all()
             )
+            print(users)
         except SQLAlchemyError as e:
             raise e
     return users or []
@@ -96,6 +98,7 @@ def get_applications_to_remind_intro():
 
 def get_applications_to_remind_submit():
     with contextmanager(get_db)() as session:
+        print("in the function")
         try:
             subquery = select(core.Message.application_id).where(
                 core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
@@ -116,6 +119,7 @@ def get_applications_to_remind_submit():
                 )
                 .all()
             )
+            print(users)
         except SQLAlchemyError as e:
             raise e
     return users or []

@@ -1,4 +1,3 @@
-import logging
 from contextlib import contextmanager
 
 from app.core.user_dependencies import sesClient
@@ -13,12 +12,12 @@ get_applications_to_remind_submit = application_utils.get_applications_to_remind
 
 if __name__ == "__main__":
     applications_to_send_intro_reminder = get_applications_to_remind_intro()
-    logging.info(
-        "Quantity of mails to send intro reminder"
+    print(
+        "Quantity of mails to send intro reminder "
         + str(len(applications_to_send_intro_reminder))
     )
     if len(applications_to_send_intro_reminder) == 0:
-        logging.info("No new intro reminder to be sent")
+        print("No new intro reminder to be sent")
     else:
         for application in applications_to_send_intro_reminder:
             with contextmanager(get_db)() as session:
@@ -36,7 +35,7 @@ if __name__ == "__main__":
                     email_utility.send_mail_intro_reminder(
                         sesClient, uuid, email, borrower_name, buyer_name, title
                     )
-                    logging.info("Mail sent and status updated")
+                    print("Mail sent and status updated")
                     session.commit()
                 except Exception as e:
                     print(
@@ -45,12 +44,12 @@ if __name__ == "__main__":
                     session.rollback()
 
     applications_to_send_submit_reminder = get_applications_to_remind_submit()
-    logging.info(
-        "Quantity of mails to send submit reminder"
+    print(
+        "Quantity of mails to send submit reminder "
         + str(len(applications_to_send_submit_reminder))
     )
     if len(applications_to_send_submit_reminder) == 0:
-        logging.info("No new submit reminder to be sent")
+        print("No new submit reminder to be sent")
     else:
         for application in applications_to_send_submit_reminder:
             with contextmanager(get_db)() as session:
@@ -68,7 +67,7 @@ if __name__ == "__main__":
                     email_utility.send_mail_submit_reminder(
                         sesClient, uuid, email, borrower_name, buyer_name, title
                     )
-                    logging.info("Mail sent and status updated")
+                    print("Mail sent and status updated")
                     session.commit()
                 except Exception as e:
                     print(
