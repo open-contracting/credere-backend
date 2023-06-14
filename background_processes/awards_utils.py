@@ -42,7 +42,7 @@ def insert_award(award: Award, session: Session):
     return obj_db
 
 
-def create_new_award(source_contract_id: str, entry: dict) -> dict:
+def create_new_award(source_contract_id: str, previous: bool, entry: dict) -> dict:
     return {
         "source_contract_id": source_contract_id,
         "source_url": entry.get("urlproceso", {}).get("url", ""),
@@ -55,7 +55,7 @@ def create_new_award(source_contract_id: str, entry: dict) -> dict:
         "buyer_name": entry.get("nombre_entidad", ""),
         "contracting_process_id": entry.get("proceso_de_compra", ""),
         "procurement_category": entry.get("tipo_de_contrato", ""),
-        "previous": False,
+        "previous": previous,
         "payment_method": {
             "habilita_pago_adelantado": entry.get("habilita_pago_adelantado", ""),
             "valor_de_pago_adelantado": entry.get("valor_de_pago_adelantado", ""),
@@ -87,7 +87,13 @@ def get_new_contracts(index: int, last_updated_award_date):
     return background_utils.make_request_with_retry(url)
 
 
-def create_award(entry, session: Session) -> Award:
+def get_previous_contracts(documento_proveedor):
+    url = f"{URLS['CONTRACTS']}?$where=documento_proveedor = '{documento_proveedor}' AND fecha_de_firma IS NOT NULL"
+
+    return background_utils.make_request_with_retry(url)
+
+
+def create_award(entry, session: Session, borrower_id=None, previous=False) -> Award:
     source_contract_id = entry.get("id_contrato", "")
 
     if not source_contract_id:
@@ -96,10 +102,10 @@ def create_award(entry, session: Session) -> Award:
     # if award already exists
     if get_existing_award(source_contract_id, session):
         background_utils.raise_sentry_error(
-            "Skipping Award - Already exists on Database", entry
+            f"Skipping Award [previous {previous}] - Already exists on Database", entry
         )
 
-    new_award = create_new_award(source_contract_id, entry)
+    new_award = create_new_award(source_contract_id, previous, entry)
     award_url = (
         f"{URLS['AWARDS']}?$where=id_del_portafolio='{entry['proceso_de_compra']}'"
         f" AND nombre_del_proveedor='{entry['proveedor_adjudicado']}'"
@@ -115,7 +121,10 @@ def create_award(entry, session: Session) -> Award:
             "response": award_response.json(),
         }
         background_utils.raise_sentry_error(
-            "Skipping Award - Zero or more than one results for 'proceso_de_compra' and 'proveedor_adjudicado'",
+            (
+                f"Skipping Award [previous {previous}]"
+                " - Zero or more than one results for 'proceso_de_compra' and 'proveedor_adjudicado'"
+            ),
             error_data,
         )
 
@@ -131,6 +140,9 @@ def create_award(entry, session: Session) -> Award:
         "estado_del_procedimiento", ""
     )
     new_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
+
+    if borrower_id:
+        new_award["borrower_id"] = borrower_id
 
     award = insert_award(new_award, session)
 
