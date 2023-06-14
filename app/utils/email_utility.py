@@ -87,7 +87,7 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
     logging.info(
         f"NON PROD - Email to: {email} sent to {app_settings.test_mail_receiver}"
     )
-    ses.send_templated_email(
+    response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={
             "ToAddresses": [app_settings.test_mail_receiver]
@@ -95,3 +95,5 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
         Template=email_templates.ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
+
+    return response.get("MessageId")

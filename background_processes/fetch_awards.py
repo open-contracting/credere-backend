@@ -39,10 +39,9 @@ def fetch_new_awards():
                         session,
                     )
 
-                    insert_message(application, session)
-                    session.commit()
-                    logging.info("Application created")
-                    email_utility.send_invitation_email(
+                    message = insert_message(application, session)
+
+                    messageId = email_utility.send_invitation_email(
                         sesClient,
                         application.uuid,
                         borrower.email,
@@ -50,6 +49,9 @@ def fetch_new_awards():
                         award.buyer_name,
                         award.title,
                     )
+                    message.external_message_id = messageId
+                    session.commit()
+                    logging.info("Application created")
                 except Exception as e:
                     logging.error(f"There was an error creating the application. {e}")
                     session.rollback()
