@@ -119,7 +119,9 @@ async def get_applications(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
-    return utils.get_all_FI_user_applications(page, page_size, session, user.id)
+    # validar lender id en user y app
+    print(user.lender.id)
+    return utils.get_all_FI_user_applications(page, page_size, session, user.lender.id)
 
 
 @router.get(

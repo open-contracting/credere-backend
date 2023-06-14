@@ -26,15 +26,15 @@ def insert_application(application: Application):
 def create_application(
     award_id, borrower_id, email, legal_identifier, source_contract_id
 ) -> str:
-    award_borrowed_identifier: str = get_secret_hash(
+    award_borrower_identifier: str = get_secret_hash(
         legal_identifier + source_contract_id
     )
-    new_uuid: str = generate_uuid(award_borrowed_identifier)
+    new_uuid: str = generate_uuid(award_borrower_identifier)
     application = {
         "award_id": award_id,
         "borrower_id": borrower_id,
         "primary_email": email,
-        "award_borrowed_identifier": award_borrowed_identifier,
+        "award_borrower_identifier": award_borrower_identifier,
         "uuid": new_uuid,
         "expired_at": datetime.utcnow() + timedelta(days=DAYS_UNTIL_EXPIRED),
     }

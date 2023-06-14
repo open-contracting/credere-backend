@@ -18,7 +18,7 @@ Table Application {
   uuid text
   primary_email text
   status text
-  award_borrowed_identifier text
+  award_borrower_identifier text
   borrower_id int [ref: > Borrower.id]
   lender_id int [ref: > Lender.id]
   contract_amount_submitted decimal

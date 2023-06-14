@@ -1,5 +1,4 @@
 from datetime import datetime
-from math import ceil
 
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -24,6 +23,24 @@ OCP_can_modify = [
 ]
 
 
+def update_models(payload, model):
+    update_dict = jsonable_encoder(payload, exclude_unset=True)
+    for field, value in update_dict.items():
+        setattr(model, field, value)
+
+
+def update_models_with_validation(payload, model):
+    update_dict = jsonable_encoder(payload, exclude_unset=True)
+    for field, value in update_dict.items():
+        if model.missing_data[field]:
+            setattr(model, field, value)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="This column cannot be updated",
+            )
+
+
 def create_application_action(
     session: Session,
     user_id: int,
@@ -40,6 +57,7 @@ def create_application_action(
         user_id=user_id,
     )
     session.add(new_action)
+    session.flush()
 
     return new_action
 
@@ -54,23 +72,27 @@ def update_application_borrower(
         .first()
     )
     if not application or not application.borrower:
-        raise HTTPException(status_code=404, detail="Application or borrower not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application or borrower not found",
+        )
 
     if application.status == core.ApplicationStatus.APPROVED:
         raise HTTPException(
-            status_code=409, detail="Approved applications cannot be updated"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Approved applications cannot be updated",
         )
 
     if user.is_OCP() and application.status not in OCP_can_modify:
         raise HTTPException(
-            status_code=409, detail="This application cannot be updated by OCP Admins"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This application cannot be updated by OCP Admins",
         )
 
-    update_dict = jsonable_encoder(payload, exclude_unset=True)
-    for field, value in update_dict.items():
-        setattr(application.borrower, field, value)
+    update_models(payload, application.borrower)
 
     session.add(application)
+    session.flush()
 
     return application
 
@@ -85,24 +107,27 @@ def update_application_award(
         .first()
     )
     if not application or not application.award:
-        raise HTTPException(status_code=404, detail="Application or award not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Application or award not found",
+        )
 
     if application.status == core.ApplicationStatus.APPROVED:
         raise HTTPException(
-            status_code=409, detail="Approved applications cannot be updated"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Approved applications cannot be updated",
         )
 
     if user.is_OCP() and application.status not in OCP_can_modify:
         raise HTTPException(
-            status_code=409, detail="This application cannot be updated by OCP Admins"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This application cannot be updated by OCP Admins",
         )
 
-    update_dict = jsonable_encoder(payload)
-    for field, value in update_dict.items():
-        setattr(application.award, field, value)
+    update_models_with_validation(payload, application.award)
 
     session.add(application)
-    session.refresh(application)
+    session.flush()
 
     return application
 
@@ -115,7 +140,6 @@ def get_all_active_applications(
     )
 
     total_count = applications_query.count()
-    total_pages = ceil(total_count / page_size)
 
     applications = (
         applications_query.offset((page - 1) * page_size).limit(page_size).all()
@@ -123,23 +147,19 @@ def get_all_active_applications(
 
     return Pagination(
         items=applications,
-        total=total_count,
+        count=total_count,
         page=page,
         page_size=page_size,
-        total_pages=total_pages,
-        next_page=page + 1 if page < total_pages else None,
-        previous_page=page - 1 if page > 1 else None,
     )
 
 
 def get_all_FI_user_applications(
-    page: int, page_size: int, session: Session, user_id
+    page: int, page_size: int, session: Session, lender_id
 ) -> Pagination:
     applications_query = session.query(core.Application).filter(
-        core.Application.lender_id == user_id
+        core.Application.lender_id == lender_id
     )
     total_count = applications_query.count()
-    total_pages = ceil(total_count / page_size)
 
     applications = (
         applications_query.offset((page - 1) * page_size).limit(page_size).all()
@@ -147,12 +167,9 @@ def get_all_FI_user_applications(
 
     return Pagination(
         items=applications,
-        total=total_count,
+        count=total_count,
         page=page,
         page_size=page_size,
-        total_pages=total_pages,
-        next_page=page + 1 if page < total_pages else None,
-        previous_page=page - 1 if page > 1 else None,
     )
 
 

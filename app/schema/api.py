@@ -8,12 +8,9 @@ from app.schema import core
 
 class Pagination(BaseModel):
     items: List[core.Application]
-    total: int
+    count: int
     page: int
     page_size: int
-    total_pages: int
-    next_page: Optional[int]
-    previous_page: Optional[int]
 
 
 class AwardUpdate(BaseModel):
