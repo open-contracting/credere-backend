@@ -2,16 +2,21 @@ import logging
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
-from sqlalchemy import and_
+from sqlalchemy import and_, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.session import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.session import get_db
-from app.schema.core import Application, Message, MessageType
+from app.schema import core
 
 from .background_utils import generate_uuid, get_secret_hash
 
 DAYS_UNTIL_EXPIRED = 7
+
+Application = core.Application()
+ApplicationStatus = core.ApplicationStatus()
+Message = core.Message()
+MessageType = core.MessageType()
 
 
 def insert_application(application: Application, session: Session):
@@ -61,28 +66,28 @@ def create_application(
 params = {"days_to_expire": 3}
 
 
-# hacer un query que me traiga todas las aplicaciones que esteen en estado
-# sin accederse por primera  vez y que su expiry date sea igual o menor a 3 dias (parametro)
-# select user email from applications where status = pending and expiry_date <= 3 days
-def get_users_to_remind_Access_to_credit():
+def get_applications_to_remind_intro():
     with contextmanager(get_db)() as session:
         try:
+            subquery = select(core.Message.application_id).where(
+                core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
+            )
             users = (
                 session.query(Application)
+                .options(
+                    joinedload(Application.borrower), joinedload(Application.award)
+                )
                 .filter(
                     and_(
-                        Application.status.PENDING,
+                        Application.status == ApplicationStatus.PENDING,
                         Application.expired_at > datetime.now(),
                         Application.expired_at
-                        <= datetime.now() + timedelta(days=params.days_to_expire),
-                        # filtro de la tabla message
-                        # message.type == BORROWER_PENDING_APPLICATION_REMINDER
+                        <= datetime.now() + timedelta(days=params["days_to_expire"]),
+                        ~Application.id.in_(subquery),
                     )
                 )
                 .all()
             )
-            print("THIS ARE THE USERS")
-            print(users)
         except SQLAlchemyError as e:
             raise e
     return users or []
