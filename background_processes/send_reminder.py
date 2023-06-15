@@ -22,8 +22,8 @@ if __name__ == "__main__":
         for application in applications_to_send_intro_reminder:
             with contextmanager(get_db)() as session:
                 try:
-                    # Db message table update
-                    save_message_type(
+                    # save to DB
+                    new_message = save_message_type(
                         application.id, session, "BORROWER_PENDING_APPLICATION_REMINDER"
                     )
                     uuid = application.uuid
@@ -32,9 +32,10 @@ if __name__ == "__main__":
                     buyer_name = application.award.buyer_name
                     title = application.award.title
 
-                    email_utility.send_mail_intro_reminder(
+                    messageID = email_utility.send_mail_intro_reminder(
                         sesClient, uuid, email, borrower_name, buyer_name, title
                     )
+                    new_message.external_message_id = messageID
                     print("Mail sent and status updated")
                     session.commit()
                 except Exception as e:
@@ -55,7 +56,7 @@ if __name__ == "__main__":
             with contextmanager(get_db)() as session:
                 try:
                     # Db message table update
-                    save_message_type(
+                    new_message = save_message_type(
                         application.id, session, "BORROWER_PENDING_SUBMIT_REMINDER"
                     )
                     uuid = application.uuid
@@ -64,9 +65,10 @@ if __name__ == "__main__":
                     buyer_name = application.award.buyer_name
                     title = application.award.title
 
-                    email_utility.send_mail_submit_reminder(
+                    messageID = email_utility.send_mail_submit_reminder(
                         sesClient, uuid, email, borrower_name, buyer_name, title
                     )
+                    new_message.external_message_id = messageID
                     print("Mail sent and status updated")
                     session.commit()
                 except Exception as e:

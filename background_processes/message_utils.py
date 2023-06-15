@@ -14,5 +14,6 @@ def save_message_type(application_id: int, session: Session, message):
         # Add new message to the session
         session.add(new_message)
         session.flush()
+        return new_message
     except Exception as e:
         raise e
