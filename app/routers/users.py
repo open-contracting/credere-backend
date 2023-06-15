@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
@@ -40,7 +41,7 @@ async def create_user(
 
 @router.put(
     "/users/change-password",
-    response_model=ApiSchema.ChangePasswordResponse,
+    response_model=Union[ApiSchema.ChangePasswordResponse, ApiSchema.ResponseBase],
 )
 def change_password(
     user: BasicUser,
