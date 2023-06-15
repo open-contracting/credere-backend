@@ -95,7 +95,7 @@ async def get_application(
 @router.get(
     "/applications-list/",
     tags=["applications"],
-    response_model=ApiSchema.Pagination,
+    response_model=ApiSchema.ApplicationPagination,
 )
 @OCP_only()
 async def get_applications_list(
@@ -111,7 +111,7 @@ async def get_applications_list(
 @router.get(
     "/applications/",
     tags=["applications"],
-    response_model=ApiSchema.Pagination,
+    response_model=ApiSchema.ApplicationPagination,
 )
 async def get_applications(
     page: int = Query(1, gt=0),
@@ -119,8 +119,6 @@ async def get_applications(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
-    # validar lender id en user y app
-    print(user.lender.id)
     return utils.get_all_FI_user_applications(page, page_size, session, user.lender.id)
 
 

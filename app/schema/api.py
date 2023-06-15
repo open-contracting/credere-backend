@@ -2,12 +2,19 @@ from decimal import Decimal
 from typing import List, Optional
 
 from pydantic import BaseModel
-
+from sqlmodel import SQLModel
 from app.schema import core
 
 
-class Pagination(BaseModel):
+class ApplicationPagination(BaseModel):
     items: List[core.Application]
+    count: int
+    page: int
+    page_size: int
+
+
+class LenderPagination(BaseModel):
+    items: List[core.Lender]
     count: int
     page: int
     page_size: int

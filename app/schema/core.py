@@ -249,6 +249,7 @@ class Lender(SQLModel, table=True):
     applications: Optional[List["Application"]] = Relationship(back_populates="lender")
     users: Optional[List["User"]] = Relationship(back_populates="lender")
     name: str = Field(default="", nullable=False, unique=True)
+    email_group: str = Field(default="")
     status: str = Field(default="")
     type: str = Field(default="")
     borrowed_type_preferences: dict = Field(
@@ -272,7 +273,7 @@ class Lender(SQLModel, table=True):
             onupdate=func.now(),
         )
     )
-    deleted_at: datetime = Field(
+    deleted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
 

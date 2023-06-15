@@ -4,9 +4,10 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, defaultload
 
-from app.schema.api import Pagination
-
+from app.schema.api import ApplicationPagination
 from ..schema import core
+
+from .general_utils import update_models, update_models_with_validation
 
 excluded_applications = [
     core.ApplicationStatus.PENDING,
@@ -21,24 +22,6 @@ OCP_can_modify = [
     core.ApplicationStatus.SUBMITTED,
     core.ApplicationStatus.INFORMATION_REQUESTED,
 ]
-
-
-def update_models(payload, model):
-    update_dict = jsonable_encoder(payload, exclude_unset=True)
-    for field, value in update_dict.items():
-        setattr(model, field, value)
-
-
-def update_models_with_validation(payload, model):
-    update_dict = jsonable_encoder(payload, exclude_unset=True)
-    for field, value in update_dict.items():
-        if model.missing_data[field]:
-            setattr(model, field, value)
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="This column cannot be updated",
-            )
 
 
 def create_application_action(
@@ -134,7 +117,7 @@ def update_application_award(
 
 def get_all_active_applications(
     page: int, page_size: int, session: Session
-) -> Pagination:
+) -> ApplicationPagination:
     applications_query = session.query(core.Application).filter(
         core.Application.status.notin_(excluded_applications)
     )
@@ -145,7 +128,7 @@ def get_all_active_applications(
         applications_query.offset((page - 1) * page_size).limit(page_size).all()
     )
 
-    return Pagination(
+    return ApplicationPagination(
         items=applications,
         count=total_count,
         page=page,
@@ -155,7 +138,7 @@ def get_all_active_applications(
 
 def get_all_FI_user_applications(
     page: int, page_size: int, session: Session, lender_id
-) -> Pagination:
+) -> ApplicationPagination:
     applications_query = session.query(core.Application).filter(
         core.Application.lender_id == lender_id
     )
@@ -165,7 +148,7 @@ def get_all_FI_user_applications(
         applications_query.offset((page - 1) * page_size).limit(page_size).all()
     )
 
-    return Pagination(
+    return ApplicationPagination(
         items=applications,
         count=total_count,
         page=page,
