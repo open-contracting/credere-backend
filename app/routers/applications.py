@@ -4,8 +4,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
+from app.background_processes.fetcher import fetch_previous_awards
 from app.schema import api as ApiSchema
-from background_processes.fetch_awards import fetch_previous_awards
 
 from ..db.session import get_db, transaction_session
 from ..schema.core import ApplicationStatus, BorrowerStatus

@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     test_mail_receiver: str = config_env.get("TEST_MAIL_RECEIVER", "aomm24@gmail.com")
     colombia_secop_app_token: str = config_env.get("COLOMBIA_SECOP_APP_TOKEN", None)
     hash_key: str = config_env.get("HASH_KEY", None)
+    application_expiration_days: int = config_env.get("APPLICATION_EXPIRATION_DAYS", 7)
     secop_pagination_limit: int = config_env.get("SECOP_PAGINATION_LIMIT", 5)
     secop_default_days_from_ultima_actualizacion: int = config_env.get(
         "SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION", 365
