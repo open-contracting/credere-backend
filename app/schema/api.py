@@ -43,4 +43,4 @@ class ApplicationDeclineFeedbackPayload(ApplicationBase):
     preffer_to_go_to_bank: bool
     dont_want_access_credit: bool
     other: bool
-    other_commnets: str
+    other_comments: str

@@ -162,7 +162,6 @@ def login_mfa(
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
-            logging.info(response["ChallengeName"])
             session = response["Session"]
             mfa_login_response = client.respond_to_auth_challenge(
                 user.username,
@@ -241,8 +240,8 @@ def forgot_password(
     user: BasicUser, client: CognitoClient = Depends(get_cognito_client)
 ):
     try:
-        response = client.reset_password(user.username)
-        logging.info(response)
+        client.reset_password(user.username)
+
         return ApiSchema.ResponseBase(
             detail="An email with a reset link was sent to end user"
         )
