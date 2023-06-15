@@ -5,6 +5,7 @@
 # Virtual environment
 /.ve
 /venv
+.env
 
 # Bytecode
 __pycache__
@@ -23,3 +24,7 @@ __pycache__
 # Node
 node_modules
 npm-debug.log
+
+#test dbs
+*.db
+.vscode/launch.json

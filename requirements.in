@@ -1,1 +1,14 @@
 fastapi
+pydantic
+python-dotenv
+sqlalchemy[postgresql]
+sqlmodel
+alembic
+boto3
+botocore
+sentry-sdk[fastapi]
+python-jose
+jose
+httpx
+requests
+typer[all]
