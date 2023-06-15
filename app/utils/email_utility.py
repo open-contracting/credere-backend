@@ -153,7 +153,7 @@ def send_mail_submit_reminder(
         f"NON PROD - Email to: {email} sent to {app_settings.test_mail_receiver}"
     )
 
-    ses.send_templated_email(
+    response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={
             "ToAddresses": [app_settings.test_mail_receiver]
@@ -161,3 +161,5 @@ def send_mail_submit_reminder(
         Template=email_templates.APPLICATION_REMINDER_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
+    message_id = response.get("MessageId")
+    print(message_id)

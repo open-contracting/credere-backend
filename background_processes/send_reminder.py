@@ -5,7 +5,7 @@ from app.db.session import get_db
 from app.utils import email_utility
 
 from . import application_utils
-from .message_utils import update_message_type
+from .message_utils import save_message_type
 
 get_applications_to_remind_intro = application_utils.get_applications_to_remind_intro
 get_applications_to_remind_submit = application_utils.get_applications_to_remind_submit
@@ -23,7 +23,7 @@ if __name__ == "__main__":
             with contextmanager(get_db)() as session:
                 try:
                     # Db message table update
-                    update_message_type(
+                    save_message_type(
                         application.id, session, "BORROWER_PENDING_APPLICATION_REMINDER"
                     )
                     uuid = application.uuid
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             with contextmanager(get_db)() as session:
                 try:
                     # Db message table update
-                    update_message_type(
+                    save_message_type(
                         application.id, session, "BORROWER_PENDING_SUBMIT_REMINDER"
                     )
                     uuid = application.uuid
