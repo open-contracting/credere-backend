@@ -4,7 +4,7 @@ from typing import Any, Generator
 import boto3
 import pytest
 from botocore.config import Config
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
@@ -22,6 +22,12 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+    handlers=[logging.StreamHandler()],  # Output logs to the console
+)
 
 
 def start_application():
@@ -125,23 +131,23 @@ data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.va
 
 def test_create_user(client):
     response = client.post("/users", json=data)
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     response = client.get("/users/1")
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
 
 def test_duplicate_user(client):
     response = client.post("/users", json=data)
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
     # duplicate user
     response = client.post("/users", json=data)
-    assert response.status_code == 400
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 def test_login(client):
     responseCreate = client.post("/users", json=data)
-    assert responseCreate.status_code == 200
+    assert responseCreate.status_code == status.HTTP_200_OK
 
     setupPasswordPayload = {
         "username": data["email"],
@@ -152,13 +158,13 @@ def test_login(client):
         "/users/change-password", json=setupPasswordPayload
     )
     logging.info(responseSetupPassword.json())
-    assert responseSetupPassword.status_code == 200
+    assert responseSetupPassword.status_code == status.HTTP_200_OK
 
     loginPayload = {"username": data["email"], "password": tempPassword}
     responseLogin = client.post("/users/login", json=loginPayload)
     logging.info(responseLogin.json())
 
-    assert responseLogin.status_code == 200
+    assert responseLogin.status_code == status.HTTP_200_OK
     assert responseLogin.json()["access_token"] is not None
 
     responseAccessProtectedRoute = client.get(
@@ -167,7 +173,7 @@ def test_login(client):
     )
     logging.info(responseAccessProtectedRoute.json())
 
-    assert responseAccessProtectedRoute.status_code == 200
+    assert responseAccessProtectedRoute.status_code == status.HTTP_200_OK
     assert (
         responseAccessProtectedRoute.json()["message"] is not None
         and responseAccessProtectedRoute.json()["message"] == "OK"
@@ -179,7 +185,7 @@ def test_login(client):
     )
     logging.info(responseAccessProtectedRouteWithUser.json())
 
-    assert responseAccessProtectedRouteWithUser.status_code == 200
+    assert responseAccessProtectedRouteWithUser.status_code == status.HTTP_200_OK
     logging.info(responseAccessProtectedRouteWithUser.json())
     assert (
         responseAccessProtectedRouteWithUser.json()["username"]

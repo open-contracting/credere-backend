@@ -1,10 +1,12 @@
 import logging
+from typing import Union
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.schema import api as ApiSchema
 from app.utils.verify_token import get_current_user
 
 from ..core.user_dependencies import CognitoClient, get_cognito_client
@@ -31,23 +33,16 @@ async def create_user(
             return user
         except (client.exceptions().UsernameExistsException, IntegrityError) as e:
             logging.error(e)
-            raise HTTPException(status_code=400, detail="Username already exists")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Username already exists",
+            )
 
 
-@router.post("/users/register")
-def register_user(user: BasicUser, client: CognitoClient = Depends(get_cognito_client)):
-    try:
-        response = client.admin_create_user(user.username, user.name)
-        logging.info(response)
-    except client.exceptions().UsernameExistsException as e:
-        logging.error(e)
-        raise HTTPException(status_code=400, detail="Username already exists")
-    except Exception as e:
-        logging.error(e)
-        raise HTTPException(status_code=500, detail="Something went wrong")
-
-
-@router.put("/users/change-password")
+@router.put(
+    "/users/change-password",
+    response_model=Union[ApiSchema.ChangePasswordResponse, ApiSchema.ResponseBase],
+)
 def change_password(
     user: BasicUser,
     response: Response,
@@ -67,24 +62,30 @@ def change_password(
             and response["ChallengeName"] == "MFA_SETUP"
         ):
             mfa_setup_response = client.mfa_setup(response["Session"])
-            return {
-                "message": "Password changed with MFA setup required",
-                "secret_code": mfa_setup_response["secret_code"],
-                "session": mfa_setup_response["session"],
-                "username": user.username,
-            }
+            return ApiSchema.ChangePasswordResponse(
+                detail="Password changed with MFA setup required",
+                secret_code=mfa_setup_response["secret_code"],
+                session=mfa_setup_response["session"],
+                username=user.username,
+            )
 
-        return {"message": "Password changed"}
+        return ApiSchema.ResponseBase(detail="Password changed")
     except ClientError as e:
         logging.error(e)
-        response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
-            return {"message": "Temporal password is expired, please request a new one"}
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Temporal password is expired, please request a new one",
+            )
+
         else:
-            return {"message": "There was an error trying to update the password"}
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="There was an error trying to update the password",
+            )
 
 
-@router.put("/users/setup-mfa")
+@router.put("/users/setup-mfa", response_model=ApiSchema.ResponseBase)
 def setup_mfa(
     user: SetupMFA,
     response: Response,
@@ -96,17 +97,27 @@ def setup_mfa(
         )
         logging.info(response)
 
-        return {"message": "MFA configured successfully"}
+        return ApiSchema.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
         logging.error(e)
-        response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
         if e.response["Error"]["Code"] == "NotAuthorizedException":
-            return {"message": "Invalid session for the user, session is expired"}
+            raise HTTPException(
+                status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                detail="Invalid session for the user, session is expired",
+            )
+
         else:
-            return {"message": "There was an error trying to setup mfa"}
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="There was an error trying to setup mfa",
+            )
 
 
-@router.post("/users/login")
+@router.post(
+    "/users/login",
+    response_model=ApiSchema.LoginResponse,
+)
 def login(
     user: BasicUser,
     response: Response,
@@ -117,21 +128,31 @@ def login(
         response = client.initiate_auth(user.username, user.password)
         user = db.query(User).filter(User.email == user.username).first()
 
-        return {
-            "user": user,
-            "access_token": response["AuthenticationResult"]["AccessToken"],
-            "refresh_token": response["AuthenticationResult"]["RefreshToken"],
-        }
+        return ApiSchema.LoginResponse(
+            user=user,
+            access_token=response["AuthenticationResult"]["AccessToken"],
+            refresh_token=response["AuthenticationResult"]["RefreshToken"],
+        )
+
     except ClientError as e:
         logging.error(e)
-        response.status_code = status.HTTP_401_UNAUTHORIZED
+
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
-            return {"message": "Temporal password is expired, please request a new one"}
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Temporal password is expired, please request a new one",
+            )
         else:
-            return {"message": "There was an error trying to login"}
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="There was an error trying to login",
+            )
 
 
-@router.post("/users/login-mfa")
+@router.post(
+    "/users/login-mfa",
+    response_model=ApiSchema.LoginResponse,
+)
 def login_mfa(
     user: BasicUser,
     client: CognitoClient = Depends(get_cognito_client),
@@ -141,7 +162,6 @@ def login_mfa(
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
-            logging.info(response["ChallengeName"])
             session = response["Session"]
             mfa_login_response = client.respond_to_auth_challenge(
                 user.username,
@@ -153,21 +173,37 @@ def login_mfa(
 
             user = db.query(User).filter(User.email == user.username).first()
 
-            return {
-                "user": user,
-                "access_token": mfa_login_response["access_token"],
-                "refresh_token": mfa_login_response["refresh_token"],
-            }
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found",
+                )
+
+            return ApiSchema.LoginResponse(
+                user=user,
+                access_token=mfa_login_response["access_token"],
+                refresh_token=mfa_login_response["refresh_token"],
+            )
 
     except ClientError as e:
         logging.error(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
-            return {"message": "Temporal password is expired, please request a new one"}
-        else:
-            return {"message": "There was an error trying to login"}
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Temporal password is expired, please request a new one",
+            )
+
+        elif e.response["Error"]["Code"] and e.response["Error"]["Message"]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=e.response["Error"]["Message"],
+            )
 
 
-@router.get("/users/logout")
+@router.get(
+    "/users/logout",
+    response_model=ApiSchema.ResponseBase,
+)
 def logout(
     Authorization: str = Header(None),
     client: CognitoClient = Depends(get_cognito_client),
@@ -176,32 +212,45 @@ def logout(
         client.logout_user(Authorization)
     except ClientError as e:
         logging.error(e)
-        return {"message": "User was unable to logout"}
+        # raise HTTPException(
+        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     detail="There was an error trying to logout",
+        # )
 
-    return {"message": "User logged out successfully"}
+    return ApiSchema.ResponseBase(detail="User logged out successfully")
 
 
-@router.get("/users/me")
+@router.get(
+    "/users/me",
+    response_model=ApiSchema.UserResponse,
+)
 def me(
-    response: Response,
     usernameFromToken: str = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.email == usernameFromToken).first()
-    return {"user": user}
+    return ApiSchema.UserResponse(user=user)
 
 
-@router.post("/users/forgot-password")
+@router.post(
+    "/users/forgot-password",
+    response_model=ApiSchema.ResponseBase,
+)
 def forgot_password(
     user: BasicUser, client: CognitoClient = Depends(get_cognito_client)
 ):
     try:
-        response = client.reset_password(user.username)
-        logging.info(response)
-        return {"message": "An email with a reset link was sent to end user"}
+        client.reset_password(user.username)
+
+        return ApiSchema.ResponseBase(
+            detail="An email with a reset link was sent to end user"
+        )
     except Exception as e:
         logging.error(e)
-        return {"message": "There was an issue trying to change the password"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="There was an issue trying to change the password",
+        )
 
 
 @router.get("/users/{user_id}", tags=["users"], response_model=User)
@@ -209,5 +258,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return user

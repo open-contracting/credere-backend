@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Generator  # new
+from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -23,7 +23,7 @@ def transaction_session(db: Session):
         raise
 
 
-def get_db() -> Generator:  # new
+def get_db() -> Generator:
     try:
         db = None
         if SessionLocal:

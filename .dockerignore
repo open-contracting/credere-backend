@@ -1,5 +1,4 @@
-# Dotfiles
-**/.*
+
 
 # Docker
 **/Dockerfile*
@@ -18,8 +17,8 @@ README.rst
 # Configuration
 pyproject.toml
 setup.cfg
-*.env
 *.db
+
 
 # Testing
 **/tests
