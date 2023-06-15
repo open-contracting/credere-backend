@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import logging
+import re
 import uuid
 
 import httpx
@@ -9,7 +10,13 @@ import sentry_sdk
 
 from app.db.session import app_settings
 
-from .background_config import headers
+pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+
+
+def is_valid_email(email: str) -> bool:
+    if re.search(pattern, email):
+        return True
+    return False
 
 
 def raise_sentry_error(message: str, payload: dict):
@@ -31,7 +38,7 @@ def get_secret_hash(nit_entidad: str) -> str:
     ).decode()
 
 
-def make_request_with_retry(url):
+def make_request_with_retry(url, headers):
     transport = httpx.HTTPTransport(retries=3, verify=False)
     client = httpx.Client(transport=transport, timeout=60, headers=headers)
 

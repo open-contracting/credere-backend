@@ -1,13 +1,11 @@
-import logging
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm.session import Session
 
+from app.db.session import app_settings
 from app.schema.core import Application, Message, MessageType
 
 from . import background_utils
-
-DAYS_UNTIL_EXPIRED = 7
 
 
 def insert_application(application: Application, session: Session):
@@ -68,12 +66,10 @@ def create_application(
         "primary_email": email,
         "award_borrower_identifier": award_borrower_identifier,
         "uuid": new_uuid,
-        "expired_at": datetime.utcnow() + timedelta(days=DAYS_UNTIL_EXPIRED),
+        "expired_at": datetime.utcnow()
+        + timedelta(days=app_settings.application_expiration_days),
     }
-    try:
-        application = insert_application(application, session)
-    except Exception as e:
-        logging.error(f"Error creating application {e}")
-        raise e
+
+    application = insert_application(application, session)
 
     return application
