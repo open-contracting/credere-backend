@@ -6,11 +6,5 @@ isort==5.12.0
 moto[cognitoidp]
 pip-tools
 pre-commit
-pydantic
 pytest
-httpx
 pytest-cov
-sqlalchemy
-sqlmodel
-jose
-requests
