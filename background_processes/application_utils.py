@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.db.session import get_db
 from app.schema import core
 
-from .background_utils import generate_uuid, get_secret_hash
+from . import background_utils
 
 DAYS_UNTIL_EXPIRED = 7
 
@@ -39,13 +39,38 @@ def insert_message(application: Application, session: Session):
     return obj_db
 
 
+def get_existing_application(award_borrower_identifier: str, session: Session):
+    application = (
+        session.query(Application)
+        .filter(Application.award_borrower_identifier == award_borrower_identifier)
+        .first()
+    )
+
+    return application
+
+
 def create_application(
     award_id, borrower_id, email, legal_identifier, source_contract_id, session: Session
 ) -> Application:
-    award_borrower_identifier: str = get_secret_hash(
+    award_borrower_identifier: str = background_utils.get_secret_hash(
         legal_identifier + source_contract_id
     )
-    new_uuid: str = generate_uuid(award_borrower_identifier)
+
+    # if application already exists
+    application = get_existing_application(award_borrower_identifier, session)
+    if application:
+        error_data = {
+            "legal_identifier": legal_identifier,
+            "source_contract_id": source_contract_id,
+            "application_id": application.id,
+        }
+
+        background_utils.raise_sentry_error(
+            f"Skipping Award - Application ID {application.id} already exists on for award {source_contract_id}",
+            error_data,
+        )
+
+    new_uuid: str = background_utils.generate_uuid(award_borrower_identifier)
     application = {
         "award_id": award_id,
         "borrower_id": borrower_id,

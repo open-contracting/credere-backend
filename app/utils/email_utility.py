@@ -87,7 +87,7 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
     logging.info(
         f"NON PROD - Email to: {email} sent to {app_settings.test_mail_receiver}"
     )
-    ses.send_templated_email(
+    response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={
             "ToAddresses": [app_settings.test_mail_receiver]
@@ -95,6 +95,7 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
         Template=email_templates.ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
+    return response.get("MessageId")
 
 
 def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender_title):
@@ -119,7 +120,7 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         f"NON PROD - Email to: {email} sent to {app_settings.test_mail_receiver}"
     )
 
-    ses.send_templated_email(
+    response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={
             "ToAddresses": [app_settings.test_mail_receiver]
@@ -127,6 +128,9 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         Template=email_templates.INTRO_REMINDER_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
+    message_id = response.get("MessageId")
+    print(message_id)
+    return response.get("MessageId")
 
 
 def send_mail_submit_reminder(
@@ -163,3 +167,4 @@ def send_mail_submit_reminder(
     )
     message_id = response.get("MessageId")
     print(message_id)
+    return response.get("MessageId")

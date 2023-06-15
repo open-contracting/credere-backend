@@ -349,6 +349,7 @@ class Message(SQLModel, table=True):
     )
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="messages")
+    external_message_id: Optional[str] = Field(default="")
     body: Optional[str] = Field(default="")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
