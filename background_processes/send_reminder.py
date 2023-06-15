@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 
 from app.core.user_dependencies import sesClient
@@ -10,14 +11,15 @@ from .message_utils import save_message_type
 get_applications_to_remind_intro = application_utils.get_applications_to_remind_intro
 get_applications_to_remind_submit = application_utils.get_applications_to_remind_submit
 
-if __name__ == "__main__":
+
+def send_reminders():
     applications_to_send_intro_reminder = get_applications_to_remind_intro()
-    print(
+    logging.info(
         "Quantity of mails to send intro reminder "
         + str(len(applications_to_send_intro_reminder))
     )
     if len(applications_to_send_intro_reminder) == 0:
-        print("No new intro reminder to be sent")
+        logging.info("No new intro reminder to be sent")
     else:
         for application in applications_to_send_intro_reminder:
             with contextmanager(get_db)() as session:
@@ -36,21 +38,21 @@ if __name__ == "__main__":
                         sesClient, uuid, email, borrower_name, buyer_name, title
                     )
                     new_message.external_message_id = messageID
-                    print("Mail sent and status updated")
+                    logging.info("Mail sent and status updated")
                     session.commit()
                 except Exception as e:
-                    print(
+                    logging.error(
                         f"there was an error sending mail or updating the sent status: {e}"
                     )
                     session.rollback()
 
     applications_to_send_submit_reminder = get_applications_to_remind_submit()
-    print(
+    logging.info(
         "Quantity of mails to send submit reminder "
         + str(len(applications_to_send_submit_reminder))
     )
     if len(applications_to_send_submit_reminder) == 0:
-        print("No new submit reminder to be sent")
+        logging.info("No new submit reminder to be sent")
     else:
         for application in applications_to_send_submit_reminder:
             with contextmanager(get_db)() as session:
@@ -69,10 +71,19 @@ if __name__ == "__main__":
                         sesClient, uuid, email, borrower_name, buyer_name, title
                     )
                     new_message.external_message_id = messageID
-                    print("Mail sent and status updated")
+                    logging.info("Mail sent and status updated")
                     session.commit()
                 except Exception as e:
-                    print(
+                    logging.error(
                         f"there was an error sending mail or updating the sent status: {e}"
                     )
                     session.rollback()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+        handlers=[logging.StreamHandler()],  # Output logs to the console
+    )
+    send_reminders()

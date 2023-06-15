@@ -129,7 +129,7 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         TemplateData=json.dumps(data),
     )
     message_id = response.get("MessageId")
-    print(message_id)
+    logging.info(message_id)
     return response.get("MessageId")
 
 
@@ -166,5 +166,5 @@ def send_mail_submit_reminder(
         TemplateData=json.dumps(data),
     )
     message_id = response.get("MessageId")
-    print(message_id)
+    logging.info(message_id)
     return response.get("MessageId")
