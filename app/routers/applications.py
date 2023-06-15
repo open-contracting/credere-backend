@@ -101,11 +101,15 @@ async def get_application(
 async def get_applications_list(
     page: int = Query(1, gt=0),
     page_size: int = Query(10, gt=0),
+    sort_field: str = Query("id"),
+    sort_order: str = Query("asc", regex="^(asc|desc)$"),
     current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
     user: core.User = None,
 ):
-    return utils.get_all_active_applications(page, page_size, session)
+    return utils.get_all_active_applications(
+        page, page_size, sort_field, sort_order, session
+    )
 
 
 @router.get(
@@ -116,12 +120,14 @@ async def get_applications_list(
 async def get_applications(
     page: int = Query(1, gt=0),
     page_size: int = Query(10, gt=0),
+    sort_field: str = Query("id"),
+    sort_order: str = Query("asc", regex="^(asc|desc)$"),
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
-    # validar lender id en user y app
-    print(user.lender.id)
-    return utils.get_all_FI_user_applications(page, page_size, session, user.lender.id)
+    return utils.get_all_FI_user_applications(
+        page, page_size, sort_field, sort_order, session, user.lender.id
+    )
 
 
 @router.get(

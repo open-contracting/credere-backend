@@ -2,7 +2,8 @@ from datetime import datetime
 
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.orm import Session, defaultload
+from sqlalchemy.orm import Session, defaultload, joinedload
+from sqlalchemy import desc, asc
 
 from app.schema.api import Pagination
 
@@ -132,11 +133,24 @@ def update_application_award(
     return application
 
 
+from sqlalchemy import text
+
+
 def get_all_active_applications(
-    page: int, page_size: int, session: Session
+    page: int, page_size: int, sort_field: str, sort_order: str, session: Session
 ) -> Pagination:
-    applications_query = session.query(core.Application).filter(
-        core.Application.status.notin_(excluded_applications)
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    applications_query = (
+        session.query(core.Application)
+        .join(core.Award)
+        .join(core.Borrower)
+        .options(
+            joinedload(core.Application.award),
+            joinedload(core.Application.borrower),
+        )
+        .filter(core.Application.status.notin_(excluded_applications))
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
 
     total_count = applications_query.count()
@@ -154,10 +168,28 @@ def get_all_active_applications(
 
 
 def get_all_FI_user_applications(
-    page: int, page_size: int, session: Session, lender_id
+    page: int,
+    page_size: int,
+    sort_field: str,
+    sort_order: str,
+    session: Session,
+    lender_id,
 ) -> Pagination:
-    applications_query = session.query(core.Application).filter(
-        core.Application.lender_id == lender_id
+    # applications_query = session.query(core.Application).filter(
+    #     core.Application.lender_id == lender_id
+    # )
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    applications_query = (
+        session.query(core.Application)
+        .join(core.Award)
+        .join(core.Borrower)
+        .options(
+            joinedload(core.Application.award),
+            joinedload(core.Application.borrower),
+        )
+        .filter(core.Application.status.notin_(excluded_applications))
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
     total_count = applications_query.count()
 
