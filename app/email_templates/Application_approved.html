@@ -55,14 +55,30 @@
       margin-bottom: 1rem;
     }
 
-    .main_content {
+    .main_content_first {
+      margin-left: 2.5rem;
+      margin-right: 2.5rem;
+      margin-top: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid lightgray;
+      height: auto;
+    }
+
+    .main_content_second {
       margin-left: 2.5rem;
       margin-right: 2.5rem;
       margin-top: 2.5rem;
       margin-bottom: 2rem;
       border-bottom: 1px solid lightgray;
       height: auto;
-      padding-bottom: 2rem;
+    }
+
+    .main_content_third {
+      margin-left: 2.5rem;
+      margin-right: 2.5rem;
+      margin-top: 2.5rem;
+      margin-bottom: 2rem;
+      height: auto;
     }
 
     .main_content_item {
@@ -127,20 +143,61 @@
     <div class='header'>
       <img class='logoOCP' title='OCPlogo' src='{{OCP_LOGO}}' alt='OCP logo' />
     </div>
-    <div class='main_content'>
-      <div class='title main_content_item'>Welcome to Credere</div>
+    <div class='main_content_first'>
+      <div class='title main_content_item'>Your credit application has been approved</div>
       <div class='main_content_item'>
-        <p>Your user account has been created.</p>
+        <p>Hi {{AWARD_SUPPLIER_NAME}}, </p>
       </div>
       <div class='action main_content_item'>
         <p>
-          Set your password to start using Credere to approve credit applications for MSMEs.
+          Thank you for making a credit application to {{FI}} for working capital for the {{TENDER_TITLE}} public sector
+          contract with {{BUYER_NAME}}.
         </p>
       </div>
+      <div class='action main_content_item'>
+        <p>
+          All of the bank’s compliance checks have been completed an your credit has been approved.
+        </p>
+      </div>
+      <div class='action main_content_item'>
+        <p>
+          The next step is for you to get your contract with {{BUYER_NAME}} signed and to upload the contract in Credere
+          so that the credit provider can release the funds.
+        </p>
+      </div>
+      <div class='action main_content_item'>
+        <p>
+          Note that if the contract value is different from the award value, the credit amount offered by the credit
+          provider may be different.
+        </p>
+      </div>
+
       <div class=' login_complete_image'>
-        <a href='{{LOGIN_URL}}'>
-          <img src='{{SET_PASSWORD_IMAGE_LINK}}' alt='link to login' />
-        </a>
+        <span>
+          <a href='{{UPLOAD_CONTRACT_URL}}'>
+            <img src='{{UPLOAD_CONTRACT_IMAGE_LINK}}' alt='link to login' />
+          </a>
+        </span>
+      </div>
+    </div>
+    <div class='main_content_second'>
+      <div class='title main_content_item'>About the Open Contracting Partnership</div>
+      <div class='action main_content_item'>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ultrices justo eget diam eleifend pharetra.
+          In congue augue nec justo congue, nec tempus odio tempor. Nunc euismod fermentum diam, quis placerat orci
+          semper sit amet. Etiam eleifend elementum dignissim. Phasellus congue aliquet sem interdum ornare. Donec
+          condimentum egestas augue eget varius. Suspendisse euismod fermentum purus, a ullamcorper massa luctus vel. In
+          vehicula tortor nisi, in fermentum sem ullamcorper sit amet. Vivamus ac ante mi.
+        </p>
+      </div>
+    </div>
+    <div class='main_content_third'>
+      <div class='action main_content_item'>
+        <p>
+          You're receiving this notification because you have recently won a pubic sector contract award. Click here to
+          unsubscribe.
+        </p>
       </div>
     </div>
     <div class=' footer'>

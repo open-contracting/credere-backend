@@ -55,14 +55,30 @@
       margin-bottom: 1rem;
     }
 
-    .main_content {
+    .main_content_first {
+      margin-left: 2.5rem;
+      margin-right: 2.5rem;
+      margin-top: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid lightgray;
+      height: auto;
+    }
+
+    .main_content_second {
+      margin-left: 2.5rem;
+      margin-right: 2.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid lightgray;
+      height: auto;
+    }
+
+    .main_content_third {
       margin-left: 2.5rem;
       margin-right: 2.5rem;
       margin-top: 2.5rem;
       margin-bottom: 2rem;
-      border-bottom: 1px solid lightgray;
       height: auto;
-      padding-bottom: 2rem;
     }
 
     .main_content_item {
@@ -127,20 +143,46 @@
     <div class='header'>
       <img class='logoOCP' title='OCPlogo' src='{{OCP_LOGO}}' alt='OCP logo' />
     </div>
-    <div class='main_content'>
-      <div class='title main_content_item'>Welcome to Credere</div>
+    <div class='main_content_first'>
+      <div class='title main_content_item'>Thank you for uploading the signed contract</div>
       <div class='main_content_item'>
-        <p>Your user account has been created.</p>
+        <p>Hi {{AWARD_SUPPLIER_NAME}}, </p>
       </div>
       <div class='action main_content_item'>
         <p>
-          Set your password to start using Credere to approve credit applications for MSMEs.
+          We have received the signed copy for your contract with {{BUYER_NAME}} for the award {{TENDER_TITLE}}.
         </p>
       </div>
-      <div class=' login_complete_image'>
-        <a href='{{LOGIN_URL}}'>
-          <img src='{{SET_PASSWORD_IMAGE_LINK}}' alt='link to login' />
-        </a>
+      <div class='action main_content_item'>
+        <p>
+          The credit provider will now review the contract and reach out to you to release the funds.
+        </p>
+      </div>
+      <div class='action main_content_item'>
+        <p>
+          Thank you for using the access to credit scheme. If you have any feedback please reach out to
+          credere@open-contracting.org.
+        </p>
+      </div>
+    </div>
+    <div class='main_content_second'>
+      <div class='title main_content_item'>About the Open Contracting Partnership</div>
+      <div class='action main_content_item'>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ultrices justo eget diam eleifend pharetra.
+          In congue augue nec justo congue, nec tempus odio tempor. Nunc euismod fermentum diam, quis placerat orci
+          semper sit amet. Etiam eleifend elementum dignissim. Phasellus congue aliquet sem interdum ornare. Donec
+          condimentum egestas augue eget varius. Suspendisse euismod fermentum purus, a ullamcorper massa luctus vel. In
+          vehicula tortor nisi, in fermentum sem ullamcorper sit amet. Vivamus ac ante mi.
+        </p>
+      </div>
+    </div>
+    <div class='main_content_third'>
+      <div class='action main_content_item'>
+        <p>
+          You're receiving this notification because you have recently won a pubic sector contract award. Click here to
+          unsubscribe.
+        </p>
       </div>
     </div>
     <div class=' footer'>

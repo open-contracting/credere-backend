@@ -1,10 +1,14 @@
 import json
 
 data = {
+    "FI": "Bank XX",
+    "AWARD_SUPPLIER_NAME": "PROVEEDOR XX",
+    "TENDER_TITLE": "PROVISION_DE_COMIDA",
+    "BUYER_NAME": "INSTITUCION PUBLICA XX",
     "LINK-TO-WEB-VERSION": "www.google.com",
+    "UPLOAD_CONTRACT_URL": "www.google.com",
+    "UPLOAD_CONTRACT_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/uploadContract.png",
     "OCP_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg",
-    "SET_PASSWORD_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/set_password.png",
-    "LOGIN_URL": "www.google.com",
     "TWITTER_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/twiterlogo.png",
     "FB_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/facebook.png",
     "LINK_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/link.png",

@@ -15,8 +15,7 @@ jobs:
       - name: Run checks and tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
-        run: |
-          pytest -W error
+        run: pytest -W error
       - env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: coveralls --service=github

@@ -1,10 +1,12 @@
 import json
 
 data = {
+    "NEW_MAIL": "test@mail.com",
+    "AWARD_SUPPLIER_NAME": "PROVEEDOR XX",
+    "CONFIRM_EMAIL_CHANGE_URL": "www.google.com",
+    "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/confirmemailchange.png",
     "LINK-TO-WEB-VERSION": "www.google.com",
     "OCP_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg",
-    "SET_PASSWORD_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/set_password.png",
-    "LOGIN_URL": "www.google.com",
     "TWITTER_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/twiterlogo.png",
     "FB_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/facebook.png",
     "LINK_LOGO": "https://adrian-personal.s3.sa-east-1.amazonaws.com/link.png",
