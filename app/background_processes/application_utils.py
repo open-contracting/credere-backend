@@ -12,7 +12,6 @@ from app.schema import core
 from . import background_utils
 
 DAYS_UNTIL_EXPIRED = 7
-days_to_expire = 3
 
 Application = core.Application
 ApplicationStatus = core.ApplicationStatus
@@ -104,7 +103,8 @@ def get_applications_to_remind_intro():
                         Application.status == ApplicationStatus.PENDING,
                         Application.expired_at > datetime.now(),
                         Application.expired_at
-                        <= datetime.now() + timedelta(days=days_to_expire),
+                        <= datetime.now()
+                        + timedelta(days=app_settings.reminder_days_before_expiration),
                         ~Application.id.in_(subquery),
                     )
                 )
@@ -132,7 +132,8 @@ def get_applications_to_remind_submit():
                         Application.status == ApplicationStatus.ACCEPTED,
                         Application.expired_at > datetime.now(),
                         Application.expired_at
-                        <= datetime.now() + timedelta(days=days_to_expire),
+                        <= datetime.now()
+                        + timedelta(days=app_settings.reminder_days_before_expiration),
                         ~Application.id.in_(subquery),
                     )
                 )

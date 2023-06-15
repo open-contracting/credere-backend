@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     secop_default_days_from_ultima_actualizacion: int = config_env.get(
         "SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION", 365
     )
+    reminder_days_before_expiration: int = config_env.get(
+        "REMINDER_DAYS_BEFORE_EXPIRATION", 3
+    )
 
     class Config:
         env_file = ".env"
