@@ -52,7 +52,6 @@ async def update_application_borrower(
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
-        print(payload)
         application = utils.update_application_borrower(
             session, application_id, payload, user
         )

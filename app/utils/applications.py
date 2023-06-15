@@ -2,8 +2,8 @@ from datetime import datetime
 
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
-from sqlalchemy import desc, asc
 
 from app.schema.api import Pagination
 
@@ -131,9 +131,6 @@ def update_application_award(
     session.flush()
 
     return application
-
-
-from sqlalchemy import text
 
 
 def get_all_active_applications(
