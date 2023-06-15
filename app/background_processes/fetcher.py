@@ -11,9 +11,8 @@ from .application_utils import create_application, insert_message
 from .borrower_utils import get_or_create_borrower
 
 
-def fetch_new_awards():
+def fetch_new_awards_from_date(last_updated_award_date: str):
     index = 0
-    last_updated_award_date = awards_utils.get_last_updated_award_date()
     contracts_response = awards_utils.get_new_contracts(index, last_updated_award_date)
     contracts_response_json = contracts_response.json()
 
@@ -63,6 +62,11 @@ def fetch_new_awards():
         contracts_response_json = contracts_response.json()
 
 
+def fetch_new_awards():
+    last_updated_award_date = awards_utils.get_last_updated_award_date()
+    fetch_new_awards_from_date(last_updated_award_date)
+
+
 def fetch_previous_awards(borrower: Borrower):
     contracts_response = awards_utils.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
@@ -94,4 +98,3 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s - %(message)s",
         handlers=[logging.StreamHandler()],  # Output logs to the console
     )
-    fetch_new_awards()

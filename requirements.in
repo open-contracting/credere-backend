@@ -10,3 +10,4 @@ sentry-sdk[fastapi]
 jose
 requests
 httpx
+typer[all]

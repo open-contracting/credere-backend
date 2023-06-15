@@ -63,12 +63,13 @@ SENTRY_DNS -> the DNS for sentry
 COLOMBIA_SECOP_APP_TOKEN -> Token from fetching SECOP data
 SECOP_PAGINATION_LIMIT -> Page size for the fected SECOP data
 HASH_KEY -> hash key for hashing personal data before submitting it to Database
-FRONT_PUBLIC_IMAGES_ES = -> Directory on the frontend server containing the Spanish version of the text in the images.
-FRONT_PUBLIC_IMAGES_EN = ->Directory on the frontend server containing the English version of the text in the images.
-TEMPORAL_BUCKET = -> Temporal S3 bucket used in develop to serve images
-FACEBOOK_LINK = -> Link to OCP Facebook account
-TWITTER_LINK = ->Link to OCP Twitter account
-LINK_LINK = -> Link to (pending to ask)
+APPLICATION_EXPIRATION_DAYS -> Days to expire link after application creation
+FRONT_PUBLIC_IMAGES_ES -> Directory on the frontend server containing the Spanish versions of the text in the images.
+FRONT_PUBLIC_IMAGES_EN -> Directory on the frontend server containing the English versions of the text in the images.
+TEMPORAL_BUCKET -> Temporal S3 bucket used in develop to serve images
+FACEBOOK_LINK -> Link to OCP Facebook account
+TWITTER_LINK -> Link to OCP Twitter account
+LINK_LINK -> Link to (pending to ask)
 
 You should configure the pre-commit for the repo one time
 
@@ -163,13 +164,14 @@ pytest tests -W error
 
 ## Run background jobs
 
-To run test locally
+To run the list of commands available use
 
 ```
-python3 -m background_processes.fetch_awards
+python -m app.commands --help
 ```
-to fech previous awards you can run the command like this:
+
+The command to fetch new awards is
 
 ```
-python3 -m background_processes.fetch_awards True
+python -m app.commands fetcher-awards
 ```
