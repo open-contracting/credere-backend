@@ -173,5 +173,11 @@ python -m app.commands --help
 The command to fetch new awards is
 
 ```
-python -m app.commands fetcher-awards
+python -m app.commands fetch-awards
+```
+
+The command to send mail reminders is
+
+```
+python -m app.commands send-reminders
 ```

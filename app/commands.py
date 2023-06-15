@@ -2,19 +2,24 @@ import logging
 
 import typer
 
-from app.background_processes import fetcher
+from app.background_processes import fetcher, send_reminder
 
 app = typer.Typer()
 
 
 @app.command()
-def fetcher_awards():
+def fetch_awards():
     fetcher.fetch_new_awards()
 
 
 @app.command()
 def fetch_new_awards_from_date(date: str):
     fetcher.fetch_new_awards_from_date(date)
+
+
+@app.command()
+def send_reminders():
+    send_reminder.send_reminders()
 
 
 if __name__ == "__main__":
