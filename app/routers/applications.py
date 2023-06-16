@@ -15,7 +15,7 @@ from ..utils.verify_token import get_current_user, get_user
 router = APIRouter()
 
 
-@router.put(
+@router.patch(
     "/applications/{application_id}/award/",
     tags=["applications"],
     response_model=core.Application,
@@ -126,7 +126,7 @@ async def get_applications(
     session: Session = Depends(get_db),
 ):
     return utils.get_all_FI_user_applications(
-        page, page_size, sort_field, sort_order, session, user.lender.id
+        page, page_size, sort_field, sort_order, session, user.lender_id
     )
 
 

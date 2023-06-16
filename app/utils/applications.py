@@ -172,9 +172,6 @@ def get_all_FI_user_applications(
     session: Session,
     lender_id,
 ) -> Pagination:
-    # applications_query = session.query(core.Application).filter(
-    #     core.Application.lender_id == lender_id
-    # )
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
     applications_query = (
@@ -185,7 +182,10 @@ def get_all_FI_user_applications(
             joinedload(core.Application.award),
             joinedload(core.Application.borrower),
         )
-        .filter(core.Application.status.notin_(excluded_applications))
+        .filter(
+            core.Application.status.notin_(excluded_applications),
+            core.Application.lender_id == lender_id,
+        )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
     total_count = applications_query.count()
