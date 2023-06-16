@@ -176,5 +176,11 @@ python -m app.commands --help
 The command to fetch new awards is
 
 ```
-python -m app.commands fetcher-awards
+python -m app.commands fetch-awards
+```
+
+It will send invitations to the email configure in the env variable _TEST_MAIL_RECEIVER_. Alternative could receive a custom email destination with **--email-invitation** argument
+
+```
+python -m app.commands fetch-awards --email-invitation test@example.com
 ```
