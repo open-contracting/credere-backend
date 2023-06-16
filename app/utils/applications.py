@@ -2,11 +2,12 @@ from datetime import datetime
 
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.orm import Session, defaultload
+from sqlalchemy import asc, desc, text
+from sqlalchemy.orm import Session, defaultload, joinedload
 
 from app.schema.api import ApplicationPagination
-from ..schema import core
 
+from ..schema import core
 from .general_utils import update_models, update_models_with_validation
 
 excluded_applications = [
@@ -116,10 +117,20 @@ def update_application_award(
 
 
 def get_all_active_applications(
-    page: int, page_size: int, session: Session
+    page: int, page_size: int, sort_field: str, sort_order: str, session: Session
 ) -> ApplicationPagination:
-    applications_query = session.query(core.Application).filter(
-        core.Application.status.notin_(excluded_applications)
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    applications_query = (
+        session.query(core.Application)
+        .join(core.Award)
+        .join(core.Borrower)
+        .options(
+            joinedload(core.Application.award),
+            joinedload(core.Application.borrower),
+        )
+        .filter(core.Application.status.notin_(excluded_applications))
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
 
     total_count = applications_query.count()
@@ -137,10 +148,28 @@ def get_all_active_applications(
 
 
 def get_all_FI_user_applications(
-    page: int, page_size: int, session: Session, lender_id
+    page: int,
+    page_size: int,
+    sort_field: str,
+    sort_order: str,
+    session: Session,
+    lender_id,
 ) -> ApplicationPagination:
-    applications_query = session.query(core.Application).filter(
-        core.Application.lender_id == lender_id
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    applications_query = (
+        session.query(core.Application)
+        .join(core.Award)
+        .join(core.Borrower)
+        .options(
+            joinedload(core.Application.award),
+            joinedload(core.Application.borrower),
+        )
+        .filter(
+            core.Application.status.notin_(excluded_applications),
+            core.Application.lender_id == lender_id,
+        )
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
     total_count = applications_query.count()
 
@@ -176,6 +205,9 @@ def get_application_by_uuid(uuid: str, session: Session):
 
 def check_is_application_expired(application: core.Application):
     expired_at = application.expired_at
+
+    if not expired_at:
+        return
 
     current_time = datetime.now(expired_at.tzinfo)
 

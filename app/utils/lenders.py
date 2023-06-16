@@ -1,13 +1,9 @@
-from datetime import datetime
-
-from fastapi import HTTPException, status
-from fastapi.encoders import jsonable_encoder
-from sqlalchemy.orm import Session, defaultload
+from sqlalchemy.orm import Session
 
 from app.schema.api import LenderPagination
-from typing import List
+
 from ..schema import core
-from .general_utils import update_models, update_models_with_validation
+from .general_utils import update_models
 
 
 def get_all_lenders(page: int, page_size: int, session: Session) -> LenderPagination:

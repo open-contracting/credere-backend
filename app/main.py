@@ -1,9 +1,11 @@
+import logging
+
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import app_settings
-from .routers import applications, awards, borrowers, users, lenders
+from .routers import applications, awards, borrowers, lenders, users
 
 if app_settings.sentry_dsn:
     sentry_sdk.init(
@@ -15,7 +17,10 @@ if app_settings.sentry_dsn:
 app = FastAPI()
 
 # Configure CORS settings
-origins = [app_settings.frontend_url]  # Add more allowed origins as needed
+origins = [
+    "http://localhost:3000",
+    app_settings.frontend_url,
+]  # Add more allowed origins as needed
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +35,12 @@ app.include_router(awards.router)
 app.include_router(borrowers.router)
 app.include_router(applications.router)
 app.include_router(lenders.router)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+    handlers=[logging.StreamHandler()],  # Output logs to the console
+)
 
 
 @app.get("/")

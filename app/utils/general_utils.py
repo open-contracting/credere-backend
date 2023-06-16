@@ -1,5 +1,5 @@
+from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from fastapi import status, HTTPException
 
 
 def update_models(payload, model):
