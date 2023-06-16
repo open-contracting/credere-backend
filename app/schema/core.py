@@ -43,6 +43,7 @@ class BorrowerStatus(Enum):
 class MessageType(Enum):
     BORROWER_INVITACION = "BORROWER_INVITACION"
     BORROWER_PENDING_APPLICATION_REMINDER = "BORROWER_PENDING_APPLICATION_REMINDER"
+    BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
     SUBMITION_COMPLETE = "SUBMITION_COMPLETE"
     CONTRACT_UPLOAD_REQUEST = "CONTRACT_UPLOAD_REQUEST"
     CONTRACT_UPLOAD_CONFIRMATION = "CONTRACT_UPLOAD_CONFIRMATION"
@@ -61,18 +62,23 @@ class UserType(Enum):
 
 
 class ApplicationActionType(Enum):
-    MSME_ACCESS_FROM_LINK = "MSME_ACCESS_FROM_LINK"
-    MSME_DECLINE_INVITATION = "MSME_DECLINE_INVITATION"
-    MSME_ACCEPT_INVITATION = "MSME_ACCEPT_INVITATION"
     AWARD_UPDATE = "AWARD_UPDATE"
     BORROWER_UPDATE = "BORROWER_UPDATE"
+    FI_UPLOAD_COMPLIANCE = "FI_UPLOAD_COMPLIANCE"
+    FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
+    APPROVED_APPLICATION = "APPROVED_APPLICATION"
+    REJECTED_APPLICATION = "REJECTED_APPLICATION"
+    MSME_UPLOAD_DOCUMENT = "MSME_UPLOAD_DOCUMENT"
+    MSME_CHANGE_EMAIL = "MSME_CHANGE_EMAIL"
+    MSME_CONFIRM_EMAIL = "MSME_CONFIRM_EMAIL"
+    MSME_RETRY_APPLICATION = "MSME_RETRY_APPLICATION"
 
 
 class BorrowerSize(Enum):
     NOT_INFORMED = "NOT_INFORMED"
-    MICRO = "0 a 10"
-    SMALL = "11 a 50"
-    MEDIUM = "51 a 200"
+    MICRO = "MICRO"
+    SMALL = "SMALL"
+    MEDIUM = "MEDIUM"
 
 
 class BorrowerDocument(SQLModel, table=True):
@@ -223,6 +229,8 @@ class Borrower(SQLModel, table=True):
         sa_column=Column(SAEnum(BorrowerStatus, name="borrower_status")),
         default=BorrowerStatus.ACTIVE,
     )
+    source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -249,6 +257,7 @@ class Lender(SQLModel, table=True):
     applications: Optional[List["Application"]] = Relationship(back_populates="lender")
     users: Optional[List["User"]] = Relationship(back_populates="lender")
     name: str = Field(default="", nullable=False, unique=True)
+    email_group: str = Field(default="")
     status: str = Field(default="")
     type: str = Field(default="")
     borrowed_type_preferences: dict = Field(
@@ -335,11 +344,12 @@ class Award(SQLModel, table=True):
 
 class Message(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    type: BorrowerDocumentType = Field(
-        sa_column=Column(SAEnum(BorrowerDocumentType, name="borrower_document_type"))
+    type: MessageType = Field(
+        sa_column=Column(SAEnum(MessageType, name="message_type"))
     )
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="messages")
+    external_message_id: Optional[str] = Field(default="")
     body: Optional[str] = Field(default="")
     created_at: Optional[datetime] = Field(
         sa_column=Column(

@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
+from app.background_processes.fetcher import fetch_previous_awards
 from app.schema import api as ApiSchema
 
 from ..db.session import get_db, transaction_session
@@ -149,7 +150,9 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     response_model=ApiSchema.ApplicationResponse,
 )
 async def access_scheme(
-    payload: ApiSchema.ApplicationBase, session: Session = Depends(get_db)
+    payload: ApiSchema.ApplicationBase,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_db),
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -160,6 +163,8 @@ async def access_scheme(
         application.borrower_accepted_at = current_time
         application.status = core.ApplicationStatus.ACCEPTED
         application.expired_at = None
+
+        background_tasks.add_task(fetch_previous_awards, application.borrower)
 
         return ApiSchema.ApplicationResponse(
             application=application,
@@ -190,15 +195,38 @@ async def decline(
         current_time = datetime.now(application.created_at.tzinfo)
         application.borrower_declined_at = current_time
 
-        # delete borrower data
-        application.borrower.legal_name = ""
-        application.borrower.legal_identifier = ""
-        application.borrower.email = ""
-        application.borrower.address = ""
-        application.borrower.declined_at = current_time
-
         if payload.decline_all:
             application.borrower.status = core.BorrowerStatus.DECLINE_OPPORTUNITIES
+            application.borrower.declined_at = current_time
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/rollback-decline",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def rollback_decline(
+    payload: ApiSchema.ApplicationBase,
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_is_application_expired(application)
+        utils.check_application_status(application, core.ApplicationStatus.DECLINED)
+
+        application.borrower_declined_data = {}
+        application.status = core.ApplicationStatus.PENDING
+        application.borrower_declined_at = None
+
+        if application.borrower.status == core.BorrowerStatus.DECLINE_OPPORTUNITIES:
+            application.borrower.status = core.BorrowerStatus.ACTIVE
+            application.borrower.declined_at = None
 
         return ApiSchema.ApplicationResponse(
             application=application,

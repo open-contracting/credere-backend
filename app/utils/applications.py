@@ -223,6 +223,9 @@ def get_application_by_uuid(uuid: str, session: Session):
 def check_is_application_expired(application: core.Application):
     expired_at = application.expired_at
 
+    if not expired_at:
+        return
+
     current_time = datetime.now(expired_at.tzinfo)
 
     if application.expired_at < current_time:

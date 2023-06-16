@@ -4,6 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from app.schema import core
+from app.schema.core import User
 
 
 class Pagination(BaseModel):
@@ -72,4 +73,23 @@ class ApplicationDeclineFeedbackPayload(ApplicationBase):
     preffer_to_go_to_bank: bool
     dont_want_access_credit: bool
     other: bool
-    other_commnets: str
+    other_comments: str
+
+
+class ResponseBase(BaseModel):
+    detail: str
+
+
+class ChangePasswordResponse(ResponseBase):
+    secret_code: str
+    session: str
+    username: str
+
+
+class UserResponse(BaseModel):
+    user: User
+
+
+class LoginResponse(UserResponse):
+    access_token: str
+    refresh_token: str
