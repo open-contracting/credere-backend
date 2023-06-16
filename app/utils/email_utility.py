@@ -112,6 +112,7 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
 
 
 def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender_title):
+    images_base_url = get_images_base_url()
     data = {
         **generate_common_data(),
         "AWARD_SUPPLIER_NAME": borrower_name,
@@ -121,8 +122,8 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         + "/application/"
         + quote(uuid)
         + "/intro",
-        "FIND_OUT_MORE_IMAGE_LINK": app_settings.temporal_bucket + "/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": app_settings.temporal_bucket + "/removeme.png",
+        "FIND_OUT_MORE_IMAGE_LINK": images_base_url + "/findoutmore.png",
+        "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
         "REMOVE_ME_URL": app_settings.frontend_url
         + "/application/"
         + quote(uuid)
@@ -149,6 +150,7 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
 def send_mail_submit_reminder(
     ses, uuid, email, borrower_name, buyer_name, tender_title
 ):
+    images_base_url = get_images_base_url()
     data = {
         **generate_common_data(),
         "AWARD_SUPPLIER_NAME": borrower_name,
@@ -158,8 +160,8 @@ def send_mail_submit_reminder(
         + "/application/"
         + quote(uuid)
         + "/intro",
-        "APPLY_FOR_CREDIT_IMAGE_LINK": "https://adrian-personal.s3.sa-east-1.amazonaws.com/applyForCredit.png",
-        "REMOVE_ME_IMAGE_LINK": app_settings.temporal_bucket + "/removeme.png",
+        "APPLY_FOR_CREDIT_IMAGE_LINK": images_base_url + "/applyForCredit.png",
+        "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
         "REMOVE_ME_URL": app_settings.frontend_url
         + "/application/"
         + quote(uuid)
