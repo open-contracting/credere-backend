@@ -17,7 +17,10 @@ if app_settings.sentry_dsn:
 app = FastAPI()
 
 # Configure CORS settings
-origins = [app_settings.frontend_url]  # Add more allowed origins as needed
+origins = [
+    "http://localhost:3000",
+    app_settings.frontend_url,
+]  # Add more allowed origins as needed
 
 app.add_middleware(
     CORSMiddleware,
