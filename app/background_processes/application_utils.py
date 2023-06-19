@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import and_, or_
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.session import Session, joinedload
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.session import app_settings, get_db
 from app.schema import core
