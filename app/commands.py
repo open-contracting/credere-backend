@@ -19,7 +19,7 @@ def fetch_new_awards_from_date(date: str, email_invitation: str = None):
 
 @app.command()
 def remove_data():
-    remove_data_bg.remove_declined_rejected_accepted_data()
+    remove_data_bg.remove_declined_rejected_completed_data()
 
 
 if __name__ == "__main__":

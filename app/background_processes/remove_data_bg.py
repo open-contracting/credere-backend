@@ -9,7 +9,7 @@ from . import application_utils
 get_applications_to_delete_data = application_utils.get_applications_to_delete_data
 
 
-def remove_declined_rejected_accepted_data():
+def remove_declined_rejected_completed_data():
     with contextmanager(get_db)() as session:
         applications_to_delete_data = get_applications_to_delete_data(session)
         logging.info(
@@ -47,4 +47,4 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s - %(message)s",
         handlers=[logging.StreamHandler()],  # Output logs to the console
     )
-    remove_declined_rejected_accepted_data()
+    remove_declined_rejected_completed_data()
