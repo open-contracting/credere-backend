@@ -175,7 +175,10 @@ class Application(SQLModel, table=True):
     lender_rejected_data: Optional[dict] = Field(
         default={}, sa_column=Column(JSON), nullable=False
     )
-    borrewed_uploaded_contracted_at: Optional[datetime] = Field(
+    lender_rejected_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    borrewer_uploaded_contracted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     completed_in_days: Optional[int] = Field(nullable=True)
