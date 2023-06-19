@@ -83,7 +83,9 @@ def create_application(
 
 def get_applications_to_delete_data(session):
     try:
-        seven_days_ago = datetime.now() - timedelta(days=7)
+        seven_days_ago = datetime.now() - timedelta(
+            days=app_settings.days_to_erase_borrower_data
+        )
         applications_to_remove_data = (
             session.query(Application)
             .options(
