@@ -1,12 +1,11 @@
 import logging
-from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 from sqlalchemy import and_, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
-from app.db.session import app_settings, get_db
+from app.db.session import app_settings
 from app.schema import core
 from app.schema.core import Application, Message, MessageType
 
@@ -82,35 +81,36 @@ def create_application(
     return application
 
 
-def get_applications_to_delete_data():
-    with contextmanager(get_db)() as session:
-        try:
-            seven_days_ago = datetime.now() - timedelta(days=7)
-            applications_to_remove_data = (
-                session.query(Application)
-                .options(
-                    joinedload(Application.borrower),
-                    joinedload(Application.borrower_documents),
-                )
-                .filter(
-                    or_(
-                        and_(
-                            Application.status == ApplicationStatus.DECLINED,
-                            Application.borrower_declined_at < seven_days_ago,
-                        ),
-                        and_(
-                            Application.status == ApplicationStatus.REJECTED,
-                            Application.lender_rejected_data < seven_days_ago,
-                        ),
-                        and_(
-                            Application.status == ApplicationStatus.COMPLETED,
-                            Application.lender_approved_at < seven_days_ago,
-                        ),
-                    )
-                )
-                .all()
+def get_applications_to_delete_data(session):
+    try:
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        applications_to_remove_data = (
+            session.query(Application)
+            .options(
+                joinedload(Application.borrower),
+                joinedload(Application.borrower_documents),
             )
-            logging.info(applications_to_remove_data)
-        except SQLAlchemyError as e:
-            raise e
+            .filter(
+                or_(
+                    and_(
+                        Application.status == ApplicationStatus.DECLINED,
+                        Application.borrower_declined_at < seven_days_ago,
+                    ),
+                    and_(
+                        Application.status == ApplicationStatus.REJECTED,
+                        Application.lender_rejected_at < seven_days_ago,
+                    ),
+                    and_(
+                        Application.status == ApplicationStatus.COMPLETED,
+                        Application.lender_approved_at < seven_days_ago,
+                    ),
+                ),
+                Application.archived_at.is_(None),
+            )
+            .all()
+        )
+        logging.info(applications_to_remove_data)
+    except SQLAlchemyError as e:
+        raise e
+
     return applications_to_remove_data or []
