@@ -31,7 +31,6 @@ def remove_declined_rejected_accepted_data():
                     application.archived_at = datetime.utcnow()
 
                     for document in application.borrower_documents:
-                        #     # Replace each field of document with an empty string or a null value
                         document.name = ""
                         document.file = b""
                         document.type = None
@@ -39,7 +38,6 @@ def remove_declined_rejected_accepted_data():
 
                 except Exception as e:
                     logging.error(f"there was an error deleting the data: {e}")
-                    print(e)
                     session.rollback()
 
 
