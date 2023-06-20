@@ -270,7 +270,7 @@ class Lender(SQLModel, table=True):
     email_group: str = Field(default="")
     status: str = Field(default="")
     type: str = Field(default="")
-    borrowed_type_preferences: dict = Field(
+    borrower_type_preferences: dict = Field(
         default={}, sa_column=Column(JSON), nullable=False
     )
     limits_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
