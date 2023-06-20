@@ -170,7 +170,7 @@ class ApplicationBase(SQLModel):
     lender_rejected_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    borrewer_uploaded_contracted_at: Optional[datetime] = Field(
+    borrower_uploaded_contracted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     completed_in_days: Optional[int] = Field(nullable=True)

@@ -38,7 +38,7 @@ Table Application {
   lender_approved_at timestamp [not null]
   lender_approved_data json
   lender_rejected_data json
-  borrewer_uploaded_contracted_at timestamp [not null]
+  borrower_uploaded_contracted_at timestamp [not null]
   completed_in_days int
   created_at timestamp [not null]
   updated_at timestamp [not null]
