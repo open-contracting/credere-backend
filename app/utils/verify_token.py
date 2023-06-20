@@ -6,8 +6,12 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwk, jwt
 from jose.utils import base64url_decode
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.core.settings import app_settings
+from app.schema.core import User
+
+from ..db.session import get_db
 
 JWK = Dict[str, str]
 
@@ -103,3 +107,18 @@ async def get_current_user(
         return credentials.claims["username"]
     except KeyError:
         raise HTTPException(status_code=403, detail="Username missing")
+
+
+async def get_user(
+    credentials: JWTAuthorizationCredentials = Depends(get_auth_credentials),
+    session: Session = Depends(get_db),
+) -> str:
+    try:
+        user = (
+            session.query(User)
+            .filter(User.external_id == credentials.claims["username"])
+            .first()
+        )
+        return user
+    except KeyError:
+        raise HTTPException(status_code=404, detail="User could not be found")
