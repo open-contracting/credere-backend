@@ -5,11 +5,16 @@ from fastapi import HTTPException, status
 from ..schema.core import User
 
 
-def OCP_only():
+def OCP_only(setUser=False):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             current_user = kwargs.get("current_user")
+            if not current_user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid credentials",
+                )
             session = kwargs.get("session")
 
             # Retrieve the user from the session using external_id
@@ -17,7 +22,8 @@ def OCP_only():
 
             # Check if the user has the required permission
             if user and user.is_OCP():
-                kwargs["user"] = user  # Pass the user as a keyword argument
+                if setUser:
+                    kwargs["user"] = user  # Pass the user as a keyword argument
                 return await func(*args, **kwargs)
             else:
                 raise HTTPException(
