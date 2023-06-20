@@ -259,10 +259,7 @@ class Borrower(SQLModel, table=True):
     )
 
 
-class Lender(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    applications: Optional[List["Application"]] = Relationship(back_populates="lender")
-    users: Optional[List["User"]] = Relationship(back_populates="lender")
+class LenderBase(SQLModel):
     name: str = Field(default="", nullable=False, unique=True)
     email_group: str = Field(default="")
     status: str = Field(default="")
@@ -291,6 +288,12 @@ class Lender(SQLModel, table=True):
     deleted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+
+
+class Lender(LenderBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    applications: Optional[List["Application"]] = Relationship(back_populates="lender")
+    users: Optional[List["User"]] = Relationship(back_populates="lender")
 
 
 class Award(SQLModel, table=True):
@@ -443,3 +446,4 @@ class SetupMFA(BaseModel):
 class ApplicationWithRelations(ApplicationRead):
     borrower: Optional["Borrower"] = None
     award: Optional["Award"] = None
+    lender: Optional["Lender"] = None

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 import app.utils.lenders as utils
@@ -13,19 +13,29 @@ router = APIRouter()
 
 
 @router.post(
-    "/lenders/",
+    "/lenders",
     tags=["lenders"],
     response_model=core.Lender,
 )
 @OCP_only()
 async def create_lender(
-    lender: core.Lender,
+    lender: core.LenderBase,
     current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
-    user: core.User = None,
 ):
     with transaction_session(session):
-        return utils.create_lender(session, lender, user)
+        return utils.create_lender(session, lender)
+
+
+@router.get("/lenders/{lender_id}", tags=["lenders"], response_model=core.Lender)
+async def get_lender(lender_id: int, db: Session = Depends(get_db)):
+    lender = db.query(core.Lender).filter(core.Lender.id == lender_id).first()
+
+    if not lender:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"
+        )
+    return lender
 
 
 @router.put(
@@ -39,23 +49,17 @@ async def update_lender(
     lender: core.Lender,
     current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
-    user: core.User = None,
 ):
     with transaction_session(session):
         return utils.update_lender(session, lender, id)
 
 
 @router.get(
-    "/lenders/",
+    "/lenders",
     tags=["lenders"],
-    response_model=ApiSchema.LenderPagination,
+    response_model=ApiSchema.LenderListResponse,
 )
-@OCP_only()
 async def get_lenders_list(
-    page: int = Query(1, gt=0),
-    page_size: int = Query(10, gt=0),
-    current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
-    user: core.User = None,
 ):
-    return utils.get_all_lenders(page, page_size, session)
+    return utils.get_all_lenders(session)
