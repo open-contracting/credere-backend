@@ -115,13 +115,8 @@ class BorrowerDocument(SQLModel, table=True):
     )
 
 
-class Application(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
-        back_populates="application"
-    )
+class ApplicationBase(SQLModel):
     award_id: int = Field(foreign_key="award.id")
-    award: "Award" = Relationship(back_populates="applications")
     uuid: str = Field(unique=True, index=True, nullable=False)
     primary_email: str = Field(default="", nullable=False)
     status: ApplicationStatus = Field(
@@ -130,10 +125,7 @@ class Application(SQLModel, table=True):
     )
     award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
-    borrower: "Borrower" = Relationship(back_populates="applications")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
-    lender: "Lender" = Relationship(back_populates="applications")
-    messages: Optional[List["Message"]] = Relationship(back_populates="application")
     contract_amount_submitted: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
@@ -201,6 +193,21 @@ class Application(SQLModel, table=True):
     archived_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+
+
+class ApplicationRead(ApplicationBase):
+    id: int
+
+
+class Application(ApplicationBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
+        back_populates="application"
+    )
+    award: "Award" = Relationship(back_populates="applications")
+    borrower: "Borrower" = Relationship(back_populates="applications")
+    lender: "Lender" = Relationship(back_populates="applications")
+    messages: Optional[List["Message"]] = Relationship(back_populates="application")
     actions: Optional[List["ApplicationAction"]] = Relationship(
         back_populates="application"
     )
@@ -252,10 +259,7 @@ class Borrower(SQLModel, table=True):
     )
 
 
-class Lender(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    applications: Optional[List["Application"]] = Relationship(back_populates="lender")
-    users: Optional[List["User"]] = Relationship(back_populates="lender")
+class LenderBase(SQLModel):
     name: str = Field(default="", nullable=False, unique=True)
     email_group: str = Field(default="")
     status: str = Field(default="")
@@ -281,9 +285,15 @@ class Lender(SQLModel, table=True):
             onupdate=func.now(),
         )
     )
-    deleted_at: datetime = Field(
+    deleted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+
+
+class Lender(LenderBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    applications: Optional[List["Application"]] = Relationship(back_populates="lender")
+    users: Optional[List["User"]] = Relationship(back_populates="lender")
 
 
 class Award(SQLModel, table=True):
@@ -392,6 +402,9 @@ class User(SQLModel, table=True):
         )
     )
 
+    def is_OCP(self) -> bool:
+        return self.type == UserType.OCP
+
 
 class ApplicationAction(SQLModel, table=True):
     __tablename__ = "application_action"
@@ -428,3 +441,9 @@ class SetupMFA(BaseModel):
     temp_password: str
     session: str
     secret: str
+
+
+class ApplicationWithRelations(ApplicationRead):
+    borrower: Optional["Borrower"] = None
+    award: Optional["Award"] = None
+    lender: Optional["Lender"] = None
