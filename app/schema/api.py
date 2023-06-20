@@ -7,18 +7,18 @@ from app.schema import core
 from app.schema.core import User
 
 
-class ApplicationPagination(BaseModel):
-    items: List[core.Application]
+class BasePagination(BaseModel):
     count: int
     page: int
     page_size: int
 
 
-class LenderPagination(BaseModel):
+class ApplicationListResponse(BasePagination):
+    items: List[core.ApplicationWithRelations]
+
+
+class LenderListResponse(BasePagination):
     items: List[core.Lender]
-    count: int
-    page: int
-    page_size: int
 
 
 class AwardUpdate(BaseModel):

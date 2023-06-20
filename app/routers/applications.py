@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.put(
-    "/applications/{application_id}/award/",
+    "/applications/{application_id}/award",
     tags=["applications"],
     response_model=core.Application,
 )
@@ -41,8 +41,8 @@ async def update_application_award(
         return application
 
 
-@router.patch(
-    "/applications/{application_id}/borrower/",
+@router.put(
+    "/applications/{application_id}/borrower",
     tags=["applications"],
     response_model=ApiSchema.ApplicationResponse,
 )
@@ -72,7 +72,26 @@ async def update_application_borrower(
 
 
 @router.get(
-    "/applications/{id}",
+    "/applications/admin-list",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationListResponse,
+)
+@OCP_only()
+async def get_applications_list(
+    page: int = Query(0, ge=0),
+    page_size: int = Query(10, gt=0),
+    sort_field: str = Query("application.created_at"),
+    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    current_user: core.User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    return utils.get_all_active_applications(
+        page, page_size, sort_field, sort_order, session
+    )
+
+
+@router.get(
+    "/applications/id/{id}",
     tags=["applications"],
     response_model=ApiSchema.ApplicationResponse,
 )
@@ -81,7 +100,6 @@ async def get_application(
     id: int,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_db),
-    user: core.User = None,
 ):
     application = (
         session.query(core.Application).filter(core.Application.id == id).first()
@@ -93,40 +111,20 @@ async def get_application(
 
 
 @router.get(
-    "/applications-list/",
+    "/applications",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationPagination,
-)
-@OCP_only()
-async def get_applications_list(
-    page: int = Query(1, gt=0),
-    page_size: int = Query(10, gt=0),
-    sort_field: str = Query("id"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: core.User = Depends(get_current_user),
-    session: Session = Depends(get_db),
-    user: core.User = None,
-):
-    return utils.get_all_active_applications(
-        page, page_size, sort_field, sort_order, session
-    )
-
-
-@router.get(
-    "/applications/",
-    tags=["applications"],
-    response_model=ApiSchema.ApplicationPagination,
+    response_model=ApiSchema.ApplicationListResponse,
 )
 async def get_applications(
-    page: int = Query(1, gt=0),
+    page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
-    sort_field: str = Query("id"),
+    sort_field: str = Query("application.created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
     return utils.get_all_FI_user_applications(
-        page, page_size, sort_field, sort_order, session, user.lender.id
+        page, page_size, sort_field, sort_order, session, user.lender_id
     )
 
 

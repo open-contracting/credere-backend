@@ -5,20 +5,20 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 
-from app.schema.api import ApplicationPagination
+from app.schema.api import ApplicationListResponse
 
 from ..schema import core
 from .general_utils import update_models, update_models_with_validation
 
 excluded_applications = [
-    core.ApplicationStatus.PENDING,
+    # core.ApplicationStatus.PENDING,
     core.ApplicationStatus.REJECTED,
     core.ApplicationStatus.LAPSED,
     core.ApplicationStatus.DECLINED,
 ]
 
 OCP_can_modify = [
-    core.ApplicationStatus.PENDING,
+    # core.ApplicationStatus.PENDING,
     core.ApplicationStatus.ACCEPTED,
     core.ApplicationStatus.SUBMITTED,
     core.ApplicationStatus.INFORMATION_REQUESTED,
@@ -118,7 +118,7 @@ def update_application_award(
 
 def get_all_active_applications(
     page: int, page_size: int, sort_field: str, sort_order: str, session: Session
-) -> ApplicationPagination:
+) -> ApplicationListResponse:
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
     applications_query = (
@@ -135,11 +135,9 @@ def get_all_active_applications(
 
     total_count = applications_query.count()
 
-    applications = (
-        applications_query.offset((page - 1) * page_size).limit(page_size).all()
-    )
+    applications = applications_query.offset(page * page_size).limit(page_size).all()
 
-    return ApplicationPagination(
+    return ApplicationListResponse(
         items=applications,
         count=total_count,
         page=page,
@@ -154,7 +152,7 @@ def get_all_FI_user_applications(
     sort_order: str,
     session: Session,
     lender_id,
-) -> ApplicationPagination:
+) -> ApplicationListResponse:
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
     applications_query = (
@@ -173,11 +171,9 @@ def get_all_FI_user_applications(
     )
     total_count = applications_query.count()
 
-    applications = (
-        applications_query.offset((page - 1) * page_size).limit(page_size).all()
-    )
+    applications = applications_query.offset(page * page_size).limit(page_size).all()
 
-    return ApplicationPagination(
+    return ApplicationListResponse(
         items=applications,
         count=total_count,
         page=page,
