@@ -83,7 +83,7 @@ def create_application(
 
 def get_applications_to_delete_data(session):
     try:
-        seven_days_ago = datetime.now() - timedelta(
+        days_to_delete_data = datetime.now() - timedelta(
             days=app_settings.days_to_erase_borrower_data
         )
         applications_to_remove_data = (
@@ -96,15 +96,15 @@ def get_applications_to_delete_data(session):
                 or_(
                     and_(
                         Application.status == ApplicationStatus.DECLINED,
-                        Application.borrower_declined_at < seven_days_ago,
+                        Application.borrower_declined_at < days_to_delete_data,
                     ),
                     and_(
                         Application.status == ApplicationStatus.REJECTED,
-                        Application.lender_rejected_at < seven_days_ago,
+                        Application.lender_rejected_at < days_to_delete_data,
                     ),
                     and_(
                         Application.status == ApplicationStatus.COMPLETED,
-                        Application.lender_approved_at < seven_days_ago,
+                        Application.lender_approved_at < days_to_delete_data,
                     ),
                 ),
                 Application.archived_at.is_(None),

@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 from app.db.session import get_db
+from app.schema.core import Application
 
 from . import application_utils
 
@@ -31,9 +32,23 @@ def remove_declined_rejected_completed_data():
                     application.archived_at = datetime.utcnow()
 
                     for document in application.borrower_documents:
-                        document.name = ""
-                        document.file = b""
-                        document.type = None
+                        session.delete(document)
+
+                    # Check if there are any other active applications that use the same award
+                    active_applications_with_same_award = (
+                        session.query(Application)
+                        .filter(
+                            Application.award_id == application.award_id,
+                            Application.id != application.id,
+                            Application.archived_at.is_(
+                                None
+                            ),  # Check that the application is active
+                        )
+                        .all()
+                    )
+                    # Delete the associated Award if no other active applications uses the award
+                    if len(active_applications_with_same_award) == 0:
+                        session.delete(application.award)
                     session.commit()
 
                 except Exception as e:

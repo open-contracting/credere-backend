@@ -120,7 +120,7 @@ class Application(SQLModel, table=True):
     borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
         back_populates="application"
     )
-    award_id: int = Field(foreign_key="award.id")
+    award_id: Optional[int] = Field(foreign_key="award.id", nullable=True)
     award: "Award" = Relationship(back_populates="applications")
     uuid: str = Field(unique=True, index=True, nullable=False)
     primary_email: str = Field(default="", nullable=False)
