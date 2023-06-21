@@ -184,3 +184,9 @@ It will send invitations to the email configure in the env variable _TEST_MAIL_R
 ```
 python -m app.commands fetch-awards --email-invitation test@example.com
 ```
+
+Command to remove data from lapsed applications
+
+```
+python -m app.commands remove-lapsed-application-data
+```
