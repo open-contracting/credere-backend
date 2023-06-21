@@ -2,24 +2,29 @@ import logging
 
 import typer
 
-from app.background_processes import fetcher, remove_lapsed_data
+from app import background_processes
 
 app = typer.Typer()
 
 
 @app.command()
 def fetch_awards(email_invitation: str = None):
-    fetcher.fetch_new_awards(email_invitation)
+    background_processes.fetcher.fetch_new_awards(email_invitation)
 
 
 @app.command()
 def fetch_new_awards_from_date(date: str, email_invitation: str = None):
-    fetcher.fetch_new_awards_from_date(date, email_invitation)
+    background_processes.fetcher.fetch_new_awards_from_date(date, email_invitation)
+
+
+@app.command()
+def remove_dated_application_data():
+    background_processes.remove_dated_data.remove_declined_rejected_completed_data()
 
 
 @app.command()
 def remove_lapsed_application_data():
-    remove_lapsed_data.remove_lapsed_data()
+    background_processes.remove_lapsed_data.remove_application_lapsed_data()
 
 
 if __name__ == "__main__":

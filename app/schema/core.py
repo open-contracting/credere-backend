@@ -115,8 +115,13 @@ class BorrowerDocument(SQLModel, table=True):
     )
 
 
-class ApplicationBase(SQLModel):
-    award_id: int = Field(foreign_key="award.id")
+class ApplicationBase(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
+        back_populates="application"
+    )
+    award_id: Optional[int] = Field(foreign_key="award.id", nullable=True)
+    award: "Award" = Relationship(back_populates="applications")
     uuid: str = Field(unique=True, index=True, nullable=False)
     primary_email: str = Field(default="", nullable=False)
     status: ApplicationStatus = Field(

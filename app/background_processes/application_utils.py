@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import and_, or_
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.session import Session, joinedload
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.session import app_settings
 from app.schema import core
@@ -79,6 +79,43 @@ def create_application(
     application = insert_application(application, session)
 
     return application
+
+
+def get_dated_completed_declined_rejected_applications(session):
+    try:
+        days_to_delete_data = datetime.now() - timedelta(
+            days=app_settings.days_to_erase_borrower_data
+        )
+        applications_to_remove_data = (
+            session.query(Application)
+            .options(
+                joinedload(Application.borrower),
+                joinedload(Application.borrower_documents),
+            )
+            .filter(
+                or_(
+                    and_(
+                        Application.status == ApplicationStatus.DECLINED,
+                        Application.borrower_declined_at < days_to_delete_data,
+                    ),
+                    and_(
+                        Application.status == ApplicationStatus.REJECTED,
+                        Application.lender_rejected_at < days_to_delete_data,
+                    ),
+                    and_(
+                        Application.status == ApplicationStatus.COMPLETED,
+                        Application.lender_approved_at < days_to_delete_data,
+                    ),
+                ),
+                Application.archived_at.is_(None),
+            )
+            .all()
+        )
+        logging.info(applications_to_remove_data)
+    except SQLAlchemyError as e:
+        raise e
+
+    return applications_to_remove_data or []
 
 
 def get_lapsed_applications(session):

@@ -7,17 +7,22 @@ from app.schema.core import Application
 
 from . import application_utils
 
-get_lapses_applications = application_utils.get_lapsed_applications
+get_dated_applications = (
+    application_utils.get_dated_completed_declined_rejected_applications
+)
 
 
-def remove_application_lapsed_data():
+def remove_declined_rejected_completed_data():
     with contextmanager(get_db)() as session:
-        lapsed_applications = get_lapses_applications(session)
-        logging.info("Quantity of lapsed application " + str(len(lapsed_applications)))
-        if len(lapsed_applications) == 0:
+        dated_applications = get_dated_applications(session)
+        logging.info(
+            "Quantity of decline, rejecte and accepted to remove data "
+            + str(len(dated_applications))
+        )
+        if len(dated_applications) == 0:
             logging.info("No application to remove data")
         else:
-            for application in lapsed_applications:
+            for application in dated_applications:
                 try:
                     # save to DB
                     application.borrower.legal_name = ""
@@ -59,4 +64,4 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s - %(message)s",
         handlers=[logging.StreamHandler()],  # Output logs to the console
     )
-    remove_application_lapsed_data()
+    remove_declined_rejected_completed_data()
