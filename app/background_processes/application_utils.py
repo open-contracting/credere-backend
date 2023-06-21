@@ -81,7 +81,7 @@ def create_application(
     return application
 
 
-def get_applications_to_delete_data(session):
+def get_dated_completed_declined_rejected_applications(session):
     try:
         days_to_delete_data = datetime.now() - timedelta(
             days=app_settings.days_to_erase_borrower_data

@@ -7,20 +7,22 @@ from app.schema.core import Application
 
 from . import application_utils
 
-get_applications_to_delete_data = application_utils.get_applications_to_delete_data
+get_dated_applications = (
+    application_utils.get_dated_completed_declined_rejected_applications
+)
 
 
 def remove_declined_rejected_completed_data():
     with contextmanager(get_db)() as session:
-        applications_to_delete_data = get_applications_to_delete_data(session)
+        dated_applications = get_dated_applications(session)
         logging.info(
             "Quantity of decline, rejecte and accepted to remove data "
-            + str(len(applications_to_delete_data))
+            + str(len(dated_applications))
         )
-        if len(applications_to_delete_data) == 0:
+        if len(dated_applications) == 0:
             logging.info("No application to remove data")
         else:
-            for application in applications_to_delete_data:
+            for application in dated_applications:
                 try:
                     # save to DB
                     application.borrower.legal_name = ""
