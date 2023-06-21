@@ -196,6 +196,9 @@ class ApplicationBase(SQLModel):
     archived_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+    information_requested_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
 
 
 class ApplicationRead(ApplicationBase):
