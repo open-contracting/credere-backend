@@ -2,7 +2,7 @@ import logging
 
 import typer
 
-from app.background_processes import fetcher, remove_data_bg
+from app.background_processes import fetcher, remove_dated_data
 
 app = typer.Typer()
 
@@ -18,8 +18,8 @@ def fetch_new_awards_from_date(date: str, email_invitation: str = None):
 
 
 @app.command()
-def remove_data():
-    remove_data_bg.remove_declined_rejected_completed_data()
+def remove_dated_application_data():
+    remove_dated_data.remove_declined_rejected_completed_data()
 
 
 if __name__ == "__main__":
