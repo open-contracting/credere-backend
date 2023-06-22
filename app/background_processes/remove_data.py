@@ -7,12 +7,10 @@ from app.schema.core import Application
 
 from . import application_utils
 
-get_dated_applications = (
-    application_utils.get_dated_completed_declined_rejected_applications
-)
+get_dated_applications = application_utils.get_dated_applications
 
 
-def remove_declined_rejected_completed_data():
+def remove_dated_data():
     with contextmanager(get_db)() as session:
         dated_applications = get_dated_applications(session)
         logging.info(
@@ -25,11 +23,6 @@ def remove_declined_rejected_completed_data():
             for application in dated_applications:
                 try:
                     # save to DB
-                    application.borrower.legal_name = ""
-                    application.borrower.email = ""
-                    application.borrower.address = ""
-                    application.borrower.legal_identifier = ""
-
                     application.primary_email = ""
                     application.archived_at = datetime.utcnow()
 
@@ -51,6 +44,10 @@ def remove_declined_rejected_completed_data():
                     # Delete the associated Award if no other active applications uses the award
                     if len(active_applications_with_same_award) == 0:
                         session.delete(application.award)
+                        application.borrower.legal_name = ""
+                        application.borrower.email = ""
+                        application.borrower.address = ""
+                        application.borrower.legal_identifier = ""
                     session.commit()
 
                 except Exception as e:
@@ -64,4 +61,4 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s - %(message)s",
         handlers=[logging.StreamHandler()],  # Output logs to the console
     )
-    remove_declined_rejected_completed_data()
+    remove_dated_data()

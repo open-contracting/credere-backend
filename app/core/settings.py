@@ -49,9 +49,7 @@ class Settings(BaseSettings):
         "SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION", 365
     )
     days_to_erase_borrower_data: int = config_env.get("DAYS_TO_ERASE_BORROWERS_DATA", 7)
-    days_to_erase_lapsed_borrower_data: int = config_env.get(
-        "DAYS_TO_ERASE_LAPSED_BORROWER_DATA", 14
-    )
+    days_to_change_to_lapsed: int = config_env.get("DAYS_TO_CHANGE_TO_LAPSED", 14)
 
     class Config:
         env_file = ".env"

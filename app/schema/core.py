@@ -199,6 +199,9 @@ class ApplicationBase(SQLModel):
     information_requested_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+    application_lapsed_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
 
 
 class ApplicationRead(ApplicationBase):

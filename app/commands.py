@@ -19,12 +19,12 @@ def fetch_new_awards_from_date(date: str, email_invitation: str = None):
 
 @app.command()
 def remove_dated_application_data():
-    background_processes.remove_dated_data.remove_declined_rejected_completed_data()
+    background_processes.remove_data.remove_dated_data()
 
 
 @app.command()
-def remove_lapsed_application_data():
-    background_processes.remove_lapsed_data.remove_application_lapsed_data()
+def update_applications_to_lapsed():
+    background_processes.lapsed_applications.set_lapsed_applications()
 
 
 if __name__ == "__main__":

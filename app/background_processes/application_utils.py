@@ -81,7 +81,7 @@ def create_application(
     return application
 
 
-def get_dated_completed_declined_rejected_applications(session):
+def get_dated_applications(session):
     try:
         days_to_delete_data = datetime.now() - timedelta(
             days=app_settings.days_to_erase_borrower_data
@@ -106,6 +106,10 @@ def get_dated_completed_declined_rejected_applications(session):
                         Application.status == ApplicationStatus.COMPLETED,
                         Application.lender_approved_at < days_to_delete_data,
                     ),
+                    and_(
+                        Application.status == ApplicationStatus.LAPSED,
+                        Application.application_lapsed_at < days_to_delete_data,
+                    ),
                 ),
                 Application.archived_at.is_(None),
             )
@@ -120,10 +124,10 @@ def get_dated_completed_declined_rejected_applications(session):
 
 def get_lapsed_applications(session):
     try:
-        days_to_delete_data = datetime.now() - timedelta(
-            days=app_settings.days_to_erase_lapsed_borrower_data
+        days_set_to_lapsed = datetime.now() - timedelta(
+            days=app_settings.days_to_change_to_lapsed
         )
-        applications_to_remove_data = (
+        applications_to_set_to_lapsed = (
             session.query(Application)
             .options(
                 joinedload(Application.borrower),
@@ -133,23 +137,23 @@ def get_lapsed_applications(session):
                 or_(
                     and_(
                         Application.status == ApplicationStatus.PENDING,
-                        Application.created_at < days_to_delete_data,
+                        Application.created_at < days_set_to_lapsed,
                     ),
                     and_(
                         Application.status == ApplicationStatus.ACCEPTED,
-                        Application.borrower_accepted_at < days_to_delete_data,
+                        Application.borrower_accepted_at < days_set_to_lapsed,
                     ),
                     and_(
                         Application.status == ApplicationStatus.INFORMATION_REQUESTED,
-                        Application.information_requested_at < days_to_delete_data,
+                        Application.information_requested_at < days_set_to_lapsed,
                     ),
                 ),
                 Application.archived_at.is_(None),
             )
             .all()
         )
-        logging.info(applications_to_remove_data)
+        logging.info(applications_to_set_to_lapsed)
     except SQLAlchemyError as e:
         raise e
 
-    return applications_to_remove_data or []
+    return applications_to_set_to_lapsed or []

@@ -1,1 +1,1 @@
-from . import fetcher, remove_dated_data, remove_lapsed_data  # noqa: F401
+from . import fetcher, lapsed_applications, remove_data  # noqa: F401
