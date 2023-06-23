@@ -68,7 +68,9 @@ def test_fetch_new_awards_from_date():
         "app.background_processes.background_utils.make_request_with_retry",
     ):
         fetch_new_awards_from_date(
-            last_updated_award_date, common_test_functions.mock_get_db
+            last_updated_award_date,
+            "email_invitation",
+            common_test_functions.mock_get_db,
         )
 
         with contextmanager(common_test_functions.mock_get_db)() as session:
