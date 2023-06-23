@@ -55,6 +55,9 @@ def test_fetch_new_awards_from_date():
         "test_hash_12345678",
         "app.background_processes.background_utils.get_secret_hash",
     ), common_test_functions.mock_function_response(
+        1,
+        "app.utils.email_utility.send_invitation_email",
+    ), common_test_functions.mock_function_response(
         None,
         "app.background_processes.application_utils.get_existing_application",
     ), common_test_functions.mock_whole_process(
