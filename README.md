@@ -51,25 +51,26 @@ uvicorn app.main:app --reload
 
 you can use .envtest as an example, it has the following keys:
 
-COGNITO_CLIENT_ID -> your client id inside cognito
-COGNITO_CLIENT_SECRET -> your client secret from cognito client app
-AWS_ACCESS_KEY -> AWS key from the account that owns the users pool
-AWS_CLIENT_SECRET -> AWS secret from the account that owns the users pool
-AWS_REGION -> conigo and SES pool region
-COGNITO_POOL_ID -> cognito pool id
-EMAIL_SENDER_ADDRESS -> authorized sender in cognito
-FRONTEND_URL -> frontend url, use http://127.0.0.1:3000/ for dev
-SENTRY_DNS -> the DNS for sentry
-COLOMBIA_SECOP_APP_TOKEN -> Token from fetching SECOP data
-SECOP_PAGINATION_LIMIT -> Page size for the fected SECOP data
-HASH_KEY -> hash key for hashing personal data before submitting it to Database
-APPLICATION_EXPIRATION_DAYS -> Days to expire link after application creation
-FRONT_PUBLIC_IMAGES_ES -> Directory on the frontend server containing the Spanish versions of the text in the images.
-FRONT_PUBLIC_IMAGES_EN -> Directory on the frontend server containing the English versions of the text in the images.
-TEMPORAL_BUCKET -> Temporal S3 bucket used in develop to serve images
-FACEBOOK_LINK -> Link to OCP Facebook account
-TWITTER_LINK -> Link to OCP Twitter account
-LINK_LINK -> Link to (pending to ask)
+- COGNITO_CLIENT_ID -> your client id inside cognito
+- COGNITO_CLIENT_SECRET -> your client secret from cognito client app
+- AWS_ACCESS_KEY -> AWS key from the account that owns the users pool
+- AWS_CLIENT_SECRET -> AWS secret from the account that owns the users pool
+- AWS_REGION -> cognito and SES pool region
+- COGNITO_POOL_ID -> cognito pool id
+- EMAIL_SENDER_ADDRESS -> authorized sender in cognito
+- FRONTEND_URL -> frontend url, use http://localhost:3000/ for dev
+- SENTRY_DNS -> the DNS for sentry
+- COLOMBIA_SECOP_APP_TOKEN -> token to set header to fetch SECOP data
+- SECOP_PAGINATION_LIMIT -> page size to fetch SECOP data
+- SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION -> days used to compare field ultima_actualizacion the first time a fetching to SECOP data is made (or no awards in database)
+- HASH_KEY -> key for hashing identifiers for privacy concerns
+- APPLICATION_EXPIRATION_DAYS -> days to expire link after application creation
+- IMAGES_BASE_URL -> url where the images are served
+- IMAGES_LANG_SUBPATH -> static sub-path to IMAGES_BASE_URL containing the localized versions of the text in the images buttons.
+- FACEBOOK_LINK -> link to OCP Facebook account
+- TWITTER_LINK -> link to OCP Twitter account
+- LINK_LINK -> link to (Pending to define)
+- TEST_MAIL_RECEIVER -> email used to send invitations when fetching new awards (Will be removed)
 
 You should configure the pre-commit for the repo one time
 
@@ -131,9 +132,11 @@ You need to have a postgresql service running. You can either install postgres f
 
 Once you have the service you need to create a database
 
-then you can construct the env variable like this
+then you can set the env variable like this
 
+```
 DATABASE_URL=postgresql://{username}:{password}@{host_adress:port}/{db_name}
+```
 
 in order to apply migrations in tables use
 
@@ -173,5 +176,11 @@ python -m app.commands --help
 The command to fetch new awards is
 
 ```
-python -m app.commands fetcher-awards
+python -m app.commands fetch-awards
+```
+
+It will send invitations to the email configure in the env variable _TEST_MAIL_RECEIVER_. Alternative could receive a custom email destination with **--email-invitation** argument
+
+```
+python -m app.commands fetch-awards --email-invitation test@example.com
 ```

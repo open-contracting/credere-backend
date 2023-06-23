@@ -73,7 +73,6 @@ class CognitoClient:
             ],
         )
 
-        logging.info(response)
         return response
 
     def initiate_auth(self, username, password):
@@ -174,7 +173,6 @@ class CognitoClient:
             UserPoolId=app_settings.cognito_pool_id, Username=username
         )
 
-        logging.info(response)
         return response
 
     def reset_password(self, username):

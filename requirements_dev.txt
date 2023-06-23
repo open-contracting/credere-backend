@@ -59,7 +59,7 @@ coverage[toml]==6.5.0
     #   pytest-cov
 coveralls==3.3.1
     # via -r requirements_dev.in
-cryptography==41.0.0
+cryptography==41.0.1
     # via
     #   moto
     #   python-jose
@@ -69,6 +69,7 @@ docopt==0.6.2
     # via coveralls
 ecdsa==0.18.0
     # via
+    #   -r requirements.txt
     #   moto
     #   python-jose
 fastapi==0.95.1
@@ -162,6 +163,7 @@ psycopg2==2.9.6
     #   sqlalchemy
 pyasn1==0.5.0
     # via
+    #   -r requirements.txt
     #   python-jose
     #   rsa
 pycodestyle==2.10.0
@@ -195,7 +197,9 @@ python-dateutil==2.8.2
 python-dotenv==1.0.0
     # via -r requirements.txt
 python-jose[cryptography]==3.3.0
-    # via moto
+    # via
+    #   -r requirements.txt
+    #   moto
 pyyaml==6.0
     # via
     #   pre-commit
@@ -213,7 +217,9 @@ rich==13.4.2
     #   -r requirements.txt
     #   typer
 rsa==4.9
-    # via python-jose
+    # via
+    #   -r requirements.txt
+    #   python-jose
 s3transfer==0.6.1
     # via
     #   -r requirements.txt

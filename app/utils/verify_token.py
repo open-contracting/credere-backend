@@ -1,13 +1,17 @@
 from typing import Dict, List, Optional
 
 import requests
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwk, jwt
 from jose.utils import base64url_decode
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.core.settings import app_settings
+from app.schema.core import User
+
+from ..db.session import get_db
 
 JWK = Dict[str, str]
 
@@ -39,7 +43,9 @@ class verifyTokeClass(HTTPBearer):
         try:
             public_key = self.kid_to_jwk[jwt_credentials.header["kid"]]
         except KeyError:
-            raise HTTPException(status_code=403, detail="JWK public key not found")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="JWK public key not found"
+            )
 
         key = jwk.construct(public_key)
         decoded_signature = base64url_decode(jwt_credentials.signature.encode())
@@ -53,7 +59,8 @@ class verifyTokeClass(HTTPBearer):
         if credentials:
             if not credentials.scheme == "Bearer":
                 raise HTTPException(
-                    status_code=403, detail="Wrong authentication method"
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Wrong authentication method",
                 )
 
             jwt_token = credentials.credentials
@@ -69,12 +76,21 @@ class verifyTokeClass(HTTPBearer):
                     message=message,
                 )
             except JWTError:
-                raise HTTPException(status_code=403, detail="JWK invalid")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid"
+                )
 
             if not self.verify_jwk_token(jwt_credentials):
-                raise HTTPException(status_code=403, detail="JWK invalid")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid"
+                )
 
             return jwt_credentials
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authenticated",
+            )
 
 
 JsonPublicKeys = None
@@ -102,4 +118,21 @@ async def get_current_user(
     try:
         return credentials.claims["username"]
     except KeyError:
-        raise HTTPException(status_code=403, detail="Username missing")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Username missing"
+        )
+
+
+async def get_user(
+    credentials: JWTAuthorizationCredentials = Depends(get_auth_credentials),
+    session: Session = Depends(get_db),
+) -> str:
+    try:
+        user = (
+            session.query(User)
+            .filter(User.external_id == credentials.claims["username"])
+            .first()
+        )
+        return user
+    except KeyError:
+        raise HTTPException(status_code=404, detail="User could not be found")

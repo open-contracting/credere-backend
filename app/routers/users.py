@@ -162,7 +162,6 @@ def login_mfa(
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
-            logging.info(response["ChallengeName"])
             session = response["Session"]
             mfa_login_response = client.respond_to_auth_challenge(
                 user.username,
@@ -240,18 +239,15 @@ def me(
 def forgot_password(
     user: BasicUser, client: CognitoClient = Depends(get_cognito_client)
 ):
+    detail = "An email with a reset link was sent to end user"
     try:
-        response = client.reset_password(user.username)
-        logging.info(response)
-        return ApiSchema.ResponseBase(
-            detail="An email with a reset link was sent to end user"
-        )
+        client.reset_password(user.username)
+
+        return ApiSchema.ResponseBase(detail=detail)
     except Exception as e:
         logging.error(e)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="There was an issue trying to change the password",
-        )
+        # always return 200 to avoid user enumeration
+        return ApiSchema.ResponseBase(detail=detail)
 
 
 @router.get("/users/{user_id}", tags=["users"], response_model=User)
