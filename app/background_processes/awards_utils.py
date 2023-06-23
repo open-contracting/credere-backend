@@ -78,5 +78,4 @@ def create_award(entry, session: Session, borrower_id=None, previous=False) -> A
     new_award = create_new_award(source_contract_id, entry, borrower_id, previous)
 
     award = insert_award(new_award, session)
-
     return award

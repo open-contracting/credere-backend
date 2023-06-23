@@ -1,160 +1,105 @@
-import pytest
-from sqlalchemy.orm import sessionmaker
-from app.schema.core import Award, Borrower
-from app.background_processes import awards_utils
-from app.background_processes.borrower_utils import get_or_create_borrower
-from sqlmodel import create_engine
-from unittest.mock import MagicMock, patch
-import os
-import json
+from contextlib import contextmanager
+from datetime import datetime
 
+from sqlalchemy.orm import defer
 
-class MockResponse:
-    def __init__(self, status_code, json_data):
-        self.status_code = status_code
-        self.json_data = json_data
-
-    def json(self):
-        return self.json_data
-
-
-def load_json_file(filename):
-    # Get the directory path of the current file
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Construct the full path to the JSON file
-    filepath = os.path.join(current_dir, filename)
-
-    # Open the JSON file and read its contents
-    with open(filepath, "r") as json_file:
-        data = json.load(json_file)
-
-    return data
-
+from app.background_processes.fetcher import fetch_new_awards_from_date
+from app.schema import core
+from tests.common import common_test_functions
 
 # Load the contract data
-contract = load_json_file("contract.json")
+contract = common_test_functions.load_json_file("mock_data/contract.json")
 
 # Load the award data
-award = load_json_file("award.json")
+award = common_test_functions.load_json_file("mock_data/award.json")
+award_result = common_test_functions.load_json_file("mock_data/award_result.json")
 
 # Load the borrower data
-borrower = load_json_file("borrower.json")
+borrower = common_test_functions.load_json_file("mock_data/borrower.json")
+borrower_result = common_test_functions.load_json_file("mock_data/borrower_result.json")
+
+email = common_test_functions.load_json_file("mock_data/email.json")
+application_result = common_test_functions.load_json_file(
+    "mock_data/application_result.json"
+)
 
 
-@pytest.fixture(scope="function")
-def db_session():
-    # Create a database session
-    SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.db"
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
-    SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    session = SessionTesting()
+award_excluded_keys = [
+    "award_amount",
+    "contractperiod_enddate",
+    "source_data_contracts",
+    "created_at",
+    "updated_at",
+]
 
-    # Create tables
-    Award.metadata.create_all(engine)
+borrower_excluded_keys = [
+    "created_at",
+    "updated_at",
+]
 
-    # Yield the session to the test case
-    yield session
-
-    # Drop tables and close the session
-    session.close()
-    Award.metadata.drop_all(engine)
+application_excluded_keys = ["amount_requested", "contract_amount_submitted"]
 
 
-@pytest.fixture(scope="function")
-def mock_get_email():
-    # Create a mock for make_request_with_retry
-    mock = MagicMock(return_value=MockResponse(200, "test_email@test.com"))
+def test_fetch_new_awards_from_date():
+    date = "2022-06-20T00:00:00.000"
+    last_updated_award_date = datetime.fromisoformat(date)
 
-    # Patch the make_request_with_retry function
-    with patch(
-        "app.background_processes.colombia_data_access.get_email",
-        mock,
-    ):
-        yield mock
-
-
-@pytest.fixture(scope="function")
-def mock_request_award():
-    # Create a mock for make_request_with_retry
-    mock = MagicMock(return_value=MockResponse(200, award))
-
-    # Patch the make_request_with_retry function
-    with patch(
+    with common_test_functions.mock_response_second_empty(
+        200,
+        contract,
+        "app.background_processes.awards_utils.get_new_contracts",
+    ), common_test_functions.mock_function_response(
+        None,
+        "app.background_processes.awards_utils.get_existing_award",
+    ), common_test_functions.mock_function_response(
+        None,
+        "app.background_processes.application_utils.get_existing_application",
+    ), common_test_functions.mock_whole_process(
+        200,
+        award,
+        borrower,
+        email,
         "app.background_processes.background_utils.make_request_with_retry",
-        mock,
     ):
-        yield mock
+        fetch_new_awards_from_date(
+            last_updated_award_date, common_test_functions.mock_get_db
+        )
 
+        with contextmanager(common_test_functions.mock_get_db)() as session:
+            inserted_award = (
+                session.query(core.Award)
+                .options(*[defer(field) for field in award_excluded_keys])
+                .first()
+            )
 
-@pytest.fixture(scope="function")
-def mock_request_borrower():
-    # Create a mock for make_request_with_retry
-    mock = MagicMock(return_value=MockResponse(200, borrower))
+            inserted_borrower = (
+                session.query(core.Borrower)
+                .options(*[defer(field) for field in borrower_excluded_keys])
+                .first()
+            )
+            inserted_application = (
+                session.query(core.Application)
+                .options(*[defer(field) for field in application_excluded_keys])
+                .first()
+            )
 
-    # Patch the make_request_with_retry function
-    with patch(
-        "app.background_processes.background_utils.make_request_with_retry",
-        mock,
-    ):
-        yield mock
+            try:
+                for key, value in inserted_award.__dict__.items():
+                    if key == "award_date":
+                        formatted_dt = value.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+                        assert formatted_dt == award_result[key]
+                        return
+                    if key != "_sa_instance_state":
+                        assert award_result[key] == value
 
-
-@pytest.fixture(scope="function")
-def mock_empty_request():
-    # Create a mock for make_request_with_retry
-    mock = MagicMock(return_value=MockResponse(200, []))
-
-    # Patch the make_request_with_retry function
-    with patch(
-        "app.background_processes.background_utils.make_request_with_retry",
-        mock,
-    ):
-        yield mock
-
-
-def test_create_award(db_session, mock_request_award):
-    # Call the function under test
-    result = awards_utils.create_award(contract, db_session)
-    inserted_award = db_session.query(Award).first()
-
-    # Assert the result
-    assert result == inserted_award
-
-
-def test_create_duplicate_award(db_session, mock_request_award):
-    with pytest.raises(ValueError) as cm:
-        awards_utils.create_award(contract, db_session)
-        awards_utils.create_award(contract, db_session)
-
-    # Assert the error message
-    assert (
-        str(cm.value) == "Skipping Award [previous False] - Already exists on database"
-    )
-
-
-def test_create_award_empty_response(db_session, mock_empty_request):
-    with pytest.raises(ValueError) as cm:
-        awards_utils.create_award(contract, db_session)
-
-    # Assert the error message
-    assert (
-        str(cm.value) == "Skipping Award [previous False]"
-        " - Zero or more than one results for 'proceso_de_compra' and 'proveedor_adjudicado'",
-    )
-
-
-def test_create_award_no_source_contract_id(db_session, mock_request_award):
-    # remove id_contrato so it raises an error
-    contract.pop("id_contrato")
-    with pytest.raises(ValueError) as cm:
-        awards_utils.create_award(contract, db_session)
-
-    # Assert the error message
-    assert (str(cm.value) == "ValueError: Skipping Award - No id_contrato",)
-
-
-def test_create_borrower(db_session, mock_request_borrower, mock_get_email):
-    result = get_or_create_borrower(contract, db_session)
-    inserted_borrower = db_session.query(Borrower).first()
-    assert result == inserted_borrower
+                for key, value in inserted_borrower.__dict__.items():
+                    if key == "size":
+                        assert core.BorrowerSize.NOT_INFORMED == value
+                        return
+                    if key != "_sa_instance_state":
+                        assert borrower_result[key] == value
+                for key, value in inserted_application.__dict__.items():
+                    if key != "_sa_instance_state":
+                        assert application_result[key] == value
+            finally:
+                core.Award.metadata.drop_all(common_test_functions.engine)
