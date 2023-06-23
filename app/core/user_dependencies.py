@@ -188,6 +188,10 @@ class CognitoClient:
 
         return responseSetPassword
 
+    def send_notifications_of_new_applications(self, username):
+        email_utility.send_notification_new_app_to_fi(self.ses, username)
+        # email_utility.send_notification_new_app_to_ocp(self.ses, username)
+
 
 cognito = boto3.client(
     "cognito-idp",

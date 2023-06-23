@@ -102,3 +102,24 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
     )
 
     return response.get("MessageId")
+
+
+def send_notification_new_app_to_fi(ses, name, username):
+    # todo refactor required when this function receives the user language
+
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(name),
+        "USER": name,
+        "LOGIN_URL": app_settings.frontend_url,
+        "LOGIN_IMAGE_LINK": images_base_url + "logincompleteimage.png",
+    }
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # Destination={"ToAddresses": [username]},
+        Destination={"ToAddresses": "aomm24@gmail.com"},
+        Template=email_templates.NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )

@@ -1,5 +1,7 @@
+import logging
 from datetime import datetime
 
+from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -7,6 +9,7 @@ import app.utils.applications as utils
 from app.background_processes.fetcher import fetch_previous_awards
 from app.schema import api as ApiSchema
 
+from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
 from ..schema import core
 from ..utils.permissions import OCP_only
@@ -169,6 +172,28 @@ async def access_scheme(
             borrower=application.borrower,
             award=application.award,
         )
+
+
+@router.post(
+    "/applications/submit",
+    tags=["applications"],
+    # response_model=ApiSchema.ApplicationResponse,
+)
+async def update_apps_send_notifications(
+    payload: ApiSchema.ApplicationSubmit,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+):
+    with transaction_session(session):
+        try:
+            application = utils.get_application_by_uuid(payload.uuid, session)
+            application.status = core.ApplicationStatus.SUBMITTED
+            application.lender_id = payload.lender_id
+            client.send_notifications_of_new_applications("aomm24@gmail.com")
+            return "recibido"
+        except ClientError as e:
+            logging.error(e)
+            return "error"
 
 
 @router.post(
