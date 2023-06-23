@@ -1,5 +1,3 @@
-import pytest
-
 from contextlib import contextmanager
 from datetime import datetime
 
@@ -108,22 +106,3 @@ def test_fetch_new_awards_from_date():
                         assert application_result[key] == value
             finally:
                 core.Award.metadata.drop_all(common_test_functions.engine)
-
-
-# def test_fetch_new_awards_from_date():
-#     date = "2022-06-20T00:00:00.000"
-#     last_updated_award_date = datetime.fromisoformat(date)
-
-#     with common_test_functions.mock_response_second_empty(
-#         200,
-#         contract,
-#         "app.background_processes.awards_utils.get_new_contracts",
-#     ), common_test_functions.mock_function_response(
-#         {"award": "test_award"},
-#         "app.background_processes.awards_utils.get_existing_award",
-#     ):
-#         with pytest.raises(Exception) as e:
-#             fetch_new_awards_from_date(
-#                 last_updated_award_date, common_test_functions.mock_get_db
-#             )
-#         assert str(e.value) == "Expected error message"
