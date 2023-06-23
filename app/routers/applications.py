@@ -189,7 +189,7 @@ async def update_apps_send_notifications(
             application = utils.get_application_by_uuid(payload.uuid, session)
             application.status = core.ApplicationStatus.SUBMITTED
             application.lender_id = payload.lender_id
-            client.send_notifications_of_new_applications("aomm24@gmail.com")
+            client.send_notifications_of_new_applications("adrian.martinez@willdom.com")
             return "recibido"
         except ClientError as e:
             logging.error(e)
