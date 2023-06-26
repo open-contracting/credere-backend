@@ -54,6 +54,7 @@ class MessageType(Enum):
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
+    AWAITING_INFORMATION = "AWAITING_INFORMATION"
 
 
 class UserType(Enum):
@@ -379,6 +380,9 @@ class Message(SQLModel, table=True):
             default=datetime.utcnow(),
             onupdate=func.now(),
         )
+    )
+    lender_id: Optional[int] = Field(
+        default=None, foreign_key="lender.id", nullable=True
     )
 
 
