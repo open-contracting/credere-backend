@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     secop_default_days_from_ultima_actualizacion: int = config_env.get(
         "SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION", 365
     )
+    ocp_email_group: str = config_env.get("OCP_EMAIL_GROUP", "test@mail.com")
 
     class Config:
         env_file = ".env"

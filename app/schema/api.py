@@ -69,6 +69,10 @@ class ApplicationBase(BaseModel):
     uuid: str
 
 
+class ApplicationSubmit(ApplicationBase):
+    lender_id: int
+
+
 class ApplicationDeclinePayload(ApplicationBase):
     decline_this: bool
     decline_all: bool
