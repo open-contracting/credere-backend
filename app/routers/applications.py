@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
 from app.background_processes.fetcher import fetch_previous_awards
+from app.core.settings import app_settings
 from app.schema import api as ApiSchema
 
 from ..core.user_dependencies import CognitoClient, get_cognito_client
@@ -177,7 +178,7 @@ async def access_scheme(
 @router.post(
     "/applications/submit",
     tags=["applications"],
-    # response_model=ApiSchema.ApplicationResponse,
+    response_model=ApiSchema.ApplicationResponse,
 )
 async def update_apps_send_notifications(
     payload: ApiSchema.ApplicationSubmit,
@@ -189,8 +190,22 @@ async def update_apps_send_notifications(
             application = utils.get_application_by_uuid(payload.uuid, session)
             application.status = core.ApplicationStatus.SUBMITTED
             application.lender_id = payload.lender_id
-            client.send_notifications_of_new_applications("adrian.martinez@willdom.com")
-            return "recibido"
+            lender = (
+                session.query(core.Lender)
+                .filter(core.Lender.id == payload.lender_id)
+                .first()
+            )
+            lender_name = lender.name
+            lender_email_group = lender.email_group
+            ocp_email_group = app_settings.ocp_email_group
+            client.send_notifications_of_new_applications(
+                ocp_email_group, lender_name, lender_email_group
+            )
+            return ApiSchema.ApplicationResponse(
+                application=application,
+                borrower=application.borrower,
+                award=application.award,
+            )
         except ClientError as e:
             logging.error(e)
             return "error"

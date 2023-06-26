@@ -69,8 +69,7 @@ class ApplicationBase(BaseModel):
     uuid: str
 
 
-class ApplicationSubmit(BaseModel):
-    uuid: str
+class ApplicationSubmit(ApplicationBase):
     lender_id: int
 
 

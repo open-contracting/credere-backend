@@ -188,9 +188,16 @@ class CognitoClient:
 
         return responseSetPassword
 
-    def send_notifications_of_new_applications(self, username):
-        email_utility.send_notification_new_app_to_fi(self.ses, username)
-        # email_utility.send_notification_new_app_to_ocp(self.ses, username)
+    def send_notifications_of_new_applications(
+        self,
+        ocp_email_group,
+        lender_name,
+        lender_email_group,
+    ):
+        email_utility.send_notification_new_app_to_fi(self.ses, lender_email_group)
+        email_utility.send_notification_new_app_to_ocp(
+            self.ses, ocp_email_group, lender_name
+        )
 
 
 cognito = boto3.client(
