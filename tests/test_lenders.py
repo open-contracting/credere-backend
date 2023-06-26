@@ -1,6 +1,5 @@
 import logging
 from typing import Any, Generator
-from contextlib import contextmanager
 import boto3
 import pytest
 from botocore.config import Config
