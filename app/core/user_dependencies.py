@@ -51,7 +51,6 @@ class CognitoClient:
 
     def admin_create_user(self, username, name):
         temp_password = self.generate_password()
-
         responseCreateUser = self.client.admin_create_user(
             UserPoolId=app_settings.cognito_pool_id,
             Username=username,
