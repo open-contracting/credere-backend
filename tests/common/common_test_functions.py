@@ -8,6 +8,15 @@ from sqlalchemy.orm import sessionmaker
 
 from app.schema import core
 
+datetime_keys = ["award_date", "contractperiod_enddate", "expired_at"]
+excluded_keys = [
+    "created_at",
+    "updated_at",
+    "secop_data_verification",
+    "_sa_instance_state",
+    "expired_at",
+]
+
 
 class MockResponse:
     def __init__(self, status_code, json_data):
@@ -19,20 +28,17 @@ class MockResponse:
 
 
 def load_json_file(filename):
-    # Get the directory path of the current file
     current_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Construct the full path to the JSON file
     filepath = os.path.join(current_dir, filename)
 
-    # Open the JSON file and read its contents
     with open(filepath, "r") as json_file:
         data = json.load(json_file)
 
     return data
 
 
-engine = create_engine("sqlite:///./test_db.db")
+engine = create_engine("postgresql://postgres:valter01@localhost:5432/postgres")
+# engine = create_engine("sqlite:///./test_db.db")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -79,11 +85,37 @@ def mock_response_second_empty(status_code: int, content: dict, function_path: s
         yield mock
 
 
+def compare_objects(
+    fetched_model,
+    expected_result,
+):
+    for key, value in fetched_model.__dict__.items():
+        if key in excluded_keys:
+            continue
+
+        if key in datetime_keys:
+            formatted_dt = value.strftime("%Y-%m-%dT%H:%M:%S")
+            assert formatted_dt == expected_result[key]
+            continue
+
+        if key == "size":
+            assert core.BorrowerSize.NOT_INFORMED == value
+            continue
+        if key == "status":
+            assert (
+                core.BorrowerStatus.ACTIVE == value
+                or core.ApplicationStatus.PENDING == value
+            )
+            continue
+
+        assert expected_result[key] == value
+
+
 def mock_get_db():
     try:
         db = None
         if SessionLocal:
-            core.Award.metadata.create_all(engine)
+            core.Application.metadata.create_all(engine)
             db = SessionLocal()
 
         yield db

@@ -1,4 +1,5 @@
 {
+  "award_date": "2023-01-09T00:00:00",
   "contractperiod_enddate": "2023-12-31T00:00:00",
   "id": 1,
   "source_url": "https://example.com",
@@ -14,9 +15,8 @@
   "source_last_updated_at": null,
   "source_contract_id": "CO1.test.123456",
   "contract_status": "Adjudicado",
-  "contractperiod_startdate": null,
   "source_data_contracts": {
-    "nombre_entidad": "Test Entity",
+    "nombre_entidad": "Test Buyer",
     "nit_entidad": "123456789",
     "departamento": "Test Department",
     "ciudad": "Test City",
@@ -54,7 +54,7 @@
     "valor_amortizado": "0",
     "valor_pendiente_de": "0",
     "valor_pendiente_de_ejecucion": "10000000",
-    "estado_bpin": "VÃ¡lido",
+    "estado_bpin": "Válido",
     "c_digo_bpin": "Test BPIN Code",
     "anno_bpin": "2023",
     "saldo_cdp": "5000000",
@@ -173,9 +173,10 @@
   },
   "award_currency": "COP",
   "contracting_process_id": "Test Procurement Process",
-  "created_at": "2023-06-22T13:52:06.691837",
+  "award_amount": 10000000.00,
+  "created_at": "2023-06-25T18:25:37.940833-03:00",
   "buyer_name": "Test Buyer",
   "procurement_category": "Test Contract Type",
-  "award_date": "2023-01-09T00:00:00.000",
-  "updated_at": "2023-06-22T13:52:06"
+  "contractperiod_startdate": null,
+  "updated_at": "2023-06-25T15:25:37.943754-03:00"
 }
