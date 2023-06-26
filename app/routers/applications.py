@@ -211,6 +211,42 @@ async def update_apps_send_notifications(
             return "error"
 
 
+# @router.post(
+#     "/applications/email-sme",
+#     tags=["applications"],
+#     response_model=ApiSchema.ApplicationResponse,
+# )
+# async def email_sme(
+#     payload: ApiSchema.ApplicationSubmit,
+#     session: Session = Depends(get_db),
+#     client: CognitoClient = Depends(get_cognito_client),
+# ):
+#     with transaction_session(session):
+#         try:
+#             application = utils.get_application_by_uuid(payload.uuid, session)
+#             application.status = core.ApplicationStatus.SUBMITTED
+#             application.lender_id = payload.lender_id
+#             lender = (
+#                 session.query(core.Lender)
+#                 .filter(core.Lender.id == payload.lender_id)
+#                 .first()
+#             )
+#             lender_name = lender.name
+#             lender_email_group = lender.email_group
+#             ocp_email_group = app_settings.ocp_email_group
+#             client.send_notifications_of_new_applications(
+#                 ocp_email_group, lender_name, lender_email_group
+#             )
+#             return ApiSchema.ApplicationResponse(
+#                 application=application,
+#                 borrower=application.borrower,
+#                 award=application.award,
+#             )
+#         except ClientError as e:
+#             logging.error(e)
+#             return "error"
+
+
 @router.post(
     "/applications/decline",
     tags=["applications"],
