@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 
+from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
 from app.schema.core import Borrower
@@ -11,7 +12,7 @@ from .application_utils import create_application, insert_message
 from .borrower_utils import get_or_create_borrower
 
 
-def fetch_new_awards_from_date(last_updated_award_date: str):
+def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: str):
     index = 0
     contracts_response = awards_utils.get_new_contracts(index, last_updated_award_date)
     contracts_response_json = contracts_response.json()
@@ -40,10 +41,19 @@ def fetch_new_awards_from_date(last_updated_award_date: str):
 
                     message = insert_message(application, session)
 
+                    # change in PROD
+                    logging.info(f"Parameter email_invitation: {email_invitation}")
+                    if not email_invitation or email_invitation == "":
+                        email_invitation = app_settings.test_mail_receiver
+
+                    logging.info(
+                        f"NON PROD - Email to: {borrower.email} sent to {email_invitation}"
+                    )
+
                     messageId = email_utility.send_invitation_email(
                         sesClient,
                         application.uuid,
-                        borrower.email,
+                        email_invitation,  # change to borrower.email in prod
                         borrower.legal_name,
                         award.buyer_name,
                         award.title,
@@ -62,9 +72,9 @@ def fetch_new_awards_from_date(last_updated_award_date: str):
         contracts_response_json = contracts_response.json()
 
 
-def fetch_new_awards():
+def fetch_new_awards(email_invitation: str = None):
     last_updated_award_date = awards_utils.get_last_updated_award_date()
-    fetch_new_awards_from_date(last_updated_award_date)
+    fetch_new_awards_from_date(last_updated_award_date, email_invitation)
 
 
 def fetch_previous_awards(borrower: Borrower):

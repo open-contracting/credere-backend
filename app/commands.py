@@ -8,13 +8,13 @@ app = typer.Typer()
 
 
 @app.command()
-def fetcher_awards():
-    fetcher.fetch_new_awards()
+def fetch_awards(email_invitation: str = None):
+    fetcher.fetch_new_awards(email_invitation)
 
 
 @app.command()
-def fetch_new_awards_from_date(date: str):
-    fetcher.fetch_new_awards_from_date(date)
+def fetch_new_awards_from_date(date: str, email_invitation: str = None):
+    fetcher.fetch_new_awards_from_date(date, email_invitation)
 
 
 if __name__ == "__main__":
