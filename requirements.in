@@ -12,4 +12,3 @@ jose
 httpx
 requests
 typer[all]
-python-multipart

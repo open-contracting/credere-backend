@@ -171,7 +171,6 @@ test_borrower = {
 }
 
 
-files = {"file": open(filepath, "rb")}
 data = {"type": "BANK_NAME", "uuid": test_application_uuid}
 
 
@@ -194,6 +193,7 @@ def test_upload_file(client):
         session.add(app_obj)
         session.commit()
         session.refresh(app_obj)
-
-    response = client.post("applications/upload/", data=data, files=files)
-    assert response.status_code == status.HTTP_200_OK
+    with open(filepath, "rb") as file:
+        files = {"file": file}
+        response = client.post("applications/upload/", data=data, files=files)
+        assert response.status_code == status.HTTP_200_OK
