@@ -199,6 +199,12 @@ class CognitoClient:
             self.ses, ocp_email_group, lender_name
         )
 
+    def send_request_to_sme(
+        self,
+        test,
+    ):
+        email_utility.send_mail_request_to_sme(self.ses, test)
+
 
 cognito = boto3.client(
     "cognito-idp",

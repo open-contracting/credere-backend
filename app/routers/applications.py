@@ -228,6 +228,9 @@ async def email_sme(
             application_id = application.id
             email_message = payload.message
             lender_id = application.lender_id
+
+            # client.send_request_to_sme("test")
+
             # create a new row in the table message saving th email body and the application id
             new_message = core.Message(
                 application_id=application_id,

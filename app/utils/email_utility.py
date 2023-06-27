@@ -139,3 +139,22 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
         Template=email_templates.NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
+
+
+def send_mail_request_to_sme(ses, test):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "F1": "aaa",
+        # "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+    }
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={"ToAddresses": ["test"]},
+        Template=email_templates.NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )
