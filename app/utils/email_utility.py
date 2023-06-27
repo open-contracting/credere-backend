@@ -141,20 +141,25 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
     )
 
 
-def send_mail_request_to_sme(ses, test):
+def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
     # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
 
     data = {
         **generate_common_data(),
-        "F1": "aaa",
-        # "LOGIN_URL": app_settings.frontend_url + "/login",
+        "FI": lender_name,
+        "FI_MESSAGE": email_message,
+        "LOGIN_DOCUMENTS_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(uuid)
+        + "/documents",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": ["test"]},
-        Template=email_templates.NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME,
+        # replace with sme_email on production
+        Destination={"ToAddresses": ["adrian.martinez@willdom.com"]},
+        Template=email_templates.REQUEST_SME_DATA_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )

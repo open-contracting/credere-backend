@@ -227,24 +227,26 @@ async def email_sme(
             application.status = core.ApplicationStatus.INFORMATION_REQUESTED
             application_id = application.id
             email_message = payload.message
+            sme_email = application.primary_email
             lender_id = application.lender_id
+            lender = (
+                session.query(core.Lender).filter(core.Lender.id == lender_id).first()
+            )
+            lender_name = lender.name
 
-            # client.send_request_to_sme("test")
+            client.send_request_to_sme(
+                payload.uuid, lender_name, email_message, sme_email
+            )
 
-            # create a new row in the table message saving th email body and the application id
             new_message = core.Message(
                 application_id=application_id,
                 body=email_message,
                 lender_id=lender_id,
-                # AM esto es un enum nuevo que hay que migrar, asi interprete
                 type=core.MessageType.AWAITING_INFORMATION,
             )
             session.add(new_message)
             session.commit()
 
-            # client.send_notifications_of_new_applications(
-            #     ocp_email_group, lender_name, lender_email_group
-            # )
             return ApiSchema.ApplicationResponse(
                 application=application,
                 borrower=application.borrower,
