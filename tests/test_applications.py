@@ -6,7 +6,7 @@ from typing import Any, Generator
 import boto3
 import pytest
 from botocore.config import Config
-from fastapi import FastAPI, File, UploadFile, status
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
@@ -172,16 +172,6 @@ test_borrower = {
 
 
 data = {"type": "BANK_NAME", "uuid": test_application_uuid}
-
-
-# added this temporal test in order to avoid python-multipart being unused
-def upload_file(file: UploadFile = File(...)):
-    return file.name
-
-
-def test_upload_file():
-    with open(filepath, "rb") as f:
-        assert upload_file(f) == filepath
 
 
 def test_applications_upload_file(client):

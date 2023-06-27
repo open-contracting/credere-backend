@@ -197,7 +197,7 @@ python-jose[cryptography]==3.3.0
     # via
     #   -r requirements.txt
     #   moto
-python-multipart==0.0.6
+python-multipart[standard_maintenance_scripts_ignore]==0.0.6
     # via -r requirements.txt
 pyyaml==6.0
     # via
