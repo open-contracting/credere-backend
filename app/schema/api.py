@@ -69,6 +69,11 @@ class ApplicationBase(BaseModel):
     uuid: str
 
 
+class ChangeEmail(ApplicationBase):
+    old_email: str
+    new_email: str
+
+
 class ApplicationSubmit(ApplicationBase):
     lender_id: int
 

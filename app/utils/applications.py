@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import HTTPException, status
+from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
@@ -9,6 +9,8 @@ from app.schema.api import ApplicationListResponse
 
 from ..schema import core
 from .general_utils import update_models, update_models_with_validation
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
 
 excluded_applications = [
     # core.ApplicationStatus.PENDING,
@@ -23,6 +25,11 @@ OCP_can_modify = [
     core.ApplicationStatus.SUBMITTED,
     core.ApplicationStatus.INFORMATION_REQUESTED,
 ]
+
+
+def allowed_file(filename):
+    allowed_extensions = {"png", "pdf", "jpeg"}
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
 def create_application_action(
@@ -179,6 +186,19 @@ def get_all_FI_user_applications(
         page=page,
         page_size=page_size,
     )
+
+
+async def validate_file(file: UploadFile = File(...)):
+    if not allowed_file(file.filename):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Format not allowed. It must be a PNG, JPEG, or PDG file",
+        )
+    if len(await file.read()) >= MAX_FILE_SIZE:  # 10MB in bytes
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File is too large",
+        )
 
 
 def get_application_by_uuid(uuid: str, session: Session):

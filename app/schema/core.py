@@ -111,7 +111,12 @@ class BorrowerDocument(SQLModel, table=True):
         )
     )
     submitted_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False)
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
+        )
     )
 
 
@@ -221,6 +226,7 @@ class Borrower(SQLModel, table=True):
     applications: Optional[List["Application"]] = Relationship(
         back_populates="borrower"
     )
+    uuid: str = Field(unique=True, index=True, nullable=False)
     awards: List["Award"] = Relationship(back_populates="borrower")
     borrower_identifier: str = Field(default="", unique=True, nullable=False)
     legal_name: str = Field(default="")
