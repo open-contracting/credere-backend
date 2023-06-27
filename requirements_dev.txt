@@ -49,6 +49,9 @@ click==8.1.3
 colorama==0.4.6
     # via
     #   -r requirements.txt
+    #   build
+    #   click
+    #   pytest
     #   typer
 coverage[toml]==6.5.0
     # via
@@ -197,6 +200,8 @@ python-jose[cryptography]==3.3.0
     # via
     #   -r requirements.txt
     #   moto
+python-multipart==0.0.6
+    # via -r requirements.txt
 pyyaml==6.0
     # via
     #   pre-commit

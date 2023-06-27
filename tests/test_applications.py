@@ -6,7 +6,7 @@ from typing import Any, Generator
 import boto3
 import pytest
 from botocore.config import Config
-from fastapi import FastAPI, status
+from fastapi import FastAPI, File, UploadFile, status
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
@@ -143,7 +143,7 @@ def mock_get_db():
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-filepath = os.path.join(current_dir, "test_files/def.png")
+filepath = os.path.join(current_dir, "test_files/test_image.png")
 
 test_application_uuid = "123-456-789"
 test_appliation = {
@@ -174,17 +174,27 @@ test_borrower = {
 data = {"type": "BANK_NAME", "uuid": test_application_uuid}
 
 
-def test_upload_file(client):
+# added this temporal test in order to avoid python-multipart being unused
+def upload_file(file: UploadFile = File(...)):
+    return file.name
+
+
+def test_upload_file():
+    with open(filepath, "rb") as f:
+        assert upload_file(f) == filepath
+
+
+def test_applications_upload_file(client):
     with contextmanager(mock_get_db)() as session:
         borrower_obj = core.Borrower(**test_borrower)
         session.add(borrower_obj)
-        session.commit()
+        session.flush()
         session.refresh(borrower_obj)
 
         award_obj = core.Award(**test_award)
         award_obj.borrower_id = borrower_obj.id
         session.add(award_obj)
-        session.commit()
+        session.flush()
         session.refresh(award_obj)
 
         app_obj = core.Application(**test_appliation)
@@ -193,6 +203,7 @@ def test_upload_file(client):
         session.add(app_obj)
         session.commit()
         session.refresh(app_obj)
+
     with open(filepath, "rb") as file:
         files = {"file": file}
         response = client.post("applications/upload/", data=data, files=files)
