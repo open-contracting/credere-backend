@@ -200,9 +200,10 @@ class CognitoClient:
         )
 
     def send_request_to_sme(self, uuid, lender_name, email_message, sme_email):
-        email_utility.send_mail_request_to_sme(
+        message_id = email_utility.send_mail_request_to_sme(
             self.ses, uuid, lender_name, email_message, sme_email
         )
+        return message_id
 
 
 cognito = boto3.client(

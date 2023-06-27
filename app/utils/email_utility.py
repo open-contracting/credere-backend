@@ -156,10 +156,11 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    ses.send_templated_email(
+    response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         # replace with sme_email on production
         Destination={"ToAddresses": ["adrian.martinez@willdom.com"]},
         Template=email_templates.REQUEST_SME_DATA_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
+    return response.get("MessageId")

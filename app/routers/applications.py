@@ -234,7 +234,7 @@ async def email_sme(
             )
             lender_name = lender.name
 
-            client.send_request_to_sme(
+            message_id = client.send_request_to_sme(
                 payload.uuid, lender_name, email_message, sme_email
             )
 
@@ -243,6 +243,7 @@ async def email_sme(
                 body=email_message,
                 lender_id=lender_id,
                 type=core.MessageType.AWAITING_INFORMATION,
+                external_message_id=message_id,
             )
             session.add(new_message)
             session.commit()
