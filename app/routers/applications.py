@@ -224,15 +224,14 @@ async def email_sme(
     with transaction_session(session):
         try:
             application = utils.get_application_by_uuid(payload.uuid, session)
-            # AM esto no estaba expresamente pedido pero creo que corresponde
             application.status = core.ApplicationStatus.INFORMATION_REQUESTED
             application_id = application.id
-            email_body = payload.message
+            email_message = payload.message
             lender_id = application.lender_id
             # create a new row in the table message saving th email body and the application id
             new_message = core.Message(
                 application_id=application_id,
-                email_body=email_body,
+                body=email_message,
                 lender_id=lender_id,
                 # AM esto es un enum nuevo que hay que migrar, asi interprete
                 type=core.MessageType.AWAITING_INFORMATION,
