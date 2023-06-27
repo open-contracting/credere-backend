@@ -104,7 +104,6 @@ async def upload_file(
 ):
     with transaction_session(session):
         await utils.validate_file(file)
-
         application = utils.get_application_by_uuid(uuid, session)
 
         new_document = {
