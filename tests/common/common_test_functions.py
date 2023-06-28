@@ -37,7 +37,9 @@ def load_json_file(filename):
     return data
 
 
-engine = create_engine("postgresql://postgres:valter01@localhost:5432/postgres")
+engine = create_engine(
+    "postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres"
+)
 # engine = create_engine("sqlite:///./test_db.db")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
