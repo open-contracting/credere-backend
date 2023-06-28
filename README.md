@@ -70,7 +70,9 @@ you can use .envtest as an example, it has the following keys:
 - FACEBOOK_LINK -> link to OCP Facebook account
 - TWITTER_LINK -> link to OCP Twitter account
 - LINK_LINK -> link to (Pending to define)
-- TEST_MAIL_RECEIVER -> email used to send invitations when fetching new awards (Will be removed)
+- TEST_MAIL_RECEIVER -> email used to send invitations when fetching new awards (Will be removed
+- DAYS_TO_ERASE_BORROWERS_DATA -> The number of days to wait before deleting borrower data
+- DAYS_TO_CHANGE_TO_LAPSED -> The number of days to wait before changing the status of an application to 'Lapsed'
 
 You should configure the pre-commit for the repo one time
 
@@ -194,4 +196,16 @@ It will send invitations to the email configure in the env variable _TEST_MAIL_R
 
 ```
 python -m app.commands fetch-awards --email-invitation test@example.com
+```
+
+Command to remove data from dated completed, declined, rejected and lapsed applications
+
+```
+python -m app.commands remove-dated-application-data
+```
+
+Command to remove data from lapsed applications
+
+```
+python -m app.commands update-applications-to-lapsed
 ```
