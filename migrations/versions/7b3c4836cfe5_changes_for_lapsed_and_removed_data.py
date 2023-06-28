@@ -1,21 +1,31 @@
-"""Make award_id field nullable
+"""Added information_requested_at column
 
-Revision ID: edbb36e7c5a9
-Revises: bfd66392691e
-Create Date: 2023-06-21 09:13:52.118045
+Revision ID: 7b3c4836cfe5
+Revises: df236486f60a
+Create Date: 2023-06-21 13:44:30.608781
 
 """
 import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "edbb36e7c5a9"
-down_revision = "bfd66392691e"
+revision = "7b3c4836cfe5"
+down_revision = "df236486f60a"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
+    op.add_column(
+        "application",
+        sa.Column(
+            "information_requested_at", sa.DateTime(timezone=True), nullable=True
+        ),
+    )
+    op.add_column(
+        "application",
+        sa.Column("application_lapsed_at", sa.DateTime(timezone=True), nullable=True),
+    )
     conn = op.get_bind()
     inspector = sa.inspect(conn)
     columns = inspector.get_columns("application")
@@ -41,6 +51,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.drop_column("application", "information_requested_at")
+    op.drop_column("application", "application_lapsed_at")
     conn = op.get_bind()
     inspector = sa.inspect(conn)
     columns = inspector.get_columns("application")
