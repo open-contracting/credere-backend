@@ -149,7 +149,7 @@ This will apply the migrations in your database
 If you need to create a new migration you can use
 
 ```
-alembic revision -m "migation name"
+alembic revision -m "migration name"
 ```
 
 this will generate a file with a identifier and the name you picked.
@@ -160,7 +160,7 @@ Inside the script you need to configure both operations, upgrade and downgrade. 
 Another option is to use
 
 ```
-alembic revision --autogenerate -m "migation name"
+alembic revision --autogenerate -m "migration name"
 ```
 
 This will attempt to auto-detect the changes made to schema.core.py and complete the upgrade and downgrade automatically.
