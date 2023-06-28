@@ -81,7 +81,7 @@ python-dotenv==1.0.0
     # via -r requirements.in
 python-jose==3.3.0
     # via -r requirements.in
-python-multipart[standard_maintenance_scripts_ignore]==0.0.6
+python-multipart==0.0.6
     # via -r requirements.in
 requests==2.31.0
     # via -r requirements.in

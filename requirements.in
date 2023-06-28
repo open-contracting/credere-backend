@@ -12,4 +12,4 @@ jose
 httpx
 requests
 typer[all]
-python-multipart[STANDARD_MAINTENANCE_SCRIPTS_IGNORE]
+python-multipart
