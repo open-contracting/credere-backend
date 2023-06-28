@@ -237,11 +237,15 @@ async def email_sme(
                 .first()
             )
             application.status = core.ApplicationStatus.INFORMATION_REQUESTED
+            # descomentar cuando exista la columna
+            # current_time = datetime.now(application.created_at.tzinfo)
+            # application.information_requested_at = current_time
             application_id = application.id
             application_uuid = application.uuid
             email_message = payload.message
             sme_email = application.primary_email
             lender_name = lender.name
+
             message_id = client.send_request_to_sme(
                 application_uuid, lender_name, email_message, sme_email
             )

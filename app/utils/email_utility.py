@@ -153,7 +153,7 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
         + "/application/"
         + quote(uuid)
         + "/documents",
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_IMAGE_LINK": images_base_url + "/uploadDocument.png",
     }
 
     response = ses.send_templated_email(
