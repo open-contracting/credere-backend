@@ -149,13 +149,24 @@ This will apply the migrations in your database
 If you need to create a new migration you can use
 
 ```
-alembic revision -m "migration name"
+alembic revision -m "migation name"
 ```
 
 this will generate a file with a identifier and the name you picked.
 It will look like this _2ca870aa737d_migration_name.py_
 
 Inside the script you need to configure both operations, upgrade and downgrade. Upgrade will apply changes and downgrade remove them. Use the first migration as base.
+
+Another option is to use
+
+```
+alembic revision --autogenerate -m "migation name"
+```
+
+This will attempt to auto-detect the changes made to schema.core.py and complete the upgrade and downgrade automatically.
+This feature needs to be re-checked by the developer to ensure all changes were included. For more details on what is auto-detected, you can read the following link
+
+https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect
 
 ## Test
 
