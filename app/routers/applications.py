@@ -212,37 +212,45 @@ async def update_apps_send_notifications(
 
 
 @router.post(
-    "/applications/email-sme",
+    "/applications/email-sme/{id}",
     tags=["applications"],
     response_model=ApiSchema.ApplicationResponse,
 )
 async def email_sme(
+    id: int,
     payload: ApiSchema.ApplicationEmailSme,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
+    user: core.User = Depends(get_user),
 ):
     with transaction_session(session):
         try:
-            application = utils.get_application_by_uuid(payload.uuid, session)
+            application = (
+                session.query(core.Application)
+                .filter(core.Application.id == id)
+                .first()
+            )
+            # Obtaing the lenderId from the user
+            lender = (
+                session.query(core.Lender)
+                .filter(core.Application.id == user.lender_id)
+                .first()
+            )
             application.status = core.ApplicationStatus.INFORMATION_REQUESTED
             application_id = application.id
+            application_uuid = application.uuid
             email_message = payload.message
             sme_email = application.primary_email
-            lender_id = application.lender_id
-            lender = (
-                session.query(core.Lender).filter(core.Lender.id == lender_id).first()
-            )
             lender_name = lender.name
-
             message_id = client.send_request_to_sme(
-                payload.uuid, lender_name, email_message, sme_email
+                application_uuid, lender_name, email_message, sme_email
             )
 
             new_message = core.Message(
                 application_id=application_id,
                 body=email_message,
-                lender_id=lender_id,
-                type=core.MessageType.AWAITING_INFORMATION,
+                lender_id=lender.id,
+                type=core.MessageType.FI_MESSAGE,
                 external_message_id=message_id,
             )
             session.add(new_message)

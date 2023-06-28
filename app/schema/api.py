@@ -73,7 +73,7 @@ class ApplicationSubmit(ApplicationBase):
     lender_id: int
 
 
-class ApplicationEmailSme(ApplicationBase):
+class ApplicationEmailSme(BaseModel):
     message: str
 
 
