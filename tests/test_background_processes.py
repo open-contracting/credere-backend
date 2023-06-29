@@ -5,13 +5,8 @@ from app.background_processes.fetcher import fetch_new_awards_from_date
 from app.schema import core
 from tests.common import common_test_functions
 
-# Load the contract data
 contract = common_test_functions.load_json_file("mock_data/contract.json")
-
-# Load the award data
 award = common_test_functions.load_json_file("mock_data/award.json")
-
-# Load the borrower data
 borrower = common_test_functions.load_json_file("mock_data/borrower.json")
 
 email = common_test_functions.load_json_file("mock_data/email.json")
@@ -19,17 +14,11 @@ application_result = common_test_functions.load_json_file(
     "mock_data/application_result.json"
 )
 
-datetime_keys = ["award_date", "contractperiod_enddate"]
-
-excluded_keys = ["created_at", "updated_at"]
+award_result = common_test_functions.load_json_file("mock_data/award_result.json")
+borrower_result = common_test_functions.load_json_file("mock_data/borrower_result.json")
 
 
 def test_fetch_new_awards_from_date():
-    award_result = common_test_functions.load_json_file("mock_data/award_result.json")
-    borrower_result = common_test_functions.load_json_file(
-        "mock_data/borrower_result.json"
-    )
-
     date = "2022-06-20T00:00:00.000"
     last_updated_award_date = datetime.fromisoformat(date)
 
@@ -67,6 +56,7 @@ def test_fetch_new_awards_from_date():
 
             inserted_borrower = session.query(core.Borrower).first()
             inserted_application = session.query(core.Application).first()
+            print(session.query(core.Application).count())
 
             try:
                 common_test_functions.compare_objects(inserted_award, award_result)

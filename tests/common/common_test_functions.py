@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.core.settings import app_settings
 from app.schema import core
 
 datetime_keys = ["award_date", "contractperiod_enddate", "expired_at"]
@@ -37,10 +38,11 @@ def load_json_file(filename):
     return data
 
 
-engine = create_engine(
-    "postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres"
-)
-# engine = create_engine("sqlite:///./test_db.db")
+LOCAL_TEST_DATABASE = app_settings.local_test_database
+DATABASE_URL = os.getenv("DATABASE_URL", LOCAL_TEST_DATABASE)
+print(DATABASE_URL)
+engine = create_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
