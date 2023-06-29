@@ -81,6 +81,37 @@ class BorrowerSize(Enum):
     MEDIUM = "MEDIUM"
 
 
+class CreditType(Enum):
+    LOAN = "Loan"
+    CREDIT_LINE = "Credit Line"
+
+
+class CreditProductBase(SQLModel, table=True):
+    __tablename__ = "credit_product"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    MSME: BorrowerSize = Field(
+        sa_column=Column(SAEnum(BorrowerSize, name="borrower_size")), nullable=False
+    )
+    lower_limit: Decimal = Field(
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
+    )
+    upper_limit: Decimal = Field(
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
+    )
+    type: CreditType = Field(
+        sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
+    )
+    required_document_types: dict = Field(
+        default={}, sa_column=Column(JSON), nullable=False
+    )
+    other_fees_total_amount: Decimal = Field(
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
+    )
+    other_fees_description: str = Field(default="", nullable=False)
+    more_info_link: str = Field(default="", nullable=False)
+    lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
+
+
 class BorrowerDocument(SQLModel, table=True):
     __tablename__ = "borrower_document"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -202,6 +233,9 @@ class ApplicationBase(SQLModel):
     application_lapsed_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+    credit_product_id: Optional[int] = Field(
+        foreign_key="credit_product.id", nullable=True
+    )
 
 
 class ApplicationRead(ApplicationBase):
@@ -273,10 +307,10 @@ class LenderBase(SQLModel):
     email_group: str = Field(default="")
     status: str = Field(default="")
     type: str = Field(default="")
-    borrower_type_preferences: dict = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
-    limits_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    # borrower_type_preferences: dict = Field(
+    #     default={}, sa_column=Column(JSON), nullable=False
+    # )
+    # limits_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     sla_days: Optional[int]
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -296,6 +330,9 @@ class LenderBase(SQLModel):
     )
     deleted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    credit_Product: CreditType = Field(
+        sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
     )
 
 
