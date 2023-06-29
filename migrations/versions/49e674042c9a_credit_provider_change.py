@@ -1,8 +1,8 @@
 """credit provider change
 
-Revision ID: 4384322a5638
+Revision ID: 49e674042c9a
 Revises: 7b3c4836cfe5
-Create Date: 2023-06-29 16:59:11.494504
+Create Date: 2023-06-29 17:19:14.223299
 
 """
 import sqlalchemy as sa
@@ -11,7 +11,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "4384322a5638"
+revision = "49e674042c9a"
 down_revision = "7b3c4836cfe5"
 branch_labels = None
 depends_on = None
@@ -57,8 +57,8 @@ def upgrade() -> None:
     op.create_foreign_key(
         None, "application", "credit_product", ["credit_product_id"], ["id"]
     )
-    op.drop_column("lender", "limits_preferences")
     op.drop_column("lender", "borrower_type_preferences")
+    op.drop_column("lender", "limits_preferences")
     op.drop_constraint("message_lender_id_fkey", "message", type_="foreignkey")
     op.drop_column("message", "lender_id")
     # ### end Alembic commands ###
@@ -76,7 +76,7 @@ def downgrade() -> None:
     op.add_column(
         "lender",
         sa.Column(
-            "borrower_type_preferences",
+            "limits_preferences",
             postgresql.JSON(astext_type=sa.Text()),
             autoincrement=False,
             nullable=True,
@@ -85,7 +85,7 @@ def downgrade() -> None:
     op.add_column(
         "lender",
         sa.Column(
-            "limits_preferences",
+            "borrower_type_preferences",
             postgresql.JSON(astext_type=sa.Text()),
             autoincrement=False,
             nullable=True,

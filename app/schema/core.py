@@ -110,7 +110,7 @@ class CreditProductBase(SQLModel, table=True):
     other_fees_description: str = Field(default="", nullable=False)
     url: str = Field(default="", nullable=False)
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
-    lender: Optional[List["Lender"]] = Relationship(back_populates="CreditProductBase")
+    lender: Optional[List["Lender"]] = Relationship(back_populates="credit_products")
 
 
 class BorrowerDocument(SQLModel, table=True):
