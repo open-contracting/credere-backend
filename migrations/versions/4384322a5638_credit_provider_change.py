@@ -1,8 +1,8 @@
 """credit provider change
 
-Revision ID: 00aae14b53cb
+Revision ID: 4384322a5638
 Revises: 7b3c4836cfe5
-Create Date: 2023-06-29 14:59:43.864303
+Create Date: 2023-06-29 16:59:11.494504
 
 """
 import sqlalchemy as sa
@@ -11,7 +11,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "00aae14b53cb"
+revision = "4384322a5638"
 down_revision = "7b3c4836cfe5"
 branch_labels = None
 depends_on = None
