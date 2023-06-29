@@ -82,14 +82,14 @@ class BorrowerSize(Enum):
 
 
 class CreditType(Enum):
-    LOAN = "Loan"
-    CREDIT_LINE = "Credit Line"
+    LOAN = "LOAN"
+    CREDIT_LINE = "CREDIT_LINE"
 
 
 class CreditProductBase(SQLModel, table=True):
     __tablename__ = "credit_product"
     id: Optional[int] = Field(default=None, primary_key=True)
-    MSME: BorrowerSize = Field(
+    borrower_size: BorrowerSize = Field(
         sa_column=Column(SAEnum(BorrowerSize, name="borrower_size")), nullable=False
     )
     lower_limit: Decimal = Field(
@@ -108,7 +108,7 @@ class CreditProductBase(SQLModel, table=True):
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
     )
     other_fees_description: str = Field(default="", nullable=False)
-    more_info_link: str = Field(default="", nullable=False)
+    url: str = Field(default="", nullable=False)
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
 
 
@@ -233,9 +233,6 @@ class ApplicationBase(SQLModel):
     application_lapsed_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    credit_product_id: Optional[int] = Field(
-        foreign_key="credit_product.id", nullable=True
-    )
 
 
 class ApplicationRead(ApplicationBase):
@@ -253,6 +250,9 @@ class Application(ApplicationBase, table=True):
     messages: Optional[List["Message"]] = Relationship(back_populates="application")
     actions: Optional[List["ApplicationAction"]] = Relationship(
         back_populates="application"
+    )
+    credit_product_id: Optional[int] = Field(
+        foreign_key="credit_product.id", nullable=True
     )
 
 
@@ -307,10 +307,6 @@ class LenderBase(SQLModel):
     email_group: str = Field(default="")
     status: str = Field(default="")
     type: str = Field(default="")
-    # borrower_type_preferences: dict = Field(
-    #     default={}, sa_column=Column(JSON), nullable=False
-    # )
-    # limits_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     sla_days: Optional[int]
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -331,15 +327,15 @@ class LenderBase(SQLModel):
     deleted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    credit_Product: CreditType = Field(
-        sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
-    )
 
 
 class Lender(LenderBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     applications: Optional[List["Application"]] = Relationship(back_populates="lender")
     users: Optional[List["User"]] = Relationship(back_populates="lender")
+    credit_products: Optional[List["CreditProductBase"]] = Relationship(
+        back_populates="lender"
+    )
 
 
 class Award(SQLModel, table=True):
