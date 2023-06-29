@@ -69,6 +69,11 @@ class ApplicationBase(BaseModel):
     uuid: str
 
 
+class ConfirmNewEmail(ApplicationBase):
+    confirmation_email_token: str
+    email: str
+
+
 class ChangeEmail(ApplicationBase):
     old_email: str
     new_email: str

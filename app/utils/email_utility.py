@@ -57,13 +57,13 @@ def send_new_email_confirmation(
     borrower_name: str,
     new_email: str,
     old_email: str,
-    borrower_uuid: str,
+    confirmation_email_token: str,
     application_uuid: str,
 ):
     images_base_url = get_images_base_url()
     CONFIRM_EMAIL_CHANGE_URL = (
-        f"app_settings.frontend_url/change-emai/"
-        f"{application_uuid}/{borrower_uuid}/{new_email}"
+        f"{app_settings.frontend_url}/change-email/"
+        f"{application_uuid}/{confirmation_email_token}/{new_email}"
     )
     data = {
         **generate_common_data(),
@@ -73,20 +73,22 @@ def send_new_email_confirmation(
         "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": images_base_url + "/confirmemailchange.png",
     }
 
-    ses.send_templated_email(
+    message = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         # line below needs to be changed to new_email in production to send email to proper address
-        Destination={"ToAddresses": [app_settings.email_sender_address]},
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
         Template=email_templates.EMAIL_CHANGE_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         # line below needs to be changed to old_email in production to send email to proper address
-        Destination={"ToAddresses": [app_settings.email_sender_address]},
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
         Template=email_templates.EMAIL_CHANGE_TEMPLATE_NAME,
         TemplateData=json.dumps(data),
     )
+
+    return message["MessageId"]
 
 
 def send_mail_to_reset_password(ses, username, temp_password):

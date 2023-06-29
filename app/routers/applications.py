@@ -3,6 +3,7 @@ from datetime import datetime
 
 import fastapi
 from botocore.exceptions import ClientError
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
@@ -35,16 +36,46 @@ async def change_email(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
 
-        borrower_uuid = generate_uuid(application.borrower.email)
-        application.borrower.uuid = borrower_uuid
-        application.pending_email_confirmation = True
-        send_new_email_confirmation(
+        confirmation_email_token = utils.update_application_primary_email(
+            application, payload.new_email
+        )
+        external_message_id = send_new_email_confirmation(
             client.ses,
             application.borrower.legal_name,
             payload.new_email,
             payload.old_email,
-            borrower_uuid,
+            confirmation_email_token,
             application.uuid,
+        )
+
+        utils.create_message(
+            application,
+            core.MessageType.EMAIL_CHANGE_CONFIRMATION,
+            session,
+            external_message_id,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/confirm-email",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def confirm_email(
+    payload: ApiSchema.ConfirmNewEmail,
+    session: Session = fastapi.Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+
+        utils.check_pending_email_confirmation(
+            application, payload.confirmation_email_token
         )
 
         return ApiSchema.ApplicationResponse(
@@ -55,41 +86,38 @@ async def change_email(
 
 
 @router.get(
-    "/applications/confirm-email/{applicaton_uuid}/{borrower_uuid}/{email}",
+    "/applications/documents/id/{id}",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
 )
-async def confirm(
-    applicaton_uuid: str,
-    borrower_uuid: str,
-    email: str,
+async def get_borrower_document(
+    id: int,
     session: Session = fastapi.Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
 ):
-    with transaction_session(session):
-        application = utils.get_application_by_uuid(applicaton_uuid, session)
-
-        if (
-            application.borrower.uuid != borrower_uuid
-            and not application.pending_email_confirmation
-        ):
-            raise fastapi.HTTPException(
-                status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
-                detail="Not authorized to modify this application",
-            )
-        application.borrower.email = email
-        application.primary_email = email
-        application.pending_email_confirmation = False
-
-        return ApiSchema.ApplicationResponse(
-            application=application,
-            borrower=application.borrower,
-            award=application.award,
+    document = (
+        session.query(core.BorrowerDocument)
+        .filter(core.BorrowerDocument.id == id)
+        .first()
+    )
+    if document is None:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
         )
 
+    if (
+        user.lender_id != document.application.lender_id
+        and user.type != core.UserType.OCP
+    ):
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
+            detail="Not authorized to download this document",
+        )
 
-def allowed_file(filename):
-    allowed_extensions = {"png", "pdf", "jpeg"}
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
+    def file_generator():
+        yield document.file
+
+    return StreamingResponse(file_generator(), media_type="application/octet-stream")
 
 
 @router.post(
@@ -97,25 +125,18 @@ def allowed_file(filename):
     tags=["applications"],
 )
 async def upload_file(
+    file: fastapi.UploadFile,
     uuid: str = fastapi.Form(...),
     type: str = fastapi.Form(...),
-    file: fastapi.UploadFile = fastapi.File(...),
     session: Session = fastapi.Depends(get_db),
 ):
     with transaction_session(session):
-        await utils.validate_file(file)
+        new_file, filename = utils.validate_file(file)
         application = utils.get_application_by_uuid(uuid, session)
 
-        new_document = {
-            "application_id": application.id,
-            "type": type,
-            "file": await file.read(),
-            "name": "file_name",
-        }
-
-        db_obj = core.BorrowerDocument(**new_document)
-
-        session.add(db_obj)
+        utils.create_or_update_borrower_document(
+            filename, application, type, session, new_file
+        )
 
         return ApiSchema.ApplicationResponse(
             application=application,

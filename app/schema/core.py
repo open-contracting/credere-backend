@@ -54,6 +54,7 @@ class MessageType(Enum):
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
+    EMAIL_CHANGE_CONFIRMATION = "EMAIL_CHANGE_CONFIRMATION"
 
 
 class UserType(Enum):
@@ -128,6 +129,7 @@ class ApplicationBase(SQLModel):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
+    confirmation_email_token: str = Field(unique=True, index=True, nullable=True)
     award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
@@ -226,7 +228,6 @@ class Borrower(SQLModel, table=True):
     applications: Optional[List["Application"]] = Relationship(
         back_populates="borrower"
     )
-    uuid: str = Field(unique=True, index=True, nullable=True)
     awards: List["Award"] = Relationship(back_populates="borrower")
     borrower_identifier: str = Field(default="", unique=True, nullable=False)
     legal_name: str = Field(default="")

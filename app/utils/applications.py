@@ -1,16 +1,20 @@
+import re
 from datetime import datetime
+from typing import Dict
 
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 
+from app.background_processes.background_utils import generate_uuid
 from app.schema.api import ApplicationListResponse
 
 from ..schema import core
 from .general_utils import update_models, update_models_with_validation
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+valid_email = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.(com|co)$"
 
 excluded_applications = [
     # core.ApplicationStatus.PENDING,
@@ -188,17 +192,20 @@ def get_all_FI_user_applications(
     )
 
 
-async def validate_file(file: UploadFile = File(...)):
+def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
+    filename = file.filename
     if not allowed_file(file.filename):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Format not allowed. It must be a PNG, JPEG, or PDG file",
         )
-    if len(await file.read()) >= MAX_FILE_SIZE:  # 10MB in bytes
+    new_file = file.file.read()
+    if len(new_file) >= MAX_FILE_SIZE:  # 10MB in bytes
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="File is too large",
         )
+    return new_file, filename
 
 
 def get_application_by_uuid(uuid: str, session: Session):
@@ -242,3 +249,81 @@ def check_application_status(
             status_code=status.HTTP_409_CONFLICT,
             detail="Application status is not {}".format(applicationStatus.name),
         )
+
+
+def create_message(
+    application: core.Application,
+    message: core.MessageType,
+    session: Session,
+    external_message_id: str,
+) -> None:
+    obj_db = core.Message(
+        application=application, type=message, external_message_id=external_message_id
+    )
+    obj_db.created_at = datetime.utcnow()
+
+    session.add(obj_db)
+    session.flush()
+
+
+def update_application_primary_email(application: core.Application, email: str) -> str:
+    if not re.match(valid_email, email):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="New email is not valid",
+        )
+    confirmation_email_token = generate_uuid(email)
+    application.confirmation_email_token = confirmation_email_token
+    application.primary_email = email
+    application.pending_email_confirmation = True
+    return confirmation_email_token
+
+
+def check_pending_email_confirmation(
+    application: core.Application, confirmation_email_token: str
+):
+    if not application.pending_email_confirmation:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Application is not pending an email confirmation",
+        )
+    if application.confirmation_email_token != confirmation_email_token:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Not authorized to modify this application",
+        )
+
+    application.pending_email_confirmation = False
+    application.confirmation_email_token = ""
+
+
+def create_or_update_borrower_document(
+    filename: str,
+    application: core.Application,
+    type: core.BorrowerDocumentType,
+    session: Session,
+    file: UploadFile = File(...),
+):
+    existing_document = (
+        session.query(core.BorrowerDocument)
+        .filter(
+            core.BorrowerDocument.application_id == application.id,
+            core.BorrowerDocument.type == type,
+        )
+        .first()
+    )
+
+    if existing_document:
+        # Update the existing document with the new file
+        existing_document.file = file
+        existing_document.name = filename
+    else:
+        new_document = {
+            "application_id": application.id,
+            "type": type,
+            "file": file,
+            "name": filename,
+        }
+
+        db_obj = core.BorrowerDocument(**new_document)
+        session.add(db_obj)
