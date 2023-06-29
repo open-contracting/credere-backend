@@ -233,13 +233,12 @@ async def email_sme(
             # Obtaing the lenderId from the user
             lender = (
                 session.query(core.Lender)
-                .filter(core.Application.id == user.lender_id)
+                .filter(core.Lender.id == user.lender_id)
                 .first()
             )
             application.status = core.ApplicationStatus.INFORMATION_REQUESTED
-            # descomentar cuando exista la columna
-            # current_time = datetime.now(application.created_at.tzinfo)
-            # application.information_requested_at = current_time
+            current_time = datetime.now(application.created_at.tzinfo)
+            application.information_requested_at = current_time
             application_id = application.id
             application_uuid = application.uuid
             email_message = payload.message

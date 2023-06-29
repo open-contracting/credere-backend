@@ -1,7 +1,7 @@
 """added message.lenderId enum.AWAITING_INFORMATION
 
 Revision ID: 173969eb685c
-Revises: df236486f60a
+Revises: 7b3c4836cfe5
 Create Date: 2023-06-27 10:24:01.195618
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "173969eb685c"
-down_revision = "df236486f60a"
+down_revision = "7b3c4836cfe5"
 branch_labels = None
 depends_on = None
 
