@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
@@ -15,6 +14,9 @@ from ..db.session import get_db, transaction_session
 from ..schema import core
 from ..utils.permissions import OCP_only
 from ..utils.verify_token import get_current_user, get_user
+
+from fastapi import Depends, Query, status  # isort:skip # noqa
+from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # noqa
 
 router = APIRouter()
 
@@ -208,7 +210,10 @@ async def update_apps_send_notifications(
             )
         except ClientError as e:
             logging.error(e)
-            return "error"
+            return HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="There was an error",
+            )
 
 
 @router.post(
@@ -264,7 +269,10 @@ async def email_sme(
             )
         except ClientError as e:
             logging.error(e)
-            return "error"
+            return HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="There was an error",
+            )
 
 
 @router.post(
