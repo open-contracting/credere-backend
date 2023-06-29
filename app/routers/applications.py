@@ -20,9 +20,33 @@ router = APIRouter()
 
 
 @router.put(
+    "/applications/update-data-field",
+    tags=["applications"],
+)
+async def update_data_field(
+    payload: ApiSchema.UpdateDataField,
+    session: Session = Depends(get_db),
+    user: core.User = Depends(get_user),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.update_data_field(application, payload.field)
+        # need a new key in enum for update data field
+        utils.create_application_action(
+            session,
+            user.id,
+            application.id,
+            core.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
+            payload,
+        )
+
+        return application.secop_data_verification
+
+
+@router.put(
     "/applications/{application_id}/award",
     tags=["applications"],
-    response_model=core.Application,
+    response_model=ApiSchema.ApplicationResponse,
 )
 async def update_application_award(
     application_id: int,
@@ -42,7 +66,11 @@ async def update_application_award(
             payload,
         )
 
-        return application
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
 
 
 @router.put(

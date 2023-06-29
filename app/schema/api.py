@@ -21,6 +21,16 @@ class LenderListResponse(BasePagination):
     items: List[core.Lender]
 
 
+class NewLender(BaseModel):
+    name: str
+    email_group: str
+    status: str
+    type: str
+    borrowed_type_preferences: Optional[dict]
+    limits_preference: Optional[dict]
+    sla_days: int
+
+
 class AwardUpdate(BaseModel):
     source_contract_id: Optional[str]
     title: Optional[str]
@@ -67,6 +77,10 @@ class ApplicationResponse(BaseModel):
 
 class ApplicationBase(BaseModel):
     uuid: str
+
+
+class UpdateDataField(ApplicationBase):
+    field: str
 
 
 class ApplicationSubmit(ApplicationBase):

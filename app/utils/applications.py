@@ -24,6 +24,28 @@ OCP_can_modify = [
     core.ApplicationStatus.INFORMATION_REQUESTED,
 ]
 
+valid_secop_fields = [
+    "borrower_identifier",
+    "legal_name",
+    "email",
+    "address",
+    "legal_identifier",
+    "type",
+    "source_data",
+]
+
+
+def update_data_field(application: core.Application, field: str):
+    if field not in valid_secop_fields:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Field is not valid",
+        )
+
+    verified_data = application.secop_data_verification.copy()
+    verified_data[field] = not verified_data[field]
+    application.secop_data_verification = verified_data.copy()
+
 
 def create_application_action(
     session: Session,
