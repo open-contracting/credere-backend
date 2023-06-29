@@ -95,7 +95,6 @@ def downgrade() -> None:
         ),
     )
     op.drop_column("lender", "credit_Product")
-    op.drop_constraint(None, "application", type_="foreignkey")
     op.drop_column("application", "credit_product_id")
     op.drop_table("credit_product")
     # ### end Alembic commands ###
