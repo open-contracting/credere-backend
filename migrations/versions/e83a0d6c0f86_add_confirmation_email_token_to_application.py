@@ -20,9 +20,14 @@ def upgrade() -> None:
     inspector = sa.inspect(conn)
     columns = inspector.get_columns("application")
 
+    column_info = None
     for column in columns:
         if column["name"] == "confirmation_email_token":
+            column_info = column["name"]
             break
+
+    if column_info is not None:
+        return
 
     op.add_column(
         "application",
@@ -39,6 +44,18 @@ def upgrade() -> None:
         op.execute(
             """
           ALTER TYPE message_type ADD VALUE IF NOT EXISTS 'EMAIL_CHANGE_CONFIRMATION'
+      """
+        )
+    with op.get_context().autocommit_block():
+        op.execute(
+            """
+          ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'FI_DOWNLOAD_DOCUMENT'
+      """
+        )
+    with op.get_context().autocommit_block():
+        op.execute(
+            """
+          ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'OCP_DOWNLOAD_DOCUMENT'
       """
         )
 

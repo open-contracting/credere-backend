@@ -1,3 +1,4 @@
+import json
 import re
 from datetime import datetime
 from typing import Dict
@@ -53,7 +54,7 @@ def create_application_action(
     )
     session.add(new_action)
     session.flush()
-
+    print(new_action)
     return new_action
 
 
@@ -256,9 +257,13 @@ def create_message(
     message: core.MessageType,
     session: Session,
     external_message_id: str,
+    body: dict,
 ) -> None:
     obj_db = core.Message(
-        application=application, type=message, external_message_id=external_message_id
+        application=application,
+        type=message,
+        external_message_id=external_message_id,
+        body=json.dumps(body),
     )
     obj_db.created_at = datetime.utcnow()
 
@@ -327,3 +332,11 @@ def create_or_update_borrower_document(
 
         db_obj = core.BorrowerDocument(**new_document)
         session.add(db_obj)
+
+
+def check_FI_user_permission(application: core.Application, user: core.User) -> None:
+    if application.lender_id != user.lender_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authorized to download this document",
+        )

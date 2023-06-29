@@ -38,7 +38,14 @@ async def change_email(
         confirmation_email_token = utils.update_application_primary_email(
             application, payload.new_email
         )
-        external_message_id = send_new_email_confirmation(
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_CHANGE_EMAIL,
+            payload,
+        )
+        external_message_id, body = send_new_email_confirmation(
             client.ses,
             application.borrower.legal_name,
             payload.new_email,
@@ -52,6 +59,7 @@ async def change_email(
             core.MessageType.EMAIL_CHANGE_CONFIRMATION,
             session,
             external_message_id,
+            body,
         )
 
         return ApiSchema.ApplicationResponse(
@@ -77,6 +85,14 @@ async def confirm_email(
             application, payload.confirmation_email_token
         )
 
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_CONFIRM_EMAIL,
+            payload,
+        )
+
         return ApiSchema.ApplicationResponse(
             application=application,
             borrower=application.borrower,
@@ -93,37 +109,48 @@ async def get_borrower_document(
     session: Session = fastapi.Depends(get_db),
     user: core.User = fastapi.Depends(get_user),
 ):
-    document = (
-        session.query(core.BorrowerDocument)
-        .filter(core.BorrowerDocument.id == id)
-        .first()
-    )
-    if document is None:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_404_NOT_FOUND,
-            detail="Document not found",
+    with transaction_session(session):
+        document = (
+            session.query(core.BorrowerDocument)
+            .filter(core.BorrowerDocument.id == id)
+            .first()
         )
+        if document is None:
+            raise fastapi.HTTPException(
+                status_code=fastapi.status.HTTP_404_NOT_FOUND,
+                detail="Document not found",
+            )
+        if user.type == core.UserType.OCP:
+            utils.create_application_action(
+                session,
+                None,
+                document.application.id,
+                core.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
+                {"file_name": document.name},
+            )
+        else:
+            utils.check_FI_user_permission(document.application, user)
+            utils.create_application_action(
+                session,
+                None,
+                document.application.id,
+                core.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
+                {"file_name": document.name},
+            )
 
-    if (
-        user.lender_id != document.application.lender_id
-        and user.type != core.UserType.OCP
-    ):
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
-            detail="Not authorized to download this document",
+        def file_generator():
+            yield document.file
+
+        return StreamingResponse(
+            file_generator(), media_type="application/octet-stream"
         )
-
-    def file_generator():
-        yield document.file
-
-    return StreamingResponse(file_generator(), media_type="application/octet-stream")
 
 
 @router.post(
     "/applications/upload",
     tags=["applications"],
 )
-async def upload_file(
+async def upload(
     file: fastapi.UploadFile,
     uuid: str = fastapi.Form(...),
     type: str = fastapi.Form(...),
@@ -135,6 +162,53 @@ async def upload_file(
 
         utils.create_or_update_borrower_document(
             filename, application, type, session, new_file
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
+            {"file_name": filename},
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/upload-compliance",
+    tags=["applications"],
+)
+async def upload_compliance(
+    file: fastapi.UploadFile,
+    uuid: str = fastapi.Form(...),
+    session: Session = fastapi.Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+):
+    with transaction_session(session):
+        new_file, filename = utils.validate_file(file)
+        application = utils.get_application_by_uuid(uuid, session)
+
+        utils.check_FI_user_permission(application, user)
+
+        utils.create_or_update_borrower_document(
+            filename,
+            application,
+            core.BorrowerDocumentType.COMPLIANCE_REPORT,
+            session,
+            new_file,
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.FI_UPLOAD_COMPLIANCE,
+            {"file_name": filename},
         )
 
         return ApiSchema.ApplicationResponse(

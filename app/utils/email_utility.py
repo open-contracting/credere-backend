@@ -88,7 +88,7 @@ def send_new_email_confirmation(
         TemplateData=json.dumps(data),
     )
 
-    return message["MessageId"]
+    return message["MessageId"], data
 
 
 def send_mail_to_reset_password(ses, username, temp_password):
