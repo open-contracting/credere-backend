@@ -7,7 +7,6 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
-from app.background_processes.background_utils import generate_uuid
 from app.background_processes.fetcher import fetch_previous_awards
 from app.core.settings import app_settings
 from app.schema import api as ApiSchema
