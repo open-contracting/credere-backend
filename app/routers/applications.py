@@ -31,12 +31,12 @@ async def update_data_field(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.update_data_field(application, payload.field)
-        # need a new key in enum for update data field
+        # pending fi user validation after mergin with branch 64
         utils.create_application_action(
             session,
             user.id,
             application.id,
-            core.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
+            core.ApplicationActionType.DATA_VALIDATION_UPDATE,
             payload,
         )
 
