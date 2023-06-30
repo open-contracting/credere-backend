@@ -20,6 +20,12 @@ def upgrade() -> None:
         "borrower_uploaded_contracted_at",
         new_column_name="borrower_uploaded_contract_at",
     )
+    with op.get_context().autocommit_block():
+        op.execute(
+            """
+            ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'BORROWER_UPLOADED_CONTRACT'
+        """
+        )
 
 
 def downgrade() -> None:

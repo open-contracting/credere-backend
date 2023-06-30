@@ -158,7 +158,6 @@ async def upload_document(
 async def upload_contract(
     file: UploadFile,
     uuid: str = Form(...),
-    type: str = Form(...),
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
@@ -166,14 +165,18 @@ async def upload_contract(
         application = utils.get_application_by_uuid(uuid, session)
 
         utils.create_or_update_borrower_document(
-            filename, application, type, session, new_file
+            filename,
+            application,
+            core.BorrowerDocumentType.SIGNED_CONTRACT,
+            session,
+            new_file,
         )
 
         utils.create_application_action(
             session,
             None,
             application.id,
-            core.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
+            core.ApplicationActionType.BORROWER_UPLOADED_CONTRACT,
             {"file_name": filename},
         )
 
@@ -183,7 +186,7 @@ async def upload_contract(
 @router.post(
     "/applications/{id}/upload-compliance",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=core.ApplicationWithRelations,
 )
 async def upload_compliance(
     id: int,
@@ -213,27 +216,23 @@ async def upload_compliance(
             {"file_name": filename},
         )
 
-        return ApiSchema.ApplicationResponse(
-            application=application,
-            borrower=application.borrower,
-            award=application.award,
-        )
+        return application
 
 
 @router.put(
     "/applications/verify-data-field",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=core.ApplicationWithRelations,
 )
 async def verify_data_field(
-    payload: ApiSchema.VerifyDataField,
+    payload: ApiSchema.UpdateDataField,
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_FI_user_permission(application, user)
-        utils.veify_data_field(application, payload.field)
+        utils.update_data_field(application, payload)
 
         utils.create_application_action(
             session,
@@ -243,41 +242,35 @@ async def verify_data_field(
             payload,
         )
 
-        return ApiSchema.ApplicationResponse(
-            application=application,
-            borrower=application.borrower,
-            award=application.award,
-        )
+        return application
 
 
 @router.post(
     "/applications/documents/{document_id}/verify-document",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=core.ApplicationWithRelations,
 )
 async def verify_document(
+    document_id: int,
     payload: ApiSchema.VerifyBorrowerDocument,
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_FI_user_permission(application, user)
-        utils.verify_document(payload.document_id, session)
+        document = utils.get_document_by_id(document_id, session)
+        utils.check_FI_user_permission(document.application, user)
+
+        document.verified = payload.verified
 
         utils.create_application_action(
             session,
             user.id,
-            application.id,
+            document.application.id,
             core.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
             payload,
         )
 
-        return ApiSchema.ApplicationResponse(
-            application=application,
-            borrower=application.borrower,
-            award=application.award,
-        )
+        return document.application
 
 
 @router.put(

@@ -91,12 +91,18 @@ class ChangeEmail(ApplicationBase):
     new_email: str
 
 
-class VerifyDataField(ApplicationBase):
-    field: str
+class UpdateDataField(ApplicationBase):
+    borrower_identifier: Optional[bool]
+    legal_name: Optional[bool]
+    email: Optional[bool]
+    address: Optional[bool]
+    legal_identifier: Optional[bool]
+    type: Optional[bool]
+    source_data: Optional[bool]
 
 
-class VerifyBorrowerDocument(ApplicationBase):
-    document_id: int
+class VerifyBorrowerDocument(BaseModel):
+    verified: bool
 
 
 class ApplicationSubmit(ApplicationBase):

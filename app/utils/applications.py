@@ -9,7 +9,7 @@ from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 
 from app.background_processes.background_utils import generate_uuid
-from app.schema.api import ApplicationListResponse
+from app.schema.api import ApplicationListResponse, UpdateDataField
 
 from ..schema import core
 from .general_utils import update_models, update_models_with_validation
@@ -44,29 +44,23 @@ valid_secop_fields = [
 ]
 
 
-def veify_data_field(application: core.Application, field: str):
-    if field not in valid_secop_fields:
+def update_data_field(application: core.Application, payload: UpdateDataField):
+    payload_dict = {
+        key: value
+        for key, value in payload.dict().items()
+        if key != "uuid" and value is not None
+    }
+
+    key, value = next(iter(payload_dict.items()), (None, None))
+    if key not in valid_secop_fields:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Field is not valid",
         )
 
     verified_data = application.secop_data_verification.copy()
-    verified_data[field] = not verified_data[field]
+    verified_data[key] = value
     application.secop_data_verification = verified_data.copy()
-
-
-def verify_document(document_id: int, session: Session):
-    document = (
-        session.query(core.BorrowerDocument)
-        .filter(core.BorrowerDocument.id == document_id)
-        .first()
-    )
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Document not found"
-        )
-    document.verified = not document.verified
 
 
 def allowed_file(filename):
@@ -117,7 +111,7 @@ def create_application_action(
     )
     session.add(new_action)
     session.flush()
-    print(new_action)
+
     return new_action
 
 
@@ -439,3 +433,17 @@ def check_FI_user_permission(application: core.Application, user: core.User) -> 
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is not authorized",
         )
+
+
+def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocument:
+    document = (
+        session.query(core.BorrowerDocument)
+        .filter(core.BorrowerDocument.id == document_id)
+        .first()
+    )
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+    return document
