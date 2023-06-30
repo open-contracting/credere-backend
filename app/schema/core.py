@@ -54,6 +54,7 @@ class MessageType(Enum):
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
+    EMAIL_CHANGE_CONFIRMATION = "EMAIL_CHANGE_CONFIRMATION"
 
 
 class UserType(Enum):
@@ -65,7 +66,9 @@ class ApplicationActionType(Enum):
     AWARD_UPDATE = "AWARD_UPDATE"
     BORROWER_UPDATE = "BORROWER_UPDATE"
     FI_UPLOAD_COMPLIANCE = "FI_UPLOAD_COMPLIANCE"
+    FI_DOWNLOAD_DOCUMENT = "FI_DOWNLOAD_DOCUMENT"
     FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
+    OCP_DOWNLOAD_DOCUMENT = "OCP_DOWNLOAD_DOCUMENT"
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     MSME_UPLOAD_DOCUMENT = "MSME_UPLOAD_DOCUMENT"
@@ -113,7 +116,12 @@ class BorrowerDocument(SQLModel, table=True):
         )
     )
     submitted_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False)
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
+        )
     )
 
 
@@ -125,6 +133,7 @@ class ApplicationBase(SQLModel):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
+    confirmation_email_token: str = Field(index=True, nullable=True, default="")
     award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)

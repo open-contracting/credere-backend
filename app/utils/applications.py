@@ -1,14 +1,21 @@
+import json
+import re
 from datetime import datetime
+from typing import Dict
 
-from fastapi import HTTPException, status
+from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 
+from app.background_processes.background_utils import generate_uuid
 from app.schema.api import ApplicationListResponse
 
 from ..schema import core
 from .general_utils import update_models, update_models_with_validation
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+valid_email = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.(com|co)$"
 
 excluded_applications = [
     # core.ApplicationStatus.PENDING,
@@ -35,7 +42,7 @@ valid_secop_fields = [
 ]
 
 
-def update_data_field(application: core.Application, field: str):
+def veify_data_field(application: core.Application, field: str):
     if field not in valid_secop_fields:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -45,6 +52,24 @@ def update_data_field(application: core.Application, field: str):
     verified_data = application.secop_data_verification.copy()
     verified_data[field] = not verified_data[field]
     application.secop_data_verification = verified_data.copy()
+
+
+def verify_document(document_id: int, session: Session):
+    document = (
+        session.query(core.BorrowerDocument)
+        .filter(core.BorrowerDocument.id == document_id)
+        .first()
+    )
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Document not found"
+        )
+    document.verified = not document.verified
+
+
+def allowed_file(filename):
+    allowed_extensions = {"png", "pdf", "jpeg"}
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
 def create_application_action(
@@ -64,7 +89,7 @@ def create_application_action(
     )
     session.add(new_action)
     session.flush()
-
+    print(new_action)
     return new_action
 
 
@@ -203,6 +228,22 @@ def get_all_FI_user_applications(
     )
 
 
+def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
+    filename = file.filename
+    if not allowed_file(file.filename):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Format not allowed. It must be a PNG, JPEG, or PDG file",
+        )
+    new_file = file.file.read()
+    if len(new_file) >= MAX_FILE_SIZE:  # 10MB in bytes
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="File is too large",
+        )
+    return new_file, filename
+
+
 def get_application_by_uuid(uuid: str, session: Session):
     application = (
         session.query(core.Application)
@@ -243,4 +284,94 @@ def check_application_status(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Application status is not {}".format(applicationStatus.name),
+        )
+
+
+def create_message(
+    application: core.Application,
+    message: core.MessageType,
+    session: Session,
+    external_message_id: str,
+    body: dict,
+) -> None:
+    obj_db = core.Message(
+        application=application,
+        type=message,
+        external_message_id=external_message_id,
+        body=json.dumps(body),
+    )
+    obj_db.created_at = datetime.utcnow()
+
+    session.add(obj_db)
+    session.flush()
+
+
+def update_application_primary_email(application: core.Application, email: str) -> str:
+    if not re.match(valid_email, email):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="New email is not valid",
+        )
+    confirmation_email_token = generate_uuid(email)
+    application.confirmation_email_token = confirmation_email_token
+    application.primary_email = email
+    application.pending_email_confirmation = True
+    return confirmation_email_token
+
+
+def check_pending_email_confirmation(
+    application: core.Application, confirmation_email_token: str
+):
+    if not application.pending_email_confirmation:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Application is not pending an email confirmation",
+        )
+    if application.confirmation_email_token != confirmation_email_token:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Not authorized to modify this application",
+        )
+
+    application.pending_email_confirmation = False
+    application.confirmation_email_token = ""
+
+
+def create_or_update_borrower_document(
+    filename: str,
+    application: core.Application,
+    type: core.BorrowerDocumentType,
+    session: Session,
+    file: UploadFile = File(...),
+):
+    existing_document = (
+        session.query(core.BorrowerDocument)
+        .filter(
+            core.BorrowerDocument.application_id == application.id,
+            core.BorrowerDocument.type == type,
+        )
+        .first()
+    )
+
+    if existing_document:
+        # Update the existing document with the new file
+        existing_document.file = file
+        existing_document.name = filename
+    else:
+        new_document = {
+            "application_id": application.id,
+            "type": type,
+            "file": file,
+            "name": filename,
+        }
+
+        db_obj = core.BorrowerDocument(**new_document)
+        session.add(db_obj)
+
+
+def check_FI_user_permission(application: core.Application, user: core.User) -> None:
+    if application.lender_id != user.lender_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is not authorized",
         )

@@ -79,8 +79,22 @@ class ApplicationBase(BaseModel):
     uuid: str
 
 
-class UpdateDataField(ApplicationBase):
+class ConfirmNewEmail(ApplicationBase):
+    confirmation_email_token: str
+    email: str
+
+
+class ChangeEmail(ApplicationBase):
+    old_email: str
+    new_email: str
+
+
+class VerifyDataField(ApplicationBase):
     field: str
+
+
+class VerifyBorrowerDocument(ApplicationBase):
+    document_id: int
 
 
 class ApplicationSubmit(ApplicationBase):

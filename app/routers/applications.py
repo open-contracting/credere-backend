@@ -1,14 +1,17 @@
 import logging
 from datetime import datetime
 
+import fastapi
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
 from app.background_processes.fetcher import fetch_previous_awards
 from app.core.settings import app_settings
 from app.schema import api as ApiSchema
+from app.schema.api import ChangeEmail
+from app.utils.email_utility import send_new_email_confirmation
 
 from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
@@ -16,22 +19,220 @@ from ..schema import core
 from ..utils.permissions import OCP_only
 from ..utils.verify_token import get_current_user, get_user
 
-router = APIRouter()
+router = fastapi.APIRouter()
 
 
-@router.put(
-    "/applications/update-data-field",
+@router.patch(
+    "/applications/change-email",
     tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
 )
-async def update_data_field(
-    payload: ApiSchema.UpdateDataField,
-    session: Session = Depends(get_db),
-    user: core.User = Depends(get_user),
+async def change_email(
+    payload: ChangeEmail,
+    session: Session = fastapi.Depends(get_db),
+    client: CognitoClient = fastapi.Depends(get_cognito_client),
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.update_data_field(application, payload.field)
-        # pending fi user validation after mergin with branch 64
+
+        confirmation_email_token = utils.update_application_primary_email(
+            application, payload.new_email
+        )
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_CHANGE_EMAIL,
+            payload,
+        )
+        external_message_id, body = send_new_email_confirmation(
+            client.ses,
+            application.borrower.legal_name,
+            payload.new_email,
+            payload.old_email,
+            confirmation_email_token,
+            application.uuid,
+        )
+
+        utils.create_message(
+            application,
+            core.MessageType.EMAIL_CHANGE_CONFIRMATION,
+            session,
+            external_message_id,
+            body,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/confirm-email",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def confirm_email(
+    payload: ApiSchema.ConfirmNewEmail,
+    session: Session = fastapi.Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+
+        utils.check_pending_email_confirmation(
+            application, payload.confirmation_email_token
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_CONFIRM_EMAIL,
+            payload,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.get(
+    "/applications/documents/id/{id}",
+    tags=["applications"],
+)
+async def get_borrower_document(
+    id: int,
+    session: Session = fastapi.Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+):
+    with transaction_session(session):
+        document = (
+            session.query(core.BorrowerDocument)
+            .filter(core.BorrowerDocument.id == id)
+            .first()
+        )
+        if document is None:
+            raise fastapi.HTTPException(
+                status_code=fastapi.status.HTTP_404_NOT_FOUND,
+                detail="Document not found",
+            )
+        if user.type == core.UserType.OCP:
+            utils.create_application_action(
+                session,
+                None,
+                document.application.id,
+                core.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
+                {"file_name": document.name},
+            )
+        else:
+            utils.check_FI_user_permission(document.application, user)
+            utils.create_application_action(
+                session,
+                None,
+                document.application.id,
+                core.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
+                {"file_name": document.name},
+            )
+
+        def file_generator():
+            yield document.file
+
+        return StreamingResponse(
+            file_generator(), media_type="application/octet-stream"
+        )
+
+
+@router.post(
+    "/applications/upload",
+    tags=["applications"],
+)
+async def upload(
+    file: fastapi.UploadFile,
+    uuid: str = fastapi.Form(...),
+    type: str = fastapi.Form(...),
+    session: Session = fastapi.Depends(get_db),
+):
+    with transaction_session(session):
+        new_file, filename = utils.validate_file(file)
+        application = utils.get_application_by_uuid(uuid, session)
+
+        utils.create_or_update_borrower_document(
+            filename, application, type, session, new_file
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
+            {"file_name": filename},
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/upload-compliance",
+    tags=["applications"],
+)
+async def upload_compliance(
+    file: fastapi.UploadFile,
+    uuid: str = fastapi.Form(...),
+    session: Session = fastapi.Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+):
+    with transaction_session(session):
+        new_file, filename = utils.validate_file(file)
+        application = utils.get_application_by_uuid(uuid, session)
+
+        utils.check_FI_user_permission(application, user)
+
+        utils.create_or_update_borrower_document(
+            filename,
+            application,
+            core.BorrowerDocumentType.COMPLIANCE_REPORT,
+            session,
+            new_file,
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.FI_UPLOAD_COMPLIANCE,
+            {"file_name": filename},
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.put(
+    "/applications/verify-data-field",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def verify_data_field(
+    payload: ApiSchema.VerifyDataField,
+    session: Session = fastapi.Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_FI_user_permission(application, user)
+        utils.veify_data_field(application, payload.field)
+
         utils.create_application_action(
             session,
             user.id,
@@ -40,7 +241,41 @@ async def update_data_field(
             payload,
         )
 
-        return application.secop_data_verification
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/documents/{document_id}/verify-document",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def verify_document(
+    payload: ApiSchema.VerifyBorrowerDocument,
+    session: Session = fastapi.Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_FI_user_permission(application, user)
+        utils.verify_document(payload.document_id, session)
+
+        utils.create_application_action(
+            session,
+            user.id,
+            application.id,
+            core.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            payload,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
 
 
 @router.put(
@@ -51,8 +286,8 @@ async def update_data_field(
 async def update_application_award(
     application_id: int,
     payload: ApiSchema.AwardUpdate,
-    user: core.User = Depends(get_user),
-    session: Session = Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+    session: Session = fastapi.Depends(get_db),
 ):
     with transaction_session(session):
         application = utils.update_application_award(
@@ -81,8 +316,8 @@ async def update_application_award(
 async def update_application_borrower(
     application_id: int,
     payload: ApiSchema.BorrowerUpdate,
-    user: core.User = Depends(get_user),
-    session: Session = Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+    session: Session = fastapi.Depends(get_db),
 ):
     with transaction_session(session):
         application = utils.update_application_borrower(
@@ -110,12 +345,12 @@ async def update_application_borrower(
 )
 @OCP_only()
 async def get_applications_list(
-    page: int = Query(0, ge=0),
-    page_size: int = Query(10, gt=0),
-    sort_field: str = Query("application.created_at"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: core.User = Depends(get_current_user),
-    session: Session = Depends(get_db),
+    page: int = fastapi.Query(0, ge=0),
+    page_size: int = fastapi.Query(10, gt=0),
+    sort_field: str = fastapi.Query("application.created_at"),
+    sort_order: str = fastapi.Query("asc", regex="^(asc|desc)$"),
+    current_user: core.User = fastapi.Depends(get_current_user),
+    session: Session = fastapi.Depends(get_db),
 ):
     return utils.get_all_active_applications(
         page, page_size, sort_field, sort_order, session
@@ -130,8 +365,8 @@ async def get_applications_list(
 @OCP_only()
 async def get_application(
     id: int,
-    current_user: str = Depends(get_current_user),
-    session: Session = Depends(get_db),
+    current_user: str = fastapi.Depends(get_current_user),
+    session: Session = fastapi.Depends(get_db),
 ):
     application = (
         session.query(core.Application).filter(core.Application.id == id).first()
@@ -148,12 +383,12 @@ async def get_application(
     response_model=ApiSchema.ApplicationListResponse,
 )
 async def get_applications(
-    page: int = Query(0, ge=0),
-    page_size: int = Query(10, gt=0),
-    sort_field: str = Query("application.created_at"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    user: core.User = Depends(get_user),
-    session: Session = Depends(get_db),
+    page: int = fastapi.Query(0, ge=0),
+    page_size: int = fastapi.Query(10, gt=0),
+    sort_field: str = fastapi.Query("application.created_at"),
+    sort_order: str = fastapi.Query("asc", regex="^(asc|desc)$"),
+    user: core.User = fastapi.Depends(get_user),
+    session: Session = fastapi.Depends(get_db),
 ):
     return utils.get_all_FI_user_applications(
         page, page_size, sort_field, sort_order, session, user.lender_id
@@ -165,7 +400,7 @@ async def get_applications(
     tags=["applications"],
     response_model=ApiSchema.ApplicationResponse,
 )
-async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
+async def application_by_uuid(uuid: str, session: Session = fastapi.Depends(get_db)):
     application = utils.get_application_by_uuid(uuid, session)
     utils.check_is_application_expired(application)
 
@@ -181,8 +416,8 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
 )
 async def access_scheme(
     payload: ApiSchema.ApplicationBase,
-    background_tasks: BackgroundTasks,
-    session: Session = Depends(get_db),
+    background_tasks: fastapi.BackgroundTasks,
+    session: Session = fastapi.Depends(get_db),
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -210,8 +445,8 @@ async def access_scheme(
 )
 async def update_apps_send_notifications(
     payload: ApiSchema.ApplicationSubmit,
-    session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    session: Session = fastapi.Depends(get_db),
+    client: CognitoClient = fastapi.Depends(get_cognito_client),
 ):
     with transaction_session(session):
         try:
@@ -246,7 +481,7 @@ async def update_apps_send_notifications(
 )
 async def decline(
     payload: ApiSchema.ApplicationDeclinePayload,
-    session: Session = Depends(get_db),
+    session: Session = fastapi.Depends(get_db),
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -279,7 +514,7 @@ async def decline(
 )
 async def rollback_decline(
     payload: ApiSchema.ApplicationBase,
-    session: Session = Depends(get_db),
+    session: Session = fastapi.Depends(get_db),
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -308,7 +543,7 @@ async def rollback_decline(
 )
 async def decline_feedback(
     payload: ApiSchema.ApplicationDeclineFeedbackPayload,
-    session: Session = Depends(get_db),
+    session: Session = fastapi.Depends(get_db),
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
