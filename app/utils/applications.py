@@ -37,6 +37,31 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
+def get_document(document: core.BorrowerDocument, user: core.User, session: Session):
+    if document is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+    if user.is_OCP():
+        create_application_action(
+            session,
+            None,
+            document.application.id,
+            core.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
+            {"file_name": document.name},
+        )
+    else:
+        check_FI_user_permission(document.application, user)
+        create_application_action(
+            session,
+            None,
+            document.application.id,
+            core.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
+            {"file_name": document.name},
+        )
+
+
 def create_application_action(
     session: Session,
     user_id: int,
@@ -216,6 +241,24 @@ def get_application_by_uuid(uuid: str, session: Session):
             defaultload(core.Application.borrower), defaultload(core.Application.award)
         )
         .filter(core.Application.uuid == uuid)
+        .first()
+    )
+
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
+        )
+
+    return application
+
+
+def get_application_by_id(id: int, session: Session) -> core.Application:
+    application = (
+        session.query(core.Application)
+        .options(
+            defaultload(core.Application.borrower), defaultload(core.Application.award)
+        )
+        .filter(core.Application.id == id)
         .first()
     )
 

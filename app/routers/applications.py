@@ -115,28 +115,7 @@ async def get_borrower_document(
             .filter(core.BorrowerDocument.id == id)
             .first()
         )
-        if document is None:
-            raise fastapi.HTTPException(
-                status_code=fastapi.status.HTTP_404_NOT_FOUND,
-                detail="Document not found",
-            )
-        if user.type == core.UserType.OCP:
-            utils.create_application_action(
-                session,
-                None,
-                document.application.id,
-                core.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
-                {"file_name": document.name},
-            )
-        else:
-            utils.check_FI_user_permission(document.application, user)
-            utils.create_application_action(
-                session,
-                None,
-                document.application.id,
-                core.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
-                {"file_name": document.name},
-            )
+        utils.get_document(document, user, session)
 
         def file_generator():
             yield document.file
@@ -149,6 +128,7 @@ async def get_borrower_document(
 @router.post(
     "/applications/upload",
     tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
 )
 async def upload(
     file: fastapi.UploadFile,
@@ -180,18 +160,19 @@ async def upload(
 
 
 @router.post(
-    "/applications/upload-compliance",
+    "/applications/{id}/upload-compliance",
     tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
 )
 async def upload_compliance(
+    id: int,
     file: fastapi.UploadFile,
-    uuid: str = fastapi.Form(...),
     session: Session = fastapi.Depends(get_db),
     user: core.User = fastapi.Depends(get_user),
 ):
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
-        application = utils.get_application_by_uuid(uuid, session)
+        application = utils.get_application_by_id(id, session)
 
         utils.check_FI_user_permission(application, user)
 
