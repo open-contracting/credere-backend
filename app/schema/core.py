@@ -86,9 +86,7 @@ class CreditType(Enum):
     CREDIT_LINE = "CREDIT_LINE"
 
 
-class CreditProductBase(SQLModel, table=True):
-    __tablename__ = "credit_product"
-    id: Optional[int] = Field(default=None, primary_key=True)
+class CreditProductBase(SQLModel):
     borrower_size: BorrowerSize = Field(
         sa_column=Column(SAEnum(BorrowerSize, name="borrower_size")), nullable=False
     )
@@ -108,9 +106,14 @@ class CreditProductBase(SQLModel, table=True):
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
     )
     other_fees_description: str = Field(default="", nullable=False)
-    url: str = Field(default="", nullable=False)
+    more_info_url: str = Field(default="", nullable=False)
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
-    lender: Optional[List["Lender"]] = Relationship(back_populates="credit_products")
+
+
+class CreditProduct(CreditProductBase, table=True):
+    __tablename__ = "credit_product"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    lender: Optional["Lender"] = Relationship(back_populates="credit_products")
 
 
 class BorrowerDocument(SQLModel, table=True):
@@ -334,9 +337,13 @@ class Lender(LenderBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     applications: Optional[List["Application"]] = Relationship(back_populates="lender")
     users: Optional[List["User"]] = Relationship(back_populates="lender")
-    credit_products: Optional[List["CreditProductBase"]] = Relationship(
+    credit_products: Optional[List["CreditProduct"]] = Relationship(
         back_populates="lender"
     )
+
+
+class LenderCreate(LenderBase):
+    credit_products: Optional[List["CreditProduct"]] = None
 
 
 class Award(SQLModel, table=True):
@@ -493,3 +500,11 @@ class ApplicationWithRelations(ApplicationRead):
     borrower: Optional["Borrower"] = None
     award: Optional["Award"] = None
     lender: Optional["Lender"] = None
+
+
+class LenderRead(LenderBase):
+    id: int
+
+
+class LenderWithRelations(LenderRead):
+    credit_products: Optional[List["CreditProduct"]] = None
