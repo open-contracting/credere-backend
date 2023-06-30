@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
@@ -25,20 +26,22 @@ class AwardUpdate(BaseModel):
     source_contract_id: Optional[str]
     title: Optional[str]
     description: Optional[str]
+    contracting_process_id: Optional[str]
     award_currency: Optional[str]
+    award_amount: Optional[Decimal]
+    award_date: Optional[datetime]
     payment_method: Optional[dict]
     buyer_name: Optional[str]
     source_url: Optional[str]
     entity_code: Optional[str]
     contract_status: Optional[str]
-    previous: Optional[bool]
+    contractperiod_startdate: Optional[datetime]
+    contractperiod_enddate: Optional[datetime]
     procurement_method: Optional[str]
-    contracting_process_id: Optional[str]
     procurement_category: Optional[str]
 
 
 class BorrowerUpdate(BaseModel):
-    borrower_identifier: Optional[str]
     legal_name: Optional[str]
     email: Optional[str]
     address: Optional[str]
@@ -46,7 +49,6 @@ class BorrowerUpdate(BaseModel):
     type: Optional[str]
     sector: Optional[str]
     size: Optional[core.BorrowerSize]
-    status: Optional[core.BorrowerStatus]
 
 
 class ApplicationUpdate(BaseModel):
@@ -81,6 +83,10 @@ class ChangeEmail(ApplicationBase):
 
 class ApplicationSubmit(ApplicationBase):
     lender_id: int
+
+
+class ApplicationEmailSme(BaseModel):
+    message: str
 
 
 class ApplicationDeclinePayload(ApplicationBase):

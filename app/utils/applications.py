@@ -1,7 +1,8 @@
 import json
 import re
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List
+
 
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
@@ -24,11 +25,13 @@ excluded_applications = [
     core.ApplicationStatus.DECLINED,
 ]
 
-OCP_can_modify = [
-    # core.ApplicationStatus.PENDING,
-    core.ApplicationStatus.ACCEPTED,
-    core.ApplicationStatus.SUBMITTED,
-    core.ApplicationStatus.INFORMATION_REQUESTED,
+OCP_cannot_modify = [
+    core.ApplicationStatus.LAPSED,
+    core.ApplicationStatus.DECLINED,
+    core.ApplicationStatus.APPROVED,
+    core.ApplicationStatus.CONTRACT_UPLOADED,
+    core.ApplicationStatus.COMPLETED,
+    core.ApplicationStatus.REJECTED,
 ]
 
 
@@ -98,16 +101,15 @@ def update_application_borrower(
             detail="Application or borrower not found",
         )
 
-    if application.status == core.ApplicationStatus.APPROVED:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Approved applications cannot be updated",
-        )
+    check_application_not_status(
+        application,
+        OCP_cannot_modify,
+    )
 
-    if user.is_OCP() and application.status not in OCP_can_modify:
+    if not user.is_OCP() and application.lender_id != user.lender_id:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This application cannot be updated by OCP Admins",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This application is not owned by this lender",
         )
 
     update_models(payload, application.borrower)
@@ -133,16 +135,15 @@ def update_application_award(
             detail="Application or award not found",
         )
 
-    if application.status == core.ApplicationStatus.APPROVED:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Approved applications cannot be updated",
-        )
+    check_application_not_status(
+        application,
+        OCP_cannot_modify,
+    )
 
-    if user.is_OCP() and application.status not in OCP_can_modify:
+    if not user.is_OCP() and application.lender_id != user.lender_id:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This application cannot be updated by OCP Admins",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This application is not owned by this lender",
         )
 
     update_models_with_validation(payload, application.award)
@@ -286,12 +287,32 @@ def check_is_application_expired(application: core.Application):
 
 
 def check_application_status(
-    application: core.Application, applicationStatus: core.ApplicationStatus
+    application: core.Application,
+    applicationStatus: core.ApplicationStatus,
+    detail: str = None,
 ):
     if application.status != applicationStatus:
+        message = "Application status is not {}".format(applicationStatus.name)
+        if detail:
+            message = detail
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Application status is not {}".format(applicationStatus.name),
+            detail=message,
+        )
+
+
+def check_application_not_status(
+    application: core.Application,
+    applicationStatus: List[core.ApplicationStatus],
+    detail: str = None,
+):
+    if application.status in applicationStatus:
+        message = "Application status is {}".format(application.status.name)
+        if detail:
+            message = detail
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=message,
         )
 
 

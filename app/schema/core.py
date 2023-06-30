@@ -124,7 +124,7 @@ class BorrowerDocument(SQLModel, table=True):
 
 
 class ApplicationBase(SQLModel):
-    award_id: int = Field(foreign_key="award.id")
+    award_id: Optional[int] = Field(foreign_key="award.id", nullable=True)
     uuid: str = Field(unique=True, index=True, nullable=False)
     primary_email: str = Field(default="", nullable=False)
     status: ApplicationStatus = Field(
@@ -203,6 +203,12 @@ class ApplicationBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     archived_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    information_requested_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    application_lapsed_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
 
@@ -388,6 +394,9 @@ class Message(SQLModel, table=True):
             default=datetime.utcnow(),
             onupdate=func.now(),
         )
+    )
+    lender_id: Optional[int] = Field(
+        default=None, foreign_key="lender.id", nullable=True
     )
 
 

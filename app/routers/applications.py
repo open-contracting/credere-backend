@@ -19,7 +19,187 @@ from ..schema import core
 from ..utils.permissions import OCP_only
 from ..utils.verify_token import get_current_user, get_user
 
-router = fastapi.APIRouter()
+from fastapi import Depends, Query, status  # isort:skip # noqa
+from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # noqa
+
+router = APIRouter()
+
+
+@router.patch(
+    "/applications/change-email",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def change_email(
+    payload: ChangeEmail,
+    session: Session = fastapi.Depends(get_db),
+    client: CognitoClient = fastapi.Depends(get_cognito_client),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+
+        confirmation_email_token = utils.update_application_primary_email(
+            application, payload.new_email
+        )
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_CHANGE_EMAIL,
+            payload,
+        )
+        external_message_id, body = send_new_email_confirmation(
+            client.ses,
+            application.borrower.legal_name,
+            payload.new_email,
+            payload.old_email,
+            confirmation_email_token,
+            application.uuid,
+        )
+
+        utils.create_message(
+            application,
+            core.MessageType.EMAIL_CHANGE_CONFIRMATION,
+            session,
+            external_message_id,
+            body,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/confirm-email",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def confirm_email(
+    payload: ApiSchema.ConfirmNewEmail,
+    session: Session = fastapi.Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+
+        utils.check_pending_email_confirmation(
+            application, payload.confirmation_email_token
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_CONFIRM_EMAIL,
+            payload,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.get(
+    "/applications/documents/id/{id}",
+    tags=["applications"],
+)
+async def get_borrower_document(
+    id: int,
+    session: Session = fastapi.Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+):
+    with transaction_session(session):
+        document = (
+            session.query(core.BorrowerDocument)
+            .filter(core.BorrowerDocument.id == id)
+            .first()
+        )
+        utils.get_document(document, user, session)
+
+        def file_generator():
+            yield document.file
+
+        return StreamingResponse(
+            file_generator(), media_type="application/octet-stream"
+        )
+
+
+@router.post(
+    "/applications/upload",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def upload(
+    file: fastapi.UploadFile,
+    uuid: str = fastapi.Form(...),
+    type: str = fastapi.Form(...),
+    session: Session = fastapi.Depends(get_db),
+):
+    with transaction_session(session):
+        new_file, filename = utils.validate_file(file)
+        application = utils.get_application_by_uuid(uuid, session)
+
+        utils.create_or_update_borrower_document(
+            filename, application, type, session, new_file
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
+            {"file_name": filename},
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/{id}/upload-compliance",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def upload_compliance(
+    id: int,
+    file: fastapi.UploadFile,
+    session: Session = fastapi.Depends(get_db),
+    user: core.User = fastapi.Depends(get_user),
+):
+    with transaction_session(session):
+        new_file, filename = utils.validate_file(file)
+        application = utils.get_application_by_id(id, session)
+
+        utils.check_FI_user_permission(application, user)
+
+        utils.create_or_update_borrower_document(
+            filename,
+            application,
+            core.BorrowerDocumentType.COMPLIANCE_REPORT,
+            session,
+            new_file,
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.FI_UPLOAD_COMPLIANCE,
+            {"file_name": filename},
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
 
 
 @router.patch(
@@ -202,7 +382,7 @@ async def upload_compliance(
 @router.put(
     "/applications/{application_id}/award",
     tags=["applications"],
-    response_model=core.Application,
+    response_model=core.ApplicationWithRelations,
 )
 async def update_application_award(
     application_id: int,
@@ -228,7 +408,7 @@ async def update_application_award(
 @router.put(
     "/applications/{application_id}/borrower",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=core.ApplicationWithRelations,
 )
 async def update_application_borrower(
     application_id: int,
@@ -248,11 +428,8 @@ async def update_application_borrower(
             core.ApplicationActionType.BORROWER_UPDATE,
             payload,
         )
-        return ApiSchema.ApplicationResponse(
-            application=application,
-            borrower=application.borrower,
-            award=application.award,
-        )
+
+        return application
 
 
 @router.get(
@@ -277,7 +454,7 @@ async def get_applications_list(
 @router.get(
     "/applications/id/{id}",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=core.ApplicationWithRelations,
 )
 @OCP_only()
 async def get_application(
@@ -289,9 +466,7 @@ async def get_application(
         session.query(core.Application).filter(core.Application.id == id).first()
     )
 
-    return ApiSchema.ApplicationResponse(
-        application=application, borrower=application.borrower, award=application.award
-    )
+    return application
 
 
 @router.get(
@@ -388,7 +563,69 @@ async def update_apps_send_notifications(
             )
         except ClientError as e:
             logging.error(e)
-            return "error"
+            return HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="There was an error",
+            )
+
+
+@router.post(
+    "/applications/email-sme/{id}",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def email_sme(
+    id: int,
+    payload: ApiSchema.ApplicationEmailSme,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+    user: core.User = Depends(get_user),
+):
+    with transaction_session(session):
+        try:
+            application = (
+                session.query(core.Application)
+                .filter(core.Application.id == id)
+                .first()
+            )
+            # Obtaing the lenderId from the user
+            lender = (
+                session.query(core.Lender)
+                .filter(core.Lender.id == user.lender_id)
+                .first()
+            )
+            application.status = core.ApplicationStatus.INFORMATION_REQUESTED
+            current_time = datetime.now(application.created_at.tzinfo)
+            application.information_requested_at = current_time
+
+            message_id = client.send_request_to_sme(
+                application.uuid,
+                lender.name,
+                payload.message,
+                application.primary_email,
+            )
+
+            new_message = core.Message(
+                application_id=application.id,
+                body=payload.message,
+                lender_id=lender.id,
+                type=core.MessageType.FI_MESSAGE,
+                external_message_id=message_id,
+            )
+            session.add(new_message)
+            session.commit()
+
+            return ApiSchema.ApplicationResponse(
+                application=application,
+                borrower=application.borrower,
+                award=application.award,
+            )
+        except ClientError as e:
+            logging.error(e)
+            return HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="There was an error",
+            )
 
 
 @router.post(
