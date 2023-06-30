@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
@@ -15,6 +14,9 @@ from ..db.session import get_db, transaction_session
 from ..schema import core
 from ..utils.permissions import OCP_only
 from ..utils.verify_token import get_current_user, get_user
+
+from fastapi import Depends, Query, status  # isort:skip # noqa
+from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # noqa
 
 router = APIRouter()
 
@@ -203,7 +205,69 @@ async def update_apps_send_notifications(
             )
         except ClientError as e:
             logging.error(e)
-            return "error"
+            return HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="There was an error",
+            )
+
+
+@router.post(
+    "/applications/email-sme/{id}",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def email_sme(
+    id: int,
+    payload: ApiSchema.ApplicationEmailSme,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+    user: core.User = Depends(get_user),
+):
+    with transaction_session(session):
+        try:
+            application = (
+                session.query(core.Application)
+                .filter(core.Application.id == id)
+                .first()
+            )
+            # Obtaing the lenderId from the user
+            lender = (
+                session.query(core.Lender)
+                .filter(core.Lender.id == user.lender_id)
+                .first()
+            )
+            application.status = core.ApplicationStatus.INFORMATION_REQUESTED
+            current_time = datetime.now(application.created_at.tzinfo)
+            application.information_requested_at = current_time
+
+            message_id = client.send_request_to_sme(
+                application.uuid,
+                lender.name,
+                payload.message,
+                application.primary_email,
+            )
+
+            new_message = core.Message(
+                application_id=application.id,
+                body=payload.message,
+                lender_id=lender.id,
+                type=core.MessageType.FI_MESSAGE,
+                external_message_id=message_id,
+            )
+            session.add(new_message)
+            session.commit()
+
+            return ApiSchema.ApplicationResponse(
+                application=application,
+                borrower=application.borrower,
+                award=application.award,
+            )
+        except ClientError as e:
+            logging.error(e)
+            return HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="There was an error",
+            )
 
 
 @router.post(
