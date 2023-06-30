@@ -475,3 +475,4 @@ class ApplicationWithRelations(ApplicationRead):
     borrower: Optional["Borrower"] = None
     award: Optional["Award"] = None
     lender: Optional["Lender"] = None
+    borrower_documents: Optional[List[BorrowerDocumentBase]] = None
