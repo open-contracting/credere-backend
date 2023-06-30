@@ -3,7 +3,6 @@ import re
 from datetime import datetime
 from typing import Dict, List
 
-
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
@@ -40,12 +39,13 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
-def get_document(document: core.BorrowerDocument, user: core.User, session: Session):
+def get_file(document: core.BorrowerDocument, user: core.User, session: Session):
     if document is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found",
         )
+
     if user.is_OCP():
         create_application_action(
             session,
