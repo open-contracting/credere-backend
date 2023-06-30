@@ -86,18 +86,15 @@ class BorrowerSize(Enum):
     MEDIUM = "MEDIUM"
 
 
-class BorrowerDocument(SQLModel, table=True):
+class BorrowerDocumentBase(SQLModel):
     __tablename__ = "borrower_document"
     id: Optional[int] = Field(default=None, primary_key=True)
     application_id: int = Field(foreign_key="application.id")
-    application: Optional["Application"] = Relationship(
-        back_populates="borrower_documents"
-    )
+
     type: BorrowerDocumentType = Field(
         sa_column=Column(SAEnum(BorrowerDocumentType, name="borrower_document_type"))
     )
     verified: bool = Field(default=False)
-    file: bytes
     name: str = Field(default="")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -123,6 +120,13 @@ class BorrowerDocument(SQLModel, table=True):
             server_default=func.now(),
         )
     )
+
+
+class BorrowerDocument(BorrowerDocumentBase, table=True):
+    application: Optional["Application"] = Relationship(
+        back_populates="borrower_documents"
+    )
+    file: bytes
 
 
 class ApplicationBase(SQLModel):
@@ -181,7 +185,7 @@ class ApplicationBase(SQLModel):
     lender_rejected_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    borrower_uploaded_contracted_at: Optional[datetime] = Field(
+    borrower_uploaded_contract_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     completed_in_days: Optional[int] = Field(nullable=True)
@@ -396,6 +400,9 @@ class Message(SQLModel, table=True):
             default=datetime.utcnow(),
             onupdate=func.now(),
         )
+    )
+    lender_id: Optional[int] = Field(
+        default=None, foreign_key="lender.id", nullable=True
     )
 
 
