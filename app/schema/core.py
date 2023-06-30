@@ -420,6 +420,9 @@ class Message(SQLModel, table=True):
             onupdate=func.now(),
         )
     )
+    lender_id: Optional[int] = Field(
+        default=None, foreign_key="lender.id", nullable=True
+    )
 
 
 class User(SQLModel, table=True):

@@ -73,6 +73,10 @@ class ApplicationSubmit(ApplicationBase):
     lender_id: int
 
 
+class ApplicationEmailSme(BaseModel):
+    message: str
+
+
 class ApplicationDeclinePayload(ApplicationBase):
     decline_this: bool
     decline_all: bool
