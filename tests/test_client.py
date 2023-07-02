@@ -1,24 +1,23 @@
 import logging
 import os
+from datetime import datetime, timedelta
+from typing import Any, Generator
+
 import boto3
 import pytest
-from typing import Any, Generator
 from botocore.config import Config
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
-from sqlalchemy import create_engine, Enum
-from datetime import datetime, timedelta
-
+from sqlalchemy import Enum, create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
 from app.db.session import get_db
 from app.email_templates import NEW_USER_TEMPLATE_NAME
-from app.routers import security, users, lenders, applications
+from app.routers import applications, lenders, security, users
 from app.schema import core
-
 
 application_status_values = (
     "PENDING",
