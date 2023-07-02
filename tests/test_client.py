@@ -19,6 +19,16 @@ from app.email_templates import NEW_USER_TEMPLATE_NAME
 from app.routers import applications, lenders, security, users
 from app.schema import core
 
+
+class MockResponse:
+    def __init__(self, status_code, json_data):
+        self.status_code = status_code
+        self.json_data = json_data
+
+    def json(self):
+        return self.json_data
+
+
 application_status_values = (
     "PENDING",
     "ACCEPTED",

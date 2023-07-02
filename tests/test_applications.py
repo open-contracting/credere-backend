@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import patch
 
 from fastapi import status
 
@@ -115,13 +116,27 @@ def test_application_declined_feedback(client):  # isort:skip # noqa
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_access_scheme(client):  # isort:skip # noqa
+def test_access_scheme(client, mocker):  # isort:skip # noqa
     test_client.create_application(ApplicationStatus.PENDING)
 
-    response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
-    assert response.json()["application"]["status"] == ApplicationStatus.ACCEPTED.value
-    assert response.status_code == status.HTTP_200_OK
+    # this will mock the previous award get to return an empty array
+    with patch(
+        "app.background_processes.awards_utils.get_previous_contracts",
+        return_value=test_client.MockResponse(status.HTTP_200_OK, {}),
+    ):
+        response = client.post(
+            "/applications/access-scheme", json={"uuid": "123-456-789"}
+        )
 
-    logging.info("Application should be accepted now so it cannot be accepted again")
-    response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
-    assert response.status_code == status.HTTP_409_CONFLICT
+        assert (
+            response.json()["application"]["status"] == ApplicationStatus.ACCEPTED.value
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        logging.info(
+            "Application should be accepted now so it cannot be accepted again"
+        )
+        response = client.post(
+            "/applications/access-scheme", json={"uuid": "123-456-789"}
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
