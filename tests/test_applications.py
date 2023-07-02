@@ -59,18 +59,6 @@ def test_get_applications(client):  # isort:skip # noqa
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_access_scheme(client):  # isort:skip # noqa
-    test_client.create_application()
-
-    response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
-    assert response.json()["application"]["status"] == ApplicationStatus.ACCEPTED.value
-    assert response.status_code == status.HTTP_200_OK
-
-    logging.info("Application should be accepted now so it cannot be accepted again")
-    response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
-    assert response.status_code == status.HTTP_409_CONFLICT
-
-
 def test_application_declined(client):  # isort:skip # noqa
     test_client.create_application()
 
@@ -125,3 +113,15 @@ def test_application_declined_feedback(client):  # isort:skip # noqa
     response = client.post("/applications/decline-feedback", json=declined_feedback)
     assert response.json()["application"]["status"] == ApplicationStatus.DECLINED.value
     assert response.status_code == status.HTTP_200_OK
+
+
+def test_access_scheme(client):  # isort:skip # noqa
+    test_client.create_application(ApplicationStatus.PENDING)
+
+    response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
+    assert response.json()["application"]["status"] == ApplicationStatus.ACCEPTED.value
+    assert response.status_code == status.HTTP_200_OK
+
+    logging.info("Application should be accepted now so it cannot be accepted again")
+    response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
+    assert response.status_code == status.HTTP_409_CONFLICT

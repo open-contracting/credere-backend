@@ -32,6 +32,7 @@ application_status_values = (
     "REJECTED",
     "INFORMATION_REQUESTED",
 )
+
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", app_settings.test_database_url)
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 existing_enum_types = engine.execute(
