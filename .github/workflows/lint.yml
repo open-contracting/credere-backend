@@ -2,7 +2,7 @@ name: Lint
 on: [push, pull_request]
 env:
   BASEDIR: https://raw.githubusercontent.com/open-contracting/standard-maintenance-scripts/main
-  STANDARD_MAINTENANCE_SCRIPTS_IGNORE: python-jose
+  STANDARD_MAINTENANCE_SCRIPTS_IGNORE: [python-jose, pytest-mock]
 jobs:
   build:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
