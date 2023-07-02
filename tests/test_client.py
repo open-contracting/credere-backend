@@ -1,23 +1,24 @@
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import Any, Generator
-
 import boto3
 import pytest
+from typing import Any, Generator
 from botocore.config import Config
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
-from sqlalchemy import Enum, create_engine
+from sqlalchemy import create_engine, Enum
+from datetime import datetime, timedelta
+
 from sqlalchemy.orm import sessionmaker
 
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
 from app.db.session import get_db
 from app.email_templates import NEW_USER_TEMPLATE_NAME
-from app.routers import applications, lenders, security, users
+from app.routers import security, users, lenders, applications
 from app.schema import core
+
 
 application_status_values = (
     "PENDING",
@@ -37,15 +38,14 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 existing_enum_types = engine.execute(
     "SELECT typname FROM pg_type WHERE typtype = 'e'"
 ).fetchall()
-enum_exists = ("application_status_enum",) in existing_enum_types
+enum_exists = ("application_status",) in existing_enum_types
 ApplicationStatusEnum = Enum(
     *application_status_values, name="application_status", create_type=False
 )
 
 if not enum_exists:
     engine.execute(
-        "CREATE TYPE application_status_enum AS ENUM %s"
-        % str(application_status_values)
+        "CREATE TYPE application_status AS ENUM %s" % str(application_status_values)
     )
 
 
