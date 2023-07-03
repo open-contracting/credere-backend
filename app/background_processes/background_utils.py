@@ -21,6 +21,7 @@ def is_valid_email(email: str) -> bool:
 
 def raise_sentry_error(message: str, payload: dict):
     sentry_sdk.capture_exception(message, payload)
+
     raise ValueError(message)
 
 
