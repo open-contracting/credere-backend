@@ -56,7 +56,6 @@ def test_fetch_new_awards_from_date():
 
             inserted_borrower = session.query(core.Borrower).first()
             inserted_application = session.query(core.Application).first()
-            print(session.query(core.Application).count())
 
             try:
                 common_test_functions.compare_objects(inserted_award, award_result)

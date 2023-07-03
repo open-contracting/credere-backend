@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
-from sqlalchemy import create_engine
+from sqlalchemy import Enum, create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.core.settings import app_settings
@@ -38,12 +38,37 @@ def load_json_file(filename):
     return data
 
 
-LOCAL_TEST_DATABASE = app_settings.local_test_database
-DATABASE_URL = os.getenv("DATABASE_URL", LOCAL_TEST_DATABASE)
-print(DATABASE_URL)
-engine = create_engine(DATABASE_URL)
+application_status_values = (
+    "PENDING",
+    "ACCEPTED",
+    "LAPSED",
+    "DECLINED",
+    "SUBMITTED",
+    "STARTED",
+    "APPROVED",
+    "CONTRACT_UPLOADED",
+    "COMPLETED",
+    "REJECTED",
+    "INFORMATION_REQUESTED",
+)
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", app_settings.test_database_url)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+existing_enum_types = engine.execute(
+    "SELECT typname FROM pg_type WHERE typtype = 'e'"
+).fetchall()
+enum_exists = ("application_status",) in existing_enum_types
+ApplicationStatusEnum = Enum(
+    *application_status_values, name="application_status", create_type=False
+)
+
+if not enum_exists:
+    engine.execute(
+        "CREATE TYPE application_status AS ENUM %s" % str(application_status_values)
+    )
+
+
+SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
@@ -118,9 +143,9 @@ def compare_objects(
 def mock_get_db():
     try:
         db = None
-        if SessionLocal:
+        if SessionTesting:
             core.Application.metadata.create_all(engine)
-            db = SessionLocal()
+            db = SessionTesting()
 
         yield db
     finally:

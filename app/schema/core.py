@@ -119,6 +119,10 @@ class ApplicationBase(SQLModel):
     award_id: int = Field(foreign_key="award.id")
     uuid: str = Field(unique=True, index=True, nullable=False)
     primary_email: str = Field(default="", nullable=False)
+    status: ApplicationStatus = Field(
+        sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
+        default=ApplicationStatus.PENDING,
+    )
     award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
@@ -204,10 +208,6 @@ class Application(ApplicationBase, table=True):
         back_populates="application"
     )
     award: "Award" = Relationship(back_populates="applications")
-    status: ApplicationStatus = Field(
-        sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
-        default=ApplicationStatus.PENDING,
-    )
     borrower: "Borrower" = Relationship(back_populates="applications")
     lender: "Lender" = Relationship(back_populates="applications")
     messages: Optional[List["Message"]] = Relationship(back_populates="application")
