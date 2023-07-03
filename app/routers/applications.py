@@ -2,7 +2,8 @@ import logging
 from datetime import datetime
 
 from botocore.exceptions import ClientError
-from sqlalchemy.orm import Session
+from sqlalchemy import and_
+from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
 from app.background_processes.fetcher import fetch_previous_awards
@@ -164,6 +165,193 @@ async def access_scheme(
         application.expired_at = None
 
         background_tasks.add_task(fetch_previous_awards, application.borrower)
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/credit-product-options",
+    tags=["applications"],
+    response_model=ApiSchema.CreditProductListResponse,
+)
+async def credit_product_options(
+    payload: ApiSchema.ApplicationCreditOptions,
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_is_application_expired(application)
+        utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+
+        loans = (
+            session.query(core.CreditProduct)
+            .join(core.Lender)
+            .options(joinedload(core.CreditProduct.lender))
+            .filter(
+                and_(
+                    core.CreditProduct.type == core.CreditType.LOAN,
+                    core.CreditProduct.borrower_size == payload.borrower_size,
+                    core.CreditProduct.lower_limit <= payload.amount_requested,
+                    core.CreditProduct.upper_limit >= payload.amount_requested,
+                )
+            )
+            .all()
+        )
+
+        credit_lines = (
+            session.query(core.CreditProduct)
+            .join(core.Lender)
+            .options(joinedload(core.CreditProduct.lender))
+            .filter(
+                and_(
+                    core.CreditProduct.type == core.CreditType.CREDIT_LINE,
+                    core.CreditProduct.borrower_size == payload.borrower_size,
+                    core.CreditProduct.lower_limit <= payload.amount_requested,
+                    core.CreditProduct.upper_limit >= payload.amount_requested,
+                )
+            )
+            .all()
+        )
+
+        return ApiSchema.CreditProductListResponse(
+            loans=loans, credit_lines=credit_lines
+        )
+
+
+@router.post(
+    "/applications/select-credit-product",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def select_credit_product(
+    payload: ApiSchema.ApplicationSelectCreditProduct,
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_is_application_expired(application)
+        utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+
+        calculator_data = utils.get_calculator_data(payload)
+
+        application.calculator_data = calculator_data
+        application.credit_product_id = payload.credit_product_id
+        current_time = datetime.now(application.created_at.tzinfo)
+        application.borrower_credit_product_selected_at = current_time
+
+        application.borrower.size = payload.borrower_size
+        application.borrower.sector = payload.sector
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.APPLICATION_CALCULATOR_DATA_UPDATE,
+            payload,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/rollback-select-credit-product",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def rollback_select_credit_product(
+    payload: ApiSchema.ApplicationBase,
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_is_application_expired(application)
+        utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+
+        if not application.credit_product_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Credit product not selected",
+            )
+
+        if application.lender_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot rollback at this stage",
+            )
+
+        application.credit_product_id = None
+        application.borrower_credit_product_selected_at = None
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+        )
+
+
+@router.post(
+    "/applications/confirm-credit-product",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def confirm_credit_product(
+    payload: ApiSchema.ApplicationBase,
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_is_application_expired(application)
+        utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+
+        if not application.credit_product_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Credit product not selected",
+            )
+
+        creditProduct = (
+            session.query(core.CreditProduct)
+            .filter(core.CreditProduct.id == application.credit_product_id)
+            .first()
+        )
+
+        if not creditProduct:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Credit product not found",
+            )
+
+        application.lender_id = creditProduct.lender_id
+        application.amount_requested = application.calculator_data.get(
+            "amount_requested", None
+        )
+        application.repayment_years = application.calculator_data.get(
+            "repayment_years", None
+        )
+        application.repayment_months = application.calculator_data.get(
+            "repayment_months", None
+        )
+        application.payment_start_date = application.calculator_data.get(
+            "payment_start_date", None
+        )
+
+        application.pending_documents = True
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
+            {},
+        )
 
         return ApiSchema.ApplicationResponse(
             application=application,

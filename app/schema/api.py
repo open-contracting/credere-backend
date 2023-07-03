@@ -71,6 +71,24 @@ class ApplicationBase(BaseModel):
     uuid: str
 
 
+class ApplicationCreditOptions(ApplicationBase):
+    borrower_size: core.BorrowerSize
+    amount_requested: Decimal
+
+
+class ApplicationSelectCreditProduct(ApplicationCreditOptions):
+    sector: str
+    credit_product_id: int
+    repayment_years: Optional[int]
+    repayment_months: Optional[int]
+    payment_start_date: Optional[datetime]
+
+
+class CreditProductListResponse(BaseModel):
+    loans: List[core.CreditProductWithLender]
+    credit_lines: List[core.CreditProductWithLender]
+
+
 class ApplicationSubmit(ApplicationBase):
     lender_id: int
 
