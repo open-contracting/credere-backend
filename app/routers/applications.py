@@ -20,6 +20,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # no
 
 router = APIRouter()
 
+
 @router.get(
     "/applications/admin-list",
     tags=["applications"],
