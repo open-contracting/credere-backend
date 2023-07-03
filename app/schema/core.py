@@ -96,6 +96,9 @@ class CreditProductBase(SQLModel):
     upper_limit: Decimal = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
     )
+    interest_rate: Decimal = Field(
+        sa_column=Column(DECIMAL(precision=5, scale=2), nullable=False)
+    )
     type: CreditType = Field(
         sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
     )
@@ -107,13 +110,29 @@ class CreditProductBase(SQLModel):
     )
     other_fees_description: str = Field(default="", nullable=False)
     more_info_url: str = Field(default="", nullable=False)
-    lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
+    lender_id: int = Field(foreign_key="lender.id", nullable=False)
 
 
 class CreditProduct(CreditProductBase, table=True):
     __tablename__ = "credit_product"
     id: Optional[int] = Field(default=None, primary_key=True)
-    lender: Optional["Lender"] = Relationship(back_populates="credit_products")
+    lender: "Lender" = Relationship(back_populates="credit_products")
+    created_at: Optional[datetime] = Field(
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
+        )
+    )
+    updated_at: Optional[datetime] = Field(
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            onupdate=func.now(),
+        )
+    )
 
 
 class BorrowerDocument(SQLModel, table=True):
@@ -508,3 +527,8 @@ class LenderRead(LenderBase):
 
 class LenderWithRelations(LenderRead):
     credit_products: Optional[List["CreditProduct"]] = None
+
+
+class CreditProductWithLender(CreditProductBase):
+    id: int
+    lender: Optional["Lender"] = None

@@ -31,11 +31,12 @@ def create_lender(session: Session, payload: dict) -> core.Lender:
         lender = core.Lender(**payload.dict(exclude={"credit_products"}))
         session.add(lender)
 
-        # Create a CreditProductBase instance for each credit_product and add it to the lender
-        for cp in payload.credit_products:
-            print(cp)
-            credit_product = core.CreditProduct(**cp.dict(), lender=lender)
-            session.add(credit_product)
+        # Create a CreditProduct instance for each credit product and add it to the lender
+        if payload.credit_products:
+            for cp in payload.credit_products:
+                credit_product = core.CreditProduct(**cp.dict(), lender=lender)
+                session.add(credit_product)
+
         session.flush()
 
         return lender
@@ -50,15 +51,14 @@ def create_lender(session: Session, payload: dict) -> core.Lender:
 def create_credit_product(
     session: Session, payload: dict, lender_id
 ) -> core.CreditProduct:
-    # Create a Lender instance without the credit_product data
     lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
     if not lender:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"
         )
+
     credit_product = core.CreditProduct(**payload.dict(), lender=lender)
     session.add(credit_product)
-    # Create a CreditProductBase instance for each credit_product and add it to the lender
     session.flush()
 
     return credit_product
@@ -67,8 +67,12 @@ def create_credit_product(
 def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lender:
     try:
         lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
-        update_models(payload, lender)
+        if not lender:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"
+            )
 
+        update_models(payload, lender)
         session.add(lender)
         session.flush()
 
@@ -79,3 +83,23 @@ def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lende
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Lender already exists",
         )
+
+
+def update_credit_product(
+    session: Session, payload: dict, credit_product_id: int
+) -> core.CreditProduct:
+    credit_product = (
+        session.query(core.CreditProduct)
+        .filter(core.CreditProduct.id == credit_product_id)
+        .first()
+    )
+    if not credit_product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found"
+        )
+
+    update_models(payload, credit_product)
+    session.add(credit_product)
+    session.flush()
+
+    return credit_product
