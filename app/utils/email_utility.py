@@ -102,3 +102,65 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
     )
 
     return response.get("MessageId")
+
+
+def send_notification_new_app_to_fi(ses, lender_email_group):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+    }
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={"ToAddresses": [lender_email_group]},
+        Template=email_templates.NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )
+
+
+def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "F1": lender_name,
+        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+    }
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={"ToAddresses": [ocp_email_group]},
+        Template=email_templates.NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )
+
+
+def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "FI": lender_name,
+        "FI_MESSAGE": email_message,
+        "LOGIN_DOCUMENTS_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(uuid)
+        + "/documents",
+        "LOGIN_IMAGE_LINK": images_base_url + "/uploadDocument.png",
+    }
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # replace with sme_email on production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=email_templates.REQUEST_SME_DATA_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )
+    return response.get("MessageId")

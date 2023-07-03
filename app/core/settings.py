@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     secop_default_days_from_ultima_actualizacion: int = config_env.get(
         "SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION", 365
     )
+    days_to_erase_borrower_data: int = config_env.get("DAYS_TO_ERASE_BORROWERS_DATA", 7)
+    days_to_change_to_lapsed: int = config_env.get("DAYS_TO_CHANGE_TO_LAPSED", 14)
+    ocp_email_group: str = config_env.get("OCP_EMAIL_GROUP", None)
 
     class Config:
         env_file = ".env"
