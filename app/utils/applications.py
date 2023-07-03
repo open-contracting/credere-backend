@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -28,9 +28,18 @@ OCP_cannot_modify = [
 ]
 
 
+def get_calculator_data(payload: dict):
+    calculator_fields = jsonable_encoder(payload, exclude_unset=True)
+    calculator_fields.pop("uuid")
+    calculator_fields.pop("credit_product_id")
+    calculator_fields.pop("sector")
+
+    return calculator_fields
+
+
 def create_application_action(
     session: Session,
-    user_id: int,
+    user_id: Optional[int],
     application_id: int,
     type: core.ApplicationAction,
     payload: dict,

@@ -64,6 +64,8 @@ class UserType(Enum):
 class ApplicationActionType(Enum):
     AWARD_UPDATE = "AWARD_UPDATE"
     BORROWER_UPDATE = "BORROWER_UPDATE"
+    APPLICATION_CALCULATOR_DATA_UPDATE = "APPLICATION_CALCULATOR_DATA_UPDATE"
+    APPLICATION_CONFIRM_CREDIT_PRODUCT = "APPLICATION_CONFIRM_CREDIT_PRODUCT"
     FI_UPLOAD_COMPLIANCE = "FI_UPLOAD_COMPLIANCE"
     FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
@@ -187,8 +189,15 @@ class ApplicationBase(SQLModel):
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
     currency: str = Field(default="COP", description="ISO 4217 currency code")
+    repayment_years: Optional[int] = Field(nullable=True)
     repayment_months: Optional[int] = Field(nullable=True)
+    payment_start_date: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=False), nullable=True)
+    )
     calculator_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    borrower_credit_product_selected_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
     pending_documents: bool = Field(default=False)
     pending_email_confirmation: bool = Field(default=False)
     borrower_submitted_at: Optional[datetime] = Field(
@@ -256,6 +265,9 @@ class ApplicationBase(SQLModel):
     application_lapsed_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+    credit_product_id: Optional[int] = Field(
+        foreign_key="credit_product.id", nullable=True
+    )
 
 
 class ApplicationRead(ApplicationBase):
@@ -269,13 +281,10 @@ class Application(ApplicationBase, table=True):
     )
     award: "Award" = Relationship(back_populates="applications")
     borrower: "Borrower" = Relationship(back_populates="applications")
-    lender: "Lender" = Relationship(back_populates="applications")
+    lender: Optional["Lender"] = Relationship(back_populates="applications")
     messages: Optional[List["Message"]] = Relationship(back_populates="application")
     actions: Optional[List["ApplicationAction"]] = Relationship(
         back_populates="application"
-    )
-    credit_product_id: Optional[int] = Field(
-        foreign_key="credit_product.id", nullable=True
     )
 
 
