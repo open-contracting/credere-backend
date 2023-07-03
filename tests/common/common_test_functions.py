@@ -151,3 +151,17 @@ def mock_get_db():
     finally:
         if db:
             db.close()
+
+
+def mock_get_db_with_drop():
+    try:
+        db = None
+        if SessionTesting:
+            core.Application.metadata.create_all(engine)
+            db = SessionTesting()
+
+        yield db
+    finally:
+        if db:
+            db.close()
+            core.Application.metadata.drop_all(engine)
