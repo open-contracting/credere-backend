@@ -173,7 +173,7 @@
   },
   "award_currency": "COP",
   "contracting_process_id": "Test Procurement Process",
-  "award_amount": 10000000.00,
+  "award_amount": 10000000.0,
   "created_at": "2023-06-25T18:25:37.940833-03:00",
   "buyer_name": "Test Buyer",
   "procurement_category": "Test Contract Type",
