@@ -65,6 +65,8 @@ class UserType(Enum):
 class ApplicationActionType(Enum):
     AWARD_UPDATE = "AWARD_UPDATE"
     BORROWER_UPDATE = "BORROWER_UPDATE"
+    APPLICATION_CALCULATOR_DATA_UPDATE = "APPLICATION_CALCULATOR_DATA_UPDATE"
+    APPLICATION_CONFIRM_CREDIT_PRODUCT = "APPLICATION_CONFIRM_CREDIT_PRODUCT"
     FI_UPLOAD_COMPLIANCE = "FI_UPLOAD_COMPLIANCE"
     FI_DOWNLOAD_DOCUMENT = "FI_DOWNLOAD_DOCUMENT"
     FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
@@ -87,8 +89,61 @@ class BorrowerSize(Enum):
     MEDIUM = "MEDIUM"
 
 
+class CreditType(Enum):
+    LOAN = "LOAN"
+    CREDIT_LINE = "CREDIT_LINE"
+
+
+class CreditProductBase(SQLModel):
+    borrower_size: BorrowerSize = Field(
+        sa_column=Column(SAEnum(BorrowerSize, name="borrower_size")), nullable=False
+    )
+    lower_limit: Decimal = Field(
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
+    )
+    upper_limit: Decimal = Field(
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
+    )
+    interest_rate: Decimal = Field(
+        sa_column=Column(DECIMAL(precision=5, scale=2), nullable=False)
+    )
+    type: CreditType = Field(
+        sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
+    )
+    required_document_types: dict = Field(
+        default={}, sa_column=Column(JSON), nullable=False
+    )
+    other_fees_total_amount: Decimal = Field(
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
+    )
+    other_fees_description: str = Field(default="", nullable=False)
+    more_info_url: str = Field(default="", nullable=False)
+    lender_id: int = Field(foreign_key="lender.id", nullable=False)
+
+
+class CreditProduct(CreditProductBase, table=True):
+    __tablename__ = "credit_product"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    lender: "Lender" = Relationship(back_populates="credit_products")
+    created_at: Optional[datetime] = Field(
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            server_default=func.now(),
+        )
+    )
+    updated_at: Optional[datetime] = Field(
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=datetime.utcnow(),
+            onupdate=func.now(),
+        )
+    )
+
+
 class BorrowerDocumentBase(SQLModel):
-    __tablename__ = "borrower_document"
     id: Optional[int] = Field(default=None, primary_key=True)
     application_id: int = Field(foreign_key="application.id")
 
@@ -124,6 +179,7 @@ class BorrowerDocumentBase(SQLModel):
 
 
 class BorrowerDocument(BorrowerDocumentBase, table=True):
+    __tablename__ = "borrower_document"
     application: Optional["Application"] = Relationship(
         back_populates="borrower_documents"
     )
@@ -149,8 +205,15 @@ class ApplicationBase(SQLModel):
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
     currency: str = Field(default="COP", description="ISO 4217 currency code")
+    repayment_years: Optional[int] = Field(nullable=True)
     repayment_months: Optional[int] = Field(nullable=True)
+    payment_start_date: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=False), nullable=True)
+    )
     calculator_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    borrower_credit_product_selected_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
     pending_documents: bool = Field(default=False)
     pending_email_confirmation: bool = Field(default=False)
     borrower_submitted_at: Optional[datetime] = Field(
@@ -218,6 +281,9 @@ class ApplicationBase(SQLModel):
     application_lapsed_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+    credit_product_id: Optional[int] = Field(
+        foreign_key="credit_product.id", nullable=True
+    )
 
 
 class ApplicationRead(ApplicationBase):
@@ -231,7 +297,7 @@ class Application(ApplicationBase, table=True):
     )
     award: "Award" = Relationship(back_populates="applications")
     borrower: "Borrower" = Relationship(back_populates="applications")
-    lender: "Lender" = Relationship(back_populates="applications")
+    lender: Optional["Lender"] = Relationship(back_populates="applications")
     messages: Optional[List["Message"]] = Relationship(back_populates="application")
     actions: Optional[List["ApplicationAction"]] = Relationship(
         back_populates="application"
@@ -289,10 +355,6 @@ class LenderBase(SQLModel):
     email_group: str = Field(default="")
     status: str = Field(default="")
     type: str = Field(default="")
-    borrower_type_preferences: dict = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
-    limits_preferences: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     sla_days: Optional[int]
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -319,6 +381,13 @@ class Lender(LenderBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     applications: Optional[List["Application"]] = Relationship(back_populates="lender")
     users: Optional[List["User"]] = Relationship(back_populates="lender")
+    credit_products: Optional[List["CreditProduct"]] = Relationship(
+        back_populates="lender"
+    )
+
+
+class LenderCreate(LenderBase):
+    credit_products: Optional[List["CreditProduct"]] = None
 
 
 class Award(SQLModel, table=True):
@@ -476,3 +545,16 @@ class ApplicationWithRelations(ApplicationRead):
     award: Optional["Award"] = None
     lender: Optional["Lender"] = None
     borrower_documents: Optional[List[BorrowerDocumentBase]] = None
+
+
+class LenderRead(LenderBase):
+    id: int
+
+
+class LenderWithRelations(LenderRead):
+    credit_products: Optional[List["CreditProduct"]] = None
+
+
+class CreditProductWithLender(CreditProductBase):
+    id: int
+    lender: Optional["Lender"] = None

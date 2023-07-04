@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
@@ -94,9 +94,18 @@ def get_file(document: core.BorrowerDocument, user: core.User, session: Session)
         )
 
 
+def get_calculator_data(payload: dict):
+    calculator_fields = jsonable_encoder(payload, exclude_unset=True)
+    calculator_fields.pop("uuid")
+    calculator_fields.pop("credit_product_id")
+    calculator_fields.pop("sector")
+
+    return calculator_fields
+
+
 def create_application_action(
     session: Session,
-    user_id: int,
+    user_id: Optional[int],
     application_id: int,
     type: core.ApplicationAction,
     payload: dict,
