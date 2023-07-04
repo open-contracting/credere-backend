@@ -19,10 +19,12 @@ router = APIRouter()
 
 
 @router.post("/users", tags=["users"], response_model=User)
+@OCP_only()
 async def create_user(
     payload: User,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
+    current_user: User = Depends(get_current_user),
 ):
     with transaction_session(session):
         try:
