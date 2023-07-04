@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     cognito_client_id: str = config_env.get("COGNITO_CLIENT_ID", None)
     cognito_client_secret: str = config_env.get("COGNITO_CLIENT_SECRET", None)
     database_url: str = config_env.get("DATABASE_URL", None)
+    test_database_url: str = config_env.get("TEST_DATABASE_URL", None)
     frontend_url: str = config_env.get("FRONTEND_URL", "http://localhost:3000")
     sentry_dsn: str = config_env.get("SENTRY_DNS", None)
     images_base_url: str = config_env.get(
