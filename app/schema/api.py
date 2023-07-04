@@ -22,6 +22,10 @@ class LenderListResponse(BasePagination):
     items: List[core.Lender]
 
 
+class UserListResponse(BasePagination):
+    items: List[core.User]
+
+
 class AwardUpdate(BaseModel):
     source_contract_id: Optional[str]
     title: Optional[str]

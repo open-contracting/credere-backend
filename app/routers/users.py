@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+import app.utils.users as utils
 from app.schema import api as ApiSchema
 from app.utils.verify_token import get_current_user
 
@@ -259,3 +260,8 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return user
+
+
+@router.get("/users", tags=["users"], response_model=ApiSchema.UserListResponse)
+async def get_all_users(db: Session = Depends(get_db)):
+    return utils.get_all_users(db)
