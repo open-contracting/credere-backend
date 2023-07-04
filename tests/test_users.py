@@ -2,11 +2,14 @@ import logging
 
 from fastapi import status
 
-import tests.test_client as test_client
+import tests.common_test_client as common_test_client
 from app.schema.core import UserType
 
-from tests.test_client import app, client  # isort:skip # noqa
-from tests.test_client import mock_cognito_client, mock_ses_client  # isort:skip # noqa
+from tests.common_test_client import mock_ses_client  # isort:skip # noqa
+
+from tests.common_test_client import mock_cognito_client  # isort:skip # noqa
+
+from tests.common_test_client import app, client  # isort:skip # noqa
 
 data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.value}
 
@@ -33,8 +36,8 @@ def test_login(client):  # isort:skip # noqa
 
     setupPasswordPayload = {
         "username": data["email"],
-        "temp_password": test_client.tempPassword,
-        "password": test_client.tempPassword,
+        "temp_password": common_test_client.tempPassword,
+        "password": common_test_client.tempPassword,
     }
     responseSetupPassword = client.put(
         "/users/change-password", json=setupPasswordPayload
@@ -42,7 +45,10 @@ def test_login(client):  # isort:skip # noqa
     logging.info(responseSetupPassword.json())
     assert responseSetupPassword.status_code == status.HTTP_200_OK
 
-    loginPayload = {"username": data["email"], "password": test_client.tempPassword}
+    loginPayload = {
+        "username": data["email"],
+        "password": common_test_client.tempPassword,
+    }
     responseLogin = client.post("/users/login", json=loginPayload)
     logging.info(responseLogin.json())
 

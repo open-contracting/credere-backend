@@ -58,7 +58,6 @@ class CognitoClient:
             MessageAction="SUPPRESS",
             UserAttributes=[{"Name": "email", "Value": username}],
         )
-
         email_utility.send_mail_to_new_user(self.ses, name, username, temp_password)
 
         return responseCreateUser
