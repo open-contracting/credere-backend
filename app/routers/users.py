@@ -13,6 +13,7 @@ from app.utils.verify_token import get_current_user
 from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
 from ..schema.core import BasicUser, SetupMFA, User
+from ..utils.permissions import OCP_only
 
 router = APIRouter()
 
@@ -265,3 +266,19 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
 @router.get("/users", tags=["users"], response_model=ApiSchema.UserListResponse)
 async def get_all_users(db: Session = Depends(get_db)):
     return utils.get_all_users(db)
+
+
+@router.put(
+    "/users/{id}",
+    tags=["users"],
+    response_model=User,
+)
+@OCP_only()
+async def update_user(
+    id: int,
+    user: User,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        return utils.update_user(session, user, id)
