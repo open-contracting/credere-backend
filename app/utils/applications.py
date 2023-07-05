@@ -38,15 +38,11 @@ def get_calculator_data(payload: dict):
 
 
 def approve_application(application: core.Application, payload: dict):
-    if application.status != core.ApplicationStatus.STARTED:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This application cannot be approved",
-        )
     payload_dict = jsonable_encoder(payload, exclude_unset=True)
     application.lender_approved_data = payload_dict
     application.status = core.ApplicationStatus.APPROVED
-    application.lender_approved_at = datetime.utcnow()
+    current_time = datetime.now(application.created_at.tzinfo)
+    application.lender_approved_at = current_time
 
 
 def create_application_action(

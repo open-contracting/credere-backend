@@ -47,6 +47,10 @@ class LenderApprovedData(BaseModel):
     additional_comments: Optional[str]
 
 
+class LenderReviewContract(BaseModel):
+    disbursed_final_amount: Optional[Decimal]
+
+
 class BorrowerUpdate(BaseModel):
     legal_name: Optional[str]
     email: Optional[str]

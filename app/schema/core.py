@@ -67,6 +67,7 @@ class ApplicationActionType(Enum):
     APPLICATION_CALCULATOR_DATA_UPDATE = "APPLICATION_CALCULATOR_DATA_UPDATE"
     APPLICATION_CONFIRM_CREDIT_PRODUCT = "APPLICATION_CONFIRM_CREDIT_PRODUCT"
     FI_UPLOAD_COMPLIANCE = "FI_UPLOAD_COMPLIANCE"
+    FI_COMPLETE_APPLICATION = "FI_COMPLETE_APPLICATION"
     FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
@@ -183,6 +184,9 @@ class ApplicationBase(SQLModel):
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
     contract_amount_submitted: Optional[Decimal] = Field(
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
+    )
+    disbursed_final_amount: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
     amount_requested: Optional[Decimal] = Field(

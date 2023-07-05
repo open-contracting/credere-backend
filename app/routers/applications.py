@@ -1,5 +1,4 @@
 import logging
-from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 
 from botocore.exceptions import ClientError
@@ -24,11 +23,44 @@ router = APIRouter()
 
 
 @router.post(
-    "/applications/{id}/approve",
+    "/applications/{id}/review-application",
     tags=["applications"],
     response_model=core.ApplicationWithRelations,
 )
-async def send_email(
+async def review_application(
+    id: int,
+    payload: ApiSchema.LenderReviewContract,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+    user: core.User = Depends(get_user),
+):
+    with transaction_session(session):
+        # this should be get application by id after merging 102 in dev
+        application = (
+            session.query(core.Application).filter(core.Application.id == id).first()
+        )
+        # before this I need to check if lender is assigned to application, function is also in branch 102
+        utils.check_application_status(
+            application, core.ApplicationStatus.CONTRACT_UPLOADED
+        )
+
+        utils.create_application_action(
+            session,
+            user.id,
+            application.id,
+            core.ApplicationActionType.FI_COMPLETE_APPLICATION,
+            payload,
+        )
+
+        return application
+
+
+@router.post(
+    "/applications/{id}/approve-application",
+    tags=["applications"],
+    response_model=core.ApplicationWithRelations,
+)
+async def approve_application(
     id: int,
     payload: ApiSchema.LenderApprovedData,
     session: Session = Depends(get_db),
@@ -40,8 +72,8 @@ async def send_email(
         application = (
             session.query(core.Application).filter(core.Application.id == id).first()
         )
-
         # before this I need to check if lender is assigned to application, function is also in branch 102
+        utils.check_application_status(application, core.ApplicationStatus.STARTED)
         utils.approve_application(application, payload)
         utils.create_application_action(
             session,
