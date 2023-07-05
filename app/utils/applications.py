@@ -359,13 +359,11 @@ def create_message(
     message: core.MessageType,
     session: Session,
     external_message_id: str,
-    body: dict,
 ) -> None:
     obj_db = core.Message(
         application=application,
         type=message,
         external_message_id=external_message_id,
-        body=json.dumps(body),
     )
     obj_db.created_at = datetime.utcnow()
 

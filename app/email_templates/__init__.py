@@ -1,4 +1,6 @@
 NEW_USER_TEMPLATE_NAME = "credere-NewAccountCreated"
+CONTRACT_UPLOAD_CONFIRMATION = "credere-ContractUploadConfirmation"
+UPLOAD_CONTRACT = "credere-UploadContract"
 RESET_PASSWORD_TEMPLATE_NAME = "credere-ResetPassword"
 ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME = "credere-AccessToCreditSchemeForMSMEs"
 NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME = "credere-newApplicationSubmissionFIuser"

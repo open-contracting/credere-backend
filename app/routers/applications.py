@@ -49,8 +49,7 @@ async def change_email(
             core.ApplicationActionType.MSME_CHANGE_EMAIL,
             payload,
         )
-        external_message_id, body = send_new_email_confirmation(
-            client.ses,
+        external_message_id = client.send_new_email_confirmation_to_sme(
             application.borrower.legal_name,
             payload.new_email,
             payload.old_email,
@@ -63,7 +62,6 @@ async def change_email(
             core.MessageType.EMAIL_CHANGE_CONFIRMATION,
             session,
             external_message_id,
-            body,
         )
 
         return application
@@ -160,6 +158,7 @@ async def upload_contract(
     file: UploadFile,
     uuid: str = Form(...),
     session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
 ):
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
@@ -179,6 +178,24 @@ async def upload_contract(
             application.id,
             core.ApplicationActionType.BORROWER_UPLOADED_CONTRACT,
             {"file_name": filename},
+        )
+
+        FI_message_id, SME_message_id = client.send_upload_contract_notifications(
+            application
+        )
+
+        utils.create_message(
+            application,
+            core.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
+            session,
+            FI_message_id,
+        )
+
+        utils.create_message(
+            application,
+            core.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
+            session,
+            SME_message_id,
         )
 
         return application
