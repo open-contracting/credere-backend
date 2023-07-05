@@ -362,17 +362,54 @@ async def get_applications_list(
     tags=["applications"],
     response_model=core.ApplicationWithRelations,
 )
-@OCP_only()
 async def get_application(
     id: int,
-    current_user: str = Depends(get_current_user),
+    user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
     application = (
         session.query(core.Application).filter(core.Application.id == id).first()
     )
 
+    if user.is_OCP:
+        return application
+
+    if user.lender_id != application.lender_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized to view this application",
+        )
+
     return application
+
+
+@router.post(
+    "/applications/{id}/start",
+    tags=["applications"],
+    response_model=core.ApplicationWithRelations,
+)
+async def start_application(
+    id: int,
+    user: core.User = Depends(get_user),
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        application = (
+            session.query(core.Application).filter(core.Application.id == id).first()
+        )
+        utils.check_application_status(application, core.ApplicationStatus.SUBMITTED)
+
+        if user.lender_id != application.lender_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Unauthorized to start this application",
+            )
+
+        application.status = core.ApplicationStatus.STARTED
+        application.lender_started_at = datetime.now(application.created_at.tzinfo)
+        # TODO add action
+
+        return application
 
 
 @router.get(
