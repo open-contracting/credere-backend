@@ -174,7 +174,8 @@ def send_rejected_application_email(ses, application):
         **generate_common_data(),
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-        "FIND_ALTENATIVE_URL": app_settings.frontend_url,
+        "FIND_ALTENATIVE_URL": app_settings.frontend_url
+        + f"/application/{application.uuid}/find-alternative-credit",
         "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
     }
 
