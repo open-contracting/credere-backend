@@ -2,7 +2,6 @@ import logging
 from typing import Union
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -14,6 +13,9 @@ from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
 from ..schema.core import BasicUser, SetupMFA, User
 from ..utils.permissions import OCP_only
+
+from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
+from fastapi import HTTPException, Query, Response, status  # isort:skip # noqa
 
 router = APIRouter()
 
@@ -266,8 +268,15 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/users", tags=["users"], response_model=ApiSchema.UserListResponse)
-async def get_all_users(db: Session = Depends(get_db)):
-    return utils.get_all_users(db)
+async def get_all_users(
+    page: int = Query(0, ge=0),
+    page_size: int = Query(10, gt=0),
+    sort_field: str = Query("created_at"),
+    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    return utils.get_all_users(page, page_size, sort_field, sort_order, session)
 
 
 @router.put(
