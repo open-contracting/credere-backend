@@ -28,6 +28,12 @@ def upgrade() -> None:
         ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'FI_COMPLETE_APPLICATION'
         """
         )
+    with op.get_context().autocommit_block():
+        op.execute(
+            """
+        ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'FI_START_APPLICATION'
+        """
+        )
 
 
 def downgrade() -> None:
