@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     days_to_erase_borrower_data: int = config_env.get("DAYS_TO_ERASE_BORROWERS_DATA", 7)
     days_to_change_to_lapsed: int = config_env.get("DAYS_TO_CHANGE_TO_LAPSED", 14)
     ocp_email_group: str = config_env.get("OCP_EMAIL_GROUP", None)
+    max_file_size_mb: int = config_env.get("MAX_FILE_SIZE_MB", 5)
 
     class Config:
         env_file = ".env"

@@ -166,6 +166,7 @@ class BorrowerDocumentBase(SQLModel):
             nullable=False,
             default=datetime.utcnow(),
             onupdate=func.now(),
+            server_default=func.now(),
         )
     )
     submitted_at: Optional[datetime] = Field(
@@ -194,7 +195,9 @@ class ApplicationBase(SQLModel):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
-    confirmation_email_token: str = Field(index=True, nullable=True, default="")
+    confirmation_email_token: Optional[str] = Field(
+        index=True, nullable=True, default=""
+    )
     award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
@@ -302,14 +305,11 @@ class Application(ApplicationBase, table=True):
     actions: Optional[List["ApplicationAction"]] = Relationship(
         back_populates="application"
     )
+    creditProduct: "CreditProduct" = Relationship()
 
 
-class Borrower(SQLModel, table=True):
+class BorrowerBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    applications: Optional[List["Application"]] = Relationship(
-        back_populates="borrower"
-    )
-    awards: List["Award"] = Relationship(back_populates="borrower")
     borrower_identifier: str = Field(default="", unique=True, nullable=False)
     legal_name: str = Field(default="")
     email: str = Field(default="")
@@ -323,11 +323,6 @@ class Borrower(SQLModel, table=True):
         ),
         default=BorrowerSize.NOT_INFORMED,
     )
-    status: BorrowerStatus = Field(
-        sa_column=Column(SAEnum(BorrowerStatus, name="borrower_status")),
-        default=BorrowerStatus.ACTIVE,
-    )
-    source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -350,12 +345,30 @@ class Borrower(SQLModel, table=True):
     )
 
 
+class Borrower(BorrowerBase, table=True):
+    source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    status: BorrowerStatus = Field(
+        sa_column=Column(SAEnum(BorrowerStatus, name="borrower_status")),
+        default=BorrowerStatus.ACTIVE,
+    )
+    applications: Optional[List["Application"]] = Relationship(
+        back_populates="borrower"
+    )
+    awards: List["Award"] = Relationship(back_populates="borrower")
+
+
 class LenderBase(SQLModel):
     name: str = Field(default="", nullable=False, unique=True)
     email_group: str = Field(default="")
-    status: str = Field(default="")
     type: str = Field(default="")
     sla_days: Optional[int]
+
+
+class Lender(LenderBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    applications: Optional[List["Application"]] = Relationship(back_populates="lender")
+    users: Optional[List["User"]] = Relationship(back_populates="lender")
+    status: str = Field(default="")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -375,12 +388,6 @@ class LenderBase(SQLModel):
     deleted_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-
-
-class Lender(LenderBase, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    applications: Optional[List["Application"]] = Relationship(back_populates="lender")
-    users: Optional[List["User"]] = Relationship(back_populates="lender")
     credit_products: Optional[List["CreditProduct"]] = Relationship(
         back_populates="lender"
     )
@@ -390,11 +397,9 @@ class LenderCreate(LenderBase):
     credit_products: Optional[List["CreditProduct"]] = None
 
 
-class Award(SQLModel, table=True):
+class AwardBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    applications: Optional[List["Application"]] = Relationship(back_populates="award")
     borrower_id: Optional[int] = Field(foreign_key="borrower.id", nullable=True)
-    borrower: Borrower = Relationship(back_populates="awards")
     source_contract_id: str = Field(default="")
     title: str = Field(default="")
     description: str = Field(default="")
@@ -423,11 +428,16 @@ class Award(SQLModel, table=True):
     procurement_method: str = Field(default="")
     contracting_process_id: str = Field(default="")
     procurement_category: str = Field(default="")
+    missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+
+
+class Award(AwardBase, table=True):
+    applications: Optional[List["Application"]] = Relationship(back_populates="award")
+    borrower: Borrower = Relationship(back_populates="awards")
     source_data_contracts: dict = Field(
         default={}, sa_column=Column(JSON), nullable=False
     )
     source_data_awards: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -541,9 +551,9 @@ class SetupMFA(BaseModel):
 
 
 class ApplicationWithRelations(ApplicationRead):
-    borrower: Optional["Borrower"] = None
-    award: Optional["Award"] = None
-    lender: Optional["Lender"] = None
+    borrower: Optional["BorrowerBase"] = None
+    award: Optional["AwardBase"] = None
+    lender: Optional["LenderBase"] = None
     borrower_documents: Optional[List[BorrowerDocumentBase]] = None
 
 

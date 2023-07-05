@@ -9,12 +9,13 @@ from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 
 from app.background_processes.background_utils import generate_uuid
+from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
 
 from ..schema import core
 from .general_utils import update_models, update_models_with_validation
 
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.(com|co)$"
 
 excluded_applications = [
@@ -64,7 +65,7 @@ def update_data_field(application: core.Application, payload: UpdateDataField):
 
 
 def allowed_file(filename):
-    allowed_extensions = {"png", "pdf", "jpeg"}
+    allowed_extensions = {"png", "pdf", "jpeg", "jpg"}
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
@@ -262,7 +263,7 @@ def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
     if not allowed_file(file.filename):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Format not allowed. It must be a PNG, JPEG, or PDG file",
+            detail="Format not allowed. It must be a PNG, JPEG, or PDF file",
         )
     new_file = file.file.read()
     if len(new_file) >= MAX_FILE_SIZE:  # 10MB in bytes
@@ -273,11 +274,13 @@ def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
     return new_file, filename
 
 
-def get_application_by_uuid(uuid: str, session: Session):
+def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
     application = (
         session.query(core.Application)
         .options(
-            defaultload(core.Application.borrower), defaultload(core.Application.award)
+            defaultload(core.Application.borrower),
+            defaultload(core.Application.award),
+            defaultload(core.Application.borrower_documents),
         )
         .filter(core.Application.uuid == uuid)
         .first()
@@ -408,7 +411,7 @@ def create_or_update_borrower_document(
     type: core.BorrowerDocumentType,
     session: Session,
     file: UploadFile = File(...),
-):
+) -> core.BorrowerDocument:
     existing_document = (
         session.query(core.BorrowerDocument)
         .filter(
@@ -422,6 +425,8 @@ def create_or_update_borrower_document(
         # Update the existing document with the new file
         existing_document.file = file
         existing_document.name = filename
+        existing_document.submitted_at = datetime.utcnow()
+        return existing_document
     else:
         new_document = {
             "application_id": application.id,
@@ -432,6 +437,7 @@ def create_or_update_borrower_document(
 
         db_obj = core.BorrowerDocument(**new_document)
         session.add(db_obj)
+        return db_obj
 
 
 def check_FI_user_permission(application: core.Application, user: core.User) -> None:

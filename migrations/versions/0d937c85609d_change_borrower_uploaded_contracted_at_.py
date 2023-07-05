@@ -1,7 +1,7 @@
 """change_borrower_uploaded_contracted_at_to_borrower_uploaded_contract_at
 
 Revision ID: 0d937c85609d
-Revises: 8ab95d68febd
+Revises: e83a0d6c0f86
 Create Date: 2023-06-30 14:19:01.544066
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0d937c85609d"
-down_revision = "8ab95d68febd"
+down_revision = "e83a0d6c0f86"
 branch_labels = None
 depends_on = None
 
@@ -18,7 +18,7 @@ depends_on = None
 def upgrade() -> None:
     conn = op.get_bind()
     inspector = sa.inspect(conn)
-    columns = inspector.get_columns("lender")
+    columns = inspector.get_columns("application")
 
     column_info = None
     for column in columns:
