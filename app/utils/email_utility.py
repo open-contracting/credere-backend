@@ -164,3 +164,44 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
+
+
+def send_rejected_application_email(ses, application):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+        "FIND_ALTENATIVE_URL": app_settings.frontend_url,
+        "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
+    }
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # replace with sme_email on production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=email_templates.APPLICATION_DECLINED,
+        TemplateData=json.dumps(data),
+    )
+    return response.get("MessageId")
+
+
+def send_rejected_application_email_without_alternatives(ses, application):
+    # todo refactor required when this function receives the user language
+
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+    }
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # replace with sme_email on production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=email_templates.APPLICATION_DECLINED_WITHOUT_ALTERNATIVE,
+        TemplateData=json.dumps(data),
+    )
+    return response.get("MessageId")

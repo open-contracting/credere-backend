@@ -67,6 +67,14 @@ class ApplicationResponse(BaseModel):
     award: core.Award
 
 
+class LenderRejectedApplication(BaseModel):
+    copliance_checks_failed: bool
+    poor_credit_history: bool
+    risk_of_fraud: bool
+    other: bool
+    other_reason: Optional[str]
+
+
 class ApplicationBase(BaseModel):
     uuid: str
 

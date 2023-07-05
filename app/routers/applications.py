@@ -22,6 +22,53 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # no
 router = APIRouter()
 
 
+@router.post(
+    "/applications/{id}/reject-application",
+    tags=["applications"],
+    response_model=core.ApplicationWithRelations,
+)
+async def reject_application(
+    id: int,
+    payload: ApiSchema.LenderRejectedApplication,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+    user: core.User = Depends(get_user),
+):
+    with transaction_session(session):
+        # this should be get application by id after merging 102 in dev
+        application = (
+            session.query(core.Application).filter(core.Application.id == id).first()
+        )
+        # before this I need to check if lender is assigned to application, function is also in branch 102
+        # utils.check_application_status(application, core.ApplicationStatus.STARTED)
+        utils.reject_application(application, payload)
+        utils.create_application_action(
+            session,
+            user.id,
+            application.id,
+            core.ApplicationActionType.REJECTED_APPLICATION,
+            payload,
+        )
+        options = (
+            session.query(core.CreditProduct)
+            .join(core.Lender)
+            .options(joinedload(core.CreditProduct.lender))
+            .filter(
+                and_(
+                    core.CreditProduct.borrower_size == application.borrower.size,
+                    core.CreditProduct.lender_id != application.lender_id,
+                    core.CreditProduct.lower_limit <= application.amount_requested,
+                    core.CreditProduct.upper_limit >= application.amount_requested,
+                )
+            )
+            .all()
+        )
+        # this returns a message id, it needs to be used to create a messageS
+        client.send_rejected_email_to_sme(application, options)
+
+        return application
+
+
 @router.put(
     "/applications/{application_id}/award",
     tags=["applications"],

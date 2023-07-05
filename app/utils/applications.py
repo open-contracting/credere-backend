@@ -37,6 +37,15 @@ def get_calculator_data(payload: dict):
     return calculator_fields
 
 
+def reject_application(application: core.Application, payload: dict):
+    payload_dict = jsonable_encoder(payload, exclude_unset=True)
+
+    application.lender_rejected_data = payload_dict
+    current_time = datetime.now(application.created_at.tzinfo)
+    application.lender_rejected_at = current_time
+    application.status = core.ApplicationStatus.REJECTED
+
+
 def create_application_action(
     session: Session,
     user_id: Optional[int],
