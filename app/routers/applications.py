@@ -1,4 +1,5 @@
 import logging
+from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 
 from botocore.exceptions import ClientError
@@ -41,10 +42,7 @@ async def send_email(
         )
 
         # before this I need to check if lender is assigned to application, function is also in branch 102
-
-        application.lender_approved_data = payload
-        application.status = core.ApplicationStatus.APPROVED
-
+        utils.approve_application(application, payload)
         utils.create_application_action(
             session,
             user.id,
