@@ -75,6 +75,9 @@ class ApplicationResponse(BaseModel):
     application: core.Application
     borrower: core.Borrower
     award: core.Award
+    lender: Optional[core.Lender] = None
+    documents: List[core.BorrowerDocumentBase] = []
+    creditProduct: Optional[core.CreditProduct] = None
 
 
 class ApplicationBase(BaseModel):
@@ -121,10 +124,6 @@ class ApplicationSelectCreditProduct(ApplicationCreditOptions):
 class CreditProductListResponse(BaseModel):
     loans: List[core.CreditProductWithLender]
     credit_lines: List[core.CreditProductWithLender]
-
-
-class ApplicationSubmit(ApplicationBase):
-    lender_id: int
 
 
 class ApplicationEmailSme(BaseModel):
