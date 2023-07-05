@@ -1,7 +1,7 @@
 """add_confirmation_email_token_to_application
 
 Revision ID: e83a0d6c0f86
-Revises: df236486f60a
+Revises: 9df7f1e04a80
 Create Date: 2023-06-27 11:43:24.186692
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "e83a0d6c0f86"
-down_revision = "df236486f60a"
+down_revision = "9df7f1e04a80"
 branch_labels = None
 depends_on = None
 

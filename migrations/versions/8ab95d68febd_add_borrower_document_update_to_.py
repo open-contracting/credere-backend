@@ -1,7 +1,7 @@
 """add_borrower_document_update_to_application_type_enum
 
 Revision ID: 8ab95d68febd
-Revises: 7b3c4836cfe5
+Revises: 0d937c85609d
 Create Date: 2023-06-29 20:11:09.452203
 
 """
@@ -9,7 +9,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "8ab95d68febd"
-down_revision = "173969eb685c"
+down_revision = "0d937c85609d"
 branch_labels = None
 depends_on = None
 
