@@ -11,7 +11,6 @@ from app.background_processes.fetcher import fetch_previous_awards
 from app.core.settings import app_settings
 from app.schema import api as ApiSchema
 from app.schema.api import ChangeEmail
-from app.utils.email_utility import send_new_email_confirmation
 
 from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
