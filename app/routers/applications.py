@@ -43,6 +43,7 @@ async def review_application(
         utils.check_application_status(
             application, core.ApplicationStatus.CONTRACT_UPLOADED
         )
+        utils.review_application(application, payload.disbursed_final_amount)
 
         utils.create_application_action(
             session,

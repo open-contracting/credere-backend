@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import List, Optional
 
 from fastapi import HTTPException, status
@@ -43,6 +44,11 @@ def approve_application(application: core.Application, payload: dict):
     application.status = core.ApplicationStatus.APPROVED
     current_time = datetime.now(application.created_at.tzinfo)
     application.lender_approved_at = current_time
+
+
+def review_application(application: core.Application, disbursed_final_amount: Decimal):
+    application.disbursed_final_amount = disbursed_final_amount
+    application.status = core.ApplicationStatus.COMPLETED
 
 
 def create_application_action(
