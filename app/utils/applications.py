@@ -252,3 +252,21 @@ def check_application_not_status(
             status_code=status.HTTP_409_CONFLICT,
             detail=message,
         )
+
+
+def create_message(
+    application: core.Application,
+    payload: dict,
+    type: core.MessageType,
+    message_id: str,
+    session: Session,
+):
+    new_message = core.Message(
+        application_id=application.id,
+        body=payload,
+        lender_id=application.lender.id,
+        type=core.MessageType.APPROVED_APPLICATION,
+        external_message_id=message_id,
+    )
+    session.add(new_message)
+    session.commit()

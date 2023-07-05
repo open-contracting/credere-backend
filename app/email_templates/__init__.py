@@ -4,3 +4,4 @@ ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME = "credere-AccessToCreditSchemeF
 NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME = "credere-newApplicationSubmissionFIuser"
 NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME = "credere-newApplicationSubmissionOCPUser"
 REQUEST_SME_DATA_TEMPLATE_NAME = "credere-RequestSmeData"
+APPLICATION_APPROVED = "credere-ApplicationApproved"

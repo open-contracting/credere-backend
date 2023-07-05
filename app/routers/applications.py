@@ -22,6 +22,49 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # no
 router = APIRouter()
 
 
+@router.post(
+    "/applications/{id}/approve",
+    tags=["applications"],
+    response_model=core.ApplicationWithRelations,
+)
+async def send_email(
+    id: int,
+    payload: ApiSchema.LenderApprovedData,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+    user: core.User = Depends(get_user),
+):
+    with transaction_session(session):
+        # this should be get application by id after merging 102 in dev
+        application = (
+            session.query(core.Application).filter(core.Application.id == id).first()
+        )
+
+        # before this I need to check if lender is assigned to application, function is also in branch 102
+
+        application.lender_approved_data = payload
+        application.status = core.ApplicationStatus.APPROVED
+
+        utils.create_application_action(
+            session,
+            user.id,
+            application.id,
+            core.ApplicationActionType.APPROVED_APPLICATION,
+            payload,
+        )
+
+        message_id = client.send_application_approved_to_sme(application)
+        utils.create_message(
+            application,
+            payload,
+            core.MessageType.APPROVED_APPLICATION,
+            message_id,
+            session,
+        )
+
+        return application
+
+
 @router.put(
     "/applications/{application_id}/award",
     tags=["applications"],

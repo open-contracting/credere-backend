@@ -41,6 +41,12 @@ class AwardUpdate(BaseModel):
     procurement_category: Optional[str]
 
 
+class LenderApprovedData(BaseModel):
+    compliant_checks_completed: bool
+    compliant_checks_passed: bool
+    additional_comments: Optional[str]
+
+
 class BorrowerUpdate(BaseModel):
     legal_name: Optional[str]
     email: Optional[str]
