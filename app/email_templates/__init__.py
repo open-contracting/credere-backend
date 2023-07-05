@@ -5,3 +5,5 @@ NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME = "credere-newApplicationSubmissionF
 NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME = "credere-newApplicationSubmissionOCPUser"
 REQUEST_SME_DATA_TEMPLATE_NAME = "credere-RequestSmeData"
 EMAIL_CHANGE_TEMPLATE_NAME = "credere-ConfirmEmailChange"
+INTRO_REMINDER_TEMPLATE_NAME = "credere-AccessToCreditSchemeReminder"
+APPLICATION_REMINDER_TEMPLATE_NAME = "credere-ApplicationReminder"
