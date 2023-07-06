@@ -61,6 +61,16 @@ class BorrowerUpdate(BaseModel):
     size: Optional[core.BorrowerSize]
 
 
+class UpdateDataField(BaseModel):
+    legal_name: Optional[bool]
+    email: Optional[bool]
+    address: Optional[bool]
+    legal_identifier: Optional[bool]
+    type: Optional[bool]
+    sector: Optional[bool]
+    size: Optional[bool]
+
+
 class ApplicationUpdate(BaseModel):
     uuid: Optional[str]
     contract_amount_submitted: Optional[Decimal]
@@ -92,16 +102,6 @@ class ConfirmNewEmail(ApplicationBase):
 class ChangeEmail(ApplicationBase):
     old_email: str
     new_email: str
-
-
-class UpdateDataField(ApplicationBase):
-    borrower_identifier: Optional[bool]
-    legal_name: Optional[bool]
-    email: Optional[bool]
-    address: Optional[bool]
-    legal_identifier: Optional[bool]
-    type: Optional[bool]
-    source_data: Optional[bool]
 
 
 class VerifyBorrowerDocument(BaseModel):

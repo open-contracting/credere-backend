@@ -34,31 +34,13 @@ OCP_cannot_modify = [
     core.ApplicationStatus.REJECTED,
 ]
 
-valid_secop_fields = [
-    "borrower_identifier",
-    "legal_name",
-    "email",
-    "address",
-    "legal_identifier",
-    "type",
-    "source_data",
-]
-
 
 def update_data_field(application: core.Application, payload: UpdateDataField):
     payload_dict = {
-        key: value
-        for key, value in payload.dict().items()
-        if key != "uuid" and value is not None
+        key: value for key, value in payload.dict().items() if value is not None
     }
 
     key, value = next(iter(payload_dict.items()), (None, None))
-    if key not in valid_secop_fields:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Field is not valid",
-        )
-
     verified_data = application.secop_data_verification.copy()
     verified_data[key] = value
     application.secop_data_verification = verified_data.copy()
@@ -334,6 +316,21 @@ def check_application_status(
 ):
     if application.status != applicationStatus:
         message = "Application status is not {}".format(applicationStatus.name)
+        if detail:
+            message = detail
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=message,
+        )
+
+
+def check_application_in_status(
+    application: core.Application,
+    applicationStatus: List[core.ApplicationStatus],
+    detail: str = None,
+):
+    if application.status not in applicationStatus:
+        message = "Application status should not be {}".format(application.status.name)
         if detail:
             message = detail
         raise HTTPException(

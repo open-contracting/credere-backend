@@ -228,17 +228,26 @@ async def upload_compliance(
 
 
 @router.put(
-    "/applications/verify-data-field",
+    "/applications/{id}/verify-data-field",
     tags=["applications"],
     response_model=core.ApplicationWithRelations,
 )
 async def verify_data_field(
+    id: int,
     payload: ApiSchema.UpdateDataField,
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
+        application = utils.get_application_by_id(id, session)
+        utils.check_application_in_status(
+            application,
+            [
+                core.ApplicationStatus.STARTED,
+                core.ApplicationStatus.INFORMATION_REQUESTED,
+            ],
+        )
+
         utils.check_FI_user_permission(application, user)
         utils.update_data_field(application, payload)
 
@@ -267,6 +276,13 @@ async def verify_document(
     with transaction_session(session):
         document = utils.get_document_by_id(document_id, session)
         utils.check_FI_user_permission(document.application, user)
+        utils.check_application_in_status(
+            document.application,
+            [
+                core.ApplicationStatus.STARTED,
+                core.ApplicationStatus.INFORMATION_REQUESTED,
+            ],
+        )
 
         document.verified = payload.verified
 
