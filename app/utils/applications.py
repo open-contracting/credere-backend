@@ -20,9 +20,8 @@ MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.(com|co)$"
 
 excluded_applications = [
-    # core.ApplicationStatus.PENDING,
-    core.ApplicationStatus.REJECTED,
-    core.ApplicationStatus.LAPSED,
+    core.ApplicationStatus.PENDING,
+    core.ApplicationStatus.ACCEPTED,
     core.ApplicationStatus.DECLINED,
 ]
 
@@ -289,6 +288,7 @@ def get_all_FI_user_applications(
         .filter(
             core.Application.status.notin_(excluded_applications),
             core.Application.lender_id == lender_id,
+            core.Application.lender_id.is_not(None),
         )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )

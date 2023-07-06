@@ -107,7 +107,7 @@ class ApplicationResponse(BaseModel):
 
 
 class LenderRejectedApplication(BaseModel):
-    copliance_checks_failed: bool
+    compliance_checks_failed: bool
     poor_credit_history: bool
     risk_of_fraud: bool
     other: bool
