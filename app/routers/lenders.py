@@ -88,10 +88,8 @@ async def get_lenders_list(
     tags=["lenders"],
     response_model=core.CreditProductWithLender,
 )
-@OCP_only()
 async def get_credit_product(
     credit_product_id: int,
-    current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
     creditProduct = (

@@ -8,6 +8,7 @@ from typing import Generator
 
 import boto3
 
+from app.schema.core import Application
 from app.utils import email_utility
 
 from ..core.settings import app_settings
@@ -202,6 +203,23 @@ class CognitoClient:
     def send_request_to_sme(self, uuid, lender_name, email_message, sme_email):
         message_id = email_utility.send_mail_request_to_sme(
             self.ses, uuid, lender_name, email_message, sme_email
+        )
+        return message_id
+
+    def send_rejected_email_to_sme(self, application, options):
+        if options:
+            message_id = email_utility.send_rejected_application_email(
+                self.ses, application
+            )
+            return message_id
+        message_id = email_utility.send_rejected_application_email_without_alternatives(
+            self.ses, application
+        )
+        return message_id
+
+    def send_application_approved_to_sme(self, application: Application):
+        message_id = email_utility.send_application_approved_email(
+            self.ses, application
         )
         return message_id
 
