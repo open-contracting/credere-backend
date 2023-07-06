@@ -11,4 +11,5 @@ templates = {
     "NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME": "credere-newApplicationSubmissionOCPUser",
     "REQUEST_SME_DATA_TEMPLATE_NAME": "credere-RequestSmeData",
     "EMAIL_CHANGE_TEMPLATE_NAME": "credere-ConfirmEmailChange",
+    "APPLICATION_APPROVED": "credere-ApplicationApproved",
 }

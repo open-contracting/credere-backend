@@ -4,6 +4,7 @@ from urllib.parse import quote
 
 from app.core.email_templates import templates
 from app.core.settings import app_settings
+from app.schema.core import Application
 
 
 def generate_common_data():
@@ -27,6 +28,33 @@ def get_images_base_url():
         images_base_url = f"{images_base_url}/{app_settings.images_lang_subpath}"
 
     return images_base_url
+
+
+def send_application_approved_email(ses, application: Application):
+    # todo refactor required when this function receives the user language
+
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+        "TENDER_TITLE": application.award.title,
+        "BUYER_NAME": application.award.buyer_name,
+        "UPLOAD_CONTRACT_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(application.uuid)
+        + "/upload-contract",
+        "UPLOAD_CONTRACT_IMAGE_LINK": images_base_url + "/uploadContract.png",
+    }
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # change to proper email in production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=templates["APPLICATION_APPROVED"],
+        TemplateData=json.dumps(data),
+    )
 
 
 def send_mail_to_new_user(ses, name, username, temp_password):
