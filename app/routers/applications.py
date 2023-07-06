@@ -40,7 +40,7 @@ async def reject_application(
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
-        # utils.check_application_status(application, core.ApplicationStatus.STARTED)
+        utils.check_application_status(application, core.ApplicationStatus.STARTED)
         utils.reject_application(application, payload)
         utils.create_application_action(
             session,
