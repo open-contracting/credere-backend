@@ -42,8 +42,9 @@ def send_application_approved_email(ses, application: Application):
         "TENDER_TITLE": application.award.title,
         "BUYER_NAME": application.award.buyer_name,
         "UPLOAD_CONTRACT_URL": app_settings.frontend_url
-        + "upload-contract/"
-        + application.uuid,
+        + "/application/"
+        + quote(application.uuid)
+        + "/upload-contract",
         "UPLOAD_CONTRACT_IMAGE_LINK": images_base_url + "/uploadContract.png",
     }
 
