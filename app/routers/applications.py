@@ -406,11 +406,7 @@ async def update_application_award(
             payload,
         )
 
-        return ApiSchema.ApplicationResponse(
-            application=application,
-            borrower=application.borrower,
-            award=application.award,
-        )
+        return application
 
 
 @router.put(
