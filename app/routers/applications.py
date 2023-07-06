@@ -26,6 +26,51 @@ router = APIRouter()
 
 
 @router.post(
+    "/applications/{id}/reject-application",
+    tags=["applications"],
+    response_model=core.ApplicationWithRelations,
+)
+async def reject_application(
+    id: int,
+    payload: ApiSchema.LenderRejectedApplication,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+    user: core.User = Depends(get_user),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_id(id, session)
+        utils.check_FI_user_permission(application, user)
+        utils.check_application_status(application, core.ApplicationStatus.STARTED)
+        utils.reject_application(application, payload)
+        utils.create_application_action(
+            session,
+            user.id,
+            application.id,
+            core.ApplicationActionType.REJECTED_APPLICATION,
+            payload,
+        )
+        options = (
+            session.query(core.CreditProduct)
+            .join(core.Lender)
+            .options(joinedload(core.CreditProduct.lender))
+            .filter(
+                and_(
+                    core.CreditProduct.borrower_size == application.borrower.size,
+                    core.CreditProduct.lender_id != application.lender_id,
+                    core.CreditProduct.lower_limit <= application.amount_requested,
+                    core.CreditProduct.upper_limit >= application.amount_requested,
+                )
+            )
+            .all()
+        )
+        message_id = client.send_rejected_email_to_sme(application, options)
+        utils.create_message(
+            application, core.MessageType.REJECTED_APPLICATION, session, message_id
+        )
+        return application
+
+
+@router.post(
     "/applications/{id}/review-application",
     tags=["applications"],
     response_model=core.ApplicationWithRelations,

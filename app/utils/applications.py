@@ -20,9 +20,8 @@ MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.(com|co)$"
 
 excluded_applications = [
-    # core.ApplicationStatus.PENDING,
-    core.ApplicationStatus.REJECTED,
-    core.ApplicationStatus.LAPSED,
+    core.ApplicationStatus.PENDING,
+    core.ApplicationStatus.ACCEPTED,
     core.ApplicationStatus.DECLINED,
 ]
 
@@ -123,6 +122,15 @@ def get_calculator_data(payload: dict):
     calculator_fields.pop("sector")
 
     return calculator_fields
+
+
+def reject_application(application: core.Application, payload: dict):
+    payload_dict = jsonable_encoder(payload, exclude_unset=True)
+
+    application.lender_rejected_data = payload_dict
+    current_time = datetime.now(application.created_at.tzinfo)
+    application.lender_rejected_at = current_time
+    application.status = core.ApplicationStatus.REJECTED
 
 
 def approve_application(application: core.Application, payload: dict):
@@ -280,6 +288,7 @@ def get_all_FI_user_applications(
         .filter(
             core.Application.status.notin_(excluded_applications),
             core.Application.lender_id == lender_id,
+            core.Application.lender_id.is_not(None),
         )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
