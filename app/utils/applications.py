@@ -424,6 +424,7 @@ def create_or_update_borrower_document(
         # Update the existing document with the new file
         existing_document.file = file
         existing_document.name = filename
+        existing_document.verified = False
         existing_document.submitted_at = datetime.utcnow()
         return existing_document
     else:
