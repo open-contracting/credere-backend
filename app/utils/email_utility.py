@@ -51,7 +51,7 @@ def send_application_approved_email(ses, application: Application):
         Source=app_settings.email_sender_address,
         # change to proper email in production
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
-        Template=email_templates.APPLICATION_APPROVED,
+        Template=templates["APPLICATION_APPROVED"],
         TemplateData=json.dumps(data),
     )
 
@@ -99,7 +99,7 @@ def send_upload_contract_notification_to_FI(ses, application):
         # change to email in production
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
         # not the proper template, needs to be changed
-        Template=email_templates.UPLOAD_CONTRACT,
+        Template=templates["UPLOAD_CONTRACT_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
 
@@ -117,7 +117,7 @@ def send_upload_contract_confirmation(ses, application):
         Source=app_settings.email_sender_address,
         # change to email in production
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
-        Template=email_templates.CONTRACT_UPLOAD_CONFIRMATION,
+        Template=templates["CONTRACT_UPLOAD_CONFIRMATION_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
 
@@ -147,14 +147,14 @@ def send_new_email_confirmation(
         Source=app_settings.email_sender_address,
         # line below needs to be changed to new_email in production to send email to proper address
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
-        Template=templates.EMAIL_CHANGE_TEMPLATE_NAME,
+        Template=templates["EMAIL_CHANGE_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         # line below needs to be changed to old_email in production to send email to proper address
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
-        Template=templates.EMAIL_CHANGE_TEMPLATE_NAME,
+        Template=templates["EMAIL_CHANGE_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
 
@@ -301,7 +301,7 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [lender_email_group]},
-        Template=templates.NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME,
+        Template=templates["NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
 
@@ -320,7 +320,7 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [ocp_email_group]},
-        Template=templates.NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME,
+        Template=templates["NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
 
@@ -344,7 +344,7 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
         Source=app_settings.email_sender_address,
         # replace with sme_email on production
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
-        Template=templates.REQUEST_SME_DATA_TEMPLATE_NAME,
+        Template=templates["REQUEST_SME_DATA_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
