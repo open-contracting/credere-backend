@@ -8,3 +8,5 @@ NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME = "credere-newApplicationSubmission
 REQUEST_SME_DATA_TEMPLATE_NAME = "credere-RequestSmeData"
 APPLICATION_APPROVED = "credere-ApplicationApproved"
 EMAIL_CHANGE_TEMPLATE_NAME = "credere-ConfirmEmailChange"
+INTRO_REMINDER_TEMPLATE_NAME = "credere-AccessToCreditSchemeReminder"
+APPLICATION_REMINDER_TEMPLATE_NAME = "credere-ApplicationReminder"

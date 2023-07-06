@@ -2,7 +2,7 @@ import logging
 
 import typer
 
-from app import background_processes
+from app import background_processes, send_reminder
 
 app = typer.Typer()
 
@@ -25,6 +25,11 @@ def remove_dated_application_data():
 @app.command()
 def update_applications_to_lapsed():
     background_processes.lapsed_applications.set_lapsed_applications()
+
+
+@app.command()
+def send_reminders():
+    send_reminder.send_reminders()
 
 
 if __name__ == "__main__":
