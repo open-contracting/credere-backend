@@ -2,7 +2,7 @@ import logging
 
 import typer
 
-from app import background_processes, send_reminder
+from app import background_processes
 
 app = typer.Typer()
 
@@ -29,7 +29,7 @@ def update_applications_to_lapsed():
 
 @app.command()
 def send_reminders():
-    send_reminder.send_reminders()
+    background_processes.send_reminder.send_reminders()
 
 
 if __name__ == "__main__":
