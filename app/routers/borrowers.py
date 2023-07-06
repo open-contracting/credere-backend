@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/borrowers/{borrower_id}", tags=["borrowers"], response_model=Borrower)
-async def get_award(borrower_id: int, db: Session = Depends(get_db)):
+async def get_borrowers(borrower_id: int, db: Session = Depends(get_db)):
     borrower = db.query(Borrower).filter(Borrower.id == borrower_id).first()
     if not borrower:
         raise HTTPException(status_code=404, detail="Borrower not found")
@@ -20,7 +20,7 @@ async def get_award(borrower_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/borrowers/", tags=["borrowers"], response_model=Borrower)
-async def create_award(borrower: Borrower, db: Session = Depends(get_db)):
+async def create_borrowers(borrower: Borrower, db: Session = Depends(get_db)):
     borrower.created_at = datetime.now()
     borrower.updated_at = datetime.now()
     borrower.declined_at = datetime.now()
@@ -37,7 +37,7 @@ async def create_award(borrower: Borrower, db: Session = Depends(get_db)):
     tags=["awards"],
     response_model=List[str],
 )
-async def get_awards_contracting_process_ids(session: Session = Depends(get_db)):
+async def get_borrowers_contracting_process_ids(session: Session = Depends(get_db)):
     borrowers = (
         session.query(Borrower.borrower_identifier)
         .order_by(desc(Borrower.created_at))

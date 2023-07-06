@@ -10,10 +10,10 @@ from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.core.email_templates import templates
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
 from app.db.session import get_db
-from app.email_templates import NEW_USER_TEMPLATE_NAME
 from app.routers import security, users
 from app.schema.core import User, UserType
 
@@ -87,7 +87,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
 
     ses_client.create_template(
         Template={
-            "TemplateName": NEW_USER_TEMPLATE_NAME,
+            "TemplateName": templates["NEW_USER_TEMPLATE_NAME"],
             "SubjectPart": "Your email subject",
             "HtmlPart": "<html><body>Your HTML content</body></html>",
             "TextPart": "Your plain text content",
