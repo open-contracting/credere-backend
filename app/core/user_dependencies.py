@@ -188,6 +188,52 @@ class CognitoClient:
 
         return responseSetPassword
 
+    def send_notifications_of_new_applications(
+        self,
+        ocp_email_group,
+        lender_name,
+        lender_email_group,
+    ):
+        email_utility.send_notification_new_app_to_fi(self.ses, lender_email_group)
+        email_utility.send_notification_new_app_to_ocp(
+            self.ses, ocp_email_group, lender_name
+        )
+
+    def send_request_to_sme(self, uuid, lender_name, email_message, sme_email):
+        message_id = email_utility.send_mail_request_to_sme(
+            self.ses, uuid, lender_name, email_message, sme_email
+        )
+        return message_id
+
+    def send_new_email_confirmation_to_sme(
+        self,
+        borrower_name: str,
+        new_email: str,
+        old_email: str,
+        confirmation_email_token: str,
+        application_uuid: str,
+    ):
+        return email_utility.send_new_email_confirmation(
+            self.ses,
+            borrower_name,
+            new_email,
+            old_email,
+            confirmation_email_token,
+            application_uuid,
+        )
+
+    def send_upload_contract_notifications(self, application):
+        FI_message_id = email_utility.send_upload_contract_notification_to_FI(
+            self.ses,
+            application,
+        )
+        SME_message_id = email_utility.send_upload_contract_confirmation(
+            self.ses,
+            application,
+        )
+
+        return FI_message_id, SME_message_id
+
 
 cognito = boto3.client(
     "cognito-idp",

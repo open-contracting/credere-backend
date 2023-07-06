@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
@@ -21,24 +22,36 @@ class LenderListResponse(BasePagination):
     items: List[core.Lender]
 
 
+class NewLender(BaseModel):
+    name: str
+    email_group: str
+    status: str
+    type: str
+    borrowed_type_preferences: Optional[dict]
+    limits_preference: Optional[dict]
+    sla_days: int
+
+
 class AwardUpdate(BaseModel):
     source_contract_id: Optional[str]
     title: Optional[str]
     description: Optional[str]
+    contracting_process_id: Optional[str]
     award_currency: Optional[str]
+    award_amount: Optional[Decimal]
+    award_date: Optional[datetime]
     payment_method: Optional[dict]
     buyer_name: Optional[str]
     source_url: Optional[str]
     entity_code: Optional[str]
     contract_status: Optional[str]
-    previous: Optional[bool]
+    contractperiod_startdate: Optional[datetime]
+    contractperiod_enddate: Optional[datetime]
     procurement_method: Optional[str]
-    contracting_process_id: Optional[str]
     procurement_category: Optional[str]
 
 
 class BorrowerUpdate(BaseModel):
-    borrower_identifier: Optional[str]
     legal_name: Optional[str]
     email: Optional[str]
     address: Optional[str]
@@ -46,7 +59,6 @@ class BorrowerUpdate(BaseModel):
     type: Optional[str]
     sector: Optional[str]
     size: Optional[core.BorrowerSize]
-    status: Optional[core.BorrowerStatus]
 
 
 class ApplicationUpdate(BaseModel):
@@ -63,10 +75,59 @@ class ApplicationResponse(BaseModel):
     application: core.Application
     borrower: core.Borrower
     award: core.Award
+    lender: Optional[core.Lender] = None
+    documents: List[core.BorrowerDocumentBase] = []
+    creditProduct: Optional[core.CreditProduct] = None
 
 
 class ApplicationBase(BaseModel):
     uuid: str
+
+
+class ConfirmNewEmail(ApplicationBase):
+    confirmation_email_token: str
+    email: str
+
+
+class ChangeEmail(ApplicationBase):
+    old_email: str
+    new_email: str
+
+
+class UpdateDataField(ApplicationBase):
+    borrower_identifier: Optional[bool]
+    legal_name: Optional[bool]
+    email: Optional[bool]
+    address: Optional[bool]
+    legal_identifier: Optional[bool]
+    type: Optional[bool]
+    source_data: Optional[bool]
+
+
+class VerifyBorrowerDocument(BaseModel):
+    verified: bool
+
+
+class ApplicationCreditOptions(ApplicationBase):
+    borrower_size: core.BorrowerSize
+    amount_requested: Decimal
+
+
+class ApplicationSelectCreditProduct(ApplicationCreditOptions):
+    sector: str
+    credit_product_id: int
+    repayment_years: Optional[int]
+    repayment_months: Optional[int]
+    payment_start_date: Optional[datetime]
+
+
+class CreditProductListResponse(BaseModel):
+    loans: List[core.CreditProductWithLender]
+    credit_lines: List[core.CreditProductWithLender]
+
+
+class ApplicationEmailSme(BaseModel):
+    message: str
 
 
 class ApplicationDeclinePayload(ApplicationBase):
