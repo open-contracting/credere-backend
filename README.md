@@ -71,8 +71,10 @@ you can use .envtest as an example, it has the following keys:
 - TWITTER_LINK -> link to OCP Twitter account
 - LINK_LINK -> link to (Pending to define)
 - TEST_MAIL_RECEIVER -> email used to send invitations when fetching new awards (Will be removed
-- DAYS_TO_ERASE_BORROWERS_DATA -> The number of days to wait before deleting borrower data
-- DAYS_TO_CHANGE_TO_LAPSED -> The number of days to wait before changing the status of an application to 'Lapsed'
+- DAYS_TO_ERASE_BORROWERS_DATA -> the number of days to wait before deleting borrower data
+- DAYS_TO_CHANGE_TO_LAPSED -> the number of days to wait before changing the status of an application to 'Lapsed'
+- OCP_EMAIL_GROUP -> list of ocp users for notifications
+- MAX_FILE_SIZE_MB -> max file size allowed to be uploaded
 
 You should configure the pre-commit for the repo one time
 
@@ -208,4 +210,11 @@ Command to remove data from lapsed applications
 
 ```
 python -m app.commands update-applications-to-lapsed
+
+```
+
+The command to send mail reminders is
+
+```
+python -m app.commands send-reminders
 ```
