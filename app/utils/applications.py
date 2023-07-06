@@ -1,5 +1,7 @@
+import logging
 import re
 from datetime import datetime
+from decimal import Decimal
 from typing import Dict, List, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
@@ -11,7 +13,7 @@ from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
 
-from ..schema import core
+from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
@@ -33,31 +35,16 @@ OCP_cannot_modify = [
     core.ApplicationStatus.REJECTED,
 ]
 
-valid_secop_fields = [
-    "borrower_identifier",
-    "legal_name",
-    "email",
-    "address",
-    "legal_identifier",
-    "type",
-    "source_data",
-]
+
+document_type_keys = [doc_type.name for doc_type in core.BorrowerDocumentType]
 
 
 def update_data_field(application: core.Application, payload: UpdateDataField):
     payload_dict = {
-        key: value
-        for key, value in payload.dict().items()
-        if key != "uuid" and value is not None
+        key: value for key, value in payload.dict().items() if value is not None
     }
 
     key, value = next(iter(payload_dict.items()), (None, None))
-    if key not in valid_secop_fields:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Field is not valid",
-        )
-
     verified_data = application.secop_data_verification.copy()
     verified_data[key] = value
     application.secop_data_verification = verified_data.copy()
@@ -66,6 +53,41 @@ def update_data_field(application: core.Application, payload: UpdateDataField):
 def allowed_file(filename):
     allowed_extensions = {"png", "pdf", "jpeg", "jpg"}
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
+
+
+def validate_fields(application):
+    not_validated_fields = []
+    app_secop_dict = application.secop_data_verification.copy()
+
+    fields = list(UpdateDataField().dict().keys())
+
+    for key in fields:
+        if key not in app_secop_dict or not app_secop_dict[key]:
+            not_validated_fields.append(key)
+    if not_validated_fields:
+        logging.error(f"Following fields were not validated: {not_validated_fields}")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=api.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
+        )
+
+
+def validate_documents(application):
+    not_validated_documents = []
+
+    for document in application.borrower_documents:
+        if not document.verified:
+            not_validated_documents.append(document.type.name)
+
+    if not_validated_documents:
+        logging.error(
+            f"Following documents were not validated: {not_validated_documents}"
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=api.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
+        )
 
 
 def get_file(document: core.BorrowerDocument, user: core.User, session: Session):
@@ -110,6 +132,22 @@ def reject_application(application: core.Application, payload: dict):
     current_time = datetime.now(application.created_at.tzinfo)
     application.lender_rejected_at = current_time
     application.status = core.ApplicationStatus.REJECTED
+
+
+def approve_application(application: core.Application, payload: dict):
+    validate_fields(application)
+    validate_documents(application)
+
+    payload_dict = jsonable_encoder(payload, exclude_unset=True)
+    application.lender_approved_data = payload_dict
+    application.status = core.ApplicationStatus.APPROVED
+    current_time = datetime.now(application.created_at.tzinfo)
+    application.lender_approved_at = current_time
+
+
+def review_application(application: core.Application, disbursed_final_amount: Decimal):
+    application.disbursed_final_amount = disbursed_final_amount
+    application.status = core.ApplicationStatus.COMPLETED
 
 
 def create_application_action(
@@ -350,6 +388,21 @@ def check_application_status(
         )
 
 
+def check_application_in_status(
+    application: core.Application,
+    applicationStatus: List[core.ApplicationStatus],
+    detail: str = None,
+):
+    if application.status not in applicationStatus:
+        message = "Application status should not be {}".format(application.status.name)
+        if detail:
+            message = detail
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=message,
+        )
+
+
 def check_application_not_status(
     application: core.Application,
     applicationStatus: List[core.ApplicationStatus],
@@ -419,6 +472,7 @@ def create_or_update_borrower_document(
     type: core.BorrowerDocumentType,
     session: Session,
     file: UploadFile = File(...),
+    verified: bool = False,
 ) -> core.BorrowerDocument:
     existing_document = (
         session.query(core.BorrowerDocument)
@@ -433,6 +487,7 @@ def create_or_update_borrower_document(
         # Update the existing document with the new file
         existing_document.file = file
         existing_document.name = filename
+        existing_document.verified = False
         existing_document.submitted_at = datetime.utcnow()
         return existing_document
     else:
@@ -441,6 +496,7 @@ def create_or_update_borrower_document(
             "type": type,
             "file": file,
             "name": filename,
+            "verified": verified,
         }
 
         db_obj = core.BorrowerDocument(**new_document)
