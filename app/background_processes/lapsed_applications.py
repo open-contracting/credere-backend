@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 from app.db.session import get_db
+from app.schema.core import ApplicationStatus
 
 from . import application_utils
 
@@ -19,7 +20,7 @@ def set_lapsed_applications():
             for application in lapsed_applications:
                 try:
                     # save to DB
-                    application.status = "LAPSED"
+                    application.status = ApplicationStatus.LAPSED
                     application.application_lapsed_at = datetime.utcnow()
                     session.commit()
 

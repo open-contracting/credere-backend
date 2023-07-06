@@ -210,4 +210,11 @@ Command to remove data from lapsed applications
 
 ```
 python -m app.commands update-applications-to-lapsed
+
+```
+
+The command to send mail reminders is
+
+```
+python -m app.commands send-reminders
 ```
