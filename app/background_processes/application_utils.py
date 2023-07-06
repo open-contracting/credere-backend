@@ -1,15 +1,21 @@
 import logging
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
-from app.db.session import app_settings
+from app.db.session import app_settings, get_db
 from app.schema import core
 from app.schema.core import Application, Message, MessageType
 
 from . import background_utils
+
+ApplicationStatus = core.ApplicationStatus
+
+
+DAYS_UNTIL_EXPIRED = 7
 
 ApplicationStatus = core.ApplicationStatus
 
@@ -157,3 +163,62 @@ def get_lapsed_applications(session):
         raise e
 
     return applications_to_set_to_lapsed or []
+
+
+def get_applications_to_remind_intro():
+    with contextmanager(get_db)() as session:
+        try:
+            subquery = select(core.Message.application_id).where(
+                core.Message.type
+                == core.MessageType.BORROWER_PENDING_APPLICATION_REMINDER
+            )
+            users = (
+                session.query(Application)
+                .options(
+                    joinedload(Application.borrower), joinedload(Application.award)
+                )
+                .filter(
+                    and_(
+                        Application.status == ApplicationStatus.PENDING,
+                        Application.expired_at > datetime.now(),
+                        Application.expired_at
+                        <= datetime.now()
+                        + timedelta(days=app_settings.reminder_days_before_expiration),
+                        ~Application.id.in_(subquery),
+                    )
+                )
+                .all()
+            )
+            logging.info(users)
+        except SQLAlchemyError as e:
+            raise e
+    return users or []
+
+
+def get_applications_to_remind_submit():
+    with contextmanager(get_db)() as session:
+        try:
+            subquery = select(core.Message.application_id).where(
+                core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
+            )
+            users = (
+                session.query(Application)
+                .options(
+                    joinedload(Application.borrower), joinedload(Application.award)
+                )
+                .filter(
+                    and_(
+                        Application.status == ApplicationStatus.ACCEPTED,
+                        Application.expired_at > datetime.now(),
+                        Application.expired_at
+                        <= datetime.now()
+                        + timedelta(days=app_settings.reminder_days_before_expiration),
+                        ~Application.id.in_(subquery),
+                    )
+                )
+                .all()
+            )
+            logging.info(users)
+        except SQLAlchemyError as e:
+            raise e
+    return users or []

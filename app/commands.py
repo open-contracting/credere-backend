@@ -27,6 +27,11 @@ def update_applications_to_lapsed():
     background_processes.lapsed_applications.set_lapsed_applications()
 
 
+@app.command()
+def send_reminders():
+    background_processes.send_reminder.send_reminders()
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
