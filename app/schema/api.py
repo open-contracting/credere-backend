@@ -22,6 +22,16 @@ class LenderListResponse(BasePagination):
     items: List[core.Lender]
 
 
+class NewLender(BaseModel):
+    name: str
+    email_group: str
+    status: str
+    type: str
+    borrowed_type_preferences: Optional[dict]
+    limits_preference: Optional[dict]
+    sla_days: int
+
+
 class AwardUpdate(BaseModel):
     source_contract_id: Optional[str]
     title: Optional[str]
@@ -65,6 +75,9 @@ class ApplicationResponse(BaseModel):
     application: core.Application
     borrower: core.Borrower
     award: core.Award
+    lender: Optional[core.Lender] = None
+    documents: List[core.BorrowerDocumentBase] = []
+    creditProduct: Optional[core.CreditProduct] = None
 
 
 class LenderRejectedApplication(BaseModel):
@@ -77,6 +90,30 @@ class LenderRejectedApplication(BaseModel):
 
 class ApplicationBase(BaseModel):
     uuid: str
+
+
+class ConfirmNewEmail(ApplicationBase):
+    confirmation_email_token: str
+    email: str
+
+
+class ChangeEmail(ApplicationBase):
+    old_email: str
+    new_email: str
+
+
+class UpdateDataField(ApplicationBase):
+    borrower_identifier: Optional[bool]
+    legal_name: Optional[bool]
+    email: Optional[bool]
+    address: Optional[bool]
+    legal_identifier: Optional[bool]
+    type: Optional[bool]
+    source_data: Optional[bool]
+
+
+class VerifyBorrowerDocument(BaseModel):
+    verified: bool
 
 
 class ApplicationCreditOptions(ApplicationBase):
@@ -95,10 +132,6 @@ class ApplicationSelectCreditProduct(ApplicationCreditOptions):
 class CreditProductListResponse(BaseModel):
     loans: List[core.CreditProductWithLender]
     credit_lines: List[core.CreditProductWithLender]
-
-
-class ApplicationSubmit(ApplicationBase):
-    lender_id: int
 
 
 class ApplicationEmailSme(BaseModel):

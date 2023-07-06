@@ -52,7 +52,88 @@ def send_mail_to_new_user(ses, name, username, temp_password):
     )
 
 
-def send_mail_to_reset_password(ses, username, temp_password):
+def send_upload_contract_notification_to_FI(ses, application):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+        "TENDER_TITLE": application.award.title,
+        "BUYER_NAME": application.award.buyer_name,
+        "UPLOAD_CONTRACT_URL": app_settings.frontend_url,
+        "UPLOAD_CONTRACT_IMAGE_LINK": images_base_url,
+    }
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # change to email in production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        # not the proper template, needs to be changed
+        Template=email_templates.UPLOAD_CONTRACT,
+        TemplateData=json.dumps(data),
+    )
+
+
+def send_upload_contract_confirmation(ses, application):
+    # todo refactor required when this function receives the user language
+    data = {
+        **generate_common_data(),
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+        "TENDER_TITLE": application.award.title,
+        "BUYER_NAME": application.award.buyer_name,
+    }
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # change to email in production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=email_templates.CONTRACT_UPLOAD_CONFIRMATION,
+        TemplateData=json.dumps(data),
+    )
+
+
+def send_new_email_confirmation(
+    ses,
+    borrower_name: str,
+    new_email: str,
+    old_email: str,
+    confirmation_email_token: str,
+    application_uuid: str,
+):
+    images_base_url = get_images_base_url()
+    CONFIRM_EMAIL_CHANGE_URL = (
+        f"{app_settings.frontend_url}/change-email/"
+        f"{application_uuid}/{confirmation_email_token}/{new_email}"
+    )
+    data = {
+        **generate_common_data(),
+        "NEW_MAIL": new_email,
+        "AWARD_SUPPLIER_NAME": borrower_name,
+        "CONFIRM_EMAIL_CHANGE_URL": CONFIRM_EMAIL_CHANGE_URL,
+        "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": images_base_url + "/confirmemailchange.png",
+    }
+
+    message = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # line below needs to be changed to new_email in production to send email to proper address
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=email_templates.EMAIL_CHANGE_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # line below needs to be changed to old_email in production to send email to proper address
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=email_templates.EMAIL_CHANGE_TEMPLATE_NAME,
+        TemplateData=json.dumps(data),
+    )
+
+    return message["MessageId"]
+
+
+def send_mail_to_reset_password(ses, username: str, temp_password: str):
     images_base_url = get_images_base_url()
 
     data = {

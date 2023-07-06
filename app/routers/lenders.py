@@ -56,7 +56,7 @@ async def get_lender(lender_id: int, db: Session = Depends(get_db)):
     return lender
 
 
-@router.put(
+@router.patch(
     "/lenders/{id}",
     tags=["lenders"],
     response_model=core.Lender,
@@ -64,12 +64,12 @@ async def get_lender(lender_id: int, db: Session = Depends(get_db)):
 @OCP_only()
 async def update_lender(
     id: int,
-    lender: core.Lender,
+    payload: ApiSchema.NewLender,
     current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
-        return utils.update_lender(session, lender, id)
+        return utils.update_lender(session, payload, id)
 
 
 @router.get(
