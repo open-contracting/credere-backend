@@ -706,6 +706,9 @@ async def select_credit_product(
             application=application,
             borrower=application.borrower,
             award=application.award,
+            lender=application.lender,
+            documents=application.borrower_documents,
+            creditProduct=application.credit_product,
         )
 
 
@@ -805,6 +808,9 @@ async def confirm_credit_product(
             application=application,
             borrower=application.borrower,
             award=application.award,
+            lender=application.lender,
+            documents=application.borrower_documents,
+            creditProduct=application.credit_product,
         )
 
 
