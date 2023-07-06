@@ -1,7 +1,7 @@
 """add_disbursed_final_amount_to_application
 
 Revision ID: 7e81b8a695ed
-Revises: 9df7f1e04a80
+Revises: 8ab95d68febd
 Create Date: 2023-07-05 12:03:03.203946
 
 """
@@ -32,6 +32,18 @@ def upgrade() -> None:
         op.execute(
             """
         ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'FI_START_APPLICATION'
+        """
+        )
+    with op.get_context().autocommit_block():
+        op.execute(
+            """
+        ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'FI_REQUEST_INFORMATION'
+        """
+        )
+    with op.get_context().autocommit_block():
+        op.execute(
+            """
+        ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED'
         """
         )
 

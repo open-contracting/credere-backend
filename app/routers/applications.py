@@ -239,7 +239,7 @@ async def upload_contract(
 
         utils.check_application_status(application, core.ApplicationStatus.APPROVED)
 
-        utils.create_or_update_borrower_document(
+        document = utils.create_or_update_borrower_document(
             filename,
             application,
             core.BorrowerDocumentType.SIGNED_CONTRACT,
@@ -273,7 +273,7 @@ async def upload_contract(
             SME_message_id,
         )
 
-        return application
+        return document
 
 
 @router.post(
@@ -293,12 +293,13 @@ async def upload_compliance(
 
         utils.check_FI_user_permission(application, user)
 
-        utils.create_or_update_borrower_document(
+        document = utils.create_or_update_borrower_document(
             filename,
             application,
             core.BorrowerDocumentType.COMPLIANCE_REPORT,
             session,
             new_file,
+            True,
         )
 
         utils.create_application_action(
@@ -309,7 +310,7 @@ async def upload_compliance(
             {"file_name": filename},
         )
 
-        return application
+        return document
 
 
 @router.put(
@@ -546,7 +547,7 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
         award=application.award,
         lender=application.lender,
         documents=application.borrower_documents,
-        creditProduct=application.creditProduct,
+        creditProduct=application.credit_product,
     )
 
 

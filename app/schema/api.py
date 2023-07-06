@@ -1,11 +1,17 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
+from enum import Enum
 
 from pydantic import BaseModel
 
 from app.schema import core
 from app.schema.core import User
+
+
+class ERROR_CODES(Enum):
+    BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
+    DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
 
 
 class BasePagination(BaseModel):

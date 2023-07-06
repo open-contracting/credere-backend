@@ -1,8 +1,8 @@
+import logging
 import re
 from datetime import datetime
 from decimal import Decimal
 from typing import Dict, List, Optional
-import logging
 
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
@@ -13,7 +13,7 @@ from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
 
-from ..schema import core, api
+from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
