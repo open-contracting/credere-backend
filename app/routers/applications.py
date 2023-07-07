@@ -315,7 +315,9 @@ async def confirm_upload_contract(
 
         application.contract_amount_submitted = payload.contract_amount_submitted
         application.status = core.ApplicationStatus.CONTRACT_UPLOADED
-        application.contract_uploaded_at = datetime.now(application.created_at.tzinfo)
+        application.borrower_uploaded_contract_at = datetime.now(
+            application.created_at.tzinfo
+        )
 
         utils.create_message(
             application,
