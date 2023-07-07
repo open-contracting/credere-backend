@@ -28,14 +28,8 @@ class LenderListResponse(BasePagination):
     items: List[core.Lender]
 
 
-class NewLender(BaseModel):
-    name: str
-    email_group: str
-    status: str
-    type: str
-    borrowed_type_preferences: Optional[dict]
-    limits_preference: Optional[dict]
-    sla_days: int
+class UserListResponse(BasePagination):
+    items: List[core.UserWithLender]
 
 
 class AwardUpdate(BaseModel):

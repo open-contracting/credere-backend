@@ -495,9 +495,8 @@ class Message(SQLModel, table=True):
     )
 
 
-class User(SQLModel, table=True):
+class UserBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    application_actions: List["ApplicationAction"] = Relationship(back_populates="user")
     type: UserType = Field(
         sa_column=Column(SAEnum(UserType, name="user_type")), default=UserType.FI
     )
@@ -508,7 +507,6 @@ class User(SQLModel, table=True):
     lender_id: Optional[int] = Field(
         default=None, foreign_key="lender.id", nullable=True
     )
-    lender: "Lender" = Relationship(back_populates="users")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -520,6 +518,16 @@ class User(SQLModel, table=True):
 
     def is_OCP(self) -> bool:
         return self.type == UserType.OCP
+
+
+class UserWithLender(UserBase):
+    id: int
+    lender: Optional["LenderBase"] = None
+
+
+class User(UserBase, table=True):
+    application_actions: List["ApplicationAction"] = Relationship(back_populates="user")
+    lender: Optional["Lender"] = Relationship(back_populates="users")
 
 
 class ApplicationAction(SQLModel, table=True):
