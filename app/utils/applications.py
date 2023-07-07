@@ -147,9 +147,12 @@ def approve_application(application: core.Application, payload: dict):
 def complete_application(
     application: core.Application, disbursed_final_amount: Decimal
 ):
+    current_time = datetime.now(application.created_at.tzinfo)
+    completed_in_days = current_time - application.lender_started_at
+    application.completed_in_days = completed_in_days.days
     application.disbursed_final_amount = disbursed_final_amount
     application.status = core.ApplicationStatus.COMPLETED
-    application.lender_completed_at = datetime.now(application.created_at.tzinfo)
+    application.lender_completed_at = current_time
 
 
 def create_application_action(
