@@ -64,7 +64,7 @@ async def get_lender(lender_id: int, db: Session = Depends(get_db)):
 @OCP_only()
 async def update_lender(
     id: int,
-    payload: ApiSchema.NewLender,
+    payload: core.LenderBase,
     current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):

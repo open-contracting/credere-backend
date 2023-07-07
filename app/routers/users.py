@@ -2,7 +2,6 @@ import logging
 from typing import Union
 
 from botocore.exceptions import ClientError
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import app.utils.users as utils
@@ -11,7 +10,7 @@ from app.utils.verify_token import get_current_user
 
 from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
-from ..schema.core import BasicUser, SetupMFA, User
+from ..schema.core import BasicUser, SetupMFA, User, UserWithLender
 from ..utils.permissions import OCP_only
 
 from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
@@ -28,21 +27,7 @@ async def create_user(
     client: CognitoClient = Depends(get_cognito_client),
     current_user: User = Depends(get_current_user),
 ):
-    with transaction_session(session):
-        try:
-            user = User(**payload.dict())
-
-            session.add(user)
-            cognitoResponse = client.admin_create_user(payload.email, payload.name)
-            user.external_id = cognitoResponse["User"]["Username"]
-
-            return user
-        except (client.exceptions().UsernameExistsException, IntegrityError) as e:
-            logging.error(e)
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Username already exists",
-            )
+    return utils.create_user(payload, session, client)
 
 
 @router.put(
@@ -268,6 +253,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/users", tags=["users"], response_model=ApiSchema.UserListResponse)
+@OCP_only()
 async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
@@ -282,7 +268,7 @@ async def get_all_users(
 @router.put(
     "/users/{id}",
     tags=["users"],
-    response_model=User,
+    response_model=UserWithLender,
 )
 @OCP_only()
 async def update_user(
