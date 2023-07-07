@@ -222,3 +222,28 @@ def get_applications_to_remind_submit():
         except SQLAlchemyError as e:
             raise e
     return users or []
+
+
+def create_message(
+    application: Application,
+    message: MessageType,
+    session: Session,
+    external_message_id: str,
+) -> None:
+    obj_db = Message(
+        application=application,
+        type=message,
+        external_message_id=external_message_id,
+    )
+    obj_db.created_at = datetime.utcnow()
+
+    session.add(obj_db)
+    session.flush()
+
+
+def get_all_applications_with_status(status_list, session):
+    applications = (
+        session.query((Application)).filter(Application.status.in_(status_list)).all()
+    )
+
+    return applications
