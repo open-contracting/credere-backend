@@ -56,7 +56,7 @@ async def get_lender(lender_id: int, db: Session = Depends(get_db)):
     return lender
 
 
-@router.patch(
+@router.put(
     "/lenders/{id}",
     tags=["lenders"],
     response_model=core.Lender,
