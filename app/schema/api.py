@@ -144,6 +144,10 @@ class CreditProductListResponse(BaseModel):
     credit_lines: List[core.CreditProductWithLender]
 
 
+class UploadContractConfirmation(ApplicationBase):
+    contract_amount_submitted: Optional[Decimal]
+
+
 class ApplicationEmailSme(BaseModel):
     message: str
 

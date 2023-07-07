@@ -270,13 +270,12 @@ async def upload_document(
 @router.post(
     "/applications/upload-contract",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=core.BorrowerDocumentBase,
 )
 async def upload_contract(
     file: UploadFile,
     uuid: str = Form(...),
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
 ):
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
@@ -292,17 +291,28 @@ async def upload_contract(
             new_file,
         )
 
-        utils.create_application_action(
-            session,
-            None,
-            application.id,
-            core.ApplicationActionType.BORROWER_UPLOADED_CONTRACT,
-            {"file_name": filename},
-        )
+        return document
+
+
+@router.post(
+    "/applications/confirm-upload-contract",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def confirm_upload_contract(
+    payload: ApiSchema.UploadContractConfirmation,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_application_status(application, core.ApplicationStatus.APPROVED)
 
         FI_message_id, SME_message_id = client.send_upload_contract_notifications(
             application
         )
+
+        application.contract_amount_submitted = payload.contract_amount_submitted
 
         utils.create_message(
             application,
@@ -318,13 +328,30 @@ async def upload_contract(
             SME_message_id,
         )
 
-        return document
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_UPLOAD_CONTRACT,
+            {
+                "contract_amount_submitted": payload.contract_amount_submitted,
+            },
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+            lender=application.lender,
+            documents=application.borrower_documents,
+            creditProduct=application.credit_product,
+        )
 
 
 @router.post(
     "/applications/{id}/upload-compliance",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=core.BorrowerDocumentBase,
 )
 async def upload_compliance(
     id: int,
@@ -541,7 +568,8 @@ async def start_application(
             session.query(core.Application).filter(core.Application.id == id).first()
         )
         utils.check_application_status(application, core.ApplicationStatus.SUBMITTED)
-
+        print(user)
+        print(application)
         if user.lender_id != application.lender_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

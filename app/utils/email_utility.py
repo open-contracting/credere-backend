@@ -87,20 +87,15 @@ def send_upload_contract_notification_to_FI(ses, application):
 
     data = {
         **generate_common_data(),
-        "FI": application.lender.name,
-        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-        "TENDER_TITLE": application.award.title,
-        "BUYER_NAME": application.award.buyer_name,
-        "UPLOAD_CONTRACT_URL": app_settings.frontend_url,
-        "UPLOAD_CONTRACT_IMAGE_LINK": images_base_url,
+        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         # change to email in production
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
-        # not the proper template, needs to be changed
-        Template=templates["UPLOAD_CONTRACT_TEMPLATE_NAME"],
+        Template=templates["NEW_CONTRACT_SUBMISSION"],
         TemplateData=json.dumps(data),
     )
 

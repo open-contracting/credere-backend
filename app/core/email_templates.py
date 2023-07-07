@@ -14,4 +14,5 @@ templates = {
     "APPLICATION_DECLINED": "credere-ApplicationDeclined",
     "APPLICATION_DECLINED_WITHOUT_ALTERNATIVE": "credere-ApplicationDeclinedWithoutAlternativeOption",
     "APPLICATION_APPROVED": "credere-ApplicationApproved",
+    "NEW_CONTRACT_SUBMISSION": "credere-NewContractSubmission",
 }

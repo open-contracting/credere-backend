@@ -472,7 +472,7 @@ def create_or_update_borrower_document(
     type: core.BorrowerDocumentType,
     session: Session,
     file: UploadFile = File(...),
-    verified: bool = False,
+    verified: Optional[bool] = False,
 ) -> core.BorrowerDocument:
     existing_document = (
         session.query(core.BorrowerDocument)
@@ -487,7 +487,7 @@ def create_or_update_borrower_document(
         # Update the existing document with the new file
         existing_document.file = file
         existing_document.name = filename
-        existing_document.verified = False
+        existing_document.verified = verified
         existing_document.submitted_at = datetime.utcnow()
         return existing_document
     else:
