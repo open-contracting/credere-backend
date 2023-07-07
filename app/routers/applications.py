@@ -71,15 +71,14 @@ async def reject_application(
 
 
 @router.post(
-    "/applications/{id}/review-application",
+    "/applications/{id}/complete-application",
     tags=["applications"],
     response_model=core.ApplicationWithRelations,
 )
-async def review_application(
+async def complete_application(
     id: int,
     payload: ApiSchema.LenderReviewContract,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
     user: core.User = Depends(get_user),
 ):
     with transaction_session(session):
@@ -88,14 +87,16 @@ async def review_application(
         utils.check_application_status(
             application, core.ApplicationStatus.CONTRACT_UPLOADED
         )
-        utils.review_application(application, payload.disbursed_final_amount)
+        utils.complete_application(application, payload.disbursed_final_amount)
 
         utils.create_application_action(
             session,
             user.id,
             application.id,
             core.ApplicationActionType.FI_COMPLETE_APPLICATION,
-            payload,
+            {
+                "disbursed_final_amount": payload.disbursed_final_amount,
+            },
         )
 
         return application
@@ -313,6 +314,8 @@ async def confirm_upload_contract(
         )
 
         application.contract_amount_submitted = payload.contract_amount_submitted
+        application.status = core.ApplicationStatus.CONTRACT_UPLOADED
+        application.contract_uploaded_at = datetime.now(application.created_at.tzinfo)
 
         utils.create_message(
             application,
