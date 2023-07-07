@@ -359,7 +359,7 @@ def send_overdue_application_email(ses, name: str, email: str, amount: int):
         **generate_common_data(),
         "USER": name,
         "NUMBER_APPLICATIONS": amount,
-        "LOGIN_IMAGE_LINK": images_base_url + "/uploadDocument.png",
+        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
