@@ -128,8 +128,11 @@ def send_new_email_confirmation(
 ):
     images_base_url = get_images_base_url()
     CONFIRM_EMAIL_CHANGE_URL = (
-        f"{app_settings.frontend_url}/change-email/"
-        f"{application_uuid}/{confirmation_email_token}/{new_email}"
+        app_settings.frontend_url
+        + "/application/"
+        + quote(application_uuid)
+        + "/change-primary-email?token="
+        + quote(confirmation_email_token)
     )
     data = {
         **generate_common_data(),

@@ -445,9 +445,10 @@ def update_application_primary_email(application: core.Application, email: str) 
             detail="New email is not valid",
         )
     confirmation_email_token = generate_uuid(email)
-    application.confirmation_email_token = confirmation_email_token
-    application.primary_email = email
+    application.confirmation_email_token = f"{email}---{confirmation_email_token}"
+    print(application.confirmation_email_token)
     application.pending_email_confirmation = True
+
     return confirmation_email_token
 
 
@@ -459,12 +460,14 @@ def check_pending_email_confirmation(
             status_code=status.HTTP_409_CONFLICT,
             detail="Application is not pending an email confirmation",
         )
-    if application.confirmation_email_token != confirmation_email_token:
+    new_email = application.confirmation_email_token.split("---")[0]
+    token = application.confirmation_email_token.split("---")[1]
+    if token != confirmation_email_token:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Not authorized to modify this application",
         )
-
+    application.primary_email = new_email
     application.pending_email_confirmation = False
     application.confirmation_email_token = ""
 

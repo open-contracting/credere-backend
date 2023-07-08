@@ -138,10 +138,10 @@ async def approve_application(
         return application
 
 
-@router.patch(
+@router.post(
     "/applications/change-email",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=ChangeEmail,
 )
 async def change_email(
     payload: ChangeEmail,
@@ -150,7 +150,7 @@ async def change_email(
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
-
+        old_email = application.primary_email
         confirmation_email_token = utils.update_application_primary_email(
             application, payload.new_email
         )
@@ -161,10 +161,11 @@ async def change_email(
             core.ApplicationActionType.MSME_CHANGE_EMAIL,
             payload,
         )
+
         external_message_id = client.send_new_email_confirmation_to_sme(
             application.borrower.legal_name,
             payload.new_email,
-            payload.old_email,
+            old_email,
             confirmation_email_token,
             application.uuid,
         )
@@ -176,13 +177,13 @@ async def change_email(
             external_message_id,
         )
 
-        return application
+        return payload
 
 
 @router.post(
-    "/applications/confirm-email",
+    "/applications/confirm-change-email",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=ChangeEmail,
 )
 async def confirm_email(
     payload: ApiSchema.ConfirmNewEmail,
@@ -203,7 +204,7 @@ async def confirm_email(
             payload,
         )
 
-        return application
+        return ChangeEmail(new_email=application.primary_email, uuid=application.uuid)
 
 
 @router.get(

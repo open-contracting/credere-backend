@@ -92,7 +92,7 @@ class ApplicationUpdate(BaseModel):
 
 
 class ApplicationResponse(BaseModel):
-    application: core.Application
+    application: core.ApplicationRead
     borrower: core.Borrower
     award: core.Award
     lender: Optional[core.Lender] = None
@@ -114,11 +114,9 @@ class ApplicationBase(BaseModel):
 
 class ConfirmNewEmail(ApplicationBase):
     confirmation_email_token: str
-    email: str
 
 
 class ChangeEmail(ApplicationBase):
-    old_email: str
     new_email: str
 
 

@@ -202,9 +202,6 @@ class ApplicationBase(SQLModel):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
-    confirmation_email_token: Optional[str] = Field(
-        index=True, nullable=True, default=""
-    )
     award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
@@ -302,11 +299,17 @@ class ApplicationBase(SQLModel):
     )
 
 
+class ApplicationPrivate(ApplicationBase):
+    confirmation_email_token: Optional[str] = Field(
+        index=True, nullable=True, default=""
+    )
+
+
 class ApplicationRead(ApplicationBase):
     id: int
 
 
-class Application(ApplicationBase, table=True):
+class Application(ApplicationPrivate, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
         back_populates="application"
