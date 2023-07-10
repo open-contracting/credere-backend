@@ -2,7 +2,9 @@
   "Source": "Credere_mail_test <credere@noreply.open-contracting.org>",
   "Template": "credere-NewAccountCreated",
   "Destination": {
-    "ToAddresses": ["credereadmin@open-contracting.org"]
+    "ToAddresses": [
+      "credereadmin@open-contracting.org"
+    ]
   },
   "TemplateData": "{\"USER\": \"Adrian\", \"LINK-TO-WEB-VERSION\": \"www.google.com\", \"OCP_LOGO\": \"http://ocp22.open-contracting.org/images/logoocp.jpg\", \"F1\": \"Bank of America\", \"SET_PASSWORD_IMAGE_LINK\": \"http://ocp22.open-contracting.org/images/set_password.png\", \"LOGIN_URL\": \"www.google.com\", \"TWITTER_LOGO\": \"http://ocp22.open-contracting.org/images/twiterlogo.png\", \"FB_LOGO\": \"http://ocp22.open-contracting.org/images/facebook.png\", \"LINK_LOGO\": \"http://ocp22.open-contracting.org/images/link.png\", \"TWITTER_LINK\": \"www.google.com\", \"FACEBOOK_LINK\": \"www.google.com\", \"LINK_LINK\": \"www.google.com\"}"
 }
