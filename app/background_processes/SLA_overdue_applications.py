@@ -7,7 +7,10 @@ from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
 from app.schema import core
-from app.utils.email_utility import send_overdue_application_email
+from app.utils.email_utility import (
+    send_overdue_application_email_to_OCP,
+    send_overdue_application_email_to_FI,
+)
 
 from . import application_utils
 
@@ -44,6 +47,14 @@ def SLA_overdue_applications():
                 paired_actions.append(
                     (
                         first_information_request.created_at,
+                        application.lender_started_at,
+                    )
+                )
+            else:
+                current_dt = datetime.now(application.created_at.tzinfo)
+                paired_actions.append(
+                    (
+                        current_dt,
                         application.lender_started_at,
                     )
                 )
@@ -90,23 +101,42 @@ def SLA_overdue_applications():
                         "name"
                     ] = application.lender.name
                 overdue_lenders[application.lender.email_group]["count"] += 1
+                if (
+                    days_passed > application.lender.sla_days
+                    and "notify_OCP"
+                    not in overdue_lenders[application.lender.email_group]
+                ):
+                    current_dt = datetime.now(application.created_at.tzinfo)
+                    overdue_lenders[application.lender.email_group]["notify_OCP"] = True
+                    application.overdued_at = current_dt
 
-            for email, lender_data in overdue_lenders.items():
-                name = lender_data.get("name")
-                count = lender_data.get("count")
+                    message_id = send_overdue_application_email_to_OCP(
+                        sesClient,
+                        application.lender.name,
+                    )
 
-                message_id = send_overdue_application_email(
-                    sesClient, name, email, count
-                )
+                    create_message(
+                        application,
+                        core.MessageType.OVERDUE_APPLICATION,
+                        session,
+                        message_id,
+                    )
 
-                create_message(
-                    application,
-                    core.MessageType.OVERDUE_APPLICATION,
-                    session,
-                    message_id,
-                )
+            session.flush()
 
-            session.commit()
+        for email, lender_data in overdue_lenders.items():
+            name = lender_data.get("name")
+            count = lender_data.get("count")
+        #     message_id = send_overdue_application_email_to_FI(
+        #         sesClient, name, email, count
+        #     )
+
+        #     create_message(
+        #         application,
+        #         core.MessageType.OVERDUE_APPLICATION,
+        #         session,
+        #         message_id,
+        #     )
 
 
 if __name__ == "__main__":
