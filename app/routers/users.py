@@ -196,17 +196,14 @@ def login_mfa(
     response_model=ApiSchema.ResponseBase,
 )
 def logout(
-    Authorization: str = Header(None),
+    authorization: str = Header(None),
     client: CognitoClient = Depends(get_cognito_client),
 ):
     try:
-        client.logout_user(Authorization)
+        access_token = authorization.split(" ")[1]
+        client.logout_user(access_token)
     except ClientError as e:
         logging.error(e)
-        # raise HTTPException(
-        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #     detail="There was an error trying to logout",
-        # )
 
     return ApiSchema.ResponseBase(detail="User logged out successfully")
 
@@ -219,7 +216,7 @@ def me(
     usernameFromToken: str = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    user = db.query(User).filter(User.email == usernameFromToken).first()
+    user = db.query(User).filter(User.external_id == usernameFromToken).first()
     return ApiSchema.UserResponse(user=user)
 
 

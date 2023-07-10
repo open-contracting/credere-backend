@@ -89,9 +89,6 @@ def create_application(
 
 def get_dated_applications(session):
     try:
-        days_to_delete_data = datetime.now() - timedelta(
-            days=app_settings.days_to_erase_borrower_data
-        )
         applications_to_remove_data = (
             session.query(Application)
             .options(
@@ -102,19 +99,27 @@ def get_dated_applications(session):
                 or_(
                     and_(
                         Application.status == ApplicationStatus.DECLINED,
-                        Application.borrower_declined_at < days_to_delete_data,
+                        Application.borrower_declined_at
+                        + timedelta(days=app_settings.days_to_erase_borrower_data)
+                        < datetime.now(),
                     ),
                     and_(
                         Application.status == ApplicationStatus.REJECTED,
-                        Application.lender_rejected_at < days_to_delete_data,
+                        Application.lender_rejected_at
+                        + timedelta(days=app_settings.days_to_erase_borrower_data)
+                        < datetime.now(),
                     ),
                     and_(
                         Application.status == ApplicationStatus.COMPLETED,
-                        Application.lender_approved_at < days_to_delete_data,
+                        Application.lender_approved_at
+                        + timedelta(days=app_settings.days_to_erase_borrower_data)
+                        < datetime.now(),
                     ),
                     and_(
                         Application.status == ApplicationStatus.LAPSED,
-                        Application.application_lapsed_at < days_to_delete_data,
+                        Application.application_lapsed_at
+                        + timedelta(days=app_settings.days_to_erase_borrower_data)
+                        < datetime.now(),
                     ),
                 ),
                 Application.archived_at.is_(None),
@@ -130,9 +135,6 @@ def get_dated_applications(session):
 
 def get_lapsed_applications(session):
     try:
-        days_set_to_lapsed = datetime.now() - timedelta(
-            days=app_settings.days_to_change_to_lapsed
-        )
         applications_to_set_to_lapsed = (
             session.query(Application)
             .options(
@@ -143,15 +145,21 @@ def get_lapsed_applications(session):
                 or_(
                     and_(
                         Application.status == ApplicationStatus.PENDING,
-                        Application.created_at < days_set_to_lapsed,
+                        Application.created_at
+                        + timedelta(days=app_settings.days_to_change_to_lapsed)
+                        < datetime.now(),
                     ),
                     and_(
                         Application.status == ApplicationStatus.ACCEPTED,
-                        Application.borrower_accepted_at < days_set_to_lapsed,
+                        Application.borrower_accepted_at
+                        + timedelta(days=app_settings.days_to_change_to_lapsed)
+                        < datetime.now(),
                     ),
                     and_(
                         Application.status == ApplicationStatus.INFORMATION_REQUESTED,
-                        Application.information_requested_at < days_set_to_lapsed,
+                        Application.information_requested_at
+                        + timedelta(days=app_settings.days_to_change_to_lapsed)
+                        < datetime.now(),
                     ),
                 ),
                 Application.archived_at.is_(None),

@@ -71,15 +71,14 @@ async def reject_application(
 
 
 @router.post(
-    "/applications/{id}/review-application",
+    "/applications/{id}/complete-application",
     tags=["applications"],
     response_model=core.ApplicationWithRelations,
 )
-async def review_application(
+async def complete_application(
     id: int,
     payload: ApiSchema.LenderReviewContract,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
     user: core.User = Depends(get_user),
 ):
     with transaction_session(session):
@@ -88,14 +87,16 @@ async def review_application(
         utils.check_application_status(
             application, core.ApplicationStatus.CONTRACT_UPLOADED
         )
-        utils.review_application(application, payload.disbursed_final_amount)
+        utils.complete_application(application, payload.disbursed_final_amount)
 
         utils.create_application_action(
             session,
             user.id,
             application.id,
             core.ApplicationActionType.FI_COMPLETE_APPLICATION,
-            payload,
+            {
+                "disbursed_final_amount": payload.disbursed_final_amount,
+            },
         )
 
         return application
@@ -137,10 +138,10 @@ async def approve_application(
         return application
 
 
-@router.patch(
+@router.post(
     "/applications/change-email",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=ChangeEmail,
 )
 async def change_email(
     payload: ChangeEmail,
@@ -149,7 +150,7 @@ async def change_email(
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
-
+        old_email = application.primary_email
         confirmation_email_token = utils.update_application_primary_email(
             application, payload.new_email
         )
@@ -160,10 +161,11 @@ async def change_email(
             core.ApplicationActionType.MSME_CHANGE_EMAIL,
             payload,
         )
+
         external_message_id = client.send_new_email_confirmation_to_sme(
             application.borrower.legal_name,
             payload.new_email,
-            payload.old_email,
+            old_email,
             confirmation_email_token,
             application.uuid,
         )
@@ -175,13 +177,13 @@ async def change_email(
             external_message_id,
         )
 
-        return application
+        return payload
 
 
 @router.post(
-    "/applications/confirm-email",
+    "/applications/confirm-change-email",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=ChangeEmail,
 )
 async def confirm_email(
     payload: ApiSchema.ConfirmNewEmail,
@@ -202,7 +204,7 @@ async def confirm_email(
             payload,
         )
 
-        return application
+        return ChangeEmail(new_email=application.primary_email, uuid=application.uuid)
 
 
 @router.get(
@@ -270,13 +272,12 @@ async def upload_document(
 @router.post(
     "/applications/upload-contract",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=core.BorrowerDocumentBase,
 )
 async def upload_contract(
     file: UploadFile,
     uuid: str = Form(...),
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
 ):
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
@@ -292,16 +293,31 @@ async def upload_contract(
             new_file,
         )
 
-        utils.create_application_action(
-            session,
-            None,
-            application.id,
-            core.ApplicationActionType.BORROWER_UPLOADED_CONTRACT,
-            {"file_name": filename},
-        )
+        return document
+
+
+@router.post(
+    "/applications/confirm-upload-contract",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def confirm_upload_contract(
+    payload: ApiSchema.UploadContractConfirmation,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_application_status(application, core.ApplicationStatus.APPROVED)
 
         FI_message_id, SME_message_id = client.send_upload_contract_notifications(
             application
+        )
+
+        application.contract_amount_submitted = payload.contract_amount_submitted
+        application.status = core.ApplicationStatus.CONTRACT_UPLOADED
+        application.borrower_uploaded_contract_at = datetime.now(
+            application.created_at.tzinfo
         )
 
         utils.create_message(
@@ -318,13 +334,30 @@ async def upload_contract(
             SME_message_id,
         )
 
-        return document
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_UPLOAD_CONTRACT,
+            {
+                "contract_amount_submitted": payload.contract_amount_submitted,
+            },
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=application,
+            borrower=application.borrower,
+            award=application.award,
+            lender=application.lender,
+            documents=application.borrower_documents,
+            creditProduct=application.credit_product,
+        )
 
 
 @router.post(
     "/applications/{id}/upload-compliance",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=core.BorrowerDocumentBase,
 )
 async def upload_compliance(
     id: int,

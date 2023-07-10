@@ -77,6 +77,7 @@ class ApplicationActionType(Enum):
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     MSME_UPLOAD_DOCUMENT = "MSME_UPLOAD_DOCUMENT"
+    MSME_UPLOAD_CONTRACT = "MSME_UPLOAD_CONTRACT"
     MSME_CHANGE_EMAIL = "MSME_CHANGE_EMAIL"
     MSME_CONFIRM_EMAIL = "MSME_CONFIRM_EMAIL"
     MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED = (
@@ -201,9 +202,6 @@ class ApplicationBase(SQLModel):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
-    confirmation_email_token: Optional[str] = Field(
-        index=True, nullable=True, default=""
-    )
     award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
@@ -264,6 +262,9 @@ class ApplicationBase(SQLModel):
     borrower_uploaded_contract_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+    lender_completed_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
     completed_in_days: Optional[int] = Field(nullable=True)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -298,11 +299,17 @@ class ApplicationBase(SQLModel):
     )
 
 
+class ApplicationPrivate(ApplicationBase):
+    confirmation_email_token: Optional[str] = Field(
+        index=True, nullable=True, default=""
+    )
+
+
 class ApplicationRead(ApplicationBase):
     id: int
 
 
-class Application(ApplicationBase, table=True):
+class Application(ApplicationPrivate, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
         back_populates="application"

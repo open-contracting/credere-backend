@@ -144,9 +144,15 @@ def approve_application(application: core.Application, payload: dict):
     application.lender_approved_at = current_time
 
 
-def review_application(application: core.Application, disbursed_final_amount: Decimal):
+def complete_application(
+    application: core.Application, disbursed_final_amount: Decimal
+):
+    current_time = datetime.now(application.created_at.tzinfo)
+    completed_in_days = current_time - application.lender_started_at
+    application.completed_in_days = completed_in_days.days
     application.disbursed_final_amount = disbursed_final_amount
     application.status = core.ApplicationStatus.COMPLETED
+    application.lender_completed_at = current_time
 
 
 def create_application_action(
@@ -442,9 +448,10 @@ def update_application_primary_email(application: core.Application, email: str) 
             detail="New email is not valid",
         )
     confirmation_email_token = generate_uuid(email)
-    application.confirmation_email_token = confirmation_email_token
-    application.primary_email = email
+    application.confirmation_email_token = f"{email}---{confirmation_email_token}"
+
     application.pending_email_confirmation = True
+
     return confirmation_email_token
 
 
@@ -456,12 +463,14 @@ def check_pending_email_confirmation(
             status_code=status.HTTP_409_CONFLICT,
             detail="Application is not pending an email confirmation",
         )
-    if application.confirmation_email_token != confirmation_email_token:
+    new_email = application.confirmation_email_token.split("---")[0]
+    token = application.confirmation_email_token.split("---")[1]
+    if token != confirmation_email_token:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Not authorized to modify this application",
         )
-
+    application.primary_email = new_email
     application.pending_email_confirmation = False
     application.confirmation_email_token = ""
 
@@ -472,7 +481,7 @@ def create_or_update_borrower_document(
     type: core.BorrowerDocumentType,
     session: Session,
     file: UploadFile = File(...),
-    verified: bool = False,
+    verified: Optional[bool] = False,
 ) -> core.BorrowerDocument:
     existing_document = (
         session.query(core.BorrowerDocument)
@@ -487,7 +496,7 @@ def create_or_update_borrower_document(
         # Update the existing document with the new file
         existing_document.file = file
         existing_document.name = filename
-        existing_document.verified = False
+        existing_document.verified = verified
         existing_document.submitted_at = datetime.utcnow()
         return existing_document
     else:

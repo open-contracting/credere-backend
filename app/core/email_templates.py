@@ -15,4 +15,5 @@ templates = {
     "APPLICATION_DECLINED_WITHOUT_ALTERNATIVE": "credere-ApplicationDeclinedWithoutAlternativeOption",
     "APPLICATION_APPROVED": "credere-ApplicationApproved",
     "OVERDUE_APPLICATION_FI": "credere-OverdueApplicationFI",
+    "NEW_CONTRACT_SUBMISSION": "credere-NewContractSubmission",
 }
