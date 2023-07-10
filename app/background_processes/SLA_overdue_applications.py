@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
 from contextlib import contextmanager
+from datetime import datetime
 
 from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
@@ -23,10 +24,30 @@ def SLA_overdue_applications():
             ],
             session,
         )
-
         overdue_lenders = defaultdict(lambda: {"count": 0})
-
         for application in applications:
+            application = (
+                session.query(core.Application)
+                .filter(core.Application.id == application.id)
+                .first()
+            )
+            paired_actions = []
+            fi_request_actions = (
+                session.query(core.ApplicationAction)
+                .filter(core.ApplicationAction.application_id == application.id)
+                .filter(core.ApplicationAction.type == "FI_REQUEST_INFORMATION")
+                .order_by(core.ApplicationAction.created_at)
+                .all()
+            )
+            if fi_request_actions:
+                first_information_request = fi_request_actions.pop(0)
+                paired_actions.append(
+                    (
+                        first_information_request.created_at,
+                        application.lender_started_at,
+                    )
+                )
+
             msme_upload_actions = (
                 session.query(core.ApplicationAction)
                 .filter(core.ApplicationAction.application_id == application.id)
@@ -38,29 +59,24 @@ def SLA_overdue_applications():
                 .all()
             )
 
-            fi_request_actions = (
-                session.query(core.ApplicationAction)
-                .filter(core.ApplicationAction.application_id == application.id)
-                .filter(core.ApplicationAction.type == "FI_REQUEST_INFORMATION")
-                .order_by(core.ApplicationAction.created_at)
-                .all()
-            )
-
-            paired_actions = []
             for msme_upload_action in msme_upload_actions:
-                for fi_request_action in fi_request_actions:
-                    if fi_request_action.created_at > msme_upload_action.created_at:
-                        paired_actions.append((msme_upload_action, fi_request_action))
-                        break
+                if not fi_request_actions:
+                    current_dt = datetime.now(application.created_at.tzinfo)
+                    paired_actions.append((current_dt, msme_upload_action.created_at))
+                    break
+                else:
+                    fi_request_action = fi_request_actions.pop(0)
+                    paired_actions.append(
+                        (fi_request_action.created_at, msme_upload_action.created_at)
+                    )
 
             days_passed = 0
-            for msme_upload_action, fi_request_action in paired_actions:
-                days_passed += (
-                    fi_request_action.created_at - msme_upload_action.created_at
-                ).days
+            for fi_request_action, msme_upload_action in paired_actions:
+                days_passed += (fi_request_action - msme_upload_action).days
 
             days_passed = round(days_passed)
             application.completed_in_days = days_passed
+
             if (
                 days_passed
                 > application.lender.sla_days
@@ -75,17 +91,22 @@ def SLA_overdue_applications():
                     ] = application.lender.name
                 overdue_lenders[application.lender.email_group]["count"] += 1
 
-        for email, lender_data in overdue_lenders.items():
-            name = lender_data.get("name")
-            count = lender_data.get("count")
+            for email, lender_data in overdue_lenders.items():
+                name = lender_data.get("name")
+                count = lender_data.get("count")
 
-            message_id = send_overdue_application_email(sesClient, name, email, count)
+                message_id = send_overdue_application_email(
+                    sesClient, name, email, count
+                )
 
-            create_message(
-                application, core.MessageType.OVERDUE_APPLICATION, session, message_id
-            )
+                create_message(
+                    application,
+                    core.MessageType.OVERDUE_APPLICATION,
+                    session,
+                    message_id,
+                )
 
-        session.commit()
+            session.commit()
 
 
 if __name__ == "__main__":
