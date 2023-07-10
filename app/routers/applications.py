@@ -574,8 +574,7 @@ async def start_application(
             session.query(core.Application).filter(core.Application.id == id).first()
         )
         utils.check_application_status(application, core.ApplicationStatus.SUBMITTED)
-        print(user)
-        print(application)
+
         if user.lender_id != application.lender_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

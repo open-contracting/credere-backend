@@ -446,7 +446,7 @@ def update_application_primary_email(application: core.Application, email: str) 
         )
     confirmation_email_token = generate_uuid(email)
     application.confirmation_email_token = f"{email}---{confirmation_email_token}"
-    print(application.confirmation_email_token)
+
     application.pending_email_confirmation = True
 
     return confirmation_email_token
