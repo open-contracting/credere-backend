@@ -7,10 +7,8 @@ from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
 from app.schema import core
-from app.utils.email_utility import (
-    send_overdue_application_email_to_OCP,
-    send_overdue_application_email_to_FI,
-)
+from app.utils.email_utility import (send_overdue_application_email_to_FI,
+                                     send_overdue_application_email_to_OCP)
 
 from . import application_utils
 
