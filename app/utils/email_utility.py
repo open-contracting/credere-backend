@@ -128,7 +128,7 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
 
     data = {
         **generate_common_data(),
-        "F1": lender_name,
+        "FI": lender_name,
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
