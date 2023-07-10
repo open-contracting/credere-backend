@@ -32,6 +32,11 @@ def send_reminders():
     background_processes.send_reminder.send_reminders()
 
 
+@app.command()
+def update_statistics():
+    background_processes.update_statistic.update_statistics()
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
