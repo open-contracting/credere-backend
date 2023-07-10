@@ -7,8 +7,7 @@ from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
 from app.schema import core
-from app.utils.email_utility import (send_overdue_application_email_to_FI,
-                                     send_overdue_application_email_to_OCP)
+from app.utils import email_utility
 
 from . import application_utils
 
@@ -108,7 +107,7 @@ def SLA_overdue_applications():
                     overdue_lenders[application.lender.email_group]["notify_OCP"] = True
                     application.overdued_at = current_dt
 
-                    message_id = send_overdue_application_email_to_OCP(
+                    message_id = email_utility.send_overdue_application_email_to_OCP(
                         sesClient,
                         application.lender.name,
                     )
@@ -125,16 +124,16 @@ def SLA_overdue_applications():
         for email, lender_data in overdue_lenders.items():
             name = lender_data.get("name")
             count = lender_data.get("count")
-        #     message_id = send_overdue_application_email_to_FI(
-        #         sesClient, name, email, count
-        #     )
+            message_id = email_utility.send_overdue_application_email_to_FI(
+                sesClient, name, email, count
+            )
 
-        #     create_message(
-        #         application,
-        #         core.MessageType.OVERDUE_APPLICATION,
-        #         session,
-        #         message_id,
-        #     )
+            create_message(
+                application,
+                core.MessageType.OVERDUE_APPLICATION,
+                session,
+                message_id,
+            )
 
 
 if __name__ == "__main__":
