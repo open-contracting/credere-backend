@@ -7,6 +7,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
+from app.background_processes import application_utils
 from app.background_processes.fetcher import fetch_previous_awards
 from app.core.settings import app_settings
 from app.schema import api as ApiSchema
@@ -88,7 +89,9 @@ async def complete_application(
             application, core.ApplicationStatus.CONTRACT_UPLOADED
         )
         utils.complete_application(application, payload.disbursed_final_amount)
-
+        application.completed_in_days = application_utils.get_application_days_passed(
+            application, session
+        )
         utils.create_application_action(
             session,
             user.id,
