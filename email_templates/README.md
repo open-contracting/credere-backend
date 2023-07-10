@@ -81,7 +81,7 @@ aws ses send-templated-email -cli-input-json file:///home//xxxx.json --profile c
   "Source": "Credere_mail_test <credere@noreply.open-contracting.org>",
   "Template": "credere-AccessToCreditSchemeForMSMEs",
   "Destination": {
-    "ToAddresses": ["test@gmail.com"]
+    "ToAddresses": ["credereadmin@open-contracting.org"]
   },
   "TemplateData": "{\"AWARD_SUPPLIER_NAME\": \"VENDOR XX\", \"TENDER_TITLE\": \"FOOD PROVIDER\""}"
 }

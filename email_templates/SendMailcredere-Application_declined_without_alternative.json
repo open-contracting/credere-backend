@@ -1,8 +1,8 @@
 {
-  "Source": "Credere_mail_test <adrian.martinez@willdom.com>",
+  "Source": "Credere_mail_test <credereadmin@open-contracting.org>",
   "Template": "credere-ApplicationDeclinedWithoutAlternativeOption",
   "Destination": {
-    "ToAddresses": ["adrian.martinez@willdom.com"]
+    "ToAddresses": ["credereadmin@open-contracting.org"]
   },
-  "TemplateData": "{\"FI\": \"Bank XX\", \"AWARD_SUPPLIER_NAME\": \"PROVEEDOR XX\", \"LINK-TO-WEB-VERSION\": \"www.google.com\", \"OCP_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/logoocp.jpg\", \"TWITTER_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/twiterlogo.png\", \"FB_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/facebook.png\", \"LINK_LOGO\": \"https://adrian-personal.s3.sa-east-1.amazonaws.com/link.png\", \"TWITTER_LINK\": \"www.google.com\", \"FACEBOOK_LINK\": \"www.google.com\", \"LINK_LINK\": \"www.google.com\"}"
+  "TemplateData": "{\"FI\": \"Bank XX\", \"AWARD_SUPPLIER_NAME\": \"PROVEEDOR XX\", \"LINK-TO-WEB-VERSION\": \"www.google.com\", \"OCP_LOGO\": \"http://ocp22.open-contracting.org/images/logoocp.jpg\", \"TWITTER_LOGO\": \"http://ocp22.open-contracting.org/images/twiterlogo.png\", \"FB_LOGO\": \"http://ocp22.open-contracting.org/images/facebook.png\", \"LINK_LOGO\": \"http://ocp22.open-contracting.org/images/link.png\", \"TWITTER_LINK\": \"www.google.com\", \"FACEBOOK_LINK\": \"www.google.com\", \"LINK_LINK\": \"www.google.com\"}"
 }
