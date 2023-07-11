@@ -396,14 +396,18 @@ def send_copied_application_notification_to_sme(ses, application):
     images_base_url = get_images_base_url()
     data = {
         **generate_common_data(),
-        "LOGIN_URL": app_settings.frontend_url + "/" + application.uuid,
+        "LOGIN_URL": app_settings.frontend_url
+        + "/application/"
+        + application.uuid
+        + "/intro",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    ses.send_templated_email(
+    response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
         # must be changed to a new template once it is created
         Template=templates["NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
+    return response.get("MessageId")

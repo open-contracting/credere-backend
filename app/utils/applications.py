@@ -535,29 +535,18 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
     return document
 
 
-def copy_documents(
-    application: core.Application, new_application: core.Application, session: Session
-):
-    for borrower_document in application.borrower_documents:
+def copy_documents(application: core.Application, documents: dict, session: Session):
+    for document in documents:
         data = {
-            "application_id": new_application.id,
-            "type": borrower_document.type,
-            "name": borrower_document.name,
-            "file": borrower_document.file,
+            "application_id": application.id,
+            "type": document.type,
+            "name": document.name,
+            "file": document.file,
         }
         new_borrower_document = core.BorrowerDocument(**data)
         session.add(new_borrower_document)
         session.flush()
-        new_application.borrower_documents.append(new_borrower_document)
-
-
-import random
-import string
-
-
-def generate_random_word(length):
-    letters = string.ascii_lowercase
-    return "".join(random.choice(letters) for _ in range(length))
+        application.borrower_documents.append(new_borrower_document)
 
 
 def copy_application(
@@ -566,7 +555,7 @@ def copy_application(
     try:
         data = {
             "award_id": application.award_id,
-            "uuid": generate_uuid(generate_random_word(10)),
+            "uuid": generate_uuid(application.uuid),
             "primary_email": application.primary_email,
             "status": core.ApplicationStatus.ACCEPTED,
             "award_borrower_identifier": application.award_borrower_identifier,
@@ -576,10 +565,55 @@ def copy_application(
         new_application = core.Application(**data)
         session.add(new_application)
         session.flush()
-        copy_documents(application, new_application, session)
         return new_application
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This application was copied already",
+            detail=f"There was a problem copying the application.{e}",
         )
+
+
+def get_previous_lenders(award_borrower_identifier: str, session: Session):
+    lender_ids = (
+        session.query(core.Application.lender_id)
+        .filter(core.Application.award_borrower_identifier == award_borrower_identifier)
+        .filter(core.Application.status == "REJECTED")
+        .distinct()
+        .all()
+    )
+
+    cleaned_lender_ids = [
+        lender_id for (lender_id,) in lender_ids if lender_id is not None
+    ]
+
+    return cleaned_lender_ids
+
+
+def get_previous_documents(application: core.Application, session: Session):
+    document_types = application.credit_product.required_document_types
+    document_types_list = [key for key, value in document_types.items() if value]
+
+    lastest_application_id = (
+        session.query(core.Application.id)
+        .filter(
+            core.Application.status == "REJECTED",
+            core.Application.award_borrower_identifier
+            == application.award_borrower_identifier,
+        )
+        .order_by(core.Application.created_at.desc())
+        .first()
+    )
+    if not lastest_application_id:
+        return
+
+    documents = (
+        session.query(core.BorrowerDocument)
+        .filter(
+            core.BorrowerDocument.application_id == lastest_application_id[0],
+            core.BorrowerDocument.type.in_(document_types_list),
+        )
+        .all()
+    )
+
+    copy_documents(application, documents, session)

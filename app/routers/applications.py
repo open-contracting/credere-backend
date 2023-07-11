@@ -665,6 +665,10 @@ async def credit_product_options(
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
+
+        previous_lenders = utils.get_previous_lenders(
+            application.award_borrower_identifier, session
+        )
         utils.check_is_application_expired(application)
         utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
 
@@ -678,6 +682,7 @@ async def credit_product_options(
                     core.CreditProduct.borrower_size == payload.borrower_size,
                     core.CreditProduct.lower_limit <= payload.amount_requested,
                     core.CreditProduct.upper_limit >= payload.amount_requested,
+                    ~core.Lender.id.in_(previous_lenders),
                 )
             )
             .all()
@@ -693,6 +698,7 @@ async def credit_product_options(
                     core.CreditProduct.borrower_size == payload.borrower_size,
                     core.CreditProduct.lower_limit <= payload.amount_requested,
                     core.CreditProduct.upper_limit >= payload.amount_requested,
+                    ~core.Lender.id.in_(previous_lenders),
                 )
             )
             .all()
@@ -726,6 +732,7 @@ async def select_credit_product(
 
         application.borrower.size = payload.borrower_size
         application.borrower.sector = payload.sector
+        utils.get_previous_documents(application, session)
 
         utils.create_application_action(
             session,
@@ -794,7 +801,7 @@ async def confirm_credit_product(
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
         utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
-
+        # verificar si existe una app anterior y copiar los documentos necesarios solamente
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1075,11 +1082,11 @@ async def decline_feedback(
 
 
 @router.post(
-    "/applications/copy",
+    "/applications/find-alternative-credit-option",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=ApiSchema.ApplicationResponse,
 )
-async def decline_feedback(
+async def find_alternative_credit_option(
     payload: ApiSchema.ApplicationBase,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
@@ -1088,7 +1095,29 @@ async def decline_feedback(
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_application_status(application, core.ApplicationStatus.REJECTED)
         new_application = utils.copy_application(application, session)
+        message_id = client.send_copied_application_notifications(new_application)
 
-        client.send_copied_application_notifications(application)
+        utils.create_message(
+            new_application, core.MessageType.APPROVED_APPLICATION, session, message_id
+        )
 
-        return new_application
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.COPIED_APPLICATION,
+            payload,
+        )
+        utils.create_application_action(
+            session,
+            None,
+            new_application.id,
+            core.ApplicationActionType.APPLICATION_COPIED_FROM,
+            payload,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=new_application,
+            borrower=new_application.borrower,
+            award=new_application.award,
+        )
