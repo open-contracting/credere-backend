@@ -1072,3 +1072,23 @@ async def decline_feedback(
             borrower=application.borrower,
             award=application.award,
         )
+
+
+@router.post(
+    "/applications/copy",
+    tags=["applications"],
+    response_model=core.ApplicationWithRelations,
+)
+async def decline_feedback(
+    payload: ApiSchema.ApplicationBase,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_application_status(application, core.ApplicationStatus.REJECTED)
+        new_application = utils.copy_application(application, session)
+
+        client.send_copied_application_notifications(application)
+
+        return new_application

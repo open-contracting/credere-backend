@@ -533,3 +533,53 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
             detail="Document not found",
         )
     return document
+
+
+def copy_documents(
+    application: core.Application, new_application: core.Application, session: Session
+):
+    for borrower_document in application.borrower_documents:
+        data = {
+            "application_id": new_application.id,
+            "type": borrower_document.type,
+            "name": borrower_document.name,
+            "file": borrower_document.file,
+        }
+        new_borrower_document = core.BorrowerDocument(**data)
+        session.add(new_borrower_document)
+        session.flush()
+        new_application.borrower_documents.append(new_borrower_document)
+
+
+import random
+import string
+
+
+def generate_random_word(length):
+    letters = string.ascii_lowercase
+    return "".join(random.choice(letters) for _ in range(length))
+
+
+def copy_application(
+    application: core.Application, session: Session
+) -> core.Application:
+    try:
+        data = {
+            "award_id": application.award_id,
+            "uuid": generate_uuid(generate_random_word(10)),
+            "primary_email": application.primary_email,
+            "status": core.ApplicationStatus.ACCEPTED,
+            "award_borrower_identifier": application.award_borrower_identifier,
+            "borrower_id": application.borrower.id,
+            "borrower_accepted_at": datetime.now(application.created_at.tzinfo),
+        }
+        new_application = core.Application(**data)
+        session.add(new_application)
+        session.flush()
+        copy_documents(application, new_application, session)
+        return new_application
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This application was copied already",
+        )
