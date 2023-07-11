@@ -732,7 +732,6 @@ async def select_credit_product(
 
         application.borrower.size = payload.borrower_size
         application.borrower.sector = payload.sector
-        utils.get_previous_documents(application, session)
 
         utils.create_application_action(
             session,
@@ -801,7 +800,7 @@ async def confirm_credit_product(
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
         utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
-        # verificar si existe una app anterior y copiar los documentos necesarios solamente
+
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -835,7 +834,7 @@ async def confirm_credit_product(
         )
 
         application.pending_documents = True
-
+        utils.get_previous_documents(application, session)
         utils.create_application_action(
             session,
             None,
