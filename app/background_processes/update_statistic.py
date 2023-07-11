@@ -12,7 +12,7 @@ get_statistics = statistics_utils.get_general_statistics
 def update_statistics():
     with contextmanager(get_db)() as session:
         ocp_stats = (get_statistics(session, None, None, None),)
-        ocp_stats_date_test = get_statistics(session, "2022-01-01", "2022-12-31")
+        ocp_stats_date_test = get_statistics(session, "2022-01-01", "2022-12-31", 2)
         # fi_stats = get_fi_statistics(session)
         # fi_stats = get_fi_statistics(session, "2022-01-01", "2022-12-31")
         logging.info(ocp_stats)
