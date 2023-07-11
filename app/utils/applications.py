@@ -574,7 +574,7 @@ def copy_application(
         )
 
 
-def get_previous_lenders(award_borrower_identifier: str, session: Session):
+def get_previous_lenders(award_borrower_identifier: str, session: Session) -> List[int]:
     lender_ids = (
         session.query(core.Application.lender_id)
         .filter(core.Application.award_borrower_identifier == award_borrower_identifier)
@@ -582,7 +582,8 @@ def get_previous_lenders(award_borrower_identifier: str, session: Session):
         .distinct()
         .all()
     )
-
+    if not lender_ids:
+        return []
     cleaned_lender_ids = [
         lender_id for (lender_id,) in lender_ids if lender_id is not None
     ]
