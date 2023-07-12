@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import Integer, and_, func, or_
+from sqlalchemy import Integer, and_, distinct, func, or_, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.schema.core import Application, ApplicationStatus
+from app.schema.core import Application, ApplicationStatus, Borrower
 
 
 def get_general_statistics(session, start_date=None, end_date=None, lender_id=None):
@@ -175,7 +175,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     return general_statistics
 
 
-def get_count_msme_opt_in(session):
+def get_msme_opt_in_stats(session):
     try:
         # opt in--------
         opt_in_query = session.query(Application).filter(
@@ -184,9 +184,90 @@ def get_count_msme_opt_in(session):
             )
         )
 
+        # opt in %--------
+        opt_in_percentage = (
+            session.query(Application)
+            .filter(Application.borrower_accepted_at.isnot(None))
+            .count()
+            / session.query(Application).count()
+        ) * 100
+
         opt_in_query_count = opt_in_query.count()
+
+        # opt proportion by sector %--------
+        # Calculate total submitted application count
+        total_submitted_application_count = (
+            session.query(Application)
+            .filter(Application.borrower_submitted_at.isnot(None))
+            .count()
+        )
+        print(total_submitted_application_count)
+        sectors = (
+            session.query(
+                Borrower.sector, func.count(distinct(Application.id)).label("count")
+            )
+            .join(Application, Borrower.id == Application.borrower_id)
+            .filter(Application.borrower_accepted_at.isnot(None))
+            .group_by(Borrower.sector)
+            .all()
+        )
+
+        sector_statistics = {}
+        for sector, count in sectors:
+            sector_statistics[sector] = round(
+                count / total_submitted_application_count * 100
+            )
+
+        # Count of Declined reasons
+        declined_applications = session.query(Application).filter(
+            Application.borrower_declined_at.isnot(None)
+        )
+
+        # Count occurrences for each case
+        dont_need_access_credit_count = declined_applications.filter(
+            text(
+                "(borrower_declined_preferences_data->>'dont_need_access_credit')::boolean is True"
+            )
+        ).count()
+
+        already_have_acredit_count = declined_applications.filter(
+            text(
+                "(borrower_declined_preferences_data->>'already_have_acredit')::boolean is True"
+            )
+        ).count()
+
+        preffer_to_go_to_bank_count = declined_applications.filter(
+            text(
+                "(borrower_declined_preferences_data->>'preffer_to_go_to_bank')::boolean is True"
+            )
+        ).count()
+
+        dont_want_access_credit_count = declined_applications.filter(
+            text(
+                "(borrower_declined_preferences_data->>'dont_want_access_credit')::boolean is True"
+            )
+        ).count()
+
+        other_count = declined_applications.filter(
+            text("(borrower_declined_preferences_data->>'other')::boolean is True")
+        ).count()
+
+        rejected_reasons_count_by_reason = {
+            "dont_need_access_credit_count": dont_need_access_credit_count,
+            "already_have_acredit_count": already_have_acredit_count,
+            "preffer_to_go_to_bank_count": preffer_to_go_to_bank_count,
+            "dont_want_access_credit_count": dont_want_access_credit_count,
+            "other_count": other_count,
+        }
+
+        opt_in_statistics = {
+            "opt_in_query_count": opt_in_query_count,
+            "opt_in_percentage": opt_in_percentage,
+            "sector_statistics": sector_statistics,
+            "rejected_reasons_count_by_reason": rejected_reasons_count_by_reason,
+        }
 
     except SQLAlchemyError as e:
         raise e
 
-    return opt_in_query_count
+    return opt_in_statistics
