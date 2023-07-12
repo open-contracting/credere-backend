@@ -143,6 +143,8 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
             and_(
                 Application.created_at >= start_date,
                 Application.created_at <= end_date,
+                # OJO PENDIENTE CONFIRMAR SI SE VA A PONER 0 EN CASO DE QUE NO SE COMPLETE NADA O SE VA DEJAR NULL
+                # SI SE DEJA NULL TENGO QUE CAMBIAR ESTE QUERY
                 Application.repayment_years.isnot(None),
                 Application.repayment_months.isnot(None),
             )
@@ -173,75 +175,18 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     return general_statistics
 
 
-# def get_fi_statistics(session, start_date="2023-01-01", end_date=datetime.now()):
-#     try:
-#         # Querys for FI user
-#         # creo que deberia se todos los estados menos pending
-#         applications_received_by_lender = (
-#             session.query(Application.lender_id, func.count(Application.lender_id))
-#             .filter(
-#                 and_(
-#                     Application.created_at >= start_date,
-#                     Application.created_at <= end_date,
-#                     Application.borrower_submitted_at.isnot(None),
-#                 )
-#             )
-#             .group_by(Application.lender_id)
-#             .all()
-#         )
-#         applications_approved_by_lender = (
-#             session.query(Application.lender_id, func.count(Application.lender_id))
-#             .filter(
-#                 and_(
-#                     Application.created_at >= start_date,
-#                     Application.created_at <= end_date,
-#                     or_(
-#                         Application.status == ApplicationStatus.APPROVED,
-#                     ),
-#                 )
-#             )
-#             .group_by(Application.lender_id)
-#             .all()
-#         )
-#         applications_rejected_by_lender = (
-#             session.query(Application.lender_id, func.count(Application.lender_id))
-#             .filter(
-#                 and_(
-#                     Application.created_at >= start_date,
-#                     Application.created_at <= end_date,
-#                     or_(
-#                         Application.status == ApplicationStatus.APPROVED,
-#                     ),
-#                 )
-#             )
-#             .group_by(Application.lender_id)
-#             .all()
-#         )
-#         applications_waiting_for_information_by_lender = (
-#             session.query(Application.lender_id, func.count(Application.lender_id))
-#             .filter(
-#                 and_(
-#                     Application.created_at >= start_date,
-#                     Application.created_at <= end_date,
-#                     or_(
-#                         Application.status == ApplicationStatus.INFORMATION_REQUESTED,
-#                     ),
-#                 )
-#             )
-#             .group_by(Application.lender_id)
-#             .all()
-#         )
-#         fi_statistics = {
-#             "applications_received_by_lender": dict(applications_received_by_lender),
-#             "applications_approved_by_lender": dict(applications_approved_by_lender),
-#             "applications_rejected_by_lender": dict(applications_rejected_by_lender),
-#             "applications_waiting_for_information_by_lender": dict(
-#                 applications_waiting_for_information_by_lender
-#             )
-#             if applications_received_by_lender
-#             else {},
-#         }
-#     except SQLAlchemyError as e:
-#         raise e
+def get_count_msme_opt_in(session):
+    try:
+        # opt in--------
+        opt_in_query = session.query(Application).filter(
+            and_(
+                Application.borrower_accepted_at.isnot(None),
+            )
+        )
 
-# return fi_statistics
+        opt_in_query_count = opt_in_query.count()
+
+    except SQLAlchemyError as e:
+        raise e
+
+    return opt_in_query_count
