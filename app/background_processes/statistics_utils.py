@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import and_, func, or_
+from sqlalchemy import Integer, and_, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.schema.core import Application, ApplicationStatus
@@ -134,6 +134,27 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
 
         average_amount_requested = average_amount_requested_query.scalar()
 
+        # Average Repayment Period
+        average_repayment_period_query = session.query(
+            func.avg(
+                Application.repayment_years * 12 + Application.repayment_months
+            ).cast(Integer)
+        ).filter(
+            and_(
+                Application.created_at >= start_date,
+                Application.created_at <= end_date,
+                Application.repayment_years.isnot(None),
+                Application.repayment_months.isnot(None),
+            )
+        )
+
+        if lender_id is not None:
+            average_repayment_period_query = average_repayment_period_query.filter(
+                Application.lender_id == lender_id
+            )
+
+        average_repayment_period = average_repayment_period_query.scalar()
+
         general_statistics = {
             "applications_received_count": applications_received_count,
             "applications_approved_count": applications_approved_count,
@@ -143,6 +164,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
             "applications_with_credit_disbursed_count": applications_with_credit_disbursed_count,
             "proportion_of_disbursed": proportion_of_disbursed,
             "average_amount_requested": average_amount_requested,
+            "average_repayment_period": average_repayment_period,
         }
 
     except SQLAlchemyError as e:
