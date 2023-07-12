@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.schema.core import Application, ApplicationStatus  # noqa: F401 # isort:skip
 from app.schema.core import Borrower, CreditProduct  # noqa: F401 # isort:skip
-from app.schema.core import CreditType  # noqa: F401 # isort:skip
+from app.schema.core import CreditType, Lender  # noqa: F401 # isort:skip
 
 
 def get_general_statistics(session, start_date=None, end_date=None, lender_id=None):
@@ -210,7 +210,6 @@ def get_msme_opt_in_stats(session):
             .filter(Application.borrower_submitted_at.isnot(None))
             .count()
         )
-        print(total_submitted_application_count)
         sectors = (
             session.query(
                 Borrower.sector, func.count(distinct(Application.id)).label("count")
@@ -280,3 +279,39 @@ def get_msme_opt_in_stats(session):
         raise e
 
     return opt_in_statistics
+
+
+def get_proportion_of_msme_selecting_current_fi(session, lender_id):
+    try:
+        total_submitted_applications_count = (
+            session.query(Application)
+            .filter(Application.borrower_submitted_at.isnot(None))
+            .count()
+        )
+
+        # Number of applications submitted requesting the specified lender
+        applications_requesting_lender_query_count = (
+            session.query(Application)
+            .filter(
+                and_(
+                    Application.borrower_submitted_at.isnot(None),
+                    Application.lender_id == lender_id,
+                )
+            )
+            .count()
+        )
+        print(applications_requesting_lender_query_count)
+
+        # Calculate the proportion
+        if total_submitted_applications_count == 0:
+            msme_selecting_current_fi = 0
+        else:
+            msme_selecting_current_fi = (
+                applications_requesting_lender_query_count
+                / total_submitted_applications_count
+            ) * 100
+
+    except SQLAlchemyError as e:
+        raise e
+
+    return round(msme_selecting_current_fi)

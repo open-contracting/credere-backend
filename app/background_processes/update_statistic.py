@@ -7,6 +7,9 @@ from . import statistics_utils
 
 get_statistics = statistics_utils.get_general_statistics
 get_opt_in = statistics_utils.get_msme_opt_in_stats
+get_msme_selecting_current_fi = (
+    statistics_utils.get_proportion_of_msme_selecting_current_fi
+)
 
 
 def update_statistics():
@@ -17,6 +20,7 @@ def update_statistics():
         logging.info(ocp_stats)
         logging.info(ocp_stats_date_test)
         logging.info(opt_in_stats)
+        logging.info(get_msme_selecting_current_fi(session, 1))
         # logging.info(fi_stats)
         # try:
         #     # save to statistics DB
