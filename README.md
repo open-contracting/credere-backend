@@ -75,6 +75,8 @@ you can use .envtest as an example, it has the following keys:
 - DAYS_TO_CHANGE_TO_LAPSED -> the number of days to wait before changing the status of an application to 'Lapsed'
 - OCP_EMAIL_GROUP -> list of ocp users for notifications
 - MAX_FILE_SIZE_MB -> max file size allowed to be uploaded
+- PROGRESS_TO_REMIND_STARTED_APPLICATIONS -> % of days of lender SLA before an overdue reminder.
+for example a lender with a SLA of 10 days will receive the first overdue at 7 days mark
 
 You should configure the pre-commit for the repo one time
 
@@ -217,4 +219,10 @@ The command to send mail reminders is
 
 ```
 python -m app.commands send-reminders
+```
+
+The command to send overdue appliations emails to FI users is 
+
+```
+python -m app.commands sla-overdue-applications
 ```
