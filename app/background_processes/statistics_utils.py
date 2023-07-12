@@ -3,7 +3,9 @@ from datetime import datetime
 from sqlalchemy import Integer, and_, distinct, func, or_, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.schema.core import Application, ApplicationStatus, Borrower
+from app.schema.core import Application, ApplicationStatus  # noqa: F401 # isort:skip
+from app.schema.core import Borrower, CreditProduct  # noqa: F401 # isort:skip
+from app.schema.core import CreditType  # noqa: F401 # isort:skip
 
 
 def get_general_statistics(session, start_date=None, end_date=None, lender_id=None):
@@ -132,21 +134,28 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
                 Application.lender_id == lender_id
             )
 
-        average_amount_requested = average_amount_requested_query.scalar()
+        average_amount_requested_result = average_amount_requested_query.scalar()
+        average_amount_requested = (
+            int(average_amount_requested_result)
+            if average_amount_requested_result is not None
+            else 0
+        )
 
         # Average Repayment Period
-        average_repayment_period_query = session.query(
-            func.avg(
-                Application.repayment_years * 12 + Application.repayment_months
-            ).cast(Integer)
-        ).filter(
-            and_(
-                Application.created_at >= start_date,
-                Application.created_at <= end_date,
-                # OJO PENDIENTE CONFIRMAR SI SE VA A PONER 0 EN CASO DE QUE NO SE COMPLETE NADA O SE VA DEJAR NULL
-                # SI SE DEJA NULL TENGO QUE CAMBIAR ESTE QUERY
-                Application.repayment_years.isnot(None),
-                Application.repayment_months.isnot(None),
+        average_repayment_period_query = (
+            session.query(
+                func.avg(
+                    Application.repayment_years * 12 + Application.repayment_months
+                ).cast(Integer)
+            )
+            .join(CreditProduct, Application.credit_product_id == CreditProduct.id)
+            .filter(
+                and_(
+                    Application.created_at >= start_date,
+                    Application.created_at <= end_date,
+                    Application.borrower_submitted_at.isnot(None),
+                    CreditProduct.type == CreditType.LOAN,
+                )
             )
         )
 
