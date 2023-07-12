@@ -378,7 +378,7 @@ def send_overdue_application_email_to_OCP(ses, name: str):
     data = {
         **generate_common_data(),
         "USER": name,
-        "F1": name,  # this should be FI not F1
+        "FI": name,
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
