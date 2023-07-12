@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     reminder_days_before_expiration: int = config_env.get(
         "REMINDER_DAYS_BEFORE_EXPIRATION", 3
     )
+    environment: str = config_env.get("ENVIRONMENT", "developtment")
 
     class Config:
         env_file = ".env"

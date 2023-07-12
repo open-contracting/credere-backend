@@ -7,6 +7,12 @@ from app.core.settings import app_settings
 from app.schema.core import Application
 
 
+def set_destionations(email: str):
+    if app_settings.environment == "development":
+        return app_settings.test_mail_receiver
+    return email
+
+
 def generate_common_data():
     return {
         "LINK-TO-WEB-VERSION": app_settings.frontend_url,
@@ -48,10 +54,11 @@ def send_application_approved_email(ses, application: Application):
         "UPLOAD_CONTRACT_IMAGE_LINK": images_base_url + "/uploadContract.png",
     }
 
+    destinations = set_destionations(application.primary_email)
+
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # change to proper email in production
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["APPLICATION_APPROVED"],
         TemplateData=json.dumps(data),
     )
@@ -73,9 +80,11 @@ def send_mail_to_new_user(ses, name, username, temp_password):
         + quote(username),
     }
 
+    destinations = set_destionations(username)
+
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [username]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["NEW_USER_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -91,10 +100,11 @@ def send_upload_contract_notification_to_FI(ses, application):
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
+    destinations = set_destionations(application.lender.email_group)
+
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # change to email in production
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["NEW_CONTRACT_SUBMISSION"],
         TemplateData=json.dumps(data),
     )
@@ -109,10 +119,11 @@ def send_upload_contract_confirmation(ses, application):
         "BUYER_NAME": application.award.buyer_name,
     }
 
+    destinations = set_destionations(application.primary_email)
+
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # change to email in production
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["CONTRACT_UPLOAD_CONFIRMATION_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -142,17 +153,18 @@ def send_new_email_confirmation(
         "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": images_base_url + "/confirmemailchange.png",
     }
 
+    new_email_address = set_destionations(new_email)
+    old_email_address = set_destionations(old_email)
+
     message = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # line below needs to be changed to new_email in production to send email to proper address
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [new_email_address]},
         Template=templates["EMAIL_CHANGE_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # line below needs to be changed to old_email in production to send email to proper address
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [old_email_address]},
         Template=templates["EMAIL_CHANGE_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -173,10 +185,11 @@ def send_mail_to_reset_password(ses, username: str, temp_password: str):
         + quote(username),
         "RESET_PASSWORD_IMAGE": images_base_url + "/ResetPassword.png",
     }
+    destinations = set_destionations(username)
 
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [username]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["RESET_PASSWORD_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -202,11 +215,11 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
         + "/decline",
     }
 
+    destination = set_destionations(email)
+
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={
-            "ToAddresses": [app_settings.test_mail_receiver]
-        },  # change to email in prod
+        Destination={"ToAddresses": [destination]},
         Template=templates["ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -231,16 +244,16 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         + quote(uuid)
         + "/decline",
     }
-    # change to email in prod
+
+    destination = set_destionations(email)
+
     logging.info(
-        f"NON PROD - Email to: {email} sent to {app_settings.test_mail_receiver}"
+        f"{app_settings.environment} - Email to: {email} sent to {destination}"
     )
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={
-            "ToAddresses": [app_settings.test_mail_receiver]
-        },  # change to email in prod
+        Destination={"ToAddresses": [destination]},
         Template=templates["INTRO_REMINDER_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -269,16 +282,14 @@ def send_mail_submit_reminder(
         + quote(uuid)
         + "/decline",
     }
-    # change to email in prod
+    destination = set_destionations(email)
     logging.info(
-        f"NON PROD - Email to: {email} sent to {app_settings.test_mail_receiver}"
+        f"{app_settings.environment} - Email to: {email} sent to {destination}"
     )
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={
-            "ToAddresses": [app_settings.test_mail_receiver]
-        },  # change to email in prod
+        Destination={"ToAddresses": [destination]},
         Template=templates["APPLICATION_REMINDER_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -296,10 +307,10 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
-
+    destination = set_destionations(lender_email_group)
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [lender_email_group]},
+        Destination={"ToAddresses": [destination]},
         Template=templates["NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -315,10 +326,11 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
+    destination = set_destionations(ocp_email_group)
 
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [ocp_email_group]},
+        Destination={"ToAddresses": [destination]},
         Template=templates["NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -339,10 +351,11 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
         "LOGIN_IMAGE_LINK": images_base_url + "/uploadDocument.png",
     }
 
+    destination = set_destionations(sme_email)
+
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # replace with sme_email on production
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destination]},
         Template=templates["REQUEST_SME_DATA_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -361,11 +374,11 @@ def send_rejected_application_email(ses, application):
         + f"/application/{quote(application.uuid)}/find-alternative-credit",
         "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
     }
+    destination = set_destionations(application.primary_email)
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # replace with sme_email on production
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destination]},
         Template=templates["APPLICATION_DECLINED"],
         TemplateData=json.dumps(data),
     )
@@ -380,11 +393,11 @@ def send_rejected_application_email_without_alternatives(ses, application):
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
+    destination = set_destionations(application.primary_email)
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # replace with sme_email on production
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destination]},
         Template=templates["APPLICATION_DECLINED_WITHOUT_ALTERNATIVE"],
         TemplateData=json.dumps(data),
     )
