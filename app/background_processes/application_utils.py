@@ -320,7 +320,6 @@ def get_application_days_passed(application: core.Application, session: Session)
     for fi_request_action, msme_upload_action in paired_actions:
         days_passed += (fi_request_action - msme_upload_action).days
     days_passed = round(days_passed)
-    application.completed_in_days = days_passed
     return days_passed
 
 
@@ -336,20 +335,19 @@ def send_overdue_reminders(session: Session):
     for application in applications:
         with transaction_session(session):
             days_passed = get_application_days_passed(application, session)
-
             if (
                 days_passed
                 > application.lender.sla_days
                 * app_settings.progress_to_remind_started_applications
             ):
-                if "email" not in overdue_lenders[application.lender.email_group]:
-                    overdue_lenders[application.lender.email_group][
+                if "email" not in overdue_lenders[application.lender.id]:
+                    overdue_lenders[application.lender.id][
                         "email"
                     ] = application.lender.email_group
-                    overdue_lenders[application.lender.email_group][
+                    overdue_lenders[application.lender.id][
                         "name"
                     ] = application.lender.name
-                overdue_lenders[application.lender.email_group]["count"] += 1
+                overdue_lenders[application.lender.id]["count"] += 1
                 if days_passed > application.lender.sla_days:
                     current_dt = datetime.now(application.created_at.tzinfo)
                     application.overdued_at = current_dt
@@ -365,9 +363,10 @@ def send_overdue_reminders(session: Session):
                         message_id,
                     )
 
-    for email, lender_data in overdue_lenders.items():
+    for id, lender_data in overdue_lenders.items():
         name = lender_data.get("name")
         count = lender_data.get("count")
+        email = lender_data.get("email")
         message_id = email_utility.send_overdue_application_email_to_FI(
             sesClient, name, email, count
         )
