@@ -271,7 +271,10 @@ def get_application_days_passed(application: core.Application, session: Session)
     fi_request_actions = (
         session.query(core.ApplicationAction)
         .filter(core.ApplicationAction.application_id == application.id)
-        .filter(core.ApplicationAction.type == "FI_REQUEST_INFORMATION")
+        .filter(
+            core.ApplicationAction.type
+            == core.ApplicationActionType.FI_REQUEST_INFORMATION
+        )
         .order_by(core.ApplicationAction.created_at)
         .all()
     )
@@ -296,7 +299,8 @@ def get_application_days_passed(application: core.Application, session: Session)
         session.query(core.ApplicationAction)
         .filter(core.ApplicationAction.application_id == application.id)
         .filter(
-            core.ApplicationAction.type == "MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED"
+            core.ApplicationAction.type
+            == core.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED
         )
         .order_by(core.ApplicationAction.created_at)
         .all()
