@@ -23,9 +23,8 @@ def update_models_with_validation(payload, model):
 
 
 def sentry_filter_transactions(event, hint):
-    try:
-        data_url = event["breadcrumbs"]["values"][0]["data"]["url"]
-        if re.search(r"https://cognito-idp.*\.amazonaws\.com", data_url):
-            return None
-    except:
-        return event
+    data_url = event["breadcrumbs"]["values"][0]["data"]["url"] or None
+    if data_url and re.search(r"https://cognito-idp.*\.amazonaws\.com", data_url):
+        return None
+
+    return event
