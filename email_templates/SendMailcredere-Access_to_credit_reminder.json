@@ -1,0 +1,10 @@
+{
+  "Source": "Credere_mail_test <credereadmin@open-contracting.org>",
+  "Template": "credere-AccessToCreditSchemeReminder",
+  "Destination": {
+    "ToAddresses": [
+      "credereadmin@open-contracting.org"
+    ]
+  },
+  "TemplateData": "{\"AWARD_SUPPLIER_NAME\": \"PROVEEDOR XX\", \"TENDER_TITLE\": \"PROVISION_DE_COMIDA\", \"BUYER_NAME\": \"INSTITUCION PUBLICA XX\", \"FIND_OUT_MORE_URL\": \"www.google.com\", \"FIND_OUT_MORE_IMAGE_LINK\": \"http://ocp22.open-contracting.org/images/findoutmore.png\", \"REMOVE_ME_URL\": \"www.google.com\", \"REMOVE_ME_IMAGE_LINK\": \"http://ocp22.open-contracting.org/images/removeme.png\", \"LINK-TO-WEB-VERSION\": \"www.google.com\", \"OCP_LOGO\": \"http://ocp22.open-contracting.org/images/logoocp.jpg\", \"TWITTER_LOGO\": \"http://ocp22.open-contracting.org/images/twiterlogo.png\", \"FB_LOGO\": \"http://ocp22.open-contracting.org/images/facebook.png\", \"LINK_LOGO\": \"http://ocp22.open-contracting.org/images/link.png\", \"TWITTER_LINK\": \"www.google.com\", \"FACEBOOK_LINK\": \"www.google.com\", \"LINK_LINK\": \"www.google.com\"}"
+}

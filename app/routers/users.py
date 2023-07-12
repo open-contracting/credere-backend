@@ -2,41 +2,32 @@ import logging
 from typing import Union
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+import app.utils.users as utils
 from app.schema import api as ApiSchema
 from app.utils.verify_token import get_current_user
 
 from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
-from ..schema.core import BasicUser, SetupMFA, User
+from ..schema.core import BasicUser, SetupMFA, User, UserWithLender
+from ..utils.permissions import OCP_only
+
+from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
+from fastapi import HTTPException, Query, Response, status  # isort:skip # noqa
 
 router = APIRouter()
 
 
 @router.post("/users", tags=["users"], response_model=User)
+@OCP_only()
 async def create_user(
     payload: User,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
+    current_user: User = Depends(get_current_user),
 ):
-    with transaction_session(session):
-        try:
-            user = User(**payload.dict())
-
-            session.add(user)
-            cognitoResponse = client.admin_create_user(payload.email, payload.name)
-            user.external_id = cognitoResponse["User"]["Username"]
-
-            return user
-        except (client.exceptions().UsernameExistsException, IntegrityError) as e:
-            logging.error(e)
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Username already exists",
-            )
+    return utils.create_user(payload, session, client)
 
 
 @router.put(
@@ -205,17 +196,14 @@ def login_mfa(
     response_model=ApiSchema.ResponseBase,
 )
 def logout(
-    Authorization: str = Header(None),
+    authorization: str = Header(None),
     client: CognitoClient = Depends(get_cognito_client),
 ):
     try:
-        client.logout_user(Authorization)
+        access_token = authorization.split(" ")[1]
+        client.logout_user(access_token)
     except ClientError as e:
         logging.error(e)
-        # raise HTTPException(
-        #     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #     detail="There was an error trying to logout",
-        # )
 
     return ApiSchema.ResponseBase(detail="User logged out successfully")
 
@@ -228,7 +216,7 @@ def me(
     usernameFromToken: str = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    user = db.query(User).filter(User.email == usernameFromToken).first()
+    user = db.query(User).filter(User.external_id == usernameFromToken).first()
     return ApiSchema.UserResponse(user=user)
 
 
@@ -259,3 +247,32 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     return user
+
+
+@router.get("/users", tags=["users"], response_model=ApiSchema.UserListResponse)
+@OCP_only()
+async def get_all_users(
+    page: int = Query(0, ge=0),
+    page_size: int = Query(10, gt=0),
+    sort_field: str = Query("created_at"),
+    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    return utils.get_all_users(page, page_size, sort_field, sort_order, session)
+
+
+@router.put(
+    "/users/{id}",
+    tags=["users"],
+    response_model=UserWithLender,
+)
+@OCP_only()
+async def update_user(
+    id: int,
+    user: User,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        return utils.update_user(session, user, id)

@@ -68,14 +68,21 @@ class ApplicationActionType(Enum):
     APPLICATION_CALCULATOR_DATA_UPDATE = "APPLICATION_CALCULATOR_DATA_UPDATE"
     APPLICATION_CONFIRM_CREDIT_PRODUCT = "APPLICATION_CONFIRM_CREDIT_PRODUCT"
     FI_UPLOAD_COMPLIANCE = "FI_UPLOAD_COMPLIANCE"
+    FI_COMPLETE_APPLICATION = "FI_COMPLETE_APPLICATION"
     FI_DOWNLOAD_DOCUMENT = "FI_DOWNLOAD_DOCUMENT"
     FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
+    FI_START_APPLICATION = "FI_START_APPLICATION"
+    FI_REQUEST_INFORMATION = "FI_REQUEST_INFORMATION"
     OCP_DOWNLOAD_DOCUMENT = "OCP_DOWNLOAD_DOCUMENT"
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     MSME_UPLOAD_DOCUMENT = "MSME_UPLOAD_DOCUMENT"
+    MSME_UPLOAD_CONTRACT = "MSME_UPLOAD_CONTRACT"
     MSME_CHANGE_EMAIL = "MSME_CHANGE_EMAIL"
     MSME_CONFIRM_EMAIL = "MSME_CONFIRM_EMAIL"
+    MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED = (
+        "MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED"
+    )
     MSME_RETRY_APPLICATION = "MSME_RETRY_APPLICATION"
     DATA_VALIDATION_UPDATE = "DATA_VALIDATION_UPDATE"
     BORROWER_DOCUMENT_UPDATE = "BORROWER_DOCUMENT_UPDATE"
@@ -195,13 +202,13 @@ class ApplicationBase(SQLModel):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
-    confirmation_email_token: Optional[str] = Field(
-        index=True, nullable=True, default=""
-    )
     award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
     contract_amount_submitted: Optional[Decimal] = Field(
+        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
+    )
+    disbursed_final_amount: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
     amount_requested: Optional[Decimal] = Field(
@@ -255,6 +262,9 @@ class ApplicationBase(SQLModel):
     borrower_uploaded_contract_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
+    lender_completed_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
     completed_in_days: Optional[int] = Field(nullable=True)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -289,11 +299,17 @@ class ApplicationBase(SQLModel):
     )
 
 
+class ApplicationPrivate(ApplicationBase):
+    confirmation_email_token: Optional[str] = Field(
+        index=True, nullable=True, default=""
+    )
+
+
 class ApplicationRead(ApplicationBase):
     id: int
 
 
-class Application(ApplicationBase, table=True):
+class Application(ApplicationPrivate, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
         back_populates="application"
@@ -305,7 +321,7 @@ class Application(ApplicationBase, table=True):
     actions: Optional[List["ApplicationAction"]] = Relationship(
         back_populates="application"
     )
-    creditProduct: "CreditProduct" = Relationship()
+    credit_product: "CreditProduct" = Relationship()
 
 
 class BorrowerBase(SQLModel):
@@ -486,9 +502,8 @@ class Message(SQLModel, table=True):
     )
 
 
-class User(SQLModel, table=True):
+class UserBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    application_actions: List["ApplicationAction"] = Relationship(back_populates="user")
     type: UserType = Field(
         sa_column=Column(SAEnum(UserType, name="user_type")), default=UserType.FI
     )
@@ -499,7 +514,6 @@ class User(SQLModel, table=True):
     lender_id: Optional[int] = Field(
         default=None, foreign_key="lender.id", nullable=True
     )
-    lender: "Lender" = Relationship(back_populates="users")
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -511,6 +525,16 @@ class User(SQLModel, table=True):
 
     def is_OCP(self) -> bool:
         return self.type == UserType.OCP
+
+
+class UserWithLender(UserBase):
+    id: int
+    lender: Optional["LenderBase"] = None
+
+
+class User(UserBase, table=True):
+    application_actions: List["ApplicationAction"] = Relationship(back_populates="user")
+    lender: Optional["Lender"] = Relationship(back_populates="users")
 
 
 class ApplicationAction(SQLModel, table=True):
@@ -554,6 +578,7 @@ class ApplicationWithRelations(ApplicationRead):
     borrower: Optional["BorrowerBase"] = None
     award: Optional["AwardBase"] = None
     lender: Optional["LenderBase"] = None
+    credit_product: Optional["CreditProductBase"] = None
     borrower_documents: Optional[List[BorrowerDocumentBase]] = None
 
 

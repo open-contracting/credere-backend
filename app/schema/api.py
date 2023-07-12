@@ -1,11 +1,17 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel
 
 from app.schema import core
 from app.schema.core import User
+
+
+class ERROR_CODES(Enum):
+    BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
+    DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
 
 
 class BasePagination(BaseModel):
@@ -22,14 +28,8 @@ class LenderListResponse(BasePagination):
     items: List[core.Lender]
 
 
-class NewLender(BaseModel):
-    name: str
-    email_group: str
-    status: str
-    type: str
-    borrowed_type_preferences: Optional[dict]
-    limits_preference: Optional[dict]
-    sla_days: int
+class UserListResponse(BasePagination):
+    items: List[core.UserWithLender]
 
 
 class AwardUpdate(BaseModel):
@@ -51,6 +51,16 @@ class AwardUpdate(BaseModel):
     procurement_category: Optional[str]
 
 
+class LenderApprovedData(BaseModel):
+    compliant_checks_completed: bool
+    compliant_checks_passed: bool
+    additional_comments: Optional[str]
+
+
+class LenderReviewContract(BaseModel):
+    disbursed_final_amount: Optional[Decimal]
+
+
 class BorrowerUpdate(BaseModel):
     legal_name: Optional[str]
     email: Optional[str]
@@ -59,6 +69,16 @@ class BorrowerUpdate(BaseModel):
     type: Optional[str]
     sector: Optional[str]
     size: Optional[core.BorrowerSize]
+
+
+class UpdateDataField(BaseModel):
+    legal_name: Optional[bool]
+    email: Optional[bool]
+    address: Optional[bool]
+    legal_identifier: Optional[bool]
+    type: Optional[bool]
+    sector: Optional[bool]
+    size: Optional[bool]
 
 
 class ApplicationUpdate(BaseModel):
@@ -72,12 +92,20 @@ class ApplicationUpdate(BaseModel):
 
 
 class ApplicationResponse(BaseModel):
-    application: core.Application
+    application: core.ApplicationRead
     borrower: core.Borrower
     award: core.Award
     lender: Optional[core.Lender] = None
     documents: List[core.BorrowerDocumentBase] = []
     creditProduct: Optional[core.CreditProduct] = None
+
+
+class LenderRejectedApplication(BaseModel):
+    compliance_checks_failed: bool
+    poor_credit_history: bool
+    risk_of_fraud: bool
+    other: bool
+    other_reason: Optional[str]
 
 
 class ApplicationBase(BaseModel):
@@ -86,22 +114,10 @@ class ApplicationBase(BaseModel):
 
 class ConfirmNewEmail(ApplicationBase):
     confirmation_email_token: str
-    email: str
 
 
 class ChangeEmail(ApplicationBase):
-    old_email: str
     new_email: str
-
-
-class UpdateDataField(ApplicationBase):
-    borrower_identifier: Optional[bool]
-    legal_name: Optional[bool]
-    email: Optional[bool]
-    address: Optional[bool]
-    legal_identifier: Optional[bool]
-    type: Optional[bool]
-    source_data: Optional[bool]
 
 
 class VerifyBorrowerDocument(BaseModel):
@@ -124,6 +140,10 @@ class ApplicationSelectCreditProduct(ApplicationCreditOptions):
 class CreditProductListResponse(BaseModel):
     loans: List[core.CreditProductWithLender]
     credit_lines: List[core.CreditProductWithLender]
+
+
+class UploadContractConfirmation(ApplicationBase):
+    contract_amount_submitted: Optional[Decimal]
 
 
 class ApplicationEmailSme(BaseModel):

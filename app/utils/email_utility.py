@@ -4,6 +4,7 @@ from urllib.parse import quote
 
 from app.core.email_templates import templates
 from app.core.settings import app_settings
+from app.schema.core import Application
 
 
 def generate_common_data():
@@ -27,6 +28,33 @@ def get_images_base_url():
         images_base_url = f"{images_base_url}/{app_settings.images_lang_subpath}"
 
     return images_base_url
+
+
+def send_application_approved_email(ses, application: Application):
+    # todo refactor required when this function receives the user language
+
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+        "TENDER_TITLE": application.award.title,
+        "BUYER_NAME": application.award.buyer_name,
+        "UPLOAD_CONTRACT_URL": app_settings.frontend_url
+        + "/application/"
+        + quote(application.uuid)
+        + "/upload-contract",
+        "UPLOAD_CONTRACT_IMAGE_LINK": images_base_url + "/uploadContract.png",
+    }
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # change to proper email in production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=templates["APPLICATION_APPROVED"],
+        TemplateData=json.dumps(data),
+    )
 
 
 def send_mail_to_new_user(ses, name, username, temp_password):
@@ -59,20 +87,15 @@ def send_upload_contract_notification_to_FI(ses, application):
 
     data = {
         **generate_common_data(),
-        "FI": application.lender.name,
-        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-        "TENDER_TITLE": application.award.title,
-        "BUYER_NAME": application.award.buyer_name,
-        "UPLOAD_CONTRACT_URL": app_settings.frontend_url,
-        "UPLOAD_CONTRACT_IMAGE_LINK": images_base_url,
+        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         # change to email in production
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
-        # not the proper template, needs to be changed
-        Template=templates["UPLOAD_CONTRACT_TEMPLATE_NAME"],
+        Template=templates["NEW_CONTRACT_SUBMISSION"],
         TemplateData=json.dumps(data),
     )
 
@@ -105,8 +128,11 @@ def send_new_email_confirmation(
 ):
     images_base_url = get_images_base_url()
     CONFIRM_EMAIL_CHANGE_URL = (
-        f"{app_settings.frontend_url}/change-email/"
-        f"{application_uuid}/{confirmation_email_token}/{new_email}"
+        app_settings.frontend_url
+        + "/application/"
+        + quote(application_uuid)
+        + "/change-primary-email?token="
+        + quote(confirmation_email_token)
     )
     data = {
         **generate_common_data(),
@@ -285,7 +311,7 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
 
     data = {
         **generate_common_data(),
-        "F1": lender_name,
+        "FI": lender_name,
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
@@ -318,6 +344,48 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
         # replace with sme_email on production
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
         Template=templates["REQUEST_SME_DATA_TEMPLATE_NAME"],
+        TemplateData=json.dumps(data),
+    )
+    return response.get("MessageId")
+
+
+def send_rejected_application_email(ses, application):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+        "FIND_ALTENATIVE_URL": app_settings.frontend_url
+        + f"/application/{quote(application.uuid)}/find-alternative-credit",
+        "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
+    }
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # replace with sme_email on production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=templates["APPLICATION_DECLINED"],
+        TemplateData=json.dumps(data),
+    )
+    return response.get("MessageId")
+
+
+def send_rejected_application_email_without_alternatives(ses, application):
+    # todo refactor required when this function receives the user language
+
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+    }
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # replace with sme_email on production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=templates["APPLICATION_DECLINED_WITHOUT_ALTERNATIVE"],
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
