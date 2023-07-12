@@ -542,6 +542,7 @@ def copy_documents(application: core.Application, documents: dict, session: Sess
             "type": document.type,
             "name": document.name,
             "file": document.file,
+            "verified": False,
         }
         new_borrower_document = core.BorrowerDocument(**data)
         session.add(new_borrower_document)
