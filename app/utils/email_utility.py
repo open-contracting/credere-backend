@@ -362,6 +362,49 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
     return response.get("MessageId")
 
 
+def send_overdue_application_email_to_FI(ses, name: str, email: str, amount: int):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "USER": name,
+        "NUMBER_APPLICATIONS": amount,
+        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_URL": app_settings.frontend_url + "/login",
+    }
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # replace with email on production
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=templates["OVERDUE_APPLICATION_FI"],
+        TemplateData=json.dumps(data),
+    )
+    return response.get("MessageId")
+
+
+def send_overdue_application_email_to_OCP(ses, name: str):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+
+    data = {
+        **generate_common_data(),
+        "USER": name,
+        "FI": name,
+        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_URL": app_settings.frontend_url + "/login",
+    }
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={"ToAddresses": [app_settings.ocp_email_group]},
+        Template=templates["OVERDUE_APPLICATION_OCP_ADMIN"],
+        TemplateData=json.dumps(data),
+    )
+    return response.get("MessageId")
+
+
 def send_rejected_application_email(ses, application):
     # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()

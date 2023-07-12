@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     reminder_days_before_expiration: int = config_env.get(
         "REMINDER_DAYS_BEFORE_EXPIRATION", 3
     )
+
+    progress_to_remind_started_applications: float = config_env.get(
+        "PROGRESS_TO_REMIND_STARTED_APPLICATIONS", 0.7
+    )
     environment: str = config_env.get("ENVIRONMENT", "developtment")
 
     class Config:

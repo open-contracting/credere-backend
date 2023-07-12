@@ -7,6 +7,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
+from app.background_processes import application_utils
 from app.background_processes.fetcher import fetch_previous_awards
 from app.core.settings import app_settings
 from app.schema import api as ApiSchema
@@ -88,7 +89,9 @@ async def complete_application(
             application, core.ApplicationStatus.CONTRACT_UPLOADED
         )
         utils.complete_application(application, payload.disbursed_final_amount)
-
+        application.completed_in_days = application_utils.get_application_days_passed(
+            application, session
+        )
         utils.create_application_action(
             session,
             user.id,
@@ -915,13 +918,7 @@ async def email_sme(
         try:
             application = utils.get_application_by_id(id, session)
             utils.check_FI_user_permission(application, user)
-            utils.check_application_in_status(
-                application,
-                [
-                    core.ApplicationStatus.STARTED,
-                    core.ApplicationStatus.INFORMATION_REQUESTED,
-                ],
-            )
+            utils.check_application_status(application, core.ApplicationStatus.STARTED)
             application.status = core.ApplicationStatus.INFORMATION_REQUESTED
             current_time = datetime.now(application.created_at.tzinfo)
             application.information_requested_at = current_time
@@ -932,6 +929,14 @@ async def email_sme(
                 application.lender.name,
                 payload.message,
                 application.primary_email,
+            )
+
+            utils.create_application_action(
+                session,
+                user.id,
+                application.id,
+                core.ApplicationActionType.FI_REQUEST_INFORMATION,
+                payload,
             )
 
             new_message = core.Message(
@@ -971,9 +976,13 @@ async def complete_information_request(
         application.status = core.ApplicationStatus.STARTED
         application.pending_documents = False
 
-        # TODO add action
-        # TODO calculate days from information requested to complete
-        # and substrac these days from the days to complete
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
+            payload,
+        )
 
         return ApiSchema.ApplicationResponse(
             application=application,
