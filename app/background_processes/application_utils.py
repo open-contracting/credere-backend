@@ -1,4 +1,3 @@
-import logging
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -130,7 +129,6 @@ def get_dated_applications(session):
             )
             .all()
         )
-        logging.info(applications_to_remove_data)
     except SQLAlchemyError as e:
         raise e
 
@@ -171,7 +169,7 @@ def get_lapsed_applications(session):
             )
             .all()
         )
-        logging.info(applications_to_set_to_lapsed)
+
     except SQLAlchemyError as e:
         raise e
 
@@ -203,7 +201,7 @@ def get_applications_to_remind_intro():
                 )
                 .all()
             )
-            logging.info(users)
+
         except SQLAlchemyError as e:
             raise e
     return users or []
@@ -233,7 +231,7 @@ def get_applications_to_remind_submit():
                 )
                 .all()
             )
-            logging.info(users)
+
         except SQLAlchemyError as e:
             raise e
     return users or []
