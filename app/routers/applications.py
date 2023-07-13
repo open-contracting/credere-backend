@@ -1081,3 +1081,26 @@ async def decline_feedback(
             borrower=application.borrower,
             award=application.award,
         )
+
+
+@router.get(
+    "/applications/{id}/previous-awards",
+    tags=["applications"],
+    response_model=ApiSchema.PreviousAwards,
+)
+@OCP_only()
+async def previous_contracts(
+    id: int,
+    page: int = Query(0, ge=0),
+    page_size: int = Query(10, gt=0),
+    sort_field: str = Query("created_at"),
+    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    current_user: core.User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_id(id, session)
+
+        return utils.get_previous_awards(
+            application, sort_field, sort_order, page, page_size, session
+        )

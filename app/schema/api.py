@@ -20,6 +20,10 @@ class BasePagination(BaseModel):
     page_size: int
 
 
+class PreviousAwards(BasePagination):
+    items: List[core.Award]
+
+
 class ApplicationListResponse(BasePagination):
     items: List[core.ApplicationWithRelations]
 
