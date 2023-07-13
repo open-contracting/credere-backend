@@ -8,6 +8,7 @@ from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
+from sqlalchemy.sql.expression import true
 
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
@@ -531,3 +532,31 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
             detail="Document not found",
         )
     return document
+
+
+def get_previous_awards(
+    application: core.Application,
+    sort_field: str,
+    sort_order: str,
+    page: int,
+    page_size: int,
+    session: Session,
+) -> api.PreviousAwards:
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+    previous_contracts = (
+        session.query(core.Award)
+        .filter(
+            core.Award.previous == true(),
+            core.Award.borrower_id == application.borrower_id,
+        )
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+    )
+    total_count = previous_contracts.count()
+    awards = previous_contracts.offset(page * page_size).limit(page_size).all()
+
+    return api.PreviousAwards(
+        items=awards,
+        count=total_count,
+        page=page,
+        page_size=page_size,
+    )
