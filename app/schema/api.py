@@ -77,8 +77,6 @@ class UpdateDataField(BaseModel):
     address: Optional[bool]
     legal_identifier: Optional[bool]
     type: Optional[bool]
-    sector: Optional[bool]
-    size: Optional[bool]
 
 
 class ApplicationUpdate(BaseModel):
