@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
-from app.schema.core import Borrower
+from app.schema.core import Borrower, BorrowerStatus
 from app.utils import email_utility
 
 from . import awards_utils
@@ -38,6 +38,12 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
                         award.source_contract_id,
                         session,
                     )
+
+                    if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
+                        logging.info(
+                            "Borrower chose to not receive new oportunities. Skipping notification"
+                        )
+                        continue
 
                     message = insert_message(application, session)
 
