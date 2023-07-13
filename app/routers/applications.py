@@ -965,6 +965,7 @@ async def email_sme(
 )
 async def complete_information_request(
     payload: ApiSchema.ApplicationBase,
+    client: CognitoClient = Depends(get_cognito_client),
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
@@ -982,6 +983,17 @@ async def complete_information_request(
             application.id,
             core.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
             payload,
+        )
+
+        message_id = client.send_upload_documents_notifications(
+            application.lender.email_group
+        )
+
+        utils.create_message(
+            application,
+            core.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            session,
+            message_id,
         )
 
         return ApiSchema.ApplicationResponse(
