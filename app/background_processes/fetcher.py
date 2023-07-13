@@ -30,6 +30,12 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
                     borrower = get_or_create_borrower(entry, session)
                     award.borrower_id = borrower.id
 
+                    if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
+                        logging.info(
+                            "Borrower chose to not receive new oportunities. Skipping app creation."
+                        )
+                        continue
+
                     application = create_application(
                         award.id,
                         borrower.id,
@@ -38,12 +44,6 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
                         award.source_contract_id,
                         session,
                     )
-
-                    if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
-                        logging.info(
-                            "Borrower chose to not receive new oportunities. Skipping notification"
-                        )
-                        continue
 
                     message = insert_message(application, session)
 
