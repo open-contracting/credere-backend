@@ -184,6 +184,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     return general_statistics
 
 
+# Group of Stat only for OCP USER (msme opt in stats)
 def get_msme_opt_in_stats(session):
     try:
         # opt in--------
@@ -226,7 +227,7 @@ def get_msme_opt_in_stats(session):
                 count / total_submitted_application_count * 100
             )
 
-        # Count of Declined reasons
+        # Count of Declined reasons bars chart
         declined_applications = session.query(Application).filter(
             Application.borrower_declined_at.isnot(None)
         )
@@ -281,6 +282,54 @@ def get_msme_opt_in_stats(session):
     return opt_in_statistics
 
 
+# Stat only for OCP USER Bars graph
+def get_count_of_fis_choosen_by_msme(session):
+    try:
+        fis_choosen_by_msme_query = (
+            session.query(Application.lender_id, func.count(Application.id))
+            .filter(Application.borrower_submitted_at.isnot(None))
+            .group_by(Application.lender_id)
+            .all()
+        )
+
+    except SQLAlchemyError as e:
+        raise e
+
+    return fis_choosen_by_msme_query
+
+
+# Stat only for OCP USER
+def get_proportion_of_submited_out_of_opt_in(session):
+    try:
+        # Count all applications where borrower_accepted_at is not None
+        total_opt_in_applications_count = (
+            session.query(Application)
+            .filter(Application.borrower_accepted_at.isnot(None))
+            .count()
+        )
+
+        # Count all applications where borrower_submitted_at is not None
+        total_submitted_applications_count = (
+            session.query(Application)
+            .filter(Application.borrower_submitted_at.isnot(None))
+            .count()
+        )
+
+        # Calculate the proportion
+        if total_opt_in_applications_count == 0:
+            proportion_of_submitted_out_of_opt_in = 0
+        else:
+            proportion_of_submitted_out_of_opt_in = (
+                total_submitted_applications_count / total_opt_in_applications_count
+            ) * 100
+
+    except SQLAlchemyError as e:
+        raise e
+
+    return proportion_of_submitted_out_of_opt_in
+
+
+# Stats only for FI USER
 def get_proportion_of_msme_selecting_current_fi(session, lender_id):
     try:
         total_submitted_applications_count = (
