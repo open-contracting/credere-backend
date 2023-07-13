@@ -41,19 +41,19 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
 
                     message = insert_message(application, session)
 
-                    # change in PROD
-                    logging.info(f"Parameter email_invitation: {email_invitation}")
-                    if not email_invitation or email_invitation == "":
+                    if app_settings.environment == "development":
                         email_invitation = app_settings.test_mail_receiver
+                    elif not email_invitation or email_invitation == "":
+                        email_invitation = borrower.email
 
                     logging.info(
-                        f"NON PROD - Email to: {borrower.email} sent to {email_invitation}"
+                        f"{app_settings.environment} - Email to: {borrower.email} sent to {email_invitation}"
                     )
 
                     messageId = email_utility.send_invitation_email(
                         sesClient,
                         application.uuid,
-                        email_invitation,  # change to borrower.email in prod
+                        email_invitation,
                         borrower.legal_name,
                         award.buyer_name,
                         award.title,
