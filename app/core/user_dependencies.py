@@ -252,6 +252,12 @@ class CognitoClient:
 
         return FI_message_id, SME_message_id
 
+    def send_copied_application_notifications(self, application):
+        return email_utility.send_copied_application_notification_to_sme(
+            self.ses,
+            application,
+        )
+
 
 cognito = boto3.client(
     "cognito-idp",
