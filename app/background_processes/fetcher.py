@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
-from app.schema.core import Borrower
+from app.schema.core import Borrower, BorrowerStatus
 from app.utils import email_utility
 
 from . import awards_utils
@@ -29,6 +29,12 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
                     award = awards_utils.create_award(entry, session)
                     borrower = get_or_create_borrower(entry, session)
                     award.borrower_id = borrower.id
+
+                    if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
+                        logging.info(
+                            "Borrower chose to not receive new oportunities. Skipping app creation."
+                        )
+                        continue
 
                     application = create_application(
                         award.id,
