@@ -593,3 +593,8 @@ class LenderWithRelations(LenderRead):
 class CreditProductWithLender(CreditProductBase):
     id: int
     lender: Optional["Lender"] = None
+
+
+class StatisticData(BaseModel):
+    name: str
+    value: int

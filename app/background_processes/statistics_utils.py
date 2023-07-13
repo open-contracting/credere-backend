@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.schema.core import Application, ApplicationStatus  # noqa: F401 # isort:skip
 from app.schema.core import Borrower, CreditProduct  # noqa: F401 # isort:skip
-from app.schema.core import CreditType, Lender  # noqa: F401 # isort:skip
+from app.schema.core import CreditType, StatisticData, Lender  # noqa: F401 # isort:skip
 
 
 def get_general_statistics(session, start_date=None, end_date=None, lender_id=None):
@@ -206,12 +206,7 @@ def get_msme_opt_in_stats(session):
 
         # opt proportion by sector %--------
         # Calculate total submitted application count
-        total_submitted_application_count = (
-            session.query(Application)
-            .filter(Application.borrower_submitted_at.isnot(None))
-            .count()
-        )
-        sectors = (
+        sectors_count_query = (
             session.query(
                 Borrower.sector, func.count(distinct(Application.id)).label("count")
             )
@@ -220,12 +215,9 @@ def get_msme_opt_in_stats(session):
             .group_by(Borrower.sector)
             .all()
         )
-
-        sector_statistics = {}
-        for sector, count in sectors:
-            sector_statistics[sector] = round(
-                count / total_submitted_application_count * 100
-            )
+        sectors_count = [
+            StatisticData(name=row[0], value=row[1]) for row in sectors_count_query
+        ]
 
         # Count of Declined reasons bars chart
         declined_applications = session.query(Application).filter(
@@ -261,18 +253,28 @@ def get_msme_opt_in_stats(session):
             text("(borrower_declined_preferences_data->>'other')::boolean is True")
         ).count()
 
-        rejected_reasons_count_by_reason = {
-            "dont_need_access_credit_count": dont_need_access_credit_count,
-            "already_have_acredit_count": already_have_acredit_count,
-            "preffer_to_go_to_bank_count": preffer_to_go_to_bank_count,
-            "dont_want_access_credit_count": dont_want_access_credit_count,
-            "other_count": other_count,
-        }
+        rejected_reasons_count_by_reason = [
+            StatisticData(
+                name="dont_need_access_credit_count",
+                value=dont_need_access_credit_count,
+            ),
+            StatisticData(
+                name="already_have_acredit_count", value=already_have_acredit_count
+            ),
+            StatisticData(
+                name="preffer_to_go_to_bank_count", value=preffer_to_go_to_bank_count
+            ),
+            StatisticData(
+                name="dont_want_access_credit_count",
+                value=dont_want_access_credit_count,
+            ),
+            StatisticData(name="other_count", value=other_count),
+        ]
 
         opt_in_statistics = {
             "opt_in_query_count": opt_in_query_count,
             "opt_in_percentage": opt_in_percentage,
-            "sector_statistics": sector_statistics,
+            "sector_statistics": sectors_count,
             "rejected_reasons_count_by_reason": rejected_reasons_count_by_reason,
         }
 
@@ -286,16 +288,17 @@ def get_msme_opt_in_stats(session):
 def get_count_of_fis_choosen_by_msme(session):
     try:
         fis_choosen_by_msme_query = (
-            session.query(Application.lender_id, func.count(Application.id))
+            session.query(Lender.name, func.count(Application.id))
+            .join(Lender, Application.lender_id == Lender.id)
             .filter(Application.borrower_submitted_at.isnot(None))
-            .group_by(Application.lender_id)
+            .group_by(Lender.name)
             .all()
         )
-
     except SQLAlchemyError as e:
         raise e
-
-    return fis_choosen_by_msme_query
+    return [
+        StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query
+    ]
 
 
 # Stat only for OCP USER
