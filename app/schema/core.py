@@ -208,6 +208,7 @@ class ApplicationBase(SQLModel):
     contract_amount_submitted: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
+
     disbursed_final_amount: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
@@ -233,6 +234,9 @@ class ApplicationBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     borrower_declined_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    overdued_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     borrower_declined_preferences_data: dict = Field(

@@ -37,6 +37,10 @@ def update_statistics():
     background_processes.update_statistic.update_statistics()
 
 
+def SLA_overdue_applications():
+    background_processes.SLA_overdue_applications.SLA_overdue_applications()
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
