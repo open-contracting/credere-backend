@@ -28,6 +28,12 @@ def upgrade() -> None:
           ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'APPLICATION_COPIED_FROM'
       """
         )
+    with op.get_context().autocommit_block():
+        op.execute(
+            """
+          ALTER TYPE message_type ADD VALUE IF NOT EXISTS 'APPLICATION_COPIED'
+      """
+        )
 
 
 def downgrade() -> None:

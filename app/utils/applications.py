@@ -617,3 +617,23 @@ def get_previous_documents(application: core.Application, session: Session):
     )
 
     copy_documents(application, documents, session)
+
+
+def check_if_application_was_already_copied(
+    application: core.Application, session: Session
+):
+    app_action = (
+        session.query(core.ApplicationAction)
+        .filter(
+            core.Application.id == application.id,
+            core.ApplicationAction.type
+            == core.ApplicationActionType.COPIED_APPLICATION,
+        )
+        .first()
+    )
+
+    if app_action:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=api.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
+        )

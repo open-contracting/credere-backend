@@ -1101,12 +1101,13 @@ async def find_alternative_credit_option(
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_if_application_was_already_copied(application, session)
         utils.check_application_status(application, core.ApplicationStatus.REJECTED)
         new_application = utils.copy_application(application, session)
         message_id = client.send_copied_application_notifications(new_application)
 
         utils.create_message(
-            new_application, core.MessageType.APPROVED_APPLICATION, session, message_id
+            new_application, core.MessageType.APPLICATION_COPIED, session, message_id
         )
 
         utils.create_application_action(
