@@ -444,7 +444,7 @@ def send_copied_application_notification_to_sme(ses, application):
         "CONTINUE_URL": app_settings.frontend_url
         + "/application/"
         + application.uuid
-        + "/intro",
+        + "/credit-options",
     }
 
     response = ses.send_templated_email(

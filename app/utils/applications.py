@@ -559,6 +559,7 @@ def copy_application(
             "status": core.ApplicationStatus.ACCEPTED,
             "award_borrower_identifier": application.award_borrower_identifier,
             "borrower_id": application.borrower.id,
+            "calculator_data": application.calculator_data,
             "borrower_accepted_at": datetime.now(application.created_at.tzinfo),
         }
         new_application = core.Application(**data)
