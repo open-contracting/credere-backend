@@ -166,6 +166,43 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
 
         average_repayment_period = average_repayment_period_query.scalar()
 
+        # Overdue Application
+        applications_overdue_query = session.query(Application).filter(
+            and_(
+                Application.created_at >= start_date,
+                Application.created_at <= end_date,
+                Application.overdued_at.isnot(None),
+            )
+        )
+        if lender_id is not None:
+            applications_overdue_query = applications_overdue_query.filter(
+                Application.lender_id == lender_id
+            )
+        applications_overdue_count = applications_overdue_query.count()
+
+        # average time to process application
+        average_processing_time_query = session.query(
+            func.avg(Application.completed_in_days)
+        ).filter(
+            and_(
+                Application.created_at >= start_date,
+                Application.created_at <= end_date,
+                Application.status == ApplicationStatus.COMPLETED,
+            )
+        )
+
+        if lender_id is not None:
+            average_processing_time_query = average_processing_time_query.filter(
+                Application.lender_id == lender_id
+            )
+
+        average_processing_time_result = average_processing_time_query.scalar()
+        average_processing_time = (
+            int(average_processing_time_result)
+            if average_processing_time_result is not None
+            else 0
+        )
+
         general_statistics = {
             "applications_received_count": applications_received_count,
             "applications_approved_count": applications_approved_count,
@@ -176,6 +213,8 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
             "proportion_of_disbursed": proportion_of_disbursed,
             "average_amount_requested": average_amount_requested,
             "average_repayment_period": average_repayment_period,
+            "applications_overdue_count": applications_overdue_count,
+            "average_processing_time": average_processing_time,
         }
 
     except SQLAlchemyError as e:

@@ -21,12 +21,12 @@ get_msme_selecting_current_fi = (
 
 def update_statistics():
     with contextmanager(get_db)() as session:
-        # ocp_stats = (get_statistics(session, None, None, None),)
+        ocp_stats = get_statistics(session, None, None, 2)
         # ocp_stats_date_test = get_statistics(session, "2022-01-01", "2022-12-31", 2)
-        opt_in_stats = get_opt_in(session)
-        # logging.info(ocp_stats)
+        # opt_in_stats = get_opt_in(session)
+        logging.info(ocp_stats)
         # logging.info(ocp_stats_date_test)
-        logging.info(opt_in_stats)
+        # logging.info(opt_in_stats)
         # logging.info(get_msme_selecting_current_fi(session, 1))
         # logging.info(get_fis_choosen_by_msme(session))
         # logging.info(get_proportion_of_submited_out_of_opt_in(session))
