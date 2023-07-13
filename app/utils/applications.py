@@ -336,17 +336,6 @@ def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
         .first()
     )
 
-    days_passed = datetime.now(application.created_at.tzinfo) - application.created_at
-
-    if (
-        days_passed.days > app_settings.days_to_change_to_lapsed
-        and application.status == core.ApplicationStatus.PENDING
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=api.ERROR_CODES.APPLICATION_LAPSED.value,
-        )
-
     if not application:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
@@ -474,7 +463,6 @@ def check_pending_email_confirmation(
         )
     new_email = application.confirmation_email_token.split("---")[0]
     token = application.confirmation_email_token.split("---")[1]
-    print(token)
     if token != confirmation_email_token:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
