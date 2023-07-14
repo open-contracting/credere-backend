@@ -1,7 +1,5 @@
 from fastapi import status
-
-import tests.common_test_client as common_test_client
-
+from tests.common.utils import OCP_user, FI_user
 from tests.common_test_client import mock_ses_client  # isort:skip # noqa
 
 from tests.common_test_client import mock_cognito_client  # isort:skip # noqa
@@ -30,10 +28,8 @@ lender_modified = {
 
 
 def test_create_lender(client):  # isort:skip # noqa
-    OCP_headers = common_test_client.create_test_user(
-        client, common_test_client.OCP_user
-    )
-    FI_headers = common_test_client.create_test_user(client, common_test_client.FI_user)
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
     response = client.post("/lenders/", json=lender, headers=OCP_headers)
     assert response.status_code == status.HTTP_200_OK
@@ -43,10 +39,8 @@ def test_create_lender(client):  # isort:skip # noqa
 
 
 def test_get_lender(client):  # isort:skip # noqa
-    OCP_headers = common_test_client.create_test_user(
-        client, common_test_client.OCP_user
-    )
-    FI_headers = common_test_client.create_test_user(client, common_test_client.FI_user)
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
     response = client.post("/lenders/", json=lender, headers=OCP_headers)
     assert response.status_code == status.HTTP_200_OK
@@ -62,10 +56,8 @@ def test_get_lender(client):  # isort:skip # noqa
 
 
 def test_update_lender(client):  # isort:skip # noqa
-    OCP_headers = common_test_client.create_test_user(
-        client, common_test_client.OCP_user
-    )
-    FI_headers = common_test_client.create_test_user(client, common_test_client.FI_user)
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
     response = client.post("/lenders/", json=lender, headers=OCP_headers)
     assert response.status_code == status.HTTP_200_OK

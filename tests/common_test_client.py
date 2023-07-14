@@ -5,19 +5,24 @@ from typing import Any, Generator
 
 import boto3
 import pytest
+from tests.common.utils import create_enums
 from botocore.config import Config
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
-from sqlalchemy import Enum, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from tests.protected_routes import users_test
+from app.core.email_templates import templates
 
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
 from app.db.session import get_db
-from app.email_templates import NEW_USER_TEMPLATE_NAME
+
 from app.routers import applications, lenders, security, users
 from app.schema import core
+
+tempPassword = "1234567890Abc!!"
 
 
 class MockResponse:
@@ -29,35 +34,10 @@ class MockResponse:
         return self.json_data
 
 
-application_status_values = (
-    "PENDING",
-    "ACCEPTED",
-    "LAPSED",
-    "DECLINED",
-    "SUBMITTED",
-    "STARTED",
-    "APPROVED",
-    "CONTRACT_UPLOADED",
-    "COMPLETED",
-    "REJECTED",
-    "INFORMATION_REQUESTED",
-)
-
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", app_settings.test_database_url)
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-existing_enum_types = engine.execute(
-    "SELECT typname FROM pg_type WHERE typtype = 'e'"
-).fetchall()
-enum_exists = ("application_status",) in existing_enum_types
-ApplicationStatusEnum = Enum(
-    *application_status_values, name="application_status", create_type=False
-)
 
-if not enum_exists:
-    engine.execute(
-        "CREATE TYPE application_status AS ENUM %s" % str(application_status_values)
-    )
-
+create_enums(engine)
 
 SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -75,6 +55,7 @@ def start_application():
     app.include_router(lenders.router)
     app.include_router(security.router)
     app.include_router(applications.router)
+    app.include_router(users_test.router)
     return app
 
 
@@ -97,40 +78,6 @@ def mock_cognito_client():
 def mock_ses_client():
     with mock_ses():
         yield
-
-
-tempPassword = "1234567890Abc!!"
-
-FI_user = {
-    "email": "FI_user@example.com",
-    "name": "Test User",
-    "external_id": "123-456-789",
-    "type": core.UserType.FI.value,
-}
-
-OCP_user = {
-    "email": "OCP@example.com",
-    "name": "Test User",
-    "external_id": "123-456-789",
-    "type": core.UserType.OCP.value,
-}
-
-
-def create_test_user(client: Generator[TestClient, Any, None], user_data: dict):
-    responseCreate = client.post("/users", json=user_data)
-    assert responseCreate.status_code == status.HTTP_200_OK
-
-    setupPasswordPayload = {
-        "username": user_data["email"],
-        "temp_password": tempPassword,
-        "password": tempPassword,
-    }
-    client.put("/users/change-password", json=setupPasswordPayload)
-
-    loginPayload = {"username": user_data["email"], "password": tempPassword}
-    responseLogin = client.post("/users/login", json=loginPayload)
-
-    return {"Authorization": "Bearer " + responseLogin.json()["access_token"]}
 
 
 def create_application(
@@ -321,6 +268,23 @@ def set_borrower_status(status: core.BorrowerStatus):
         session.commit()
 
 
+# def create_test_user(client: Generator[TestClient, Any, None], user_data: dict):
+#     responseCreate = client.post("/users", json=user_data)
+#     assert responseCreate.status_code == status.HTTP_200_OK
+
+#     setupPasswordPayload = {
+#         "username": user_data["email"],
+#         "temp_password": tempPassword,
+#         "password": tempPassword,
+#     }
+#     client.put("/users/change-password", json=setupPasswordPayload)
+
+#     loginPayload = {"username": user_data["email"], "password": tempPassword}
+#     responseLogin = client.post("/users/login", json=loginPayload)
+
+#     return {"Authorization": "Bearer " + responseLogin.json()["access_token"]}
+
+
 @pytest.fixture(scope="function")
 def client(app: FastAPI) -> Generator[TestClient, Any, None]:
     my_config = Config(region_name=app_settings.aws_region)
@@ -347,7 +311,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
 
     ses_client.create_template(
         Template={
-            "TemplateName": NEW_USER_TEMPLATE_NAME,
+            "TemplateName": templates["NEW_USER_TEMPLATE_NAME"],
             "SubjectPart": "Your email subject",
             "HtmlPart": "<html><body>Your HTML content</body></html>",
             "TextPart": "Your plain text content",

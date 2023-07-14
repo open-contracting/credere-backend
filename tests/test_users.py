@@ -7,6 +7,9 @@ from app.schema.core import UserType
 
 from tests.common_test_client import mock_ses_client  # isort:skip # noqa
 from tests.common_test_client import mock_cognito_client  # isort:skip # noqa
+from tests.common_test_client import app, client  # isort:skip # noqa
+
+data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.value}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,13 +18,8 @@ logging.basicConfig(
 )
 
 
-from tests.common_test_client import app, client  # isort:skip # noqa
-
-data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.value}
-
-
 def test_create_user(client):  # isort:skip # noqa
-    response = client.post("/users", json=data)
+    response = client.post("/users-test", json=data)
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get("/users/1")
