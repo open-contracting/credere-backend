@@ -671,6 +671,10 @@ async def credit_product_options(
 ):
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
+
+        previous_lenders = utils.get_previous_lenders(
+            application.award_borrower_identifier, session
+        )
         utils.check_is_application_expired(application)
         utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
 
@@ -684,6 +688,7 @@ async def credit_product_options(
                     core.CreditProduct.borrower_size == payload.borrower_size,
                     core.CreditProduct.lower_limit <= payload.amount_requested,
                     core.CreditProduct.upper_limit >= payload.amount_requested,
+                    ~core.Lender.id.in_(previous_lenders),
                 )
             )
             .all()
@@ -699,6 +704,7 @@ async def credit_product_options(
                     core.CreditProduct.borrower_size == payload.borrower_size,
                     core.CreditProduct.lower_limit <= payload.amount_requested,
                     core.CreditProduct.upper_limit >= payload.amount_requested,
+                    ~core.Lender.id.in_(previous_lenders),
                 )
             )
             .all()
@@ -834,7 +840,7 @@ async def confirm_credit_product(
         )
 
         application.pending_documents = True
-
+        utils.get_previous_documents(application, session)
         utils.create_application_action(
             session,
             None,
@@ -968,6 +974,7 @@ async def email_sme(
 )
 async def complete_information_request(
     payload: ApiSchema.ApplicationBase,
+    client: CognitoClient = Depends(get_cognito_client),
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
@@ -985,6 +992,17 @@ async def complete_information_request(
             application.id,
             core.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
             payload,
+        )
+
+        message_id = client.send_upload_documents_notifications(
+            application.lender.email_group
+        )
+
+        utils.create_message(
+            application,
+            core.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            session,
+            message_id,
         )
 
         return ApiSchema.ApplicationResponse(
@@ -1083,4 +1101,47 @@ async def decline_feedback(
             application=application,
             borrower=application.borrower,
             award=application.award,
+        )
+
+
+@router.post(
+    "/applications/find-alternative-credit-option",
+    tags=["applications"],
+    response_model=ApiSchema.ApplicationResponse,
+)
+async def find_alternative_credit_option(
+    payload: ApiSchema.ApplicationBase,
+    session: Session = Depends(get_db),
+    client: CognitoClient = Depends(get_cognito_client),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_uuid(payload.uuid, session)
+        utils.check_if_application_was_already_copied(application, session)
+        utils.check_application_status(application, core.ApplicationStatus.REJECTED)
+        new_application = utils.copy_application(application, session)
+        message_id = client.send_copied_application_notifications(new_application)
+
+        utils.create_message(
+            new_application, core.MessageType.APPLICATION_COPIED, session, message_id
+        )
+
+        utils.create_application_action(
+            session,
+            None,
+            application.id,
+            core.ApplicationActionType.COPIED_APPLICATION,
+            payload,
+        )
+        utils.create_application_action(
+            session,
+            None,
+            new_application.id,
+            core.ApplicationActionType.APPLICATION_COPIED_FROM,
+            payload,
+        )
+
+        return ApiSchema.ApplicationResponse(
+            application=new_application,
+            borrower=new_application.borrower,
+            award=new_application.award,
         )
