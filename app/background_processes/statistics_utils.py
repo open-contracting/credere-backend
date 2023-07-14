@@ -1,4 +1,4 @@
-from datetime import datetime
+# from datetime import datetime
 
 from sqlalchemy import Integer, and_, distinct, func, or_, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,10 +12,12 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     if start_date is None:
         start_date = "2023-01-01"
     if end_date is None:
-        end_date = datetime.now()
+        # to do en produccion ṕodria ser now? la hora de mi pc no coincide con la que esta guardando la BD
+        # end_date = datetime.now()
+        end_date = "2024-01-01"
     try:
         # received--------
-        applications_aproved_query = session.query(Application).filter(
+        applications_received_query = session.query(Application).filter(
             and_(
                 Application.created_at >= start_date,
                 Application.created_at <= end_date,
@@ -23,10 +25,10 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
             )
         )
         if lender_id is not None:
-            applications_aproved_query = applications_aproved_query.filter(
+            applications_received_query = applications_received_query.filter(
                 Application.lender_id == lender_id
             )
-        applications_received_count = applications_aproved_query.count()
+        applications_received_count = applications_received_query.count()
 
         # approved-------
         applications_aproved_query = session.query(Application).filter(
