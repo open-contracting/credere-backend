@@ -5,7 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.settings import app_settings
-from .routers import applications, awards, borrowers, lenders, users
+
+from .routers import applications, awards, borrowers, lenders, users  # isort:skip
+from .routers import statistics  # isort:skip
 
 if app_settings.sentry_dsn:
     sentry_sdk.init(
@@ -35,6 +37,7 @@ app.include_router(awards.router)
 app.include_router(borrowers.router)
 app.include_router(applications.router)
 app.include_router(lenders.router)
+app.include_router(statistics.router)
 
 
 logging.basicConfig(

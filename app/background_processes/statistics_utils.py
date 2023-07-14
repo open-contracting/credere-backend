@@ -232,16 +232,19 @@ def get_msme_opt_in_stats(session):
                 Application.borrower_accepted_at.isnot(None),
             )
         )
+        opt_in_query_count = opt_in_query.count()
 
         # opt in %--------
-        opt_in_percentage = (
-            session.query(Application)
-            .filter(Application.borrower_accepted_at.isnot(None))
-            .count()
-            / session.query(Application).count()
-        ) * 100
-
-        opt_in_query_count = opt_in_query.count()
+        total_applications = session.query(Application).count()
+        if total_applications != 0:
+            opt_in_percentage = (
+                session.query(Application)
+                .filter(Application.borrower_accepted_at.isnot(None))
+                .count()
+                / total_applications
+            ) * 100
+        else:
+            opt_in_percentage = 0
 
         # opt proportion by sector %--------
         # Calculate total submitted application count

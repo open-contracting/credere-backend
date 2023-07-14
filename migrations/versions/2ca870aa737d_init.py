@@ -393,6 +393,29 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
+    op.create_table(
+        "statistic",
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column(
+            "type",
+            sa.Enum(
+                "MSME opt-in statistics", "Application KPIs", name="statistic_type"
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "data",
+            postgresql.JSON(astext_type=sa.Text()),
+            nullable=True,
+            server_default="{}",
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            onupdate=sa.text("now()"),
+        ),
+    )
     # ### end Alembic commands ###
 
 
@@ -407,4 +430,5 @@ def downgrade() -> None:
     op.drop_table("award")
     op.drop_table("lender")
     op.drop_table("borrower")
+    op.drop_table("statistic")
     # ### end Alembic commands ###
