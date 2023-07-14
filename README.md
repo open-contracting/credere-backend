@@ -77,6 +77,7 @@ you can use .envtest as an example, it has the following keys:
 - MAX_FILE_SIZE_MB -> max file size allowed to be uploaded
 - PROGRESS_TO_REMIND_STARTED_APPLICATIONS -> % of days of lender SLA before an overdue reminder.
 for example a lender with a SLA of 10 days will receive the first overdue at 7 days mark
+- ENVIRONMENT -> Needs to be set as production in order to send emails to proper address. If not emails will be sent to test_email_receiver
 
 You should configure the pre-commit for the repo one time
 
