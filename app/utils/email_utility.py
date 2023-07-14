@@ -455,8 +455,9 @@ def send_copied_application_notification_to_sme(ses, application):
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
-  
-  def send_upload_documents_notifications_to_FI(ses, email: str):
+
+
+def send_upload_documents_notifications_to_FI(ses, email: str):
     # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
     data = {
