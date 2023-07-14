@@ -252,6 +252,13 @@ class CognitoClient:
 
         return FI_message_id, SME_message_id
 
+    def send_upload_documents_notifications(self, email: str):
+        message_id = email_utility.send_upload_documents_notifications_to_FI(
+            self.ses,
+            email,
+        )
+        return message_id
+
     def send_copied_application_notifications(self, application):
         return email_utility.send_copied_application_notification_to_sme(
             self.ses,
