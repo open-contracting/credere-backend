@@ -1,6 +1,6 @@
-from app.schema import core
 from sqlalchemy import Enum
 
+from app.schema import core
 
 FI_user = {
     "email": "FI_user@example.com",
