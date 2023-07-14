@@ -8,6 +8,7 @@ from typing import Generator
 
 import boto3
 
+from app.schema.core import Application
 from app.utils import email_utility
 
 from ..core.settings import app_settings
@@ -202,6 +203,52 @@ class CognitoClient:
             self.ses, uuid, lender_name, email_message, sme_email
         )
         return message_id
+
+    def send_rejected_email_to_sme(self, application, options):
+        if options:
+            message_id = email_utility.send_rejected_application_email(
+                self.ses, application
+            )
+            return message_id
+        message_id = email_utility.send_rejected_application_email_without_alternatives(
+            self.ses, application
+        )
+        return message_id
+
+    def send_application_approved_to_sme(self, application: Application):
+        message_id = email_utility.send_application_approved_email(
+            self.ses, application
+        )
+        return message_id
+
+    def send_new_email_confirmation_to_sme(
+        self,
+        borrower_name: str,
+        new_email: str,
+        old_email: str,
+        confirmation_email_token: str,
+        application_uuid: str,
+    ):
+        return email_utility.send_new_email_confirmation(
+            self.ses,
+            borrower_name,
+            new_email,
+            old_email,
+            confirmation_email_token,
+            application_uuid,
+        )
+
+    def send_upload_contract_notifications(self, application):
+        FI_message_id = email_utility.send_upload_contract_notification_to_FI(
+            self.ses,
+            application,
+        )
+        SME_message_id = email_utility.send_upload_contract_confirmation(
+            self.ses,
+            application,
+        )
+
+        return FI_message_id, SME_message_id
 
 
 cognito = boto3.client(

@@ -6,8 +6,14 @@ import tests.common_test_client as common_test_client
 from app.schema.core import UserType
 
 from tests.common_test_client import mock_ses_client  # isort:skip # noqa
-
 from tests.common_test_client import mock_cognito_client  # isort:skip # noqa
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+    handlers=[logging.StreamHandler()],  # Output logs to the console
+)
+
 
 from tests.common_test_client import app, client  # isort:skip # noqa
 
@@ -23,15 +29,15 @@ def test_create_user(client):  # isort:skip # noqa
 
 
 def test_duplicate_user(client):  # isort:skip # noqa
-    response = client.post("/users", json=data)
+    response = client.post("/users-test", json=data)
     assert response.status_code == status.HTTP_200_OK
     # duplicate user
-    response = client.post("/users", json=data)
+    response = client.post("/users-test", json=data)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 def test_login(client):  # isort:skip # noqa
-    responseCreate = client.post("/users", json=data)
+    responseCreate = client.post("/users-test", json=data)
     assert responseCreate.status_code == status.HTTP_200_OK
 
     setupPasswordPayload = {

@@ -34,6 +34,7 @@ app.include_router(users.router)
 app.include_router(applications.router)
 app.include_router(lenders.router)
 
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s - %(message)s",
