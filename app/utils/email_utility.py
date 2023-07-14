@@ -8,9 +8,9 @@ from app.schema.core import Application
 
 
 def set_destionations(email: str):
-    if app_settings.environment == "development":
-        return app_settings.test_mail_receiver
-    return email
+    if app_settings.environment == "production":
+        return email
+    return app_settings.test_mail_receiver
 
 
 def generate_common_data():
@@ -215,11 +215,11 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
         + "/decline",
     }
 
-    destination = set_destionations(email)
+    destinations = set_destionations(email)
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destination]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -245,15 +245,15 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         + "/decline",
     }
 
-    destination = set_destionations(email)
+    destinations = set_destionations(email)
 
     logging.info(
-        f"{app_settings.environment} - Email to: {email} sent to {destination}"
+        f"{app_settings.environment} - Email to: {email} sent to {destinations}"
     )
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destination]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["INTRO_REMINDER_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -282,14 +282,14 @@ def send_mail_submit_reminder(
         + quote(uuid)
         + "/decline",
     }
-    destination = set_destionations(email)
+    destinations = set_destionations(email)
     logging.info(
-        f"{app_settings.environment} - Email to: {email} sent to {destination}"
+        f"{app_settings.environment} - Email to: {email} sent to {destinations}"
     )
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destination]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["APPLICATION_REMINDER_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -307,10 +307,10 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
-    destination = set_destionations(lender_email_group)
+    destinations = set_destionations(lender_email_group)
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destination]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -326,11 +326,11 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
-    destination = set_destionations(ocp_email_group)
+    destinations = set_destionations(ocp_email_group)
 
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destination]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -351,11 +351,11 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
         "LOGIN_IMAGE_LINK": images_base_url + "/uploadDocument.png",
     }
 
-    destination = set_destionations(sme_email)
+    destinations = set_destionations(sme_email)
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destination]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["REQUEST_SME_DATA_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -417,11 +417,11 @@ def send_rejected_application_email(ses, application):
         + f"/application/{quote(application.uuid)}/find-alternative-credit",
         "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
     }
-    destination = set_destionations(application.primary_email)
+    destinations = set_destionations(application.primary_email)
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destination]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["APPLICATION_DECLINED"],
         TemplateData=json.dumps(data),
     )
@@ -436,11 +436,11 @@ def send_rejected_application_email_without_alternatives(ses, application):
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
-    destination = set_destionations(application.primary_email)
+    destinations = set_destionations(application.primary_email)
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destination]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["APPLICATION_DECLINED_WITHOUT_ALTERNATIVE"],
         TemplateData=json.dumps(data),
     )
