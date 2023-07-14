@@ -374,10 +374,11 @@ def send_overdue_application_email_to_FI(ses, name: str, email: str, amount: int
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
+    destinations = set_destionations(email)
+
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # replace with email on production
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["OVERDUE_APPLICATION_FI"],
         TemplateData=json.dumps(data),
     )
@@ -460,10 +461,11 @@ def send_copied_application_notification_to_sme(ses, application):
         + "/credit-options",
     }
 
+    destinations = set_destionations(application.primary_email)
+
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # change to proper email in prod
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["ALTERNATIVE_CREDIT_OPTION"],
         TemplateData=json.dumps(data),
     )
@@ -479,10 +481,11 @@ def send_upload_documents_notifications_to_FI(ses, email: str):
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
+    destinations = set_destionations(email)
+
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        # replace with email on production
-        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Destination={"ToAddresses": [destinations]},
         Template=templates["APPLICATION_UPDATE"],
         TemplateData=json.dumps(data),
     )
