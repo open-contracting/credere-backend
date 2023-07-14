@@ -5,6 +5,7 @@ from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.schema import api as ApiSchema
 from app.utils.verify_token import get_current_user, get_user
 
 from ..background_processes import statistics_utils
@@ -16,10 +17,11 @@ from ..utils.permissions import OCP_only
 router = APIRouter()
 
 
-# this need to receive dates, and may o may not receive a lender
-# as this is get, the dates should be in the url as query params
-# after the test i need to add the OCP only decorator
-@router.get("/statistics-ocp")
+@router.get(
+    "/statistics-ocp",
+    tags=["statistics"],
+    response_model=ApiSchema.StatisticOCPResponse,
+)
 @OCP_only()
 async def get_calculated_ocp_statistics(
     initialDate: Optional[str] = None,
@@ -39,16 +41,18 @@ async def get_calculated_ocp_statistics(
         )
     except ClientError as e:
         logging.error(e)
-    return (
-        statistics_kpis,
-        opt_in_stats,
-        fis_choosen_by_msme,
-        proportion_of_submited_out_of_opt_in,
+    return ApiSchema.StatisticOCPResponse(
+        statistics_kpis=statistics_kpis,
+        opt_in_stat=opt_in_stats,
+        fis_choosen_by_msme=fis_choosen_by_msme,
+        proportion_of_submited_out_of_opt_in=proportion_of_submited_out_of_opt_in,
     )
     # return ApiSchema.ResponseBase(detail=result)
 
 
-@router.get("/statistics-fi")
+@router.get(
+    "/statistics-fi", tags=["statistics"], response_model=ApiSchema.StatisticFIResponse
+)
 async def get_calculated_fi_statistics(
     session: Session = Depends(get_db), user: core.User = Depends(get_user)
 ):
@@ -65,4 +69,7 @@ async def get_calculated_fi_statistics(
         )
     except ClientError as e:
         logging.error(e)
-    return (statistics_kpis, proportion_of_msme_selecting_current_fi)
+    return ApiSchema.StatisticFIResponse(
+        statistics_kpis=statistics_kpis,
+        proportion_of_msme_selecting_current_fi=proportion_of_msme_selecting_current_fi,
+    )

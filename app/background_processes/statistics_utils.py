@@ -245,6 +245,7 @@ def get_msme_opt_in_stats(session):
                 .count()
                 / total_applications
             ) * 100
+            opt_in_percentage = round(opt_in_percentage, 2)
         else:
             opt_in_percentage = 0
 
