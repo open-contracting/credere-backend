@@ -311,7 +311,7 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
 
     data = {
         **generate_common_data(),
-        "F1": lender_name,
+        "FI": lender_name,
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
@@ -429,6 +429,29 @@ def send_rejected_application_email_without_alternatives(ses, application):
         # replace with sme_email on production
         Destination={"ToAddresses": [app_settings.test_mail_receiver]},
         Template=templates["APPLICATION_DECLINED_WITHOUT_ALTERNATIVE"],
+        TemplateData=json.dumps(data),
+    )
+    return response.get("MessageId")
+
+
+def send_copied_application_notification_to_sme(ses, application):
+    # todo refactor required when this function receives the user language
+    images_base_url = get_images_base_url()
+    data = {
+        **generate_common_data(),
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+        "CONTINUE_IMAGE_LINK": images_base_url + "/continueInCredere.png",
+        "CONTINUE_URL": app_settings.frontend_url
+        + "/application/"
+        + application.uuid
+        + "/credit-options",
+    }
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        # change to proper email in prod
+        Destination={"ToAddresses": [app_settings.test_mail_receiver]},
+        Template=templates["ALTERNATIVE_CREDIT_OPTION"],
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
