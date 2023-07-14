@@ -539,6 +539,7 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
         )
     return document
 
+
 def get_previous_awards(
     application: core.Application,
     sort_field: str,
@@ -565,6 +566,7 @@ def get_previous_awards(
         page=page,
         page_size=page_size,
     )
+
 
 def copy_documents(application: core.Application, documents: dict, session: Session):
     for document in documents:
