@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
 from pydantic import BaseModel
-
+from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schema import core
@@ -180,7 +179,7 @@ async def create_application(
 
 
 @router.post("/change-test-application-status", tags=["applications"])
-async def create_application(
+async def change_application_status(
     payload: ApplicationTestPayload, session: Session = Depends(get_db)
 ):
     application = session.query(core.Application).first()
@@ -191,7 +190,7 @@ async def create_application(
 
 
 @router.post("/change-test-borrower-status", tags=["applications"])
-async def create_application(
+async def change_borrower_status(
     payload: BorrowerTestPayload, session: Session = Depends(get_db)
 ):
     borrower = session.query(core.Borrower).first()

@@ -5,22 +5,21 @@ from typing import Any, Generator
 
 import boto3
 import pytest
-from tests.common.utils import create_enums
 from botocore.config import Config
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from tests.protected_routes import users_test, applications_test
-from app.core.email_templates import templates
 
+from app.core.email_templates import templates
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
 from app.db.session import get_db
-
 from app.routers import applications, lenders, security, users
 from app.schema import core
+from tests.common.utils import create_enums
+from tests.protected_routes import applications_test, users_test
 
 tempPassword = "1234567890Abc!!"
 

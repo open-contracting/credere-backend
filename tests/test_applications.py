@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 from fastapi import status
 
-from tests.common.utils import OCP_user, FI_user
 from app.schema.core import ApplicationStatus, BorrowerStatus
+from tests.common.utils import FI_user, OCP_user
 
 from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
 from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
