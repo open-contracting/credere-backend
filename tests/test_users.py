@@ -33,7 +33,7 @@ logging.basicConfig(
 )
 
 
-def test_get_me(client):
+def test_get_me(client):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
 
     response = client.get("/users/me", headers=OCP_headers)
