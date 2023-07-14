@@ -164,7 +164,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
                 Application.lender_id == lender_id
             )
 
-        average_repayment_period = average_repayment_period_query.scalar()
+        average_repayment_period = average_repayment_period_query.scalar() or 0
 
         # Overdue Application
         applications_overdue_query = session.query(Application).filter(
