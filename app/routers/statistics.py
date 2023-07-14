@@ -33,7 +33,6 @@ async def get_calculated_ocp_statistics(
             session, initialDate, finalDate, lender
         )
         opt_in_stats = statistics_utils.get_msme_opt_in_stats(session)
-        msme_opt_in = statistics_utils.get_msme_opt_in_stats(session)
         fis_choosen_by_msme = statistics_utils.get_count_of_fis_choosen_by_msme(session)
         proportion_of_submited_out_of_opt_in = (
             statistics_utils.get_proportion_of_submited_out_of_opt_in(session)
@@ -43,7 +42,6 @@ async def get_calculated_ocp_statistics(
     return (
         statistics_kpis,
         opt_in_stats,
-        msme_opt_in,
         fis_choosen_by_msme,
         proportion_of_submited_out_of_opt_in,
     )
