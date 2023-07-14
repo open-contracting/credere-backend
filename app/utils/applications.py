@@ -336,6 +336,12 @@ def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
         .first()
     )
 
+    if application.status == core.ApplicationStatus.LAPSED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=api.ERROR_CODES.APPLICATION_LAPSED.value,
+        )
+
     if not application:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
