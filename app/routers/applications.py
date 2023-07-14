@@ -1101,7 +1101,6 @@ async def decline_feedback(
         )
 
 
-
 @router.get(
     "/applications/{id}/previous-awards",
     tags=["applications"],
@@ -1122,6 +1121,8 @@ async def previous_contracts(
 
         return utils.get_previous_awards(
             application, sort_field, sort_order, page, page_size, session
+        )
+
 
 @router.post(
     "/applications/find-alternative-credit-option",
