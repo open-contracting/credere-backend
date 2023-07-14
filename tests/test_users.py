@@ -1,13 +1,12 @@
 import logging
+import tests.common.common_test_client as common_test_client
 
 from fastapi import status
-
-import tests.common_test_client as common_test_client
 from app.schema.core import UserType
 
-from tests.common_test_client import mock_ses_client  # isort:skip # noqa
-from tests.common_test_client import mock_cognito_client  # isort:skip # noqa
-from tests.common_test_client import app, client  # isort:skip # noqa
+from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
+from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
+from tests.common.common_test_client import app, client  # isort:skip # noqa
 
 data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.value}
 

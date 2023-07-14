@@ -3,25 +3,30 @@ from unittest.mock import patch
 
 from fastapi import status
 
-import tests.common_test_client as common_test_client
+from tests.common.utils import OCP_user, FI_user
 from app.schema.core import ApplicationStatus, BorrowerStatus
 
-from tests.common_test_client import mock_cognito_client  # isort:skip # noqa
-from tests.common_test_client import mock_ses_client  # isort:skip # noqa
+from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
+from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
+from tests.common.common_test_client import app, client  # isort:skip # noqa
+from tests.common.common_test_client import MockResponse  # isort:skip # noqa
 
-from tests.common_test_client import app, client  # isort:skip # noqa
+payload = {"status": ApplicationStatus.PENDING.value}
+application_lapsed_payload = {"status": ApplicationStatus.LAPSED.value}
+application_declined_payload = {"status": ApplicationStatus.DECLINED.value}
+borrower_declined_oportunity_payload = {
+    "status": BorrowerStatus.DECLINE_OPPORTUNITIES.value
+}
 
 
 def test_get_applications(client):  # isort:skip # noqa
     logging.info("Pre load users for this test")
-    OCP_headers = common_test_client.create_test_user(
-        client, common_test_client.OCP_user
-    )
-    FI_headers = common_test_client.create_test_user(client, common_test_client.FI_user)
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
     logging.info(
         "Pre load an application with its related award and borrower for this test"
     )
-    common_test_client.create_application()
+    client.post("/create-test-application", json=payload)
 
     logging.info("Test different get methods and permissions for getting applications")
     response = client.get(
@@ -36,6 +41,7 @@ def test_get_applications(client):  # isort:skip # noqa
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     response = client.get("/applications/id/1", headers=OCP_headers)
+
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get("/applications/id/1")
@@ -52,7 +58,7 @@ def test_get_applications(client):  # isort:skip # noqa
     assert response.status_code == status.HTTP_200_OK
 
     logging.info("set application to expire so use cannot get it")
-    common_test_client.set_application_as_expired()
+    client.post("/change-test-application-status", json=application_lapsed_payload)
     response = client.get("/applications/uuid/123-456-789")
     assert response.status_code == status.HTTP_409_CONFLICT
 
@@ -65,7 +71,7 @@ def test_get_applications(client):  # isort:skip # noqa
 
 
 def test_application_declined(client):  # isort:skip # noqa
-    common_test_client.create_application()
+    client.post("/create-test-application", json=payload)
 
     response = client.post(
         "/applications/decline",
@@ -84,8 +90,10 @@ def test_application_declined(client):  # isort:skip # noqa
 
 
 def test_application_rollback_declined(client):  # isort:skip # noqa
-    common_test_client.create_application(ApplicationStatus.DECLINED)
-    common_test_client.set_borrower_status(BorrowerStatus.DECLINE_OPPORTUNITIES)
+    client.post("/create-test-application", json=application_declined_payload)
+    client.post(
+        "/change-test-borrower-status", json=borrower_declined_oportunity_payload
+    )
 
     response = client.post(
         "/applications/rollback-decline", json={"uuid": "123-456-789"}
@@ -103,7 +111,9 @@ def test_application_rollback_declined(client):  # isort:skip # noqa
 
 
 def test_application_declined_feedback(client):  # isort:skip # noqa
-    common_test_client.create_application(ApplicationStatus.DECLINED)
+    client.post(
+        "/create-test-application", json={"status": ApplicationStatus.DECLINED.value}
+    )
 
     declined_feedback = {
         "uuid": "123-456-789",
@@ -121,12 +131,14 @@ def test_application_declined_feedback(client):  # isort:skip # noqa
 
 
 def test_access_scheme(client, mocker):  # isort:skip # noqa
-    common_test_client.create_application(ApplicationStatus.PENDING)
+    client.post(
+        "/create-test-application", json={"status": ApplicationStatus.PENDING.value}
+    )
 
     # this will mock the previous award get to return an empty array
     with patch(
         "app.background_processes.awards_utils.get_previous_contracts",
-        return_value=common_test_client.MockResponse(status.HTTP_200_OK, {}),
+        return_value=MockResponse(status.HTTP_200_OK, {}),
     ):
         response = client.post(
             "/applications/access-scheme", json={"uuid": "123-456-789"}
