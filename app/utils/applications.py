@@ -336,6 +336,12 @@ def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
         .first()
     )
 
+    if application.status == core.ApplicationStatus.LAPSED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=api.ERROR_CODES.APPLICATION_LAPSED.value,
+        )
+
     if not application:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
@@ -531,3 +537,110 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
             detail="Document not found",
         )
     return document
+
+
+def copy_documents(application: core.Application, documents: dict, session: Session):
+    for document in documents:
+        data = {
+            "application_id": application.id,
+            "type": document.type,
+            "name": document.name,
+            "file": document.file,
+            "verified": False,
+        }
+        new_borrower_document = core.BorrowerDocument(**data)
+        session.add(new_borrower_document)
+        session.flush()
+        application.borrower_documents.append(new_borrower_document)
+
+
+def copy_application(
+    application: core.Application, session: Session
+) -> core.Application:
+    try:
+        data = {
+            "award_id": application.award_id,
+            "uuid": generate_uuid(application.uuid),
+            "primary_email": application.primary_email,
+            "status": core.ApplicationStatus.ACCEPTED,
+            "award_borrower_identifier": application.award_borrower_identifier,
+            "borrower_id": application.borrower.id,
+            "calculator_data": application.calculator_data,
+            "borrower_accepted_at": datetime.now(application.created_at.tzinfo),
+        }
+        new_application = core.Application(**data)
+        session.add(new_application)
+        session.flush()
+        return new_application
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"There was a problem copying the application.{e}",
+        )
+
+
+def get_previous_lenders(award_borrower_identifier: str, session: Session) -> List[int]:
+    lender_ids = (
+        session.query(core.Application.lender_id)
+        .filter(core.Application.award_borrower_identifier == award_borrower_identifier)
+        .filter(core.Application.status == "REJECTED")
+        .distinct()
+        .all()
+    )
+    if not lender_ids:
+        return []
+    cleaned_lender_ids = [
+        lender_id for (lender_id,) in lender_ids if lender_id is not None
+    ]
+
+    return cleaned_lender_ids
+
+
+def get_previous_documents(application: core.Application, session: Session):
+    document_types = application.credit_product.required_document_types
+    document_types_list = [key for key, value in document_types.items() if value]
+
+    lastest_application_id = (
+        session.query(core.Application.id)
+        .filter(
+            core.Application.status == "REJECTED",
+            core.Application.award_borrower_identifier
+            == application.award_borrower_identifier,
+        )
+        .order_by(core.Application.created_at.desc())
+        .first()
+    )
+    if not lastest_application_id:
+        return
+
+    documents = (
+        session.query(core.BorrowerDocument)
+        .filter(
+            core.BorrowerDocument.application_id == lastest_application_id[0],
+            core.BorrowerDocument.type.in_(document_types_list),
+        )
+        .all()
+    )
+
+    copy_documents(application, documents, session)
+
+
+def check_if_application_was_already_copied(
+    application: core.Application, session: Session
+):
+    app_action = (
+        session.query(core.ApplicationAction)
+        .filter(
+            core.Application.id == application.id,
+            core.ApplicationAction.type
+            == core.ApplicationActionType.COPIED_APPLICATION,
+        )
+        .first()
+    )
+
+    if app_action:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=api.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
+        )

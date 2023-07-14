@@ -18,4 +18,5 @@ templates = {
     "OVERDUE_APPLICATION_OCP_ADMIN": "credere-OverdueApplicationOCPadmin",
     "NEW_CONTRACT_SUBMISSION": "credere-NewContractSubmission",
     "APPLICATION_UPDATE": "credere-ApplicationUpdate",
+    "ALTERNATIVE_CREDIT_OPTION": "credere-AlternativeCreditOption",
 }
