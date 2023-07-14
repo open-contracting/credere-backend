@@ -80,11 +80,9 @@ def send_mail_to_new_user(ses, name, username, temp_password):
         + quote(username),
     }
 
-    destinations = set_destionations(username)
-
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
+        Destination={"ToAddresses": [username]},
         Template=templates["NEW_USER_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -185,11 +183,10 @@ def send_mail_to_reset_password(ses, username: str, temp_password: str):
         + quote(username),
         "RESET_PASSWORD_IMAGE": images_base_url + "/ResetPassword.png",
     }
-    destinations = set_destionations(username)
 
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
+        Destination={"ToAddresses": [username]},
         Template=templates["RESET_PASSWORD_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -307,10 +304,10 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
-    destinations = set_destionations(lender_email_group)
+
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
+        Destination={"ToAddresses": [lender_email_group]},
         Template=templates["NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
@@ -326,11 +323,10 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
-    destinations = set_destionations(ocp_email_group)
 
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
+        Destination={"ToAddresses": [ocp_email_group]},
         Template=templates["NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME"],
         TemplateData=json.dumps(data),
     )
