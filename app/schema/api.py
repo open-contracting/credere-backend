@@ -12,6 +12,8 @@ from app.schema.core import User
 class ERROR_CODES(Enum):
     BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
     DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
+    APPLICATION_LAPSED = "APPLICATION_LAPSED"
+    APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
 class BasePagination(BaseModel):
@@ -77,8 +79,6 @@ class UpdateDataField(BaseModel):
     address: Optional[bool]
     legal_identifier: Optional[bool]
     type: Optional[bool]
-    sector: Optional[bool]
-    size: Optional[bool]
 
 
 class ApplicationUpdate(BaseModel):

@@ -55,6 +55,7 @@ class MessageType(Enum):
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
     EMAIL_CHANGE_CONFIRMATION = "EMAIL_CHANGE_CONFIRMATION"
+    APPLICATION_COPIED = "APPLICATION_COPIED"
 
 
 class UserType(Enum):
@@ -87,6 +88,8 @@ class ApplicationActionType(Enum):
     DATA_VALIDATION_UPDATE = "DATA_VALIDATION_UPDATE"
     BORROWER_DOCUMENT_UPDATE = "BORROWER_DOCUMENT_UPDATE"
     BORROWER_UPLOADED_CONTRACT = "BORROWER_UPLOADED_CONTRACT"
+    APPLICATION_COPIED_FROM = "APPLICATION_COPIED_FROM"
+    COPIED_APPLICATION = "COPIED_APPLICATION"
 
 
 class BorrowerSize(Enum):
@@ -202,7 +205,7 @@ class ApplicationBase(SQLModel):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
-    award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
+    award_borrower_identifier: str = Field(default="", nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
     contract_amount_submitted: Optional[Decimal] = Field(
