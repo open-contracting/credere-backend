@@ -20,7 +20,7 @@ router = APIRouter()
 @router.get(
     "/statistics-ocp",
     tags=["statistics"],
-    response_model=ApiSchema.StatisticOCPResponse,
+    response_model=ApiSchema.StatisticResponse,
 )
 @OCP_only()
 async def get_ocp_statistics_by_lender(
