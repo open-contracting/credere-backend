@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -181,3 +181,12 @@ class UserResponse(BaseModel):
 class LoginResponse(UserResponse):
     access_token: str
     refresh_token: str
+
+
+class StatisticResponse(BaseModel):
+    statistics_kpis: Dict[Any, Any]
+
+
+class StatisticOCPResponse(BaseModel):
+    opt_in_stat: Dict[Any, Any]
+    fis_choosen_by_msme: List[Any]
