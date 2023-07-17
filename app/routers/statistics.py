@@ -20,7 +20,7 @@ router = APIRouter()
 @router.get(
     "/statistics-ocp",
     tags=["statistics"],
-    response_model=ApiSchema.StatisticOCPResponse,
+    response_model=ApiSchema.StatisticResponse,
 )
 @OCP_only()
 async def get_ocp_statistics_by_lender(
@@ -56,21 +56,17 @@ async def get_ocp_statistics_opt_in(
     try:
         opt_in_stats = statistics_utils.get_msme_opt_in_stats(session)
         fis_choosen_by_msme = statistics_utils.get_count_of_fis_choosen_by_msme(session)
-        proportion_of_submited_out_of_opt_in = (
-            statistics_utils.get_proportion_of_submited_out_of_opt_in(session)
-        )
     except ClientError as e:
         logging.error(e)
 
     return ApiSchema.StatisticOCPResponse(
         opt_in_stat=opt_in_stats,
         fis_choosen_by_msme=fis_choosen_by_msme,
-        proportion_of_submited_out_of_opt_in=proportion_of_submited_out_of_opt_in,
     )
 
 
 @router.get(
-    "/statistics-fi", tags=["statistics"], response_model=ApiSchema.StatisticFIResponse
+    "/statistics-fi", tags=["statistics"], response_model=ApiSchema.StatisticResponse
 )
 async def get_fi_statistics(
     session: Session = Depends(get_db), user: core.User = Depends(get_user)
@@ -79,14 +75,8 @@ async def get_fi_statistics(
         statistics_kpis = statistics_utils.get_general_statistics(
             session, None, None, user.lender_id
         )
-        proportion_of_msme_selecting_current_fi = (
-            statistics_utils.get_proportion_of_msme_selecting_current_fi(
-                session, user.lender_id
-            )
-        )
     except ClientError as e:
         logging.error(e)
-    return ApiSchema.StatisticFIResponse(
+    return ApiSchema.StatisticResponse(
         statistics_kpis=statistics_kpis,
-        proportion_of_msme_selecting_current_fi=proportion_of_msme_selecting_current_fi,
     )

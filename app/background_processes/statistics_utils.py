@@ -173,6 +173,33 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
             if average_processing_time_result is not None
             else 0
         )
+        #  get_proportion_of_submited_out_of_opt_in
+        application_accepted_query = (
+            get_base_query(session.query(Application), start_date, end_date, lender_id)
+            .filter(Application.borrower_submitted_at.isnot(None))
+            .count()
+        )
+
+        if lender_id is not None:
+            application_divisor = (
+                session.query(Application)
+                .filter(Application.borrower_submitted_at.isnot(None))
+                .count()
+            )
+        else:
+            application_divisor = (
+                session.query(Application)
+                .filter(Application.borrower_accepted_at.isnot(None))
+                .count()
+            )
+
+        # Calculate the proportion
+        if application_accepted_query == 0:
+            proportion_of_submitted_out_of_opt_in = 0
+        else:
+            proportion_of_submitted_out_of_opt_in = (
+                application_accepted_query / application_divisor
+            ) * 100
 
         general_statistics = {
             "applications_received_count": applications_received_count,
@@ -186,6 +213,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
             "average_repayment_period": average_repayment_period,
             "applications_overdue_count": applications_overdue_count,
             "average_processing_time": average_processing_time,
+            "proportion_of_submitted_out_of_opt_in": proportion_of_submitted_out_of_opt_in,
         }
 
     except SQLAlchemyError as e:
@@ -317,71 +345,3 @@ def get_count_of_fis_choosen_by_msme(session):
     return [
         StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query
     ]
-
-
-# Stat only for OCP USER
-def get_proportion_of_submited_out_of_opt_in(session):
-    try:
-        # Count all applications where borrower_accepted_at is not None
-        total_opt_in_applications_count = (
-            session.query(Application)
-            .filter(Application.borrower_accepted_at.isnot(None))
-            .count()
-        )
-
-        # Count all applications where borrower_submitted_at is not None
-        total_submitted_applications_count = (
-            session.query(Application)
-            .filter(Application.borrower_submitted_at.isnot(None))
-            .count()
-        )
-
-        # Calculate the proportion
-        if total_opt_in_applications_count == 0:
-            proportion_of_submitted_out_of_opt_in = 0
-        else:
-            proportion_of_submitted_out_of_opt_in = (
-                total_submitted_applications_count / total_opt_in_applications_count
-            ) * 100
-
-    except SQLAlchemyError as e:
-        raise e
-
-    return proportion_of_submitted_out_of_opt_in
-
-
-# Stats only for FI USER
-def get_proportion_of_msme_selecting_current_fi(session, lender_id):
-    try:
-        total_submitted_applications_count = (
-            session.query(Application)
-            .filter(Application.borrower_submitted_at.isnot(None))
-            .count()
-        )
-
-        # Number of applications submitted requesting the specified lender
-        applications_requesting_lender_query_count = (
-            session.query(Application)
-            .filter(
-                and_(
-                    Application.borrower_submitted_at.isnot(None),
-                    Application.lender_id == lender_id,
-                )
-            )
-            .count()
-        )
-        print(applications_requesting_lender_query_count)
-
-        # Calculate the proportion
-        if total_submitted_applications_count == 0:
-            msme_selecting_current_fi = 0
-        else:
-            msme_selecting_current_fi = (
-                applications_requesting_lender_query_count
-                / total_submitted_applications_count
-            ) * 100
-
-    except SQLAlchemyError as e:
-        raise e
-
-    return round(msme_selecting_current_fi)
