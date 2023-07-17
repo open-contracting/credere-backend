@@ -542,30 +542,18 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
 
 def get_previous_awards(
     application: core.Application,
-    sort_field: str,
-    sort_order: str,
-    page: int,
-    page_size: int,
     session: Session,
-) -> api.PreviousAwards:
-    sort_direction = desc if sort_order.lower() == "desc" else asc
+) -> List[core.Award]:
     previous_contracts = (
         session.query(core.Award)
         .filter(
             core.Award.previous == true(),
             core.Award.borrower_id == application.borrower_id,
         )
-        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+        .all()
     )
-    total_count = previous_contracts.count()
-    awards = previous_contracts.offset(page * page_size).limit(page_size).all()
 
-    return api.PreviousAwards(
-        items=awards,
-        count=total_count,
-        page=page,
-        page_size=page_size,
-    )
+    return previous_contracts
 
 
 def copy_documents(application: core.Application, documents: dict, session: Session):

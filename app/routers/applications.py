@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-
+from typing import List
 from botocore.exceptions import ClientError
 from fastapi.responses import StreamingResponse
 from sqlalchemy import and_
@@ -1104,24 +1104,17 @@ async def decline_feedback(
 @router.get(
     "/applications/{id}/previous-awards",
     tags=["applications"],
-    response_model=ApiSchema.PreviousAwards,
+    response_model=List[core.Award],
 )
-@OCP_only()
 async def previous_contracts(
     id: int,
-    page: int = Query(0, ge=0),
-    page_size: int = Query(10, gt=0),
-    sort_field: str = Query("created_at"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: core.User = Depends(get_current_user),
+    user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
-
-        return utils.get_previous_awards(
-            application, sort_field, sort_order, page, page_size, session
-        )
+        utils.check_FI_user_permission(application, user)
+        return utils.get_previous_awards(application, session)
 
 
 @router.post(
