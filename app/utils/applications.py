@@ -631,11 +631,16 @@ def check_if_application_was_already_copied(
 ):
     app_action = (
         session.query(core.ApplicationAction)
+        .join(
+            core.Application,
+            core.Application.id == core.ApplicationAction.application_id,
+        )
         .filter(
             core.Application.id == application.id,
             core.ApplicationAction.type
             == core.ApplicationActionType.COPIED_APPLICATION,
         )
+        .options(joinedload(core.ApplicationAction.application))
         .first()
     )
 

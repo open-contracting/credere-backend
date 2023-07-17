@@ -70,14 +70,13 @@ you can use .envtest as an example, it has the following keys:
 - FACEBOOK_LINK -> link to OCP Facebook account
 - TWITTER_LINK -> link to OCP Twitter account
 - LINK_LINK -> link to (Pending to define)
-- TEST_MAIL_RECEIVER -> email used to send invitations when fetching new awards (Will be removed
+- TEST_MAIL_RECEIVER -> email used to send invitations when fetching new awards or emails to borrower.
 - DAYS_TO_ERASE_BORROWERS_DATA -> the number of days to wait before deleting borrower data
 - DAYS_TO_CHANGE_TO_LAPSED -> the number of days to wait before changing the status of an application to 'Lapsed'
 - OCP_EMAIL_GROUP -> list of ocp users for notifications
 - MAX_FILE_SIZE_MB -> max file size allowed to be uploaded
-- PROGRESS_TO_REMIND_STARTED_APPLICATIONS -> % of days of lender SLA before an overdue reminder.
-for example a lender with a SLA of 10 days will receive the first overdue at 7 days mark
-- ENVIRONMENT -> Needs to be set as production in order to send emails to proper address. If not emails will be sent to test_email_receiver
+- PROGRESS_TO_REMIND_STARTED_APPLICATIONS -> % of days of lender SLA before an overdue reminder, for example a lender with a SLA of 10 days will receive the first overdue at 7 days mark
+- ENVIRONMENT -> needs to be set as "production" in order to send emails to real borrower address. If not, emails will be sent to TEST_MAIL_RECEIVER
 
 You should configure the pre-commit for the repo one time
 
@@ -222,8 +221,14 @@ The command to send mail reminders is
 python -m app.commands send-reminders
 ```
 
-The command to send overdue appliations emails to FI users is 
+The command to send overdue appliations emails to FI users is
 
 ```
 python -m app.commands sla-overdue-applications
+```
+
+The command to update statistics is
+
+```
+python -m app.commands update-statistics
 ```

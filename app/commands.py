@@ -33,6 +33,10 @@ def send_reminders():
 
 
 @app.command()
+def update_statistics():
+    background_processes.update_statistic.update_statistics()
+
+
 def SLA_overdue_applications():
     background_processes.SLA_overdue_applications.SLA_overdue_applications()
 
