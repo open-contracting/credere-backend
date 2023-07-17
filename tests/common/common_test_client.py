@@ -19,7 +19,7 @@ from app.db.session import get_db
 from app.routers import applications, lenders, security, users
 from app.schema import core
 from tests.common.utils import create_enums
-from tests.protected_routes import applications_test, users_test
+from tests.protected_routes import applications_test, lenders_test, users_test
 
 tempPassword = "1234567890Abc!!"
 
@@ -56,6 +56,7 @@ def start_application():
     app.include_router(applications.router)
     app.include_router(users_test.router)
     app.include_router(applications_test.router)
+    app.include_router(lenders_test.router)
     return app
 
 

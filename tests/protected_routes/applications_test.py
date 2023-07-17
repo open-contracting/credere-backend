@@ -1,4 +1,7 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, status
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -10,14 +13,55 @@ router = APIRouter()
 
 class ApplicationTestPayload(BaseModel):
     status: core.ApplicationStatus
+    lender_id: Optional[int]
+    credit_product_id: Optional[int]
+
+
+class ApplicationActionTestPayload(BaseModel):
+    type: core.ApplicationActionType
+    application_id: int
+    user_id: int
 
 
 class BorrowerTestPayload(BaseModel):
     status: core.BorrowerStatus
 
 
+@router.post(
+    "/create-test-credit-option",
+    tags=["applications"],
+    response_model=core.CreditProduct,
+)
+async def create_test_credit_option(
+    payload: core.CreditProduct, session: Session = Depends(get_db)
+):
+    session.add(payload)
+    session.commit()
+    session.refresh(payload)
+
+    return payload
+
+
+@router.post("/create-test-application-action", tags=["applications"])
+async def create_test_application_action(
+    payload: ApplicationActionTestPayload, session: Session = Depends(get_db)
+):
+    update_dict = jsonable_encoder(payload, exclude_unset=True)
+
+    new_action = core.ApplicationAction(
+        type=type,
+        data=update_dict,
+        application_id=payload.application_id,
+        user_id=payload.user_id,
+    )
+    session.add(new_action)
+    session.flush()
+
+    return new_action
+
+
 @router.post("/create-test-application", tags=["applications"])
-async def create_application(
+async def create_test_application(
     payload: ApplicationTestPayload, session: Session = Depends(get_db)
 ):
     test_award = {
@@ -129,8 +173,16 @@ async def create_application(
     }
 
     test_application = {
-        "amount_requested": None,
-        "secop_data_verification": {},
+        "amount_requested": 10000,
+        "secop_data_verification": {
+            "legal_name": False,
+            "address": True,
+            "legal_identifier": True,
+            "type": True,
+            "size": True,
+            "sector": True,
+            "email": True,
+        },
         "borrower_id": 1,
         "id": 1,
         "calculator_data": {},
@@ -139,7 +191,7 @@ async def create_application(
         "borrower_submitted_at": None,
         "lender_approved_data": {},
         "status": payload.status,
-        "lender_id": None,
+        "lender_id": payload.lender_id,
         "borrower_accepted_at": None,
         "lender_rejected_data": {},
         "award_id": 1,
@@ -160,6 +212,7 @@ async def create_application(
         "lender_started_at": None,
         "updated_at": "2023-06-26T03:14:31.572553+00:00",
         "completed_in_days": None,
+        "credit_product_id": payload.credit_product_id,
     }
 
     db_award = core.Award(**test_award)

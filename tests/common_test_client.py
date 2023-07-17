@@ -267,23 +267,6 @@ def set_borrower_status(status: core.BorrowerStatus):
         session.commit()
 
 
-# def create_test_user(client: Generator[TestClient, Any, None], user_data: dict):
-#     responseCreate = client.post("/users", json=user_data)
-#     assert responseCreate.status_code == status.HTTP_200_OK
-
-#     setupPasswordPayload = {
-#         "username": user_data["email"],
-#         "temp_password": tempPassword,
-#         "password": tempPassword,
-#     }
-#     client.put("/users/change-password", json=setupPasswordPayload)
-
-#     loginPayload = {"username": user_data["email"], "password": tempPassword}
-#     responseLogin = client.post("/users/login", json=loginPayload)
-
-#     return {"Authorization": "Bearer " + responseLogin.json()["access_token"]}
-
-
 @pytest.fixture(scope="function")
 def client(app: FastAPI) -> Generator[TestClient, Any, None]:
     my_config = Config(region_name=app_settings.aws_region)
@@ -312,6 +295,15 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
         Template={
             "TemplateName": templates["NEW_USER_TEMPLATE_NAME"],
             "SubjectPart": "Your email subject",
+            "HtmlPart": "<html><body>Your HTML content</body></html>",
+            "TextPart": "Your plain text content",
+        }
+    )
+
+    ses_client.create_template(
+        Template={
+            "TemplateName": "credere-ApplicationDeclinedWithoutAlternativeOption",
+            "SubjectPart": "APPLICATION_DECLINED_WITHOUT_ALTERNATIVE",
             "HtmlPart": "<html><body>Your HTML content</body></html>",
             "TextPart": "Your plain text content",
         }

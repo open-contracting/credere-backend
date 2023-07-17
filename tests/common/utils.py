@@ -8,6 +8,13 @@ FI_user = {
     "type": core.UserType.FI.value,
 }
 
+FI_user_with_lender = {
+    "email": "FI_user_with_lender@example.com",
+    "name": "Test FI with lender",
+    "type": core.UserType.FI.value,
+    "lender_id": 1,
+}
+
 OCP_user = {
     "email": "OCP_user@example.com",
     "name": "OCP_user@example.com",
