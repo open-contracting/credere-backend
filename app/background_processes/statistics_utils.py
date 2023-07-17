@@ -197,9 +197,9 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
         if application_accepted_query == 0:
             proportion_of_submitted_out_of_opt_in = 0
         else:
-            proportion_of_submitted_out_of_opt_in = (
-                application_accepted_query / application_divisor
-            ) * 100
+            proportion_of_submitted_out_of_opt_in = round(
+                (application_accepted_query / application_divisor) * 100, 2
+            )
 
         general_statistics = {
             "applications_received_count": applications_received_count,
