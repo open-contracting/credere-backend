@@ -24,15 +24,15 @@ router = APIRouter()
 )
 @OCP_only()
 async def get_ocp_statistics_by_lender(
-    initialDate: Optional[str] = None,
-    finalDate: Optional[str] = None,
-    lender: Optional[int] = None,
+    initial_date: Optional[str] = None,
+    final_date: Optional[str] = None,
+    lender_id: Optional[int] = None,
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
     try:
         statistics_kpis = statistics_utils.get_general_statistics(
-            session, initialDate, finalDate, lender
+            session, initial_date, final_date, lender_id
         )
 
     except ClientError as e:
