@@ -180,7 +180,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
             .count()
         )
 
-        if lender_id is None:
+        if lender_id is not None:
             application_divisor = (
                 session.query(Application)
                 .filter(Application.borrower_submitted_at.isnot(None))
