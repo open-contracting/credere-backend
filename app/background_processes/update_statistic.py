@@ -11,13 +11,6 @@ get_statistics_kpis = statistics_utils.get_general_statistics
 # OCP
 get_msme_opt_in = statistics_utils.get_msme_opt_in_stats
 get_fis_choosen_by_msme = statistics_utils.get_count_of_fis_choosen_by_msme
-get_proportion_of_submited_out_of_opt_in = (
-    statistics_utils.get_proportion_of_submited_out_of_opt_in
-)
-# FI
-get_msme_selecting_current_fi = (
-    statistics_utils.get_proportion_of_msme_selecting_current_fi
-)
 
 
 def update_statistics():
@@ -28,8 +21,6 @@ def update_statistics():
         logging.info(get_msme_opt_in(session))
 
         logging.info(get_fis_choosen_by_msme(session))
-        logging.info(get_proportion_of_submited_out_of_opt_in(session))
-        logging.info(get_msme_selecting_current_fi(session, 1))
 
         # se van almacernar en la DB los datos por lender
         # lo de FI no voy a almacenar porque es especifico del lender
