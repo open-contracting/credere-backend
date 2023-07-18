@@ -256,7 +256,10 @@ def get_all_active_applications(
             joinedload(core.Application.award),
             joinedload(core.Application.borrower),
         )
-        .filter(core.Application.status.notin_(excluded_applications))
+        .filter(
+            core.Application.status.notin_(excluded_applications),
+            core.Application.archived_at.is_(None),
+        )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
 
@@ -292,6 +295,7 @@ def get_all_FI_user_applications(
         )
         .filter(
             core.Application.status.notin_(excluded_applications),
+            core.Application.archived_at.is_(None),
             core.Application.lender_id == lender_id,
             core.Application.lender_id.is_not(None),
         )
