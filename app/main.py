@@ -8,7 +8,7 @@ from app.utils.general_utils import sentry_filter_transactions
 
 from .core.settings import app_settings
 
-from .routers import applications, awards, borrowers, lenders, users  # isort:skip
+from .routers import applications, lenders, users  # isort:skip
 from .routers import statistics  # isort:skip
 
 
