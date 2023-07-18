@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
-from app.schema.core import Borrower
+from app.schema.core import Borrower, BorrowerStatus
 from app.utils import email_utility
 
 from . import awards_utils
@@ -31,6 +31,13 @@ def fetch_new_awards_from_date(
                     award = awards_utils.create_award(entry, session)
                     borrower = get_or_create_borrower(entry, session)
                     award.borrower_id = borrower.id
+
+                    if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
+                        logging.info(
+                            "Borrower chose to not receive new oportunities. Skipping app creation."
+                        )
+                        continue
+
                     application = create_application(
                         award.id,
                         borrower.id,
@@ -42,19 +49,20 @@ def fetch_new_awards_from_date(
 
                     message = insert_message(application, session)
 
-                    # change in PROD
-                    logging.info(f"Parameter email_invitation: {email_invitation}")
-                    if not email_invitation or email_invitation == "":
+                    if app_settings.environment == "production":
+                        if not email_invitation or email_invitation == "":
+                            email_invitation = borrower.email
+                    else:
                         email_invitation = app_settings.test_mail_receiver
 
                     logging.info(
-                        f"NON PROD - Email to: {borrower.email} sent to {email_invitation}"
+                        f"{app_settings.environment} - Email to: {borrower.email} sent to {email_invitation}"
                     )
 
                     messageId = email_utility.send_invitation_email(
                         sesClient,
                         application.uuid,
-                        email_invitation,  # change to borrower.email in prod
+                        email_invitation,
                         borrower.legal_name,
                         award.buyer_name,
                         award.title,

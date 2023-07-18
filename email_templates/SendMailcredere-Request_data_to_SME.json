@@ -1,0 +1,10 @@
+{
+  "Source": "Credere_mail_test <credereadmin@open-contracting.org>",
+  "Template": "credere-RequestSmeData",
+  "Destination": {
+    "ToAddresses": [
+      "credereadmin@open-contracting.org"
+    ]
+  },
+  "TemplateData": "{\"LINK-TO-WEB-VERSION\": \"www.google.com\", \"OCP_LOGO\": \"http://ocp22.open-contracting.org/images/logoocp.jpg\", \"FI\": \"BANK OF AMERICA\", \"FI_MESSAGE\": \"this is the boy of the message received as a parameter\", \"LOGIN_IMAGE_LINK\": \"http://ocp22.open-contracting.org/images/logincompleteimage.png\", \"LOGIN_DOCUMENTS_URL\": \"www.google.com\", \"TWITTER_LOGO\": \"http://ocp22.open-contracting.org/images/twiterlogo.png\", \"FB_LOGO\": \"http://ocp22.open-contracting.org/images/facebook.png\", \"LINK_LOGO\": \"http://ocp22.open-contracting.org/images/link.png\", \"TWITTER_LINK\": \"www.google.com\", \"FACEBOOK_LINK\": \"www.google.com\", \"LINK_LINK\": \"www.google.com\"}"
+}

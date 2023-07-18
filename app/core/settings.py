@@ -50,9 +50,28 @@ class Settings(BaseSettings):
     secop_default_days_from_ultima_actualizacion: int = config_env.get(
         "SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION", 365
     )
+    days_to_erase_borrower_data: int = config_env.get("DAYS_TO_ERASE_BORROWERS_DATA", 7)
+    days_to_change_to_lapsed: int = config_env.get("DAYS_TO_CHANGE_TO_LAPSED", 14)
+    ocp_email_group: str = config_env.get("OCP_EMAIL_GROUP", None)
+    max_file_size_mb: int = config_env.get("MAX_FILE_SIZE_MB", 5)
+    reminder_days_before_expiration: int = config_env.get(
+        "REMINDER_DAYS_BEFORE_EXPIRATION", 3
+    )
+
+    progress_to_remind_started_applications: float = config_env.get(
+        "PROGRESS_TO_REMIND_STARTED_APPLICATIONS", 0.7
+    )
+    environment: str = config_env.get("ENVIRONMENT", "development")
 
     class Config:
         env_file = ".env"
 
 
 app_settings = Settings()
+
+# email template names
+NEW_USER_TEMPLATE_NAME = "credere-NewAccountCreated"
+RESET_PASSWORD_TEMPLATE_NAME = "credere-ResetPassword"
+ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME = "credere-AccessToCreditSchemeForMSMEs"
+INTRO_REMINDER_TEMPLATE_NAME = "credere-AccessToCreditSchemeReminder"
+APPLICATION_REMINDER_TEMPLATE_NAME = "credere-ApplicationReminder"

@@ -17,7 +17,7 @@ class StatisticType(Enum):
 class Statistic(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     type: StatisticType = Field(
-        sa_column=Column(SAEnum(StatisticType, name="user_type"))
+        sa_column=Column(SAEnum(StatisticType, name="statistic_type"))
     )
     data: dict = Field(default={}, sa_column=Column(JSON))
     updated_at: Optional[datetime] = Field(

@@ -10,12 +10,13 @@ from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.core.email_templates import templates
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
 from app.db.session import get_db
-from app.email_templates import NEW_USER_TEMPLATE_NAME
 from app.routers import security, users
 from app.schema.core import User, UserType
+from tests.protected_routes import users_test
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.db"
 engine = create_engine(
@@ -33,6 +34,7 @@ logging.basicConfig(
 def start_application():
     app = FastAPI()
     app.include_router(users.router)
+    app.include_router(users_test.router)
     app.include_router(security.router)
     return app
 
@@ -87,7 +89,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
 
     ses_client.create_template(
         Template={
-            "TemplateName": NEW_USER_TEMPLATE_NAME,
+            "TemplateName": templates["NEW_USER_TEMPLATE_NAME"],
             "SubjectPart": "Your email subject",
             "HtmlPart": "<html><body>Your HTML content</body></html>",
             "TextPart": "Your plain text content",
@@ -130,7 +132,7 @@ data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.va
 
 
 def test_create_user(client):
-    response = client.post("/users", json=data)
+    response = client.post("/users-test", json=data)
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get("/users/1")
@@ -138,15 +140,15 @@ def test_create_user(client):
 
 
 def test_duplicate_user(client):
-    response = client.post("/users", json=data)
+    response = client.post("/users-test", json=data)
     assert response.status_code == status.HTTP_200_OK
     # duplicate user
-    response = client.post("/users", json=data)
+    response = client.post("/users-test", json=data)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 def test_login(client):
-    responseCreate = client.post("/users", json=data)
+    responseCreate = client.post("/users-test", json=data)
     assert responseCreate.status_code == status.HTTP_200_OK
 
     setupPasswordPayload = {

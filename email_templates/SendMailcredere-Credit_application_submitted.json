@@ -1,0 +1,10 @@
+{
+  "Source": "Credere_mail_test <credere@noreply.open-contracting.org>",
+  "Template": "credere-CreditApplicationSubmitted",
+  "Destination": {
+    "ToAddresses": [
+      "credereadmin@open-contracting.org"
+    ]
+  },
+  "TemplateData": "{\"AWARD_SUPPLIER_NAME\": \"PROVEEDOR XX\", \"FI\": \"Bank of America\", \"LINK-TO-WEB-VERSION\": \"www.google.com\", \"OCP_LOGO\": \"http://ocp22.open-contracting.org/images/logoocp.jpg\", \"TWITTER_LOGO\": \"http://ocp22.open-contracting.org/images/twiterlogo.png\", \"FB_LOGO\": \"http://ocp22.open-contracting.org/images/facebook.png\", \"LINK_LOGO\": \"http://ocp22.open-contracting.org/images/link.png\", \"TWITTER_LINK\": \"www.google.com\", \"FACEBOOK_LINK\": \"www.google.com\", \"LINK_LINK\": \"www.google.com\"}"
+}
