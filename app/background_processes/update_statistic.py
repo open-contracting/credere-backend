@@ -1,5 +1,6 @@
 import logging
 from contextlib import contextmanager
+from datetime import datetime
 
 from app.db.session import get_db
 from app.schema.statistic import Statistic, StatisticType
@@ -10,7 +11,6 @@ from . import statistics_utils
 get_statistics_kpis = statistics_utils.get_general_statistics
 # OCP
 get_msme_opt_in = statistics_utils.get_msme_opt_in_stats
-get_fis_choosen_by_msme = statistics_utils.get_count_of_fis_choosen_by_msme
 
 
 def update_statistics():
@@ -18,24 +18,43 @@ def update_statistics():
         logging.info(get_statistics_kpis(session, None, None, 2))
         logging.info(get_statistics_kpis(session, "2022-01-01", "2022-12-31", 2))
 
-        logging.info(get_msme_opt_in(session))
-
-        logging.info(get_fis_choosen_by_msme(session))
+        # logging.info(get_msme_opt_in(session))
 
         # se van almacernar en la DB los datos por lender
         # lo de FI no voy a almacenar porque es especifico del lender
         try:
-            statistic_kpis = get_statistics_kpis(
-                session, None, None, None
-            )  # Get general statistics
-            statistics = Statistic(
+            # Get general statistics
+            statistic_kpis = get_statistics_kpis(session, None, None, None)
+            statistics_msme_opt_in = get_msme_opt_in(session)
+            statistics_msme_opt_in["sector_statistics"] = [
+                data.dict() for data in statistics_msme_opt_in["sector_statistics"]
+            ]
+            statistics_msme_opt_in["rejected_reasons_count_by_reason"] = [
+                data.dict()
+                for data in statistics_msme_opt_in["rejected_reasons_count_by_reason"]
+            ]
+            statistics_msme_opt_in["fis_choosen_by_msme"] = [
+                data.dict() for data in statistics_msme_opt_in["fis_choosen_by_msme"]
+            ]
+
+            insert_kpis = Statistic(
                 type=StatisticType.APPLICATION_KPIS,
                 data=statistic_kpis,
+                created_at=datetime.now(),
             )
-            session.add(statistics)
+            session.add(insert_kpis)
+
+            insert_statistics_msme_opt_in = Statistic(
+                type=StatisticType.MSME_OPT_IN_STATISTICS,
+                data=statistics_msme_opt_in,
+                created_at=datetime.now(),
+            )
+            session.add(insert_statistics_msme_opt_in)
+
             session.commit()
+
         except Exception as e:
-            logging.error(f"there was an error setting to lapsed: {e}")
+            logging.error(f"there was an error saving statistics: {e}")
             session.rollback()
 
 

@@ -316,23 +316,7 @@ def get_msme_opt_in_stats(session):
             ),
             StatisticData(name="other", value=other_count),
         ]
-
-        opt_in_statistics = {
-            "opt_in_query_count": opt_in_query_count,
-            "opt_in_percentage": opt_in_percentage,
-            "sector_statistics": sectors_count,
-            "rejected_reasons_count_by_reason": rejected_reasons_count_by_reason,
-        }
-
-    except SQLAlchemyError as e:
-        raise e
-
-    return opt_in_statistics
-
-
-# Stat only for OCP USER Bars graph
-def get_count_of_fis_choosen_by_msme(session):
-    try:
+        # Bars graph
         fis_choosen_by_msme_query = (
             session.query(Lender.name, func.count(Application.id))
             .join(Lender, Application.lender_id == Lender.id)
@@ -340,8 +324,20 @@ def get_count_of_fis_choosen_by_msme(session):
             .group_by(Lender.name)
             .all()
         )
+        fis_choosen_by_msme = [
+            StatisticData(name=row[0], value=row[1])
+            for row in fis_choosen_by_msme_query
+        ]
+
+        opt_in_statistics = {
+            "opt_in_query_count": opt_in_query_count,
+            "opt_in_percentage": opt_in_percentage,
+            "sector_statistics": sectors_count,
+            "rejected_reasons_count_by_reason": rejected_reasons_count_by_reason,
+            "fis_choosen_by_msme": fis_choosen_by_msme,
+        }
+
     except SQLAlchemyError as e:
         raise e
-    return [
-        StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query
-    ]
+
+    return opt_in_statistics
