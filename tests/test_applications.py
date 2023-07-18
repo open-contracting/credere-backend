@@ -133,6 +133,11 @@ def test_approve_application_cicle(client, mocker):  # noqa
     FI_headers = client.post(
         "/create-test-user-headers", json=FI_user_with_lender
     ).json()
+
+    client.post("/lenders", json=lender_2, headers=OCP_headers)
+    FI_headers_2 = client.post(
+        "/create-test-user-headers", json=FI_user_with_lender_2
+    ).json()
     client.post("/create-test-credit-option", json=test_credit_option)
     client.post("/create-test-application", json=application_with_lender_payload)
 
@@ -158,6 +163,10 @@ def test_approve_application_cicle(client, mocker):  # noqa
             "/applications/access-scheme", json={"uuid": "123-456-789"}
         )
         assert response.status_code == status.HTTP_409_CONFLICT
+
+    # different lender tries to get the application
+    response = client.get("/applications/id/1", headers=FI_headers_2)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     with patch(
         "app.utils.email_utility.send_new_email_confirmation",
@@ -207,6 +216,10 @@ def test_approve_application_cicle(client, mocker):  # noqa
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    # different lender tries to start the application
+    response = client.post("/applications/1/start", headers=FI_headers_2)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     # lender starts application
     response = client.post("/applications/1/start", headers=FI_headers)

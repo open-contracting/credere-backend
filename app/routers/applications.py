@@ -497,7 +497,7 @@ async def get_application(
         session.query(core.Application).filter(core.Application.id == id).first()
     )
 
-    if user.is_OCP:
+    if user.is_OCP():
         return application
 
     if user.lender_id != application.lender_id:

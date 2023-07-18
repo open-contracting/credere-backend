@@ -77,6 +77,7 @@ you can use .envtest as an example, it has the following keys:
 - MAX_FILE_SIZE_MB -> max file size allowed to be uploaded
 - PROGRESS_TO_REMIND_STARTED_APPLICATIONS -> % of days of lender SLA before an overdue reminder.
 for example a lender with a SLA of 10 days will receive the first overdue at 7 days mark
+- TEST_DATABASE_URL -> Local test database in order to not drop and generate the main local database all the time
 
 You should configure the pre-commit for the repo one time
 
@@ -181,6 +182,20 @@ To run test locally
 ```
 pytest tests -W error
 ```
+
+You can get coverage information in console by running the following command
+
+```
+pytest --cov
+```
+
+and you can generate an html report using the following command
+
+```
+pytest --cov --cov-report=html:coverage_re
+```
+
+this will creat a folder called coverage_re in your project
 
 ## Run background jobs
 
