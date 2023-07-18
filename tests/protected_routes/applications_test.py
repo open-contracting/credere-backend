@@ -23,6 +23,10 @@ class ApplicationActionTestPayload(BaseModel):
     user_id: int
 
 
+class UpdateApplicationStatus(BaseModel):
+    status: core.ApplicationStatus
+
+
 class BorrowerTestPayload(BaseModel):
     status: core.BorrowerStatus
 
@@ -58,6 +62,23 @@ async def create_test_application_action(
     session.flush()
 
     return new_action
+
+
+@router.post(
+    "/applications/{id}/update-test-application-status",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def update_test_application_status(
+    id: int, payload: UpdateApplicationStatus, session: Session = Depends(get_db)
+):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+    application.status = payload.status
+    session.commit()
+
+    return application
 
 
 @router.post("/create-test-application", tags=["applications"])
