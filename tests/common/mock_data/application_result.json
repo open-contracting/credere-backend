@@ -20,7 +20,7 @@
   "uuid": "79df9e67-3a92-5e64-ae14-ee1194bf6c76",
   "repayment_months": null,
   "borrower_declined_preferences_data": {},
-  "borrower_uploaded_contracted_at": null,
+  "borrower_uploaded_contract_at": null,
   "primary_email": "test@example.com",
   "pending_documents": false,
   "contract_amount_submitted": null,
@@ -30,5 +30,15 @@
   "pending_email_confirmation": false,
   "lender_started_at": null,
   "updated_at": "2023-06-26T03:14:31.572553+00:00",
-  "completed_in_days": null
+  "completed_in_days": null,
+  "credit_product_id": null,
+  "confirmation_email_token": "",
+  "disbursed_final_amount": null,
+  "overdued_at": null,
+  "information_requested_at": null,
+  "repayment_years": null,
+  "payment_start_date": null,
+  "lender_completed_at": null,
+  "application_lapsed_at": null,
+  "borrower_credit_product_selected_at": null
 }
