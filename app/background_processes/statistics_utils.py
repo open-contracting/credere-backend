@@ -1,4 +1,4 @@
-# from datetime import datetime
+import logging
 
 from sqlalchemy import Integer, and_, distinct, func, or_, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -31,6 +31,14 @@ def get_base_query(sessionBase, start_date, end_date, lender_id):
 
 
 def get_general_statistics(session, start_date=None, end_date=None, lender_id=None):
+    logging.info(
+        "calculating general statistics for lender "
+        + str(lender_id)
+        + " between dates "
+        + (start_date if start_date else "not provided")
+        + " and "
+        + (end_date if end_date else "not provided")
+    )
     try:
         # received--------
         applications_received_query = get_base_query(
@@ -224,6 +232,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
 
 # Group of Stat only for OCP USER (msme opt in stats)
 def get_msme_opt_in_stats(session):
+    logging.info("calculating msme opt in stas for lender ")
     try:
         # opt in--------
         opt_in_query = session.query(Application).filter(

@@ -14,6 +14,11 @@ class StatisticType(Enum):
     APPLICATION_KPIS = "APPLICATION_KPIS"
 
 
+class StatisticCustomRange(Enum):
+    LAST_WEEK = "LAST_WEEK"
+    LAST_MONTH = "LAST_MONTH"
+
+
 class Statistic(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     type: StatisticType = Field(
