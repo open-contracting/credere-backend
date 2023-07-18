@@ -1114,7 +1114,8 @@ async def previous_contracts(
 ):
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
-        utils.check_FI_user_permission(application, user)
+        utils.check_FI_user_permission_or_OCP(application, user)
+
         return utils.get_previous_awards(application, session)
 
 

@@ -526,6 +526,16 @@ def check_FI_user_permission(application: core.Application, user: core.User) -> 
         )
 
 
+def check_FI_user_permission_or_OCP(
+    application: core.Application, user: core.User
+) -> None:
+    if not user.is_OCP and application.lender_id != user.lender_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is not authorized",
+        )
+
+
 def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocument:
     document = (
         session.query(core.BorrowerDocument)
