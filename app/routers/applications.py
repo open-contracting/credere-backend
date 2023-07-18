@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import List
 
 from botocore.exceptions import ClientError
 from fastapi.responses import StreamingResponse
@@ -1102,6 +1103,23 @@ async def decline_feedback(
             borrower=application.borrower,
             award=application.award,
         )
+
+
+@router.get(
+    "/applications/{id}/previous-awards",
+    tags=["applications"],
+    response_model=List[core.Award],
+)
+async def previous_contracts(
+    id: int,
+    user: core.User = Depends(get_user),
+    session: Session = Depends(get_db),
+):
+    with transaction_session(session):
+        application = utils.get_application_by_id(id, session)
+        utils.check_FI_user_permission_or_OCP(application, user)
+
+        return utils.get_previous_awards(application, session)
 
 
 @router.post(

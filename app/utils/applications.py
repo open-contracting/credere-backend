@@ -8,6 +8,7 @@ from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
+from sqlalchemy.sql.expression import true
 
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
@@ -255,7 +256,10 @@ def get_all_active_applications(
             joinedload(core.Application.award),
             joinedload(core.Application.borrower),
         )
-        .filter(core.Application.status.notin_(excluded_applications))
+        .filter(
+            core.Application.status.notin_(excluded_applications),
+            core.Application.archived_at.is_(None),
+        )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
 
@@ -291,6 +295,7 @@ def get_all_FI_user_applications(
         )
         .filter(
             core.Application.status.notin_(excluded_applications),
+            core.Application.archived_at.is_(None),
             core.Application.lender_id == lender_id,
             core.Application.lender_id.is_not(None),
         )
@@ -525,6 +530,16 @@ def check_FI_user_permission(application: core.Application, user: core.User) -> 
         )
 
 
+def check_FI_user_permission_or_OCP(
+    application: core.Application, user: core.User
+) -> None:
+    if not user.is_OCP and application.lender_id != user.lender_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User is not authorized",
+        )
+
+
 def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocument:
     document = (
         session.query(core.BorrowerDocument)
@@ -537,6 +552,22 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
             detail="Document not found",
         )
     return document
+
+
+def get_previous_awards(
+    application: core.Application,
+    session: Session,
+) -> List[core.Award]:
+    previous_contracts = (
+        session.query(core.Award)
+        .filter(
+            core.Award.previous == true(),
+            core.Award.borrower_id == application.borrower_id,
+        )
+        .all()
+    )
+
+    return previous_contracts
 
 
 def copy_documents(application: core.Application, documents: dict, session: Session):
@@ -631,11 +662,16 @@ def check_if_application_was_already_copied(
 ):
     app_action = (
         session.query(core.ApplicationAction)
+        .join(
+            core.Application,
+            core.Application.id == core.ApplicationAction.application_id,
+        )
         .filter(
             core.Application.id == application.id,
             core.ApplicationAction.type
             == core.ApplicationActionType.COPIED_APPLICATION,
         )
+        .options(joinedload(core.ApplicationAction.application))
         .first()
     )
 

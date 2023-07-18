@@ -197,6 +197,7 @@ def get_applications_to_remind_intro():
                         <= datetime.now()
                         + timedelta(days=app_settings.reminder_days_before_expiration),
                         ~core.Application.id.in_(subquery),
+                        core.Borrower.status == core.BorrowerStatus.ACTIVE,
                     )
                 )
                 .all()
