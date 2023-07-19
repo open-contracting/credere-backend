@@ -182,7 +182,7 @@ To run test locally
 pytest tests -W error
 ```
 
-## Run background jobs
+## Background jobs Commands
 
 To run the list of commands available use
 
@@ -196,19 +196,19 @@ python -m app.commands --help
 python -m app.commands fetch-awards
 ```
 
-It will send invitations to the email configure in the env variable _TEST_MAIL_RECEIVER_. Alternative could receive a custom email destination with **--email-invitation** argument
-
-does the followings actions
-
-- fetch application data from Secop and store it into the Credere database
-
-- Send the invitation intro mail to the potential borrowers
-
 ```
 python -m app.commands fetch-awards --email-invitation test@example.com
 ```
 
-### Command to remove data from dated completed, declined, rejected and lapsed applications
+this commands gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on environment and the env variable _TEST_MAIL_RECEIVER_).
+
+Alternative could receive a custom email destination with **--email-invitation** argument
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day.
+
+### Command to remove user data from dated applications
 
 ```
 python -m app.commands remove-dated-application-data
@@ -233,7 +233,7 @@ Queries the applications in 'pending', 'accepted', and 'requested' status that h
 
 This process should be run once a day to keep the application's status updated.
 
-### The command to send mail reminders is
+### Command to send mail reminders is
 
 ```
 python -m app.commands send-reminders
@@ -254,6 +254,12 @@ This process should be run once a day.
 ```
 python -m app.commands sla-overdue-applications
 ```
+
+This command identifies applications that are in INFORMATION_REQUESTED or STARTED status and overdue based on the lender's service level agreement (SLA). For each overdue application, an email is sent to OCP and to the respective lender. The command also updates the overdued_at attribute for applications that exceed the lender's SLA days.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to ensure that all necessary parties are notified of overdue applications in a timely manner.
 
 ### Command to update statistics is
 
