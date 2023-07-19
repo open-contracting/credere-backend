@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.core.settings import app_settings
 from app.db.session import get_db
 from app.schema import core
 
@@ -28,6 +30,63 @@ class UpdateApplicationStatus(BaseModel):
 
 class BorrowerTestPayload(BaseModel):
     status: core.BorrowerStatus
+
+
+@router.get(
+    "/set-test-application-as-lapsed/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_lapsed(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+    application.created_at = datetime.now(application.created_at.tzinfo) - timedelta(
+        days=app_settings.days_to_change_to_lapsed + 1
+    )
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
+    "/set-test-application-as-dated/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_dated(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+    application.borrower_declined_at = datetime.now(
+        application.created_at.tzinfo
+    ) - timedelta(days=app_settings.days_to_erase_borrower_data + 1)
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
+    "/set-test-application-to-remind/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_to_remind(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+    application.expired_at = datetime.now(application.created_at.tzinfo) + timedelta(
+        days=1
+    )
+
+    session.commit()
+    session.refresh(application)
+
+    return application
 
 
 @router.post(
@@ -166,7 +225,7 @@ async def create_test_application(
             "pais": "CO",
         },
         "status": "ACTIVE",
-        "created_at": "2023-06-22T17:48:06.152807",
+        "created_at": datetime.utcnow(),
         "declined_at": None,
         "borrower_identifier": "test_hash_12345678",
         "email": "test@example.com",
@@ -208,7 +267,7 @@ async def create_test_application(
         "pending_documents": True,
         "contract_amount_submitted": None,
         "borrower_declined_data": {},
-        "created_at": "2023-06-26T03:14:32.019854+00:00",
+        "created_at": datetime.utcnow(),
         "award_borrower_identifier": "test_hash_12345678",
         "pending_email_confirmation": True,
         "lender_started_at": None,

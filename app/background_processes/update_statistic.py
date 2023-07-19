@@ -1,6 +1,8 @@
 import logging
 from contextlib import contextmanager
 
+from sqlalchemy.orm import Session
+
 from app.db.session import get_db
 from app.schema.statistic import Statistic, StatisticType
 
@@ -13,8 +15,8 @@ get_msme_opt_in = statistics_utils.get_msme_opt_in_stats
 get_fis_choosen_by_msme = statistics_utils.get_count_of_fis_choosen_by_msme
 
 
-def update_statistics():
-    with contextmanager(get_db)() as session:
+def update_statistics(db_provider: Session = get_db):
+    with contextmanager(db_provider)() as session:
         logging.info(get_statistics_kpis(session, None, None, 2))
         logging.info(get_statistics_kpis(session, "2022-01-01", "2022-12-31", 2))
 

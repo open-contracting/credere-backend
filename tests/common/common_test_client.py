@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.email_templates import templates
 from app.core.settings import app_settings
@@ -48,7 +48,7 @@ logging.basicConfig(
 )
 
 
-def get_test_db():
+def get_test_db() -> Session:
     try:
         db = None
         if SessionTesting:

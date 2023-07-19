@@ -35,7 +35,7 @@ async def get_ocp_statistics_by_lender(
             session, initial_date, final_date, lender_id
         )
 
-    except ClientError as e:
+    except ClientError() as e:
         logging.error(e)
 
     return ApiSchema.StatisticResponse(

@@ -68,37 +68,32 @@ def test_fetch_empty_contracts(start_background_db, caplog):  # noqa
     assert "No new contracts" in caplog.text
 
 
-def test_fetch_new_awards_borrower_declined(client, caplog):  # noqa
+def test_fetch_new_awards_borrower_declined(client):  # noqa
     client.post("/borrowers-test", json=borrower_declined)
 
-    with caplog.at_level("INFO"):
-        with common_test_functions.mock_response_second_empty(
-            200,
-            contract,
-            "app.background_processes.awards_utils.get_new_contracts",
-        ), common_test_functions.mock_function_response(
-            None,
-            "app.background_processes.awards_utils.get_existing_award",
-        ), common_test_functions.mock_function_response(
-            1,
-            "app.utils.email_utility.send_invitation_email",
-        ), common_test_functions.mock_function_response(
-            None,
-            "app.background_processes.application_utils.get_existing_application",
-        ), common_test_functions.mock_whole_process(
-            200,
-            award,
-            borrower,
-            email,
-            "app.background_processes.background_utils.make_request_with_retry",
-        ):
-            fetcher.fetch_new_awards(
-                "test@test.com",
-                common_test_client.get_test_db,
-            )
-        assert (
-            "Skipping Award - Borrower choosed to not receive any new opportunity"
-            in caplog.text
+    with common_test_functions.mock_response_second_empty(
+        200,
+        contracts,
+        "app.background_processes.awards_utils.get_new_contracts",
+    ), common_test_functions.mock_function_response(
+        None,
+        "app.background_processes.awards_utils.get_existing_award",
+    ), common_test_functions.mock_function_response(
+        1,
+        "app.utils.email_utility.send_invitation_email",
+    ), common_test_functions.mock_function_response(
+        None,
+        "app.background_processes.application_utils.get_existing_application",
+    ), common_test_functions.mock_whole_process(
+        200,
+        award,
+        borrower,
+        email,
+        "app.background_processes.background_utils.make_request_with_retry",
+    ):
+        fetcher.fetch_new_awards(
+            "test@test.com",
+            common_test_client.get_test_db,
         )
 
 

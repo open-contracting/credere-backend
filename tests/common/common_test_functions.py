@@ -77,6 +77,9 @@ def mock_whole_process(
             MockResponse(status_code, award),
             MockResponse(status_code, borrower),
             MockResponse(status_code, email),
+            MockResponse(status_code, award),
+            MockResponse(status_code, borrower),
+            MockResponse(status_code, email),
         ]
     )
 

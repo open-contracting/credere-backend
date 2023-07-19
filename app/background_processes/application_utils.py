@@ -62,6 +62,7 @@ def create_application(
 
     # if application already exists
     application = get_existing_application(award_borrower_identifier, session)
+
     if application:
         error_data = {
             "legal_identifier": legal_identifier,
@@ -185,6 +186,8 @@ def get_applications_to_remind_intro():
             )
             users = (
                 session.query(core.Application)
+                .join(core.Borrower, core.Application.borrower_id == core.Borrower.id)
+                .join(core.Award, core.Application.award_id == core.Award.id)
                 .options(
                     joinedload(core.Application.borrower),
                     joinedload(core.Application.award),
