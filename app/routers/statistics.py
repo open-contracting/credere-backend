@@ -59,8 +59,10 @@ async def get_ocp_statistics_by_lender(
                 )
                 .first()
             )
+            if statistics_kpis is not None:
+                statistics_kpis = statistics_kpis.data
             # If no record for the current date, calculate the statistics
-            if statistics_kpis is None:
+            else:
                 logging.info(
                     "no records found for the current date, next step is to calculate the statistics"
                 )
@@ -114,8 +116,9 @@ async def get_ocp_statistics_opt_in(
             )
             .first()
         )
-
-        if opt_in_stats is None:
+        if opt_in_stats is not None:
+            opt_in_stats = opt_in_stats.data
+        else:
             logging.info(
                 "no records found for the current date, next step is to calculate the statistics"
             )
@@ -153,8 +156,9 @@ async def get_fi_statistics(
             )
             .first()
         )
-
-        if statistics_kpis is None:
+        if statistics_kpis is not None:
+            statistics_kpis = statistics_kpis.data
+        else:
             logging.info(
                 "no records found for the current date, next step is to calculate the statistics"
             )
