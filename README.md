@@ -190,7 +190,7 @@ To run the list of commands available use
 python -m app.commands --help
 ```
 
-The command to fetch new awards is
+### Command to fetch new awards is
 
 ```
 python -m app.commands fetch-awards
@@ -202,33 +202,55 @@ It will send invitations to the email configure in the env variable _TEST_MAIL_R
 python -m app.commands fetch-awards --email-invitation test@example.com
 ```
 
-Command to remove data from dated completed, declined, rejected and lapsed applications
+### Command to remove data from dated completed, declined, rejected and lapsed applications
 
 ```
 python -m app.commands remove-dated-application-data
 ```
 
-Command to remove data from lapsed applications
+Queries the applications in 'declined', 'rejected', 'completed', and 'lapsed' status that have remained in these states longer than the time defined in the environment variable DAYS_TO_ERASE_BORROWERS_DATA. If no other application is using the data, it deletes all the personal data of the borrower (name, email, address, legal identifier)."
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day.
+
+### Command to set application status to lapsed
 
 ```
 python -m app.commands update-applications-to-lapsed
 
 ```
 
-The command to send mail reminders is
+Queries the applications in 'pending', 'accepted', and 'requested' status that have remained in these states longer than the time defined in the environment variable DAYS_TO_CHANGE_TO_LAPSED, and changes their status to 'LAPSED'.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to keep the application's status updated.
+
+### The command to send mail reminders is
 
 ```
 python -m app.commands send-reminders
 ```
 
-The command to send overdue appliations emails to FI users is
+### Command to send overdue appliations emails to FI users is
 
 ```
 python -m app.commands sla-overdue-applications
 ```
 
-The command to update statistics is
+### Command to update statistics is
 
 ```
 python -m app.commands update-statistics
 ```
+
+"Performs the calculation needed to populate the statistic table with data from other tables, mainly, the Applications table."
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to keep the statistics table updated.
+
+#### Programmatic Execution
+
+This process is automatically run every time a user or MSME action adds new data that affects the statistics.
