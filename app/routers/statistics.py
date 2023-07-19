@@ -37,7 +37,7 @@ async def get_ocp_statistics_by_lender(
     try:
         if initial_date is None and final_date is None and custom_range is None:
             logging.info(
-                "Queriying general statistics data from DB  general statistics for lender "
+                "Queriying OCP general statistics data from DB for lender "
                 + str(lender_id)
                 + " between dates "
                 + (
@@ -62,7 +62,7 @@ async def get_ocp_statistics_by_lender(
             # If no record for the current date, calculate the statistics
             if statistics_kpis is None:
                 logging.info(
-                    "no records found, next step will calculate the statistics"
+                    "no records found for the current date, next step is to calculate the statistics"
                 )
                 statistics_kpis = statistics_utils.get_general_statistics(
                     session, initial_date, final_date, lender_id
@@ -116,11 +116,14 @@ async def get_ocp_statistics_opt_in(
         )
 
         if opt_in_stats is None:
+            logging.info(
+                "no records found for the current date, next step is to calculate the statistics"
+            )
             opt_in_stats = statistics_utils.get_msme_opt_in_stats(session)
 
     except ClientError as e:
         logging.error(e)
-
+    logging.info(opt_in_stats)
     return ApiSchema.StatisticOptInResponse(
         opt_in_stat=opt_in_stats,
     )
@@ -134,7 +137,11 @@ async def get_fi_statistics(
 ):
     try:
         current_date = datetime.now().date()
-        logging.info("Queriying opt in stats data from DB")
+        logging.info(
+            "Queriying FI general statistics data from DB for lender "
+            + str(user.lender_id)
+        )
+
         statistics_kpis = (
             session.query(Statistic)
             .filter(
@@ -148,6 +155,9 @@ async def get_fi_statistics(
         )
 
         if statistics_kpis is None:
+            logging.info(
+                "no records found for the current date, next step is to calculate the statistics"
+            )
             statistics_kpis = statistics_utils.get_general_statistics(
                 session, None, None, user.lender_id
             )

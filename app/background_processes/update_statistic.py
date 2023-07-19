@@ -79,8 +79,6 @@ def update_statistics():
 
             # Get general Kpis for every lender
             lender_ids = [id[0] for id in session.query(core.Lender.id).all()]
-            print(lender_ids)
-
             for lender_id in lender_ids:
                 # Get statistics for each lender
                 statistic_kpis = get_statistics_kpis(session, None, None, lender_id)
