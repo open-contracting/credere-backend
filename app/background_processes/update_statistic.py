@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 from sqlalchemy import Date, cast
+from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schema import core
@@ -16,8 +17,8 @@ get_statistics_kpis = statistics_utils.get_general_statistics
 get_msme_opt_in = statistics_utils.get_msme_opt_in_stats
 
 
-def update_statistics():
-    with contextmanager(get_db)() as session:
+def update_statistics(db_provider: Session = get_db):
+    with contextmanager(db_provider)() as session:
         try:
             # Get general Kpis
             statistic_kpis = get_statistics_kpis(session, None, None, None)
