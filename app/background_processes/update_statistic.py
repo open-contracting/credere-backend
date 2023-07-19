@@ -18,13 +18,6 @@ get_msme_opt_in = statistics_utils.get_msme_opt_in_stats
 
 def update_statistics():
     with contextmanager(get_db)() as session:
-        logging.info(get_statistics_kpis(session, None, None, 2))
-        logging.info(get_statistics_kpis(session, "2022-01-01", "2022-12-31", 2))
-
-        # logging.info(get_msme_opt_in(session))
-
-        # se van almacernar en la DB los datos por lender
-        # lo de FI no voy a almacenar porque es especifico del lender
         try:
             # Get general Kpis
             statistic_kpis = get_statistics_kpis(session, None, None, None)

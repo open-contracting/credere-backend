@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, joinedload
 import app.utils.applications as utils
 from app.background_processes import application_utils
 from app.background_processes.fetcher import fetch_previous_awards
+from app.background_processes.update_statistic import update_statistics
 from app.core.settings import app_settings
 from app.schema import api as ApiSchema
 from app.schema.api import ChangeEmail
@@ -35,6 +36,7 @@ router = APIRouter()
 async def reject_application(
     id: int,
     payload: ApiSchema.LenderRejectedApplication,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
     user: core.User = Depends(get_user),
@@ -69,6 +71,7 @@ async def reject_application(
         utils.create_message(
             application, core.MessageType.REJECTED_APPLICATION, session, message_id
         )
+        background_tasks.add_task(update_statistics)
         return application
 
 
@@ -80,6 +83,7 @@ async def reject_application(
 async def complete_application(
     id: int,
     payload: ApiSchema.LenderReviewContract,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
@@ -102,7 +106,7 @@ async def complete_application(
                 "disbursed_final_amount": payload.disbursed_final_amount,
             },
         )
-
+        background_tasks.add_task(update_statistics)
         return application
 
 
@@ -114,6 +118,7 @@ async def complete_application(
 async def approve_application(
     id: int,
     payload: ApiSchema.LenderApprovedData,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
     user: core.User = Depends(get_user),
@@ -138,7 +143,7 @@ async def approve_application(
             session,
             message_id,
         )
-
+        background_tasks.add_task(update_statistics)
         return application
 
 
@@ -570,6 +575,7 @@ async def get_application(
 )
 async def start_application(
     id: int,
+    background_tasks: BackgroundTasks,
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
@@ -588,7 +594,7 @@ async def start_application(
         application.status = core.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
         # TODO add action
-
+        background_tasks.add_task(update_statistics)
         return application
 
 
@@ -650,6 +656,7 @@ async def access_scheme(
         application.expired_at = None
 
         background_tasks.add_task(fetch_previous_awards, application.borrower)
+        background_tasks.add_task(update_statistics)
 
         return ApiSchema.ApplicationResponse(
             application=application,
@@ -744,7 +751,6 @@ async def select_credit_product(
             core.ApplicationActionType.APPLICATION_CALCULATOR_DATA_UPDATE,
             payload,
         )
-
         return ApiSchema.ApplicationResponse(
             application=application,
             borrower=application.borrower,
@@ -783,7 +789,6 @@ async def rollback_select_credit_product(
 
         application.credit_product_id = None
         application.borrower_credit_product_selected_at = None
-
         return ApiSchema.ApplicationResponse(
             application=application,
             borrower=application.borrower,
@@ -798,6 +803,7 @@ async def rollback_select_credit_product(
 )
 async def confirm_credit_product(
     payload: ApiSchema.ApplicationBase,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
@@ -846,7 +852,7 @@ async def confirm_credit_product(
             core.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
             {},
         )
-
+        background_tasks.add_task(update_statistics)
         return ApiSchema.ApplicationResponse(
             application=application,
             borrower=application.borrower,
@@ -864,6 +870,7 @@ async def confirm_credit_product(
 )
 async def update_apps_send_notifications(
     payload: ApiSchema.ApplicationBase,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
@@ -894,7 +901,7 @@ async def update_apps_send_notifications(
                 lender_name=application.lender.name,
                 lender_email_group=application.lender.email_group,
             )
-
+            background_tasks.add_task(update_statistics)
             return ApiSchema.ApplicationResponse(
                 application=application,
                 borrower=application.borrower,
@@ -917,6 +924,7 @@ async def update_apps_send_notifications(
 async def email_sme(
     id: int,
     payload: ApiSchema.ApplicationEmailSme,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
     user: core.User = Depends(get_user),
@@ -955,7 +963,7 @@ async def email_sme(
             )
             session.add(new_message)
             session.commit()
-
+            background_tasks.add_task(update_statistics)
             return application
         except ClientError as e:
             logging.error(e)
@@ -972,6 +980,7 @@ async def email_sme(
 )
 async def complete_information_request(
     payload: ApiSchema.ApplicationBase,
+    background_tasks: BackgroundTasks,
     client: CognitoClient = Depends(get_cognito_client),
     session: Session = Depends(get_db),
 ):
@@ -1002,7 +1011,7 @@ async def complete_information_request(
             session,
             message_id,
         )
-
+        background_tasks.add_task(update_statistics)
         return ApiSchema.ApplicationResponse(
             application=application,
             borrower=application.borrower,
@@ -1019,6 +1028,7 @@ async def complete_information_request(
 )
 async def decline(
     payload: ApiSchema.ApplicationDeclinePayload,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
@@ -1037,7 +1047,7 @@ async def decline(
         if payload.decline_all:
             application.borrower.status = core.BorrowerStatus.DECLINE_OPPORTUNITIES
             application.borrower.declined_at = current_time
-
+        background_tasks.add_task(update_statistics)
         return ApiSchema.ApplicationResponse(
             application=application,
             borrower=application.borrower,
@@ -1052,6 +1062,7 @@ async def decline(
 )
 async def rollback_decline(
     payload: ApiSchema.ApplicationBase,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
@@ -1066,7 +1077,7 @@ async def rollback_decline(
         if application.borrower.status == core.BorrowerStatus.DECLINE_OPPORTUNITIES:
             application.borrower.status = core.BorrowerStatus.ACTIVE
             application.borrower.declined_at = None
-
+        background_tasks.add_task(update_statistics)
         return ApiSchema.ApplicationResponse(
             application=application,
             borrower=application.borrower,
@@ -1081,6 +1092,7 @@ async def rollback_decline(
 )
 async def decline_feedback(
     payload: ApiSchema.ApplicationDeclineFeedbackPayload,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
     with transaction_session(session):
@@ -1094,7 +1106,7 @@ async def decline_feedback(
         application.borrower_declined_preferences_data = (
             borrower_declined_preferences_data
         )
-
+        background_tasks.add_task(update_statistics)
         return ApiSchema.ApplicationResponse(
             application=application,
             borrower=application.borrower,
