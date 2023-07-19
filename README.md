@@ -198,6 +198,12 @@ python -m app.commands fetch-awards
 
 It will send invitations to the email configure in the env variable _TEST_MAIL_RECEIVER_. Alternative could receive a custom email destination with **--email-invitation** argument
 
+does the followings actions
+
+- fetch application data from Secop and store it into the Credere database
+
+- Send the invitation intro mail to the potential borrowers
+
 ```
 python -m app.commands fetch-awards --email-invitation test@example.com
 ```
@@ -232,6 +238,16 @@ This process should be run once a day to keep the application's status updated.
 ```
 python -m app.commands send-reminders
 ```
+
+- Queries the applications in 'pending' status that fall within the range leading up to the expiration date. This range is defined by the environment variable REMINDER_DAYS_BEFORE_EXPIRATION.
+- The intro reminder email is sent to the applications that fulfill the previous condition
+
+- Queries the applications in 'accepted' status that fall within the range leading up to the expiration date. This range is defined by the environment variable REMINDER_DAYS_BEFORE_EXPIRATION.
+- The submit reminder email is sent to the applications that fulfill the previous condition
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day.
 
 ### Command to send overdue appliations emails to FI users is
 
