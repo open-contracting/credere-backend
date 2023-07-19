@@ -2,6 +2,7 @@
   {
     "nombre_entidad": "Test Entity",
     "nit": "123456789121",
+    "nit_entidad": "test123456789",
     "tel_fono_entidad": "1234567890",
     "correo_entidad": "test@example.com",
     "direccion": "Test Address",

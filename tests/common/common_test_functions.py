@@ -3,10 +3,6 @@ import os
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
-from sqlalchemy import Enum, create_engine
-from sqlalchemy.orm import sessionmaker
-
-from app.core.settings import app_settings
 from app.schema import core
 
 datetime_keys = ["award_date", "contractperiod_enddate", "expired_at"]
@@ -16,6 +12,9 @@ excluded_keys = [
     "secop_data_verification",
     "_sa_instance_state",
     "expired_at",
+    "source_data_contracts",
+    "missing_data",
+    "source_data",
 ]
 
 
@@ -29,8 +28,10 @@ class MockResponse:
 
 
 def load_json_file(filename):
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    filepath = os.path.join(current_dir, filename)
+    __location__ = os.path.realpath(
+        os.path.join(os.getcwd(), os.path.dirname(__file__))
+    )
+    filepath = os.path.join(__location__, filename)
 
     with open(filepath, "r") as json_file:
         data = json.load(json_file)
@@ -51,24 +52,6 @@ application_status_values = (
     "REJECTED",
     "INFORMATION_REQUESTED",
 )
-
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", app_settings.test_database_url)
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-existing_enum_types = engine.execute(
-    "SELECT typname FROM pg_type WHERE typtype = 'e'"
-).fetchall()
-enum_exists = ("application_status",) in existing_enum_types
-ApplicationStatusEnum = Enum(
-    *application_status_values, name="application_status", create_type=False
-)
-
-if not enum_exists:
-    engine.execute(
-        "CREATE TYPE application_status AS ENUM %s" % str(application_status_values)
-    )
-
-
-SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
@@ -138,30 +121,3 @@ def compare_objects(
             continue
 
         assert expected_result[key] == value
-
-
-def mock_get_db():
-    try:
-        db = None
-        if SessionTesting:
-            core.Application.metadata.create_all(engine)
-            db = SessionTesting()
-
-        yield db
-    finally:
-        if db:
-            db.close()
-
-
-def mock_get_db_with_drop():
-    try:
-        db = None
-        if SessionTesting:
-            core.Application.metadata.create_all(engine)
-            db = SessionTesting()
-
-        yield db
-    finally:
-        if db:
-            db.close()
-            core.Application.metadata.drop_all(engine)

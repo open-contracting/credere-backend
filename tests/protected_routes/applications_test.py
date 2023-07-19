@@ -1,7 +1,6 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, status
-from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -44,24 +43,6 @@ async def create_test_credit_option(
     session.refresh(payload)
 
     return payload
-
-
-@router.post("/create-test-application-action", tags=["applications"])
-async def create_test_application_action(
-    payload: ApplicationActionTestPayload, session: Session = Depends(get_db)
-):
-    update_dict = jsonable_encoder(payload, exclude_unset=True)
-
-    new_action = core.ApplicationAction(
-        type=type,
-        data=update_dict,
-        application_id=payload.application_id,
-        user_id=payload.user_id,
-    )
-    session.add(new_action)
-    session.flush()
-
-    return new_action
 
 
 @router.post(
@@ -148,7 +129,7 @@ async def create_test_application(
         "size": "NOT_INFORMED",
         "missing_data": {
             "borrower_identifier": False,
-            "legal_name": False,
+            "legal_name": True,
             "email": False,
             "address": False,
             "legal_identifier": True,

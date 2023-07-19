@@ -201,7 +201,7 @@ def update_application_borrower(
             detail="This application is not owned by this lender",
         )
 
-    update_models(payload, application.borrower)
+    update_models_with_validation(payload, application.borrower)
 
     session.add(application)
     session.flush()
@@ -235,7 +235,7 @@ def update_application_award(
             detail="This application is not owned by this lender",
         )
 
-    update_models_with_validation(payload, application.award)
+    update_models(payload, application.award)
 
     session.add(application)
     session.flush()

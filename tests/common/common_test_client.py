@@ -1,6 +1,5 @@
 import logging
 import os
-from datetime import datetime, timedelta
 from typing import Any, Generator
 
 import boto3
@@ -19,7 +18,8 @@ from app.db.session import get_db
 from app.routers import applications, lenders, security, users
 from app.schema import core
 from tests.common.utils import create_enums
-from tests.protected_routes import applications_test, lenders_test, users_test
+from tests.protected_routes import users_test  # noqa
+from tests.protected_routes import applications_test, borrowers_test  # noqa
 
 tempPassword = "1234567890Abc!!"
 
@@ -48,6 +48,25 @@ logging.basicConfig(
 )
 
 
+def get_test_db():
+    try:
+        db = None
+        if SessionTesting:
+            db = SessionTesting()
+
+        yield db
+    finally:
+        if db:
+            db.close()
+
+
+@pytest.fixture(scope="function")
+def start_background_db():
+    core.User.metadata.create_all(engine)
+    yield
+    core.User.metadata.drop_all(engine)
+
+
 def start_application():
     app = FastAPI()
     app.include_router(users.router)
@@ -56,7 +75,7 @@ def start_application():
     app.include_router(applications.router)
     app.include_router(users_test.router)
     app.include_router(applications_test.router)
-    app.include_router(lenders_test.router)
+    app.include_router(borrowers_test.router)
     return app
 
 
@@ -79,33 +98,6 @@ def mock_cognito_client():
 def mock_ses_client():
     with mock_ses():
         yield
-
-
-def set_application_as_expired():
-    connection = engine.connect()
-    with SessionTesting(bind=connection) as session:
-        db_app = session.query(core.Application).first()
-        db_app.expired_at = datetime.now() - timedelta(hours=1)
-        session.add(db_app)
-        session.commit()
-
-
-def set_application_status(status: core.ApplicationStatus):
-    connection = engine.connect()
-    with SessionTesting(bind=connection) as session:
-        db_obj = session.query(core.Application).first()
-        db_obj.status = status
-        session.add(db_obj)
-        session.commit()
-
-
-def set_borrower_status(status: core.BorrowerStatus):
-    connection = engine.connect()
-    with SessionTesting(bind=connection) as session:
-        db_obj = session.query(core.Borrower).first()
-        db_obj.status = status
-        session.add(db_obj)
-        session.commit()
 
 
 @pytest.fixture(scope="function")

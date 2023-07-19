@@ -93,11 +93,16 @@ test_credit_option = {
     "more_info_url": "www.moreinfo.test",
     "lender_id": 1,
 }
+
 approve_application = {
     "compliant_checks_completed": True,
     "compliant_checks_passed": True,
     "additional_comments": "test comments",
 }
+
+update_award = {"title": "new test title"}
+
+update_borrower = {"legal_name": "new_legal_name"}
 
 
 def test_reject_application(client):  # noqa
@@ -217,13 +222,43 @@ def test_approve_application_cicle(client, mocker):  # noqa
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    # different lender tries to start the application
+    # different FI user tries to start the application
     response = client.post("/applications/1/start", headers=FI_headers_2)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    # lender starts application
+    # different FI user tries to update the award
+    response = client.put(
+        "/applications/1/award", json=update_award, headers=FI_headers_2
+    )
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # different FI user tries to update the borrower
+    response = client.put(
+        "/applications/1/award", json=update_borrower, headers=FI_headers_2
+    )
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # Fi user starts application
     response = client.post("/applications/1/start", headers=FI_headers)
     assert response.json()["status"] == core.ApplicationStatus.STARTED.value
+    assert response.status_code == status.HTTP_200_OK
+
+    # FI user tries to update the award
+    response = client.put(
+        "/applications/1/award",
+        json=update_award,
+        headers=FI_headers,
+    )
+    assert response.json()["award"]["title"] == update_award["title"]
+    assert response.status_code == status.HTTP_200_OK
+
+    # FI user tries to update the borrower
+    response = client.put(
+        "/applications/1/borrower",
+        json=update_borrower,
+        headers=FI_headers,
+    )
+    assert response.json()["borrower"]["legal_name"] == update_borrower["legal_name"]
     assert response.status_code == status.HTTP_200_OK
 
     with patch(
@@ -369,6 +404,9 @@ def test_get_applications(client):  # noqa
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     response = client.get("/applications/id/1", headers=OCP_headers)
+    assert response.status_code == status.HTTP_200_OK
+
+    response = client.get("/applications/id/1", headers=FI_headers)
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get("/applications/id/1")

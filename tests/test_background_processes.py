@@ -1,14 +1,22 @@
-import unittest
 from contextlib import contextmanager
-from datetime import datetime
 
-from app.background_processes.fetcher import fetch_new_awards_from_date
+from app.background_processes import fetcher
 from app.schema import core
-from tests.common import common_test_functions
+from tests.common import common_test_client, common_test_functions
+
+from tests.common.common_test_client import start_background_db  # isort:skip # noqa
+from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
+from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
+from tests.common.common_test_client import app, client  # isort:skip # noqa
+
 
 contract = common_test_functions.load_json_file("mock_data/contract.json")
+contracts = common_test_functions.load_json_file("mock_data/contracts.json")
 award = common_test_functions.load_json_file("mock_data/award.json")
 borrower = common_test_functions.load_json_file("mock_data/borrower.json")
+borrower_declined = common_test_functions.load_json_file(
+    "mock_data/borrower_declined.json"
+)
 
 email = common_test_functions.load_json_file("mock_data/email.json")
 application_result = common_test_functions.load_json_file(
@@ -19,42 +27,51 @@ award_result = common_test_functions.load_json_file("mock_data/award_result.json
 borrower_result = common_test_functions.load_json_file("mock_data/borrower_result.json")
 
 
-class TestFetchNewAwardsFromDate(unittest.TestCase):
-    def test_fetch_new_awards_from_date_empty_contracts(self):
-        date = "2022-06-20T00:00:00.000"
-        last_updated_award_date = datetime.fromisoformat(date)
-        with self.assertLogs(level="INFO") as log:
-            with common_test_functions.mock_response(
-                200, [], "app.background_processes.awards_utils.get_new_contracts"
-            ):
-                fetch_new_awards_from_date(
-                    last_updated_award_date,
-                    "",
-                    common_test_functions.mock_get_db_with_drop,
-                )
-
-        self.assertIn("No new contracts", log.output[0])
-        core.Award.metadata.drop_all(common_test_functions.engine)
-
-    def test_fetch_new_awards_from_date_empty_test_invitation(self):
-        date = "2022-06-20T00:00:00.000"
-        last_updated_award_date = datetime.fromisoformat(date)
-        with common_test_functions.mock_response_second_empty(
+def test_fetch_previous_borrower_awards_empty(start_background_db, caplog):  # noqa
+    with caplog.at_level("INFO"):
+        with common_test_functions.mock_response(
             200,
-            contract,
-            "app.background_processes.awards_utils.get_new_contracts",
+            [],
+            "app.background_processes.awards_utils.get_previous_contracts",
         ):
-            fetch_new_awards_from_date(
-                last_updated_award_date,
-                "",
-                common_test_functions.mock_get_db_with_drop,
+            fetcher.fetch_previous_awards(
+                core.Borrower(**borrower_result), common_test_client.get_test_db
             )
 
-            core.Award.metadata.drop_all(common_test_functions.engine)
+    assert "No previous contracts" in caplog.text
 
-    def test_fetch_new_awards_from_date(self):
-        date = "2022-06-20T00:00:00.000"
-        last_updated_award_date = datetime.fromisoformat(date)
+
+def test_fetch_previous_borrower_awards(start_background_db, caplog):  # noqa
+    with caplog.at_level("INFO"):
+        with common_test_functions.mock_response(
+            200,
+            contracts,
+            "app.background_processes.awards_utils.get_previous_contracts",
+        ):
+            fetcher.fetch_previous_awards(
+                core.Borrower(**borrower_result), common_test_client.get_test_db
+            )
+
+    assert "Previous contracts for" in caplog.text
+
+
+def test_fetch_empty_contracts(start_background_db, caplog):  # noqa
+    with caplog.at_level("INFO"):
+        with common_test_functions.mock_response(
+            200, [], "app.background_processes.awards_utils.get_new_contracts"
+        ):
+            fetcher.fetch_new_awards(
+                "",
+                common_test_client.get_test_db,
+            )
+
+    assert "No new contracts" in caplog.text
+
+
+def test_fetch_new_awards_borrower_declined(client, caplog):  # noqa
+    client.post("/borrowers-test", json=borrower_declined)
+
+    with caplog.at_level("INFO"):
         with common_test_functions.mock_response_second_empty(
             200,
             contract,
@@ -62,9 +79,6 @@ class TestFetchNewAwardsFromDate(unittest.TestCase):
         ), common_test_functions.mock_function_response(
             None,
             "app.background_processes.awards_utils.get_existing_award",
-        ), common_test_functions.mock_function_response(
-            "test_hash_12345678",
-            "app.background_processes.background_utils.get_secret_hash",
         ), common_test_functions.mock_function_response(
             1,
             "app.utils.email_utility.send_invitation_email",
@@ -78,27 +92,53 @@ class TestFetchNewAwardsFromDate(unittest.TestCase):
             email,
             "app.background_processes.background_utils.make_request_with_retry",
         ):
-            fetch_new_awards_from_date(
-                last_updated_award_date,
-                "",
-                common_test_functions.mock_get_db,
+            fetcher.fetch_new_awards(
+                "test@test.com",
+                common_test_client.get_test_db,
             )
+        assert (
+            "Skipping Award - Borrower choosed to not receive any new opportunity"
+            in caplog.text
+        )
 
-            with contextmanager(common_test_functions.mock_get_db)() as session:
-                inserted_award = session.query(core.Award).first()
 
-                inserted_borrower = session.query(core.Borrower).first()
-                inserted_application = session.query(core.Application).first()
+def test_fetch_new_awards_from_date(start_background_db, caplog):  # noqa
+    with common_test_functions.mock_response_second_empty(
+        200,
+        contract,
+        "app.background_processes.awards_utils.get_new_contracts",
+    ), common_test_functions.mock_function_response(
+        None,
+        "app.background_processes.awards_utils.get_existing_award",
+    ), common_test_functions.mock_function_response(
+        "test_hash_12345678",
+        "app.background_processes.background_utils.get_secret_hash",
+    ), common_test_functions.mock_function_response(
+        1,
+        "app.utils.email_utility.send_invitation_email",
+    ), common_test_functions.mock_function_response(
+        None,
+        "app.background_processes.application_utils.get_existing_application",
+    ), common_test_functions.mock_whole_process(
+        200,
+        award,
+        borrower,
+        email,
+        "app.background_processes.background_utils.make_request_with_retry",
+    ):
+        fetcher.fetch_new_awards(
+            "",
+            common_test_client.get_test_db,
+        )
 
-                try:
-                    common_test_functions.compare_objects(inserted_award, award_result)
-                    common_test_functions.compare_objects(
-                        inserted_borrower, borrower_result
-                    )
-                    common_test_functions.compare_objects(
-                        inserted_application, application_result
-                    )
+        with contextmanager(common_test_client.get_test_db)() as session:
+            inserted_award = session.query(core.Award).first()
 
-                finally:
-                    session.close()
-                    core.Award.metadata.drop_all(common_test_functions.engine)
+            inserted_borrower = session.query(core.Borrower).first()
+            inserted_application = session.query(core.Application).first()
+
+            common_test_functions.compare_objects(inserted_award, award_result)
+            common_test_functions.compare_objects(inserted_borrower, borrower_result)
+            common_test_functions.compare_objects(
+                inserted_application, application_result
+            )
