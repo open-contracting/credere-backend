@@ -8,6 +8,7 @@ from app.background_processes.background_utils import generate_uuid
 from app.schema import core
 
 from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
+from tests.common.common_test_client import mock_templated_email  # isort:skip # noqa
 from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
 from tests.common.common_test_client import app, client  # isort:skip # noqa
 from tests.common.common_test_client import MockResponse  # isort:skip # noqa
@@ -125,7 +126,7 @@ update_award = {"title": "new test title"}
 update_borrower = {"legal_name": "new_legal_name"}
 
 
-def test_reject_application(client):  # noqa
+def test_reject_application(client, mock_templated_email):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     FI_headers = client.post(
@@ -153,7 +154,7 @@ def test_reject_application(client):  # noqa
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_rollback_credit_product(client):  # noqa
+def test_rollback_credit_product(client, mock_templated_email):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     client.post("/create-test-credit-option", json=test_credit_option)
@@ -166,7 +167,7 @@ def test_rollback_credit_product(client):  # noqa
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_approve_application_cicle(client, mocker):  # noqa
+def test_approve_application_cicle(client, mock_templated_email):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     FI_headers = client.post(
@@ -503,7 +504,7 @@ def test_get_applications(client):  # noqa
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_application_declined(client):  # noqa
+def test_application_declined(client, mock_templated_email):  # noqa
     client.post("/create-test-application", json=application_payload)
 
     response = client.post(

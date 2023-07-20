@@ -1,16 +1,16 @@
 import logging
 import os
 from typing import Any, Generator
-
 import boto3
 import pytest
+from unittest.mock import MagicMock, patch
 from botocore.config import Config
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-
+from app.core.user_dependencies import sesClient
 from app.core.email_templates import templates
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
@@ -65,6 +65,14 @@ def start_background_db():
     core.User.metadata.create_all(engine)
     yield
     core.User.metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="function")
+def mock_templated_email():
+    with patch.object(
+        sesClient, "send_templated_email", MagicMock()
+    ) as mock_send_templated_email:
+        yield mock_send_templated_email
 
 
 def start_application():

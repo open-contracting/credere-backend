@@ -41,7 +41,9 @@ class Settings(BaseSettings):
     facebook_link: str = config_env.get("FACEBOOK_LINK", "www.facebook.com")
     twitter_link: str = config_env.get("TWITTER_LINK", "www.twitter.com")
     link_link: str = config_env.get("LINK_LINK", "http://localhost:3000")
-    test_mail_receiver: str = config_env.get("TEST_MAIL_RECEIVER", None)
+    test_mail_receiver: str = config_env.get(
+        "TEST_MAIL_RECEIVER", "hernan.lombardo@willdom.com"
+    )
     colombia_secop_app_token: str = config_env.get("COLOMBIA_SECOP_APP_TOKEN", None)
     hash_key: str = config_env.get("HASH_KEY", None)
     application_expiration_days: int = config_env.get("APPLICATION_EXPIRATION_DAYS", 7)
@@ -55,6 +57,9 @@ class Settings(BaseSettings):
     max_file_size_mb: int = config_env.get("MAX_FILE_SIZE_MB", 5)
     reminder_days_before_expiration: int = config_env.get(
         "REMINDER_DAYS_BEFORE_EXPIRATION", 3
+    )
+    progress_to_remind_started_applications: float = config_env.get(
+        "PROGRESS_TO_REMIND_STARTED_APPLICATIONS", 0.7
     )
 
     progress_to_remind_started_applications: float = config_env.get(

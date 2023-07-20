@@ -71,6 +71,25 @@ async def set_test_application_as_dated(id: int, session: Session = Depends(get_
 
 
 @router.get(
+    "/set-application-as-started/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_started(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+
+    application.lender_started_at = datetime.now(application.created_at.tzinfo)
+    application.status = core.ApplicationStatus.STARTED.value
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
     "/set-application-as-overdue/id/{id}",
     tags=["applications"],
     response_model=core.Application,
@@ -79,9 +98,11 @@ async def set_test_application_as_overdue(id: int, session: Session = Depends(ge
     application = (
         session.query(core.Application).filter(core.Application.id == id).first()
     )
-    application.borrower_declined_at = datetime.now(
+
+    application.status = core.ApplicationStatus.STARTED.value
+    application.lender_started_at = datetime.now(
         application.created_at.tzinfo
-    ) - timedelta(days=app_settings.days_to_erase_borrower_data + 1)
+    ) - timedelta(days=application.lender.sla_days + 1)
 
     session.commit()
     session.refresh(application)
