@@ -1,8 +1,8 @@
 import pytest
+
 from app.background_processes import SLA_overdue_applications
 from app.schema import core
 from tests.common import common_test_client
-
 
 from tests.common.common_test_client import start_background_db  # isort:skip # noqa
 from tests.common.common_test_client import mock_templated_email  # isort:skip # noqa

@@ -1,19 +1,21 @@
 import logging
 import os
 from typing import Any, Generator
+from unittest.mock import MagicMock, patch
+
 import boto3
 import pytest
-from unittest.mock import MagicMock, patch
 from botocore.config import Config
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from app.core.user_dependencies import sesClient
+
 from app.core.email_templates import templates
 from app.core.settings import app_settings
-from app.core.user_dependencies import CognitoClient, get_cognito_client
+from app.core.user_dependencies import (CognitoClient, get_cognito_client,
+                                        sesClient)
 from app.db.session import get_db
 from app.routers import applications, lenders, security, statistics, users
 from app.schema import core
