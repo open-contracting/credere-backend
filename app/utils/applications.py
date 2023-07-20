@@ -564,6 +564,7 @@ def get_previous_awards(
             core.Award.previous == true(),
             core.Award.borrower_id == application.borrower_id,
         )
+        .order_by(core.Award.contractperiod_startdate.desc())
         .all()
     )
 
