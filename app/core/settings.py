@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     twitter_link: str = config_env.get("TWITTER_LINK", "www.twitter.com")
     link_link: str = config_env.get("LINK_LINK", "http://localhost:3000")
     test_mail_receiver: str = config_env.get(
-        "TEST_MAIL_RECEIVER", "hernan.lombardo@willdom.com"
+        "TEST_MAIL_RECEIVER", "credere@noreply.open-contracting.org"
     )
     colombia_secop_app_token: str = config_env.get("COLOMBIA_SECOP_APP_TOKEN", None)
     hash_key: str = config_env.get("HASH_KEY", None)
@@ -53,7 +53,9 @@ class Settings(BaseSettings):
     )
     days_to_erase_borrower_data: int = config_env.get("DAYS_TO_ERASE_BORROWERS_DATA", 7)
     days_to_change_to_lapsed: int = config_env.get("DAYS_TO_CHANGE_TO_LAPSED", 14)
-    ocp_email_group: str = config_env.get("OCP_EMAIL_GROUP", None)
+    ocp_email_group: str = config_env.get(
+        "OCP_EMAIL_GROUP", "credere@noreply.open-contracting.org"
+    )
     max_file_size_mb: int = config_env.get("MAX_FILE_SIZE_MB", 5)
     reminder_days_before_expiration: int = config_env.get(
         "REMINDER_DAYS_BEFORE_EXPIRATION", 3
