@@ -99,7 +99,7 @@ async def set_test_application_to_remind(id: int, session: Session = Depends(get
         session.query(core.Application).filter(core.Application.id == id).first()
     )
     application.expired_at = datetime.now(application.created_at.tzinfo) + timedelta(
-        days=2
+        days=1
     )
 
     session.commit()

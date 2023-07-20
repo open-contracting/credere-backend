@@ -15,7 +15,7 @@ get_applications_to_remind_submit = application_utils.get_applications_to_remind
 
 
 def send_reminders(db_provider: Session = get_db):
-    applications_to_send_intro_reminder = get_applications_to_remind_intro()
+    applications_to_send_intro_reminder = get_applications_to_remind_intro(db_provider)
     logging.info(
         "Quantity of mails to send intro reminder "
         + str(len(applications_to_send_intro_reminder))
@@ -48,7 +48,9 @@ def send_reminders(db_provider: Session = get_db):
                     )
                     session.rollback()
 
-    applications_to_send_submit_reminder = get_applications_to_remind_submit()
+    applications_to_send_submit_reminder = get_applications_to_remind_submit(
+        db_provider
+    )
     logging.info(
         "Quantity of mails to send submit reminder "
         + str(len(applications_to_send_submit_reminder))
@@ -57,7 +59,7 @@ def send_reminders(db_provider: Session = get_db):
         logging.info("No new submit reminder to be sent")
     else:
         for application in applications_to_send_submit_reminder:
-            with contextmanager(get_db)() as session:
+            with contextmanager(db_provider)() as session:
                 try:
                     # Db message table update
                     new_message = save_message_type(

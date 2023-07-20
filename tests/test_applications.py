@@ -284,6 +284,39 @@ def test_approve_application_cicle(client, mocker):  # noqa
     assert response.json()["status"] == core.ApplicationStatus.STARTED.value
     assert response.status_code == status.HTTP_200_OK
 
+    # different FI user tries to update the award
+    response = client.put(
+        "/applications/1/award",
+        json=update_award,
+        headers=FI_headers_2,
+    )
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # different FI user tries to update the borrower
+    response = client.put(
+        "/applications/1/borrower",
+        json=update_borrower,
+        headers=FI_headers_2,
+    )
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # FI user tries to update non existing award
+    response = client.put(
+        "/applications/100/award",
+        json=update_award,
+        headers=FI_headers,
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # FI user tries to update non existing borrower
+    response = client.put(
+        "/applications/100/borrower",
+        json=update_borrower,
+        headers=FI_headers,
+    )
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
     # FI user tries to update the award
     response = client.put(
         "/applications/1/award",
@@ -351,18 +384,26 @@ def test_approve_application_cicle(client, mocker):  # noqa
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
-    # verifly borrower document
-    response = client.put(
-        "/applications/documents/1/verify-document",
-        json={"verified": True},
-        headers=FI_headers,
-    )
-    assert response.status_code == status.HTTP_200_OK
-
     # verifly legal_name
     response = client.put(
         "/applications/1/verify-data-field",
         json={"legal_name": True},
+        headers=FI_headers,
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    # lender tries to approve the application without verifing INCORPORATION_DOCUMENT
+    response = client.post(
+        "/applications/1/approve-application",
+        json=approve_application,
+        headers=FI_headers,
+    )
+    assert response.status_code == status.HTTP_409_CONFLICT
+
+    # verifly borrower document
+    response = client.put(
+        "/applications/documents/1/verify-document",
+        json={"verified": True},
         headers=FI_headers,
     )
     assert response.status_code == status.HTTP_200_OK
@@ -434,6 +475,10 @@ def test_get_applications(client):  # noqa
 
     response = client.get("/applications/id/1")
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # tries to get a non existing application
+    response = client.get("/applications/id/100", headers=FI_headers)
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
     logging.info("get only applications related to FI user")
     response = client.get("/applications", headers=FI_headers)

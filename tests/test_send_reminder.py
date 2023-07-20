@@ -8,10 +8,17 @@ from tests.common.common_test_client import mock_cognito_client  # isort:skip # 
 from tests.common.common_test_client import app, client  # isort:skip # noqa
 
 application_payload = {"status": core.ApplicationStatus.PENDING.value}
+application_accepted_payload = {"status": core.ApplicationStatus.ACCEPTED.value}
 
 
-def test_send_reminders(client):  # noqa
+def test_send_reminders_intro(client):  # noqa
     client.post("/create-test-application", json=application_payload)
+    client.get("/set-test-application-to-remind/id/1")
+    send_reminders(common_test_client.get_test_db)
+
+
+def test_send_reminders_submit(client):  # noqa
+    client.post("/create-test-application", json=application_accepted_payload)
     client.get("/set-test-application-to-remind/id/1")
     send_reminders(common_test_client.get_test_db)
 
