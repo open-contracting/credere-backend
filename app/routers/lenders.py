@@ -23,6 +23,23 @@ async def create_lender(
     current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Create a new lender.
+
+    :param lender: The lender data to be created.
+    :type lender: core.LenderCreate
+
+    :param current_user: The current user authenticated.
+    :type current_user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The created lender.
+    :rtype: core.Lender
+
+    :raise: lumache.OCPOnlyError if the current user is not authorized.
+    """
     with transaction_session(session):
         return utils.create_lender(session, lender)
 
