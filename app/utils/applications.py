@@ -18,7 +18,7 @@ from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
-valid_email = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.(com|co)$"
+valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
 excluded_applications = [
     core.ApplicationStatus.PENDING,
@@ -341,15 +341,15 @@ def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
         .first()
     )
 
+    if not application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
+        )
+
     if application.status == core.ApplicationStatus.LAPSED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=api.ERROR_CODES.APPLICATION_LAPSED.value,
-        )
-
-    if not application:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
         )
 
     return application
@@ -564,6 +564,7 @@ def get_previous_awards(
             core.Award.previous == true(),
             core.Award.borrower_id == application.borrower_id,
         )
+        .order_by(core.Award.contractperiod_startdate.desc())
         .all()
     )
 

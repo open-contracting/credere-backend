@@ -75,6 +75,7 @@ you can use .envtest as an example, it has the following keys:
 - DAYS_TO_CHANGE_TO_LAPSED -> the number of days to wait before changing the status of an application to 'Lapsed'
 - OCP_EMAIL_GROUP -> list of ocp users for notifications
 - MAX_FILE_SIZE_MB -> max file size allowed to be uploaded
+- TEST_DATABASE_URL -> Local test database in order to not drop and generate the main local database all the time
 - PROGRESS_TO_REMIND_STARTED_APPLICATIONS -> % of days of lender SLA before an overdue reminder, for example a lender with a SLA of 10 days will receive the first overdue at 7 days mark
 - ENVIRONMENT -> needs to be set as "production" in order to send emails to real borrower address. If not, emails will be sent to TEST_MAIL_RECEIVER
 
@@ -182,7 +183,23 @@ To run test locally
 pytest tests -W error
 ```
 
+You can get coverage information in console by running the following command
+
+```
+pytest --cov
+```
+
+and you can generate an html report using the following command
+
+```
+pytest --cov --cov-report=html:coverage_re
+```
+
+this will creat a folder called coverage_re in your project
+
 ## Background jobs Commands
+
+### Run background jobs
 
 To run the list of commands available use
 
@@ -200,7 +217,7 @@ python -m app.commands fetch-awards
 python -m app.commands fetch-awards --email-invitation test@example.com
 ```
 
-this commands gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on environment and the env variable _TEST_MAIL_RECEIVER_).
+this commands gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on env variables _ENVIRONMENT_ and _TEST_MAIL_RECEIVER_ values).
 
 Alternative could receive a custom email destination with **--email-invitation** argument
 
@@ -214,7 +231,7 @@ This process should be run once a day.
 python -m app.commands remove-dated-application-data
 ```
 
-Queries the applications in 'declined', 'rejected', 'completed', and 'lapsed' status that have remained in these states longer than the time defined in the environment variable DAYS_TO_ERASE_BORROWERS_DATA. If no other application is using the data, it deletes all the personal data of the borrower (name, email, address, legal identifier)."
+Queries the applications in 'declined', 'rejected', 'completed', and 'lapsed' status that have remained in these states longer than the time defined in the environment variable _DAYS_TO_ERASE_BORROWERS_DATA_. If no other application is using the data, it deletes all the personal data of the borrower (name, email, address, legal identifier)."
 
 #### Scheduled Execution (Cron)
 
@@ -227,7 +244,7 @@ python -m app.commands update-applications-to-lapsed
 
 ```
 
-Queries the applications in 'pending', 'accepted', and 'requested' status that have remained in these states longer than the time defined in the environment variable DAYS_TO_CHANGE_TO_LAPSED, and changes their status to 'LAPSED'.
+Queries the applications in 'PENDING', 'ACCEPTED', and 'INFORMATION*REQUESTED' status that have remained in these states longer than the time defined in the environment variable \_DAYS_TO_CHANGE_TO_LAPSED*, and changes their status to 'LAPSED'.
 
 #### Scheduled Execution (Cron)
 
@@ -239,11 +256,13 @@ This process should be run once a day to keep the application's status updated.
 python -m app.commands send-reminders
 ```
 
-- Queries the applications in 'pending' status that fall within the range leading up to the expiration date. This range is defined by the environment variable REMINDER_DAYS_BEFORE_EXPIRATION.
-- The intro reminder email is sent to the applications that fulfill the previous condition
+- Queries the applications in 'PENDING' status that fall within the range leading up to the expiration date. This range is defined by the environment variable _REMINDER_DAYS_BEFORE_EXPIRATION_.
 
-- Queries the applications in 'accepted' status that fall within the range leading up to the expiration date. This range is defined by the environment variable REMINDER_DAYS_BEFORE_EXPIRATION.
-- The submit reminder email is sent to the applications that fulfill the previous condition
+- The intro reminder email is sent to the applications that fulfill the previous condition.
+
+- Queries the applications in 'ACCEPTED' status that fall within the range leading up to the expiration date. This range is defined by the environment variable _REMINDER_DAYS_BEFORE_EXPIRATION_.
+
+- The submit reminder email is sent to the applications that fulfill the previous condition.
 
 #### Scheduled Execution (Cron)
 
@@ -255,7 +274,7 @@ This process should be run once a day.
 python -m app.commands sla-overdue-applications
 ```
 
-This command identifies applications that are in INFORMATION_REQUESTED or STARTED status and overdue based on the lender's service level agreement (SLA). For each overdue application, an email is sent to OCP and to the respective lender. The command also updates the overdued_at attribute for applications that exceed the lender's SLA days.
+This command identifies applications that are in 'INFORMATION_REQUESTED' or 'STARTED' status and overdue based on the lender's service level agreement (SLA). For each overdue application, an email is sent to OCP and to the respective lender. The command also updates the **overdued_at** attribute for applications that exceed the lender's SLA days.
 
 #### Scheduled Execution (Cron)
 
