@@ -8,8 +8,9 @@ from app.utils.general_utils import sentry_filter_transactions
 
 from .core.settings import app_settings
 
-from .routers import applications, awards, borrowers, lenders, users  # isort:skip
+from .routers import applications, lenders, users  # isort:skip
 from .routers import statistics  # isort:skip
+
 
 if app_settings.sentry_dsn:
     sentry_sdk.init(
@@ -36,8 +37,6 @@ app.add_middleware(
 )
 
 app.include_router(users.router)
-app.include_router(awards.router)
-app.include_router(borrowers.router)
 app.include_router(applications.router)
 app.include_router(lenders.router)
 app.include_router(statistics.router)

@@ -1,28 +1,30 @@
 import logging
-from typing import Any, Generator
 
-import boto3
-import pytest
-from botocore.config import Config
-from fastapi import FastAPI, status
-from fastapi.testclient import TestClient
-from moto import mock_cognitoidp, mock_ses
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from fastapi import status
 
-from app.core.email_templates import templates
-from app.core.settings import app_settings
-from app.core.user_dependencies import CognitoClient, get_cognito_client
-from app.db.session import get_db
-from app.routers import security, users
-from app.schema.core import User, UserType
-from tests.protected_routes import users_test
+import tests.common.common_test_client as common_test_client
+from app.schema.core import UserType
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_db.db"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
-SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
+from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
+from tests.common.common_test_client import app, client  # isort:skip # noqa
+
+OCP_user = {
+    "email": "OCP_test@example.com",
+    "name": "OCP Test User",
+    "type": UserType.OCP.value,
+}
+FI_user = {
+    "email": "fi_test@example.com",
+    "name": "FI Test User",
+    "type": UserType.FI.value,
+}
+
+test_user = {
+    "email": "test@example.com",
+    "name": "Test User",
+    "type": UserType.FI.value,
+}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,130 +33,84 @@ logging.basicConfig(
 )
 
 
-def start_application():
-    app = FastAPI()
-    app.include_router(users.router)
-    app.include_router(users_test.router)
-    app.include_router(security.router)
-    return app
+def test_get_me(client):  # noqa
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+
+    response = client.get("/users/me", headers=OCP_headers)
+    assert response.json()["user"]["name"] == OCP_user["name"]
+    assert response.status_code == status.HTTP_200_OK
 
 
-@pytest.fixture(scope="function")
-def app() -> Generator[FastAPI, Any, None]:
-    logging.info("Creating test database")
-    User.metadata.create_all(engine)  # Create the tables.
-    _app = start_application()
-    yield _app
-    User.metadata.drop_all(engine)
+def test_create_and_get_user(client):  # noqa
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
+
+    response = client.post("/users", json=test_user, headers=OCP_headers)
+    assert response.status_code == status.HTTP_200_OK
+
+    # fetch second user since the first one is the OCP user created for headers
+    response = client.get("/users/2")
+    assert response.status_code == status.HTTP_200_OK
+
+    # try to get a non existing user
+    response = client.get("/users/200")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # try to get all users
+    response = client.get(
+        "/users?page=0&page_size=5&sort_field=user_created_at&sort_order=desc",
+        headers=OCP_headers,
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    response = client.get(
+        "/users?page=0&page_size=5&sort_field=user_created_at&sort_order=desc",
+        headers=FI_headers,
+    )
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-@pytest.fixture(autouse=True)
-def mock_cognito_client():
-    with mock_cognitoidp():
-        yield
+def test_update_user(client):  # noqa
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
+    response = client.post("/users", json=test_user, headers=OCP_headers)
+    assert response.json()["name"] == test_user["name"]
+    assert response.status_code == status.HTTP_200_OK
 
-@pytest.fixture(autouse=True)
-def mock_ses_client():
-    with mock_ses():
-        yield
+    # update user 3 since 1 is ocp test user and 2 FI test user
+    response = client.put(
+        "/users/3", json={"email": "new_name@test.com"}, headers=OCP_headers
+    )
+    assert response.json()["email"] == "new_name@test.com"
+    assert response.status_code == status.HTTP_200_OK
 
-
-tempPassword = "1234567890Abc!!"
-
-
-@pytest.fixture(scope="function")
-def client(app: FastAPI) -> Generator[TestClient, Any, None]:
-    my_config = Config(region_name=app_settings.aws_region)
-
-    cognito_client = boto3.client("cognito-idp", config=my_config)
-    ses_client = boto3.client("ses", config=my_config)
-
-    cognito_pool_id = cognito_client.create_user_pool(PoolName="TestUserPool")[
-        "UserPool"
-    ]["Id"]
-
-    app_settings.cognito_pool_id = cognito_pool_id
-
-    cognito_client_name = "TestAppClient"
-
-    cognito_client_id = cognito_client.create_user_pool_client(
-        UserPoolId=cognito_pool_id, ClientName=cognito_client_name
-    )["UserPoolClient"]["ClientId"]
-
-    app_settings.cognito_client_id = cognito_client_id
-    app_settings.cognito_client_secret = "secret"
-
-    ses_client.verify_email_identity(EmailAddress=app_settings.email_sender_address)
-
-    ses_client.create_template(
-        Template={
-            "TemplateName": templates["NEW_USER_TEMPLATE_NAME"],
-            "SubjectPart": "Your email subject",
-            "HtmlPart": "<html><body>Your HTML content</body></html>",
-            "TextPart": "Your plain text content",
-        }
+    response = client.put(
+        "/users/3", json={"email": "anoter_email@test.com"}, headers=FI_headers
     )
 
-    def generate_test_password():
-        logging.info("generate_password")
-        return tempPassword
-
-    def _get_test_cognito_client():
-        try:
-            yield CognitoClient(
-                cognito_client,
-                ses_client,
-                generate_test_password,
-            )
-        finally:
-            pass
-
-    connection = engine.connect()
-    session = SessionTesting(bind=connection)
-
-    def _get_test_db():
-        try:
-            yield session
-        finally:
-            session.close()
-
-    # Override the clients dependencies with the mock implementations
-    app.dependency_overrides[get_cognito_client] = _get_test_cognito_client
-    app.dependency_overrides[get_db] = _get_test_db
-
-    with TestClient(app) as client:
-        yield client
-        connection.close()
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-data = {"email": "test@example.com", "name": "Test User", "type": UserType.FI.value}
+def test_duplicate_user(client):  # noqa
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
 
-
-def test_create_user(client):
-    response = client.post("/users-test", json=data)
-    assert response.status_code == status.HTTP_200_OK
-
-    response = client.get("/users/1")
-    assert response.status_code == status.HTTP_200_OK
-
-
-def test_duplicate_user(client):
-    response = client.post("/users-test", json=data)
+    response = client.post("/users", json=test_user, headers=OCP_headers)
     assert response.status_code == status.HTTP_200_OK
     # duplicate user
-    response = client.post("/users-test", json=data)
+    response = client.post("/users", json=test_user, headers=OCP_headers)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_login(client):
-    responseCreate = client.post("/users-test", json=data)
-    assert responseCreate.status_code == status.HTTP_200_OK
+def test_login(client):  # noqa
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    response = client.post("/users", json=test_user, headers=OCP_headers)
+    assert response.status_code == status.HTTP_200_OK
 
     setupPasswordPayload = {
-        "username": data["email"],
-        "temp_password": tempPassword,
-        "password": tempPassword,
+        "username": test_user["email"],
+        "temp_password": common_test_client.tempPassword,
+        "password": common_test_client.tempPassword,
     }
     responseSetupPassword = client.put(
         "/users/change-password", json=setupPasswordPayload
@@ -162,7 +118,10 @@ def test_login(client):
     logging.info(responseSetupPassword.json())
     assert responseSetupPassword.status_code == status.HTTP_200_OK
 
-    loginPayload = {"username": data["email"], "password": tempPassword}
+    loginPayload = {
+        "username": test_user["email"],
+        "password": common_test_client.tempPassword,
+    }
     responseLogin = client.post("/users/login", json=loginPayload)
     logging.info(responseLogin.json())
 
