@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.settings import app_settings
 from app.db.session import get_db
@@ -42,7 +42,7 @@ async def set_test_application_as_lapsed(id: int, session: Session = Depends(get
         session.query(core.Application).filter(core.Application.id == id).first()
     )
     application.created_at = datetime.now(application.created_at.tzinfo) - timedelta(
-        days=app_settings.days_to_change_to_lapsed + 1
+        days=app_settings.days_to_change_to_lapsed + 2
     )
 
     session.commit()
@@ -71,6 +71,25 @@ async def set_test_application_as_dated(id: int, session: Session = Depends(get_
 
 
 @router.get(
+    "/set-application-as-overdue/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_overdue(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+    application.borrower_declined_at = datetime.now(
+        application.created_at.tzinfo
+    ) - timedelta(days=app_settings.days_to_erase_borrower_data + 1)
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
     "/set-test-application-to-remind/id/{id}",
     tags=["applications"],
     response_model=core.Application,
@@ -80,7 +99,7 @@ async def set_test_application_to_remind(id: int, session: Session = Depends(get
         session.query(core.Application).filter(core.Application.id == id).first()
     )
     application.expired_at = datetime.now(application.created_at.tzinfo) + timedelta(
-        days=1
+        days=2
     )
 
     session.commit()
@@ -121,7 +140,11 @@ async def update_test_application_status(
     return application
 
 
-@router.post("/create-test-application", tags=["applications"])
+@router.post(
+    "/create-test-application",
+    tags=["applications"],
+    response_model=core.Application,
+)
 async def create_test_application(
     payload: ApplicationTestPayload, session: Session = Depends(get_db)
 ):
@@ -245,7 +268,6 @@ async def create_test_application(
             "email": True,
         },
         "borrower_id": 1,
-        "id": 1,
         "calculator_data": {},
         "lender_approved_at": None,
         "archived_at": None,
@@ -286,10 +308,32 @@ async def create_test_application(
     session.flush()
 
     db_app = core.Application(**test_application)
+    db_app.award = db_award
+    db_app.borrower = db_borrower
+
+    if payload.lender_id:
+        lender = (
+            session.query(core.Lender)
+            .filter(core.Lender.id == payload.lender_id)
+            .first()
+        )
+        db_app.lender = lender
+
     session.add(db_app)
     session.commit()
 
-    return status.HTTP_201_CREATED
+    application = (
+        session.query(core.Application)
+        .filter(core.Application.id == db_app.id)
+        .options(
+            joinedload(core.Application.award),
+            joinedload(core.Application.borrower),
+            joinedload(core.Application.lender),
+        )
+        .first()
+    )
+
+    return application
 
 
 @router.post("/change-test-application-status", tags=["applications"])

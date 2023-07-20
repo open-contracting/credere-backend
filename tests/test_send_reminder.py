@@ -16,5 +16,6 @@ def test_send_reminders(client):  # noqa
     send_reminders(common_test_client.get_test_db)
 
 
-def test_send_reminders_no_applications_to_remind(start_background_db):  # noqa
+def test_send_reminders_no_applications_to_remind(client):  # noqa
+    client.post("/create-test-application", json=application_payload)
     send_reminders(common_test_client.get_test_db)

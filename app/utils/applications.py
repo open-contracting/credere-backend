@@ -458,7 +458,6 @@ def update_application_primary_email(application: core.Application, email: str) 
         )
     confirmation_email_token = generate_uuid(email)
     application.confirmation_email_token = f"{email}---{confirmation_email_token}"
-
     application.pending_email_confirmation = True
 
     return confirmation_email_token
@@ -533,7 +532,7 @@ def check_FI_user_permission(application: core.Application, user: core.User) -> 
 def check_FI_user_permission_or_OCP(
     application: core.Application, user: core.User
 ) -> None:
-    if not user.is_OCP and application.lender_id != user.lender_id:
+    if not user.is_OCP() and application.lender_id != user.lender_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is not authorized",

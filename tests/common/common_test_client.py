@@ -15,7 +15,7 @@ from app.core.email_templates import templates
 from app.core.settings import app_settings
 from app.core.user_dependencies import CognitoClient, get_cognito_client
 from app.db.session import get_db
-from app.routers import applications, lenders, security, users
+from app.routers import applications, lenders, security, statistics, users
 from app.schema import core
 from tests.common.utils import create_enums
 from tests.protected_routes import users_test  # noqa
@@ -76,6 +76,7 @@ def start_application():
     app.include_router(users_test.router)
     app.include_router(applications_test.router)
     app.include_router(borrowers_test.router)
+    app.include_router(statistics.router)
     return app
 
 
@@ -98,6 +99,18 @@ def mock_cognito_client():
 def mock_ses_client():
     with mock_ses():
         yield
+
+
+def create_templates(ses):
+    for key, value in templates.items():
+        ses.create_template(
+            Template={
+                "TemplateName": templates[key],
+                "SubjectPart": "Your email subject",
+                "HtmlPart": "<html><body>Your HTML content</body></html>",
+                "TextPart": "Your plain text content",
+            }
+        )
 
 
 @pytest.fixture(scope="function")
@@ -124,14 +137,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
 
     ses_client.verify_email_identity(EmailAddress=app_settings.email_sender_address)
 
-    ses_client.create_template(
-        Template={
-            "TemplateName": templates["NEW_USER_TEMPLATE_NAME"],
-            "SubjectPart": "Your email subject",
-            "HtmlPart": "<html><body>Your HTML content</body></html>",
-            "TextPart": "Your plain text content",
-        }
-    )
+    create_templates(ses_client)
 
     def generate_test_password():
         logging.info("generate_password")
