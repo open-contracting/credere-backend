@@ -1,19 +1,20 @@
 import logging
 import os
 from typing import Any, Generator
+from unittest.mock import MagicMock, patch
+
 import boto3
 import pytest
-from unittest.mock import MagicMock, patch
 from botocore.config import Config
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from app.core.user_dependencies import sesClient
+
+from app.core import user_dependencies
 from app.core.email_templates import templates
 from app.core.settings import app_settings
-from app.core.user_dependencies import CognitoClient, get_cognito_client
 from app.db.session import get_db
 from app.routers import applications, lenders, security, statistics, users
 from app.schema import core
@@ -70,7 +71,7 @@ def start_background_db():
 @pytest.fixture(scope="function")
 def mock_templated_email():
     with patch.object(
-        sesClient, "send_templated_email", MagicMock()
+        user_dependencies.sesClient, "send_templated_email", MagicMock()
     ) as mock_send_templated_email:
         yield mock_send_templated_email
 
@@ -153,7 +154,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
 
     def _get_test_cognito_client():
         try:
-            yield CognitoClient(
+            yield user_dependencies.CognitoClient(
                 cognito_client,
                 ses_client,
                 generate_test_password,
@@ -171,7 +172,9 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
             session.close()
 
     # Override the clients dependencies with the mock implementations
-    app.dependency_overrides[get_cognito_client] = _get_test_cognito_client
+    app.dependency_overrides[
+        user_dependencies.get_cognito_client
+    ] = _get_test_cognito_client
     app.dependency_overrides[get_db] = _get_test_db
 
     with TestClient(app) as client:
