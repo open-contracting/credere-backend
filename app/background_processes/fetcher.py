@@ -93,8 +93,8 @@ def fetch_new_awards(email_invitation: str = None):
     if either award and borrower doesn't exist or if borrower exist but the award doesn't it will create an application
     in status pending
 
-    An email invitation will be sent to the proper borrower email obtained from endpoint data (In this case SECOP Colombia)
-    for each application created
+    An email invitation will be sent to the proper borrower email obtained from endpoint data
+    (In this case SECOP Colombia) for each application created
 
     you can also pass an email_invitation as parameter if you want to invite a particular borrower
 
