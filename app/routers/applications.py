@@ -39,6 +39,29 @@ async def reject_application(
     client: CognitoClient = Depends(get_cognito_client),
     user: core.User = Depends(get_user),
 ):
+    """
+    Reject an application.
+
+    Changes the status from "STARTED" to "REJECTED".
+
+    :param id: The ID of the application to reject.
+    :type id: int
+
+    :param payload: The rejected application data.
+    :type payload: ApiSchema.LenderRejectedApplication
+
+    :param session: The database session.
+    :type session: Session
+
+    :param client: The Cognito client.
+    :type client: CognitoClient
+
+    :param user: The current user.
+    :type user: core.User
+
+    :return: The rejected application with its associated relations.
+    :rtype: core.ApplicationWithRelations
+    """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
@@ -83,6 +106,25 @@ async def complete_application(
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
+    """
+    Complete an application.
+    Changes application status from "CONTRACT_UPLOADED" to "COMPLETED".
+
+    :param id: The ID of the application to complete.
+    :type id: int
+
+    :param payload: The completed application data.
+    :type payload: ApiSchema.LenderReviewContract
+
+    :param session: The database session.
+    :type session: Session
+
+    :param user: The current user.
+    :type user: core.User
+
+    :return: The completed application with its associated relations.
+    :rtype: core.ApplicationWithRelations
+    """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
@@ -118,6 +160,29 @@ async def approve_application(
     client: CognitoClient = Depends(get_cognito_client),
     user: core.User = Depends(get_user),
 ):
+    """
+    Approve an application.
+    Changes application status from "STARTED" to "APPROVED".
+    Sends an email to  SME notifying the current stage of their application.
+
+    :param id: The ID of the application to approve.
+    :type id: int
+
+    :param payload: The approved application data.
+    :type payload: ApiSchema.LenderApprovedData
+
+    :param session: The database session.
+    :type session: Session
+
+    :param client: The Cognito client.
+    :type client: CognitoClient
+
+    :param user: The current user.
+    :type user: core.User
+
+    :return: The approved application with its associated relations.
+    :rtype: core.ApplicationWithRelations
+    """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
@@ -152,6 +217,21 @@ async def change_email(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
+    """
+    Change the email address for an application.
+
+    :param payload: The data for changing the email address.
+    :type payload: ChangeEmail
+
+    :param session: The database session.
+    :type session: Session
+
+    :param client: The Cognito client.
+    :type client: CognitoClient
+
+    :return: The data for changing the email address.
+    :rtype: ChangeEmail
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         old_email = application.primary_email
@@ -193,6 +273,18 @@ async def confirm_email(
     payload: ApiSchema.ConfirmNewEmail,
     session: Session = Depends(get_db),
 ):
+    """
+    Confirm the email address change for an application.
+
+    :param payload: The data for confirming the email address change.
+    :type payload: ApiSchema.ConfirmNewEmail
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The data for confirming the email address change.
+    :rtype: ChangeEmail
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
 
@@ -220,6 +312,21 @@ async def get_borrower_document(
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
+    """
+    Retrieve a borrower document by its ID and stream the file content as a response.
+
+    :param id: The ID of the borrower document to retrieve.
+    :type id: int
+
+    :param session: The database session.
+    :type session: Session
+
+    :param user: The current user.
+    :type user: core.User
+
+    :return: A streaming response with the borrower document file content.
+    :rtype: StreamingResponse
+    """
     with transaction_session(session):
         document = (
             session.query(core.BorrowerDocument)
@@ -249,6 +356,24 @@ async def upload_document(
     type: str = Form(...),
     session: Session = Depends(get_db),
 ):
+    """
+    Upload a document for an application.
+
+    :param file: The uploaded file.
+    :type file: UploadFile
+
+    :param uuid: The UUID of the application.
+    :type uuid: str
+
+    :param type: The type of the document.
+    :type type: str
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The created or updated borrower document.
+    :rtype: core.BorrowerDocumentBase
+    """
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
         application = utils.get_application_by_uuid(uuid, session)
@@ -283,6 +408,21 @@ async def upload_contract(
     uuid: str = Form(...),
     session: Session = Depends(get_db),
 ):
+    """
+    Upload a contract document for an application.
+
+    :param file: The uploaded file.
+    :type file: UploadFile
+
+    :param uuid: The UUID of the application.
+    :type uuid: str
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The created or updated borrower document representing the contract.
+    :rtype: core.BorrowerDocumentBase
+    """
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
         application = utils.get_application_by_uuid(uuid, session)
@@ -310,6 +450,25 @@ async def confirm_upload_contract(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
+    """
+    Confirm the upload of a contract document for an application.
+
+    Changes application status from "CONTRACT_UPLOADED" to "CONTRACT_ACCEPTED".
+
+    Sends an email to SME notifying the current stage of their application.
+
+    :param payload: The confirmation data for the uploaded contract.
+    :type payload: ApiSchema.UploadContractConfirmation
+
+    :param session: The database session.
+    :type session: Session
+
+    :param client: The Cognito client.
+    :type client: CognitoClient
+
+    :return: The application response containing the updated application and related entities.
+    :rtype: ApiSchema.ApplicationResponse
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_application_status(application, core.ApplicationStatus.APPROVED)
@@ -369,6 +528,24 @@ async def upload_compliance(
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
+    """
+    Upload a compliance document for an application.
+
+    :param id: The ID of the application.
+    :type id: int
+
+    :param file: The uploaded file.
+    :type file: UploadFile
+
+    :param session: The database session.
+    :type session: Session
+
+    :param user: The current user.
+    :type user: core.User
+
+    :return: The created or updated borrower document representing the compliance report.
+    :rtype: core.BorrowerDocumentBase
+    """
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
         application = utils.get_application_by_id(id, session)
@@ -406,6 +583,24 @@ async def verify_data_field(
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
+    """
+    Verify and update a data field in an application.
+
+    :param id: The ID of the application.
+    :type id: int
+
+    :param payload: The data field update payload.
+    :type payload: ApiSchema.UpdateDataField
+
+    :param session: The database session.
+    :type session: Session
+
+    :param user: The current user.
+    :type user: core.User
+
+    :return: The updated application with its associated relations.
+    :rtype: core.ApplicationWithRelations
+    """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_application_in_status(
@@ -441,6 +636,24 @@ async def verify_document(
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
+    """
+    Verify a borrower document in an application.
+
+    :param document_id: The ID of the borrower document.
+    :type document_id: int
+
+    :param payload: The document verification payload.
+    :type payload: ApiSchema.VerifyBorrowerDocument
+
+    :param session: The database session.
+    :type session: Session
+
+    :param user: The current user.
+    :type user: core.User
+
+    :return: The updated application with its associated relations.
+    :rtype: core.ApplicationWithRelations
+    """
     with transaction_session(session):
         document = utils.get_document_by_id(document_id, session)
         utils.check_FI_user_permission(document.application, user)
@@ -476,6 +689,24 @@ async def update_application_award(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Update the award details of an application.
+
+    :param application_id: The ID of the application.
+    :type application_id: int
+
+    :param payload: The award update payload.
+    :type payload: ApiSchema.AwardUpdate
+
+    :param user: The current user.
+    :type user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The updated application with its associated relations.
+    :rtype: core.ApplicationWithRelations
+    """
     with transaction_session(session):
         application = utils.update_application_award(
             session, application_id, payload, user
@@ -502,6 +733,24 @@ async def update_application_borrower(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Update the borrower details of an application.
+
+    :param application_id: The ID of the application.
+    :type application_id: int
+
+    :param payload: The borrower update payload.
+    :type payload: ApiSchema.BorrowerUpdate
+
+    :param user: The current user.
+    :type user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The updated application with its associated relations.
+    :rtype: core.ApplicationWithRelations
+    """
     with transaction_session(session):
         application = utils.update_application_borrower(
             session, application_id, payload, user
@@ -532,6 +781,32 @@ async def get_applications_list(
     current_user: core.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Get a paginated list of applications for administrative purposes.
+
+    :param page: The page number of the application list (default: 0).
+    :type page: int
+
+    :param page_size: The number of applications per page (default: 10).
+    :type page_size: int
+
+    :param sort_field: The field to sort the applications by (default: "application.created_at").
+    :type sort_field: str
+
+    :param sort_order: The sort order of the applications ("asc" or "desc", default: "asc").
+    :type sort_order: str
+
+    :param current_user: The current user authenticated.
+    :type current_user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The paginated list of applications.
+    :rtype: ApiSchema.ApplicationListResponse
+
+    :raise: lumache.OCPOnlyError if the current user is not authorized.
+    """
     return utils.get_all_active_applications(
         page, page_size, sort_field, sort_order, session
     )
@@ -547,6 +822,23 @@ async def get_application(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Retrieve an application by its ID.
+
+    :param id: The ID of the application to retrieve.
+    :type id: int
+
+    :param user: The current user.
+    :type user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application with the specified ID and its associated relations.
+    :rtype: core.ApplicationWithRelations
+
+    :raise: HTTPException with status code 401 if the user is not authorized to view the application.
+    """
     application = (
         session.query(core.Application).filter(core.Application.id == id).first()
     )
@@ -573,6 +865,23 @@ async def start_application(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Start an application.
+
+    :param id: The ID of the application to start.
+    :type id: int
+
+    :param user: The current user.
+    :type user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The started application with its associated relations.
+    :rtype: core.ApplicationWithRelations
+
+    :raise: HTTPException with status code 401 if the user is not authorized to start the application.
+    """
     with transaction_session(session):
         application = (
             session.query(core.Application).filter(core.Application.id == id).first()
@@ -605,6 +914,30 @@ async def get_applications(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Get a paginated list of applications for a specific user.
+
+    :param page: The page number of the application list (default: 0).
+    :type page: int
+
+    :param page_size: The number of applications per page (default: 10).
+    :type page_size: int
+
+    :param sort_field: The field to sort the applications by (default: "application.created_at").
+    :type sort_field: str
+
+    :param sort_order: The sort order of the applications ("asc" or "desc", default: "asc").
+    :type sort_order: str
+
+    :param user: The current user.
+    :type user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The paginated list of applications for the specific user.
+    :rtype: ApiSchema.ApplicationListResponse
+    """
     return utils.get_all_FI_user_applications(
         page, page_size, sort_field, sort_order, session, user.lender_id
     )
@@ -616,6 +949,20 @@ async def get_applications(
     response_model=ApiSchema.ApplicationResponse,
 )
 async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
+    """
+    Retrieve an application by its UUID.
+
+    :param uuid: The UUID of the application to retrieve.
+    :type uuid: str
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application with the specified UUID and its associated entities.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 404 if the application is expired.
+    """
     application = utils.get_application_by_uuid(uuid, session)
     utils.check_is_application_expired(application)
 
@@ -639,6 +986,28 @@ async def access_scheme(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
+    """
+    Access the scheme for an application.
+
+    Changes the status from PENDING to ACCEPTED.
+
+    Search for previous awards for the borrower and add them to the application.
+
+
+    :param payload: The application data.
+    :type payload: ApiSchema.ApplicationBase
+
+    :param background_tasks: The background tasks to be executed.
+    :type background_tasks: BackgroundTasks
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application response containing the updated application, borrower, and award.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
@@ -667,6 +1036,21 @@ async def credit_product_options(
     payload: ApiSchema.ApplicationCreditOptions,
     session: Session = Depends(get_db),
 ):
+    """
+    Get the available credit product options for an application.
+
+    :param payload: The application credit options.
+    :type payload: ApiSchema.ApplicationCreditOptions
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The credit product list response containing the available loans and credit lines.
+    :rtype: ApiSchema.CreditProductListResponse
+
+    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status,
+            or if the previous lenders are not found.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
 
@@ -722,6 +1106,22 @@ async def select_credit_product(
     payload: ApiSchema.ApplicationSelectCreditProduct,
     session: Session = Depends(get_db),
 ):
+    """
+    Select a credit product for an application.
+
+    :param payload: The application credit product selection payload.
+    :type payload: ApiSchema.ApplicationSelectCreditProduct
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application response containing the updated application, borrower, award, lender, documents,
+            and credit product.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status,
+            or if the calculator data is invalid.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
@@ -764,6 +1164,21 @@ async def rollback_select_credit_product(
     payload: ApiSchema.ApplicationBase,
     session: Session = Depends(get_db),
 ):
+    """
+    Rollback the selection of a credit product for an application.
+
+    :param payload: The application data.
+    :type payload: ApiSchema.ApplicationBase
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application response containing the updated application, borrower, and award.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 400 if the credit product is not selected or if
+    the lender is already assigned.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
@@ -800,6 +1215,21 @@ async def confirm_credit_product(
     payload: ApiSchema.ApplicationBase,
     session: Session = Depends(get_db),
 ):
+    """
+    Confirm the selected credit product for an application.
+
+    :param payload: The application data.
+    :type payload: ApiSchema.ApplicationBase
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application response containing the updated application, borrower, award, lender, documents,
+            and credit product.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 400 if the credit product is not selected or not found.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
@@ -921,6 +1351,24 @@ async def email_sme(
     client: CognitoClient = Depends(get_cognito_client),
     user: core.User = Depends(get_user),
 ):
+    """
+    Submit an application.
+
+    :param payload: The application data.
+    :type payload: ApiSchema.ApplicationBase
+
+    :param session: The database session.
+    :type session: Session
+
+    :param client: The Cognito client for sending notifications.
+    :type client: CognitoClient
+
+    :return: The application response containing the updated application, borrower, award, and lender.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 400 if the credit product or lender is not selected,
+            or if there is an error in submitting the application.
+    """
     with transaction_session(session):
         try:
             application = utils.get_application_by_id(id, session)
@@ -975,6 +1423,23 @@ async def complete_information_request(
     client: CognitoClient = Depends(get_cognito_client),
     session: Session = Depends(get_db),
 ):
+    """
+    Complete the information request for an application.
+
+    :param payload: The application data.
+    :type payload: ApiSchema.ApplicationBase
+
+    :param client: The Cognito client for sending notifications.
+    :type client: CognitoClient
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application response containing the updated application, borrower, award, lender, and documents.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 400 if the application is not in the INFORMATION_REQUESTED status.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_application_status(
@@ -1021,6 +1486,20 @@ async def decline(
     payload: ApiSchema.ApplicationDeclinePayload,
     session: Session = Depends(get_db),
 ):
+    """
+    Decline an application.
+
+    :param payload: The application decline payload.
+    :type payload: ApiSchema.ApplicationDeclinePayload
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application response containing the updated application, borrower, and award.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 400 if the application is not in the PENDING status.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
@@ -1054,6 +1533,20 @@ async def rollback_decline(
     payload: ApiSchema.ApplicationBase,
     session: Session = Depends(get_db),
 ):
+    """
+    Rollback the decline of an application.
+
+    :param payload: The application base payload.
+    :type payload: ApiSchema.ApplicationBase
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application response containing the updated application, borrower, and award.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
@@ -1083,6 +1576,20 @@ async def decline_feedback(
     payload: ApiSchema.ApplicationDeclineFeedbackPayload,
     session: Session = Depends(get_db),
 ):
+    """
+    Provide feedback for a declined application.
+
+    :param payload: The application decline feedback payload.
+    :type payload: ApiSchema.ApplicationDeclineFeedbackPayload
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The application response containing the updated application, borrower, and award.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
@@ -1112,6 +1619,23 @@ async def previous_contracts(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Get the previous awards associated with an application.
+
+    :param id: The ID of the application.
+    :type id: int
+
+    :param user: The current user authenticated.
+    :type user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: A list of previous awards associated with the application.
+    :rtype: List[core.Award]
+
+    :raise: HTTPException with status code 401 if the user is not authorized to access the application.
+    """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission_or_OCP(application, user)
@@ -1129,6 +1653,24 @@ async def find_alternative_credit_option(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
+    """
+    Find an alternative credit option for a rejected application by copying it.
+
+    :param payload: The payload containing the UUID of the rejected application.
+    :type payload: ApiSchema.ApplicationBase
+
+    :param session: The database session.
+    :type session: Session
+
+    :param client: The Cognito client for sending notifications.
+    :type client: CognitoClient
+
+    :return: The newly created application as an alternative credit option.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raise: HTTPException with status code 400 if the application has already been copied.
+    :raise: HTTPException with status code 400 if the application is not in the rejected status.
+    """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_if_application_was_already_copied(application, session)
