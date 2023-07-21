@@ -1,5 +1,5 @@
 statistics Module
-==============
+=================
 
 .. automodule:: app.routers.statistics
    :members:

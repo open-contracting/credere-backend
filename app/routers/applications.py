@@ -61,6 +61,7 @@ async def reject_application(
 
     :return: The rejected application with its associated relations.
     :rtype: core.ApplicationWithRelations
+
     """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
@@ -124,6 +125,7 @@ async def complete_application(
 
     :return: The completed application with its associated relations.
     :rtype: core.ApplicationWithRelations
+
     """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
@@ -182,6 +184,7 @@ async def approve_application(
 
     :return: The approved application with its associated relations.
     :rtype: core.ApplicationWithRelations
+
     """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
@@ -231,6 +234,7 @@ async def change_email(
 
     :return: The data for changing the email address.
     :rtype: ChangeEmail
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -284,6 +288,7 @@ async def confirm_email(
 
     :return: The data for confirming the email address change.
     :rtype: ChangeEmail
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -326,6 +331,7 @@ async def get_borrower_document(
 
     :return: A streaming response with the borrower document file content.
     :rtype: StreamingResponse
+
     """
     with transaction_session(session):
         document = (
@@ -373,6 +379,7 @@ async def upload_document(
 
     :return: The created or updated borrower document.
     :rtype: core.BorrowerDocumentBase
+
     """
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
@@ -422,6 +429,7 @@ async def upload_contract(
 
     :return: The created or updated borrower document representing the contract.
     :rtype: core.BorrowerDocumentBase
+
     """
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
@@ -468,6 +476,7 @@ async def confirm_upload_contract(
 
     :return: The application response containing the updated application and related entities.
     :rtype: ApiSchema.ApplicationResponse
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -545,6 +554,7 @@ async def upload_compliance(
 
     :return: The created or updated borrower document representing the compliance report.
     :rtype: core.BorrowerDocumentBase
+
     """
     with transaction_session(session):
         new_file, filename = utils.validate_file(file)
@@ -600,6 +610,7 @@ async def verify_data_field(
 
     :return: The updated application with its associated relations.
     :rtype: core.ApplicationWithRelations
+
     """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
@@ -653,6 +664,7 @@ async def verify_document(
 
     :return: The updated application with its associated relations.
     :rtype: core.ApplicationWithRelations
+
     """
     with transaction_session(session):
         document = utils.get_document_by_id(document_id, session)
@@ -706,6 +718,7 @@ async def update_application_award(
 
     :return: The updated application with its associated relations.
     :rtype: core.ApplicationWithRelations
+
     """
     with transaction_session(session):
         application = utils.update_application_award(
@@ -750,6 +763,7 @@ async def update_application_borrower(
 
     :return: The updated application with its associated relations.
     :rtype: core.ApplicationWithRelations
+
     """
     with transaction_session(session):
         application = utils.update_application_borrower(
@@ -806,6 +820,7 @@ async def get_applications_list(
     :rtype: ApiSchema.ApplicationListResponse
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
+
     """
     return utils.get_all_active_applications(
         page, page_size, sort_field, sort_order, session
@@ -838,6 +853,7 @@ async def get_application(
     :rtype: core.ApplicationWithRelations
 
     :raise: HTTPException with status code 401 if the user is not authorized to view the application.
+
     """
     application = (
         session.query(core.Application).filter(core.Application.id == id).first()
@@ -881,6 +897,7 @@ async def start_application(
     :rtype: core.ApplicationWithRelations
 
     :raise: HTTPException with status code 401 if the user is not authorized to start the application.
+
     """
     with transaction_session(session):
         application = (
@@ -937,6 +954,7 @@ async def get_applications(
 
     :return: The paginated list of applications for the specific user.
     :rtype: ApiSchema.ApplicationListResponse
+
     """
     return utils.get_all_FI_user_applications(
         page, page_size, sort_field, sort_order, session, user.lender_id
@@ -962,6 +980,7 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     :rtype: ApiSchema.ApplicationResponse
 
     :raise: HTTPException with status code 404 if the application is expired.
+
     """
     application = utils.get_application_by_uuid(uuid, session)
     utils.check_is_application_expired(application)
@@ -1007,6 +1026,7 @@ async def access_scheme(
     :rtype: ApiSchema.ApplicationResponse
 
     :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1048,8 +1068,8 @@ async def credit_product_options(
     :return: The credit product list response containing the available loans and credit lines.
     :rtype: ApiSchema.CreditProductListResponse
 
-    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status,
-            or if the previous lenders are not found.
+    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the previous lenders are not found. # noqa
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1115,12 +1135,11 @@ async def select_credit_product(
     :param session: The database session.
     :type session: Session
 
-    :return: The application response containing the updated application, borrower, award, lender, documents,
-            and credit product.
+    :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
     :rtype: ApiSchema.ApplicationResponse
 
-    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status,
-            or if the calculator data is invalid.
+    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the calculator data is invalid. # noqa: E501
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1176,8 +1195,8 @@ async def rollback_select_credit_product(
     :return: The application response containing the updated application, borrower, and award.
     :rtype: ApiSchema.ApplicationResponse
 
-    :raise: HTTPException with status code 400 if the credit product is not selected or if
-    the lender is already assigned.
+    :raise: HTTPException with status code 400 if the credit product is not selected or if the lender is already assigned. # noqa: E501
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1224,11 +1243,12 @@ async def confirm_credit_product(
     :param session: The database session.
     :type session: Session
 
-    :return: The application response containing the updated application, borrower, award, lender, documents,
-            and credit product.
+    :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
+
     :rtype: ApiSchema.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the credit product is not selected or not found.
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1366,8 +1386,8 @@ async def email_sme(
     :return: The application response containing the updated application, borrower, award, and lender.
     :rtype: ApiSchema.ApplicationResponse
 
-    :raise: HTTPException with status code 400 if the credit product or lender is not selected,
-            or if there is an error in submitting the application.
+    :raise: HTTPException with status code 400 if the credit product or lender is not selected, or if there is an error in submitting the application. # noqa: E501
+
     """
     with transaction_session(session):
         try:
@@ -1439,6 +1459,7 @@ async def complete_information_request(
     :rtype: ApiSchema.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the INFORMATION_REQUESTED status.
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1499,6 +1520,7 @@ async def decline(
     :rtype: ApiSchema.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the PENDING status.
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1546,6 +1568,7 @@ async def rollback_decline(
     :rtype: ApiSchema.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1589,6 +1612,7 @@ async def decline_feedback(
     :rtype: ApiSchema.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1635,6 +1659,7 @@ async def previous_contracts(
     :rtype: List[core.Award]
 
     :raise: HTTPException with status code 401 if the user is not authorized to access the application.
+
     """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
@@ -1670,6 +1695,7 @@ async def find_alternative_credit_option(
 
     :raise: HTTPException with status code 400 if the application has already been copied.
     :raise: HTTPException with status code 400 if the application is not in the rejected status.
+
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)

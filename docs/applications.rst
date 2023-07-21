@@ -1,5 +1,5 @@
 Applications Module
-==============
+===================
 
 .. automodule:: app.routers.applications
    :members:

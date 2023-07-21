@@ -1,5 +1,5 @@
 Security Module
-==============
+===============
 
 .. automodule:: app.routers.security
    :members:
