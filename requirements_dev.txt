@@ -94,7 +94,9 @@ filelock==3.12.0
 flake8==6.0.0
     # via -r requirements_dev.in
 furo==2023.5.20
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   -r requirements_dev.in
 greenlet==2.0.2
     # via
     #   -r requirements.txt
@@ -288,7 +290,9 @@ sphinx==7.0.1
     #   sphinx-autodoc-typehints
     #   sphinx-basic-ng
 sphinx-autodoc-typehints==1.24.0
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   -r requirements_dev.in
 sphinx-basic-ng==1.0.0b2
     # via
     #   -r requirements.txt
