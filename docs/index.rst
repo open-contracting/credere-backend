@@ -13,6 +13,13 @@ This is the documentation for the `credere` project. It provides detailed inform
   :caption: Contents:
 
   lenders
+  fetcher
+  background_application_utils
+  background_awards_utils
+  background_utils
+  background_borrower_utils
+  colombia_data_access
+  lapsed_applications
    
 
 Indices and tables

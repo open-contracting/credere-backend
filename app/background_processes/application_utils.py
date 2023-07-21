@@ -22,6 +22,17 @@ ApplicationStatus = core.ApplicationStatus
 
 
 def insert_application(application: core.Application, session: Session):
+    """
+    Insert a new application into the database.
+
+    :param application: The application data to be inserted.
+    :type application: core.Application
+    :param session: The database session.
+    :type session: Session
+
+    :return: The inserted application.
+    :rtype: core.Application
+    """
     obj_db = core.Application(**application)
     obj_db.created_at = datetime.utcnow()
 
@@ -32,6 +43,17 @@ def insert_application(application: core.Application, session: Session):
 
 
 def insert_message(application: core.Application, session: Session):
+    """
+    Insert a new message associated with an application into the database.
+
+    :param application: The application to associate the message with.
+    :type application: core.Application
+    :param session: The database session.
+    :type session: Session
+
+    :return: The inserted message.
+    :rtype: core.Message
+    """
     obj_db = core.Message(
         application=application, type=core.MessageType.BORROWER_INVITACION
     )
@@ -44,6 +66,17 @@ def insert_message(application: core.Application, session: Session):
 
 
 def get_existing_application(award_borrower_identifier: str, session: Session):
+    """
+    Get an existing application based on the award borrower identifier.
+
+    :param award_borrower_identifier: The unique identifier for the award and borrower combination.
+    :type award_borrower_identifier: str
+    :param session: The database session.
+    :type session: Session
+
+    :return: The existing application if found, otherwise None.
+    :rtype: core.Application or None
+    """
     application = (
         session.query(core.Application)
         .filter(core.Application.award_borrower_identifier == award_borrower_identifier)
@@ -56,6 +89,25 @@ def get_existing_application(award_borrower_identifier: str, session: Session):
 def create_application(
     award_id, borrower_id, email, legal_identifier, source_contract_id, session: Session
 ) -> core.Application:
+    """
+    Create a new application and insert it into the database.
+
+    :param award_id: The ID of the award associated with the application.
+    :type award_id: int
+    :param borrower_id: The ID of the borrower associated with the application.
+    :type borrower_id: int
+    :param email: The email of the borrower.
+    :type email: str
+    :param legal_identifier: The legal identifier of the borrower.
+    :type legal_identifier: str
+    :param source_contract_id: The ID of the source contract.
+    :type source_contract_id: str
+    :param session: The database session.
+    :type session: Session
+
+    :return: The created application.
+    :rtype: core.Application
+    """
     award_borrower_identifier: str = background_utils.get_secret_hash(
         legal_identifier + source_contract_id
     )
@@ -91,6 +143,15 @@ def create_application(
 
 
 def get_dated_applications(session):
+    """
+    Get applications that meet specific date-based criteria.
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: A list of applications that meet the date-based criteria.
+    :rtype: list[core.Application]
+    """
     try:
         applications_to_remove_data = (
             session.query(core.Application)
@@ -136,6 +197,15 @@ def get_dated_applications(session):
 
 
 def get_lapsed_applications(session):
+    """
+    Get applications that meet specific lapsed status criteria.
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: A list of applications that meet the lapsed status criteria.
+    :rtype: list[core.Application]
+    """
     try:
         applications_to_set_to_lapsed = (
             session.query(core.Application)
@@ -177,6 +247,12 @@ def get_lapsed_applications(session):
 
 
 def get_applications_to_remind_intro():
+    """
+    Get applications that need a reminder for the introduction.
+
+    :return: A list of applications that need an introduction reminder.
+    :rtype: list[core.Application]
+    """
     with contextmanager(get_db)() as session:
         try:
             subquery = select(core.Message.application_id).where(
@@ -209,6 +285,12 @@ def get_applications_to_remind_intro():
 
 
 def get_applications_to_remind_submit():
+    """
+    Get applications that need a reminder to submit.
+
+    :return: A list of applications that need a submit reminder.
+    :rtype: list[core.Application]
+    """
     with contextmanager(get_db)() as session:
         try:
             subquery = select(core.Message.application_id).where(
@@ -244,6 +326,21 @@ def create_message(
     session: Session,
     external_message_id: str,
 ) -> None:
+    """
+    Create and insert a new message associated with an application.
+
+    :param application: The application to associate the message with.
+    :type application: core.Application
+    :param message: The type of message to be created.
+    :type message: core.MessageType
+    :param session: The database session.
+    :type session: Session
+    :param external_message_id: The external message ID.
+    :type external_message_id: str
+
+    :return: None
+    :rtype: None
+    """
     obj_db = core.Message(
         application=application,
         type=message,
@@ -256,6 +353,17 @@ def create_message(
 
 
 def get_all_applications_with_status(status_list, session):
+    """
+    Get all applications that have one of the specified status.
+
+    :param status_list: The list of status to filter applications.
+    :type status_list: list[core.ApplicationStatus]
+    :param session: The database session.
+    :type session: Session
+
+    :return: A list of applications that have the specified status.
+    :rtype: list[core.Application]
+    """
     applications = (
         session.query((core.Application))
         .filter(core.Application.status.in_(status_list))
@@ -266,6 +374,17 @@ def get_all_applications_with_status(status_list, session):
 
 
 def get_application_days_passed(application: core.Application, session: Session):
+    """
+    Calculate the number of days passed between different application actions.
+
+    :param application: The application to calculate the days passed for.
+    :type application: core.Application
+    :param session: The database session.
+    :type session: Session
+
+    :return: The number of days passed between application actions.
+    :rtype: int
+    """
     paired_actions = []
     fi_request_actions = (
         session.query(core.ApplicationAction)
@@ -327,6 +446,15 @@ def get_application_days_passed(application: core.Application, session: Session)
 
 
 def send_overdue_reminders(session: Session):
+    """
+    Send reminders for applications that are overdue.
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: None
+    :rtype: None
+    """
     applications = get_all_applications_with_status(
         [
             core.ApplicationStatus.INFORMATION_REQUESTED,

@@ -13,6 +13,14 @@ from .borrower_utils import get_or_create_borrower
 
 
 def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: str):
+    """
+    Fetch new awards from the given date and process them.
+
+    :param last_updated_award_date: Date string in the format 'YYYY-MM-DD'.
+    :type last_updated_award_date: str
+    :param email_invitation: Optional email address to send invitations. Defaults to None.
+    :type email_invitation: str or None
+    """
     index = 0
     contracts_response = awards_utils.get_new_contracts(index, last_updated_award_date)
     contracts_response_json = contracts_response.json()
@@ -80,11 +88,23 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
 
 
 def fetch_new_awards(email_invitation: str = None):
+    """
+    Fetch new awards and process them.
+
+    :param email_invitation: Optional email address to send invitations. Defaults to None.
+    :type email_invitation: str or None
+    """
     last_updated_award_date = awards_utils.get_last_updated_award_date()
     fetch_new_awards_from_date(last_updated_award_date, email_invitation)
 
 
 def fetch_previous_awards(borrower: Borrower):
+    """
+    Fetch previous awards for a borrower and process them.
+
+    :param borrower: The borrower for whom to fetch and process previous awards.
+    :type borrower: Borrower
+    """
     contracts_response = awards_utils.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
 

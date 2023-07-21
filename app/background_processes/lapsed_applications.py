@@ -11,6 +11,16 @@ get_lapses_applications = application_utils.get_lapsed_applications
 
 
 def set_lapsed_applications():
+    """
+    Set applications with lapsed status in the database.
+
+    This function retrieves the lapsed applications from the database and updates their status
+    to "LAPSED" and sets the application_lapsed_at timestamp to the current UTC time.
+
+    :return: None
+    :rtype: None
+    """
+
     with contextmanager(get_db)() as session:
         lapsed_applications = get_lapses_applications(session)
         logging.info("Quantity of lapsed application " + str(len(lapsed_applications)))
