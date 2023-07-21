@@ -16,32 +16,36 @@ depends_on = None
 
 
 def upgrade() -> None:
-    conn = op.get_bind()
-
-    op.alter_column("statistic", "updated_at", new_column_name="created_at")
-
     # create new type
-    with op.get_context().autocommit_block():
-        conn.execute(
-            "CREATE TYPE statistic_type_new AS ENUM ('MSME_OPT_IN_STATISTICS', 'APPLICATION_KPIS');"
-        )
-
-    # change type of column to new type
     op.execute(
-        """
-        ALTER TABLE statistic
-        ALTER COLUMN type TYPE statistic_type_new
-        USING type::text::statistic_type_new
-    """
+        "CREATE TYPE statistic_type_new AS ENUM ('MSME_OPT_IN_STATISTICS', 'APPLICATION_KPIS');"
     )
 
-    # remove old type
-    with op.get_context().autocommit_block():
-        conn.execute("DROP TYPE statistic_type;")
+    # add a temporary column of new type
+    op.add_column(
+        "statistic",
+        sa.Column(
+            "type_temp",
+            sa.Enum(
+                "MSME_OPT_IN_STATISTICS", "APPLICATION_KPIS", name="statistic_type_new"
+            ),
+        ),
+    )
+
+    # copy data from old column to temporary column
+    op.execute("UPDATE statistic SET type_temp=type::text::statistic_type_new;")
+
+    # drop old column
+    op.drop_column("statistic", "type")
+
+    # rename temporary column to old column's name
+    op.alter_column("statistic", "type_temp", new_column_name="type")
+
+    # drop old type if it exists
+    op.execute("DROP TYPE IF EXISTS statistic_type;")
 
     # rename new type
-    with op.get_context().autocommit_block():
-        conn.execute("ALTER TYPE statistic_type_new RENAME TO statistic_type;")
+    op.execute("ALTER TYPE statistic_type_new RENAME TO statistic_type;")
 
     # add lender_id column
     op.add_column("statistic", sa.Column("lender_id", sa.Integer))
@@ -51,32 +55,36 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    conn = op.get_bind()
-
-    op.alter_column("statistic", "created_at", new_column_name="updated_at")
-
     # create old type
-    with op.get_context().autocommit_block():
-        conn.execute(
-            "CREATE TYPE statistic_type_old AS ENUM ('MSME opt-in statistics', 'Application KPIs');"
-        )
-
-    # change type of column to old type
     op.execute(
-        """
-        ALTER TABLE statistic
-        ALTER COLUMN type TYPE statistic_type_old
-        USING type::text::statistic_type_old
-    """
+        "CREATE TYPE statistic_type_old AS ENUM ('MSME opt-in statistics', 'Application KPIs');"
     )
 
-    # remove new type
-    with op.get_context().autocommit_block():
-        conn.execute("DROP TYPE statistic_type;")
+    # add a temporary column of old type
+    op.add_column(
+        "statistic",
+        sa.Column(
+            "type_temp",
+            sa.Enum(
+                "MSME opt-in statistics", "Application KPIs", name="statistic_type_old"
+            ),
+        ),
+    )
+
+    # copy data from old column to temporary column
+    op.execute("UPDATE statistic SET type_temp=type::text::statistic_type_old;")
+
+    # drop old column
+    op.drop_column("statistic", "type")
+
+    # rename temporary column to old column's name
+    op.alter_column("statistic", "type_temp", new_column_name="type")
+
+    # drop new type if it exists
+    op.execute("DROP TYPE IF EXISTS statistic_type;")
 
     # rename old type
-    with op.get_context().autocommit_block():
-        conn.execute("ALTER TYPE statistic_type_old RENAME TO statistic_type;")
+    op.execute("ALTER TYPE statistic_type_old RENAME TO statistic_type;")
 
     # drop foreign key
     op.drop_constraint("statistic_lender_id_fkey", "statistic", type_="foreignkey")
