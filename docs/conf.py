@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 
-project = "Credere-backend"
+project = "Credere"
 copyright = "2023, Open Contracting Partnership"
 author = "Open Contracting Partnership"
 

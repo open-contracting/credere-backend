@@ -13,3 +13,4 @@ httpx
 requests
 typer[all]
 python-multipart
+furo

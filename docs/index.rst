@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to credere's documentation!
+Welcome to Credere's documentation!
 ===================================
 
-This is the documentation for the `credere` project. It provides detailed information about the code, modules, classes, and functions used in the application.
+This is the documentation for the `Credere` project. It provides detailed information about the code, modules, classes, and functions used in the application.
 
 .. toctree::
   :maxdepth: 2
