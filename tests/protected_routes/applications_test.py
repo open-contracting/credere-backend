@@ -111,6 +111,27 @@ async def set_test_application_as_overdue(id: int, session: Session = Depends(ge
 
 
 @router.get(
+    "/set-application-as-expired/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_expired(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+
+    application.status = core.ApplicationStatus.PENDING.value
+    application.expired_at = datetime.now(application.created_at.tzinfo) - timedelta(
+        days=+1
+    )
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
     "/set-test-application-to-remind/id/{id}",
     tags=["applications"],
     response_model=core.Application,

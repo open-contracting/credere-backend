@@ -15,6 +15,7 @@ from tests.common.common_test_client import MockResponse  # isort:skip # noqa
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 file = os.path.join(__location__, "file.jpeg")
+wrong_file = os.path.join(__location__, "file.gif")
 
 FI_user = {
     "email": "FI_user@noreply.open-contracting.org",
@@ -135,6 +136,14 @@ def test_reject_application(client, mock_templated_email):  # noqa
     client.post("/create-test-credit-option", json=test_credit_option)
     client.post("/create-test-application", json=application_with_lender_payload)
 
+    # tries to reject the application before its started
+    response = client.post(
+        "/applications/1/reject-application",
+        json=reject_payload,
+        headers=FI_headers,
+    )
+    assert response.status_code == status.HTTP_409_CONFLICT
+
     response = client.post(
         "/applications/1/update-test-application-status",
         json={"status": core.ApplicationStatus.STARTED.value},
@@ -167,6 +176,18 @@ def test_rollback_credit_product(client, mock_templated_email):  # noqa
     assert response.status_code == status.HTTP_200_OK
 
 
+def test_access_expired_application(client):  # noqa
+    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    client.post("/lenders", json=lender, headers=OCP_headers)
+    client.post("/create-test-credit-option", json=test_credit_option)
+    client.post("/create-test-application", json=application_with_credit_product)
+
+    response = client.get("/set-application-as-expired/id/1")
+    # borrower tries to access expired application
+    response = client.get("/applications/uuid/123-456-789")
+    assert response.status_code == status.HTTP_409_CONFLICT
+
+
 def test_approve_application_cicle(client, mock_templated_email):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
@@ -193,9 +214,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         )
         assert response.status_code == status.HTTP_200_OK
 
-        logging.info(
-            "Application should be accepted now so it cannot be accepted again"
-        )
+        # Application should be accepted now so it cannot be accepted again
         response = client.post("/applications/access-scheme", json=application_base)
         assert response.status_code == status.HTTP_409_CONFLICT
 
@@ -227,6 +246,20 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     new_email = "new_test_email@example.com"
+    new_wrong_email = "wrong_email@@noreply!$%&/().open-contracting.org"
+
+    # borrower tries to change their email to a non valid one
+    response = client.post(
+        "/applications/change-email",
+        json={"uuid": "123-456-789", "new_email": new_wrong_email},
+    )
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    response = client.post(
+        "/applications/change-email",
+        json={"uuid": "123-456-789", "new_email": new_email},
+    )
+    assert response.status_code == status.HTTP_200_OK
 
     response = client.post(
         "/applications/change-email",
@@ -244,6 +277,16 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         },
     )
     assert response.status_code == status.HTTP_200_OK
+
+    # borrower tries to confirm email without a pending change
+    response = client.post(
+        "/applications/confirm-change-email",
+        json={
+            "uuid": "123-456-789",
+            "confirmation_email_token": "confirmation_email_token",
+        },
+    )
+    assert response.status_code == status.HTTP_409_CONFLICT
 
     response = client.post("/applications/submit", json=application_base)
     assert (
@@ -347,6 +390,18 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     )
     assert response.status_code == status.HTTP_200_OK
 
+    # borrower uploads the wrong type of document
+    with open(wrong_file, "rb") as file_to_upload:
+        response = client.post(
+            "/applications/upload-document",
+            data={
+                "uuid": "123-456-789",
+                "type": core.BorrowerDocumentType.INCORPORATION_DOCUMENT.value,
+            },
+            files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
     with open(file, "rb") as file_to_upload:
         response = client.post(
             "/applications/upload-document",
@@ -358,6 +413,14 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         )
         assert response.status_code == status.HTTP_200_OK
 
+        # different FI user tries to upload compliance document
+        response = client.post(
+            "/applications/1/upload-compliance",
+            files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
+            headers=FI_headers_2,
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
         response = client.post(
             "/applications/1/upload-compliance",
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
@@ -367,6 +430,14 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
 
         response = client.get("/applications/documents/id/1", headers=FI_headers)
         assert response.status_code == status.HTTP_200_OK
+
+        # OCP user downloads the document
+        response = client.get("/applications/documents/id/1", headers=OCP_headers)
+        assert response.status_code == status.HTTP_200_OK
+
+        # OCP ask for a file that does not exist
+        response = client.get("/applications/documents/id/100", headers=OCP_headers)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
         response = client.post(
             "/applications/complete-information-request", json={"uuid": "123-456-789"}

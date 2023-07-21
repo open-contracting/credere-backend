@@ -81,9 +81,6 @@ def test_fetch_new_awards_borrower_declined(client):  # noqa
     ), common_test_functions.mock_function_response(
         1,
         "app.utils.email_utility.send_invitation_email",
-    ), common_test_functions.mock_function_response(
-        None,
-        "app.background_processes.application_utils.get_existing_application",
     ), common_test_functions.mock_whole_process(
         200,
         award,
@@ -92,7 +89,7 @@ def test_fetch_new_awards_borrower_declined(client):  # noqa
         "app.background_processes.background_utils.make_request_with_retry",
     ):
         fetcher.fetch_new_awards(
-            "test@test.com",
+            "test@noreply.open-contracting.org",
             common_test_client.get_test_db,
         )
 
@@ -100,7 +97,7 @@ def test_fetch_new_awards_borrower_declined(client):  # noqa
 def test_fetch_new_awards_from_date(start_background_db, caplog):  # noqa
     with common_test_functions.mock_response_second_empty(
         200,
-        contract,
+        contracts,
         "app.background_processes.awards_utils.get_new_contracts",
     ), common_test_functions.mock_function_response(
         None,
