@@ -16,6 +16,9 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # rename column updated_at to created_at
+    op.alter_column("statistic", "updated_at", new_column_name="created_at")
+
     # create new type
     op.execute(
         "CREATE TYPE statistic_type_new AS ENUM ('MSME_OPT_IN_STATISTICS', 'APPLICATION_KPIS');"
@@ -55,6 +58,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # rename column created_at back to updated_at
+    op.alter_column("statistic", "created_at", new_column_name="updated_at")
+
     # create old type
     op.execute(
         "CREATE TYPE statistic_type_old AS ENUM ('MSME opt-in statistics', 'Application KPIs');"
