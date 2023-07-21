@@ -7,9 +7,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 
-project = "credere"
-copyright = "2023, ocp"
-author = "ocp"
+project = "Credere-backend"
+copyright = "2023, Open Contracting Partnership"
+author = "Open Contracting Partnership"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
