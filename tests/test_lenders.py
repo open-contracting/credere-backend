@@ -128,7 +128,7 @@ def test_create_credit_product(client):  # isort:skip # noqa
     response = client.put(
         "/credit-products/100", json=updated_credit_product, headers=OCP_headers
     )
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
     response = client.get("/credit-products/1")
     assert response.status_code == status.HTTP_200_OK

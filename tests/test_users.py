@@ -155,3 +155,9 @@ def test_login(client):  # noqa
         responseAccessProtectedRouteWithUser.json()["username"]
         == setupPasswordPayload["username"]
     )
+
+    response = client.get(
+        "/users/logout",
+        headers={"Authorization": "Bearer " + responseLogin.json()["access_token"]},
+    )
+    assert responseAccessProtectedRoute.status_code == status.HTTP_200_OK
