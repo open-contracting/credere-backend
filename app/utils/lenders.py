@@ -52,7 +52,6 @@ def create_credit_product(
     session: Session, payload: dict, lender_id
 ) -> core.CreditProduct:
     lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
-
     if not lender:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"

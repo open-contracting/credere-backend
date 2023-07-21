@@ -17,7 +17,7 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 file = os.path.join(__location__, "file.jpeg")
 
 FI_user = {
-    "email": "FI_user@example.com",
+    "email": "FI_user@noreply.open-contracting.org",
     "name": "Test FI",
     "type": core.UserType.FI.value,
 }
@@ -25,7 +25,7 @@ FI_user = {
 
 FI_user_with_lender = {
     "id": 2,
-    "email": "FI_user_with_lender@example.com",
+    "email": "FI_user_with_lender@noreply.open-contracting.org",
     "name": "Test FI with lender",
     "type": core.UserType.FI.value,
     "lender_id": 1,
@@ -33,15 +33,15 @@ FI_user_with_lender = {
 
 FI_user_with_lender_2 = {
     "id": 3,
-    "email": "FI_user_with_lender_2@example.com",
+    "email": "FI_user_with_lender_2@noreply.open-contracting.org",
     "name": "Test FI with lender 2",
     "type": core.UserType.FI.value,
     "lender_id": 2,
 }
 
 OCP_user = {
-    "email": "OCP_user@example.com",
-    "name": "OCP_user@example.com",
+    "email": "OCP_user@noreply.open-contracting.org",
+    "name": "OCP_user@noreply.open-contracting.org",
     "type": core.UserType.OCP.value,
 }
 
@@ -78,7 +78,7 @@ application_select_credit_option = {
 lender = {
     "id": 1,
     "name": "test",
-    "email_group": "test@lender.com",
+    "email_group": "test@noreply.open-contracting.org",
     "status": "Active",
     "type": "Some Type",
     "sla_days": 7,
@@ -87,7 +87,7 @@ lender = {
 lender_2 = {
     "id": 2,
     "name": "test 2",
-    "email_group": "test@lender2.com",
+    "email_group": "test@noreply.open-contracting.org",
     "status": "Active",
     "type": "Some Type",
     "sla_days": 7,

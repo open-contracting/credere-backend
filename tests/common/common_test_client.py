@@ -3,8 +3,6 @@ import os
 from typing import Any, Generator
 from unittest.mock import MagicMock, patch
 
-from unittest.mock import MagicMock, patch
-
 import boto3
 import pytest
 from botocore.config import Config

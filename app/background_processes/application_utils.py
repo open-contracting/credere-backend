@@ -62,7 +62,6 @@ def create_application(
 
     # if application already exists
     application = get_existing_application(award_borrower_identifier, session)
-
     if application:
         error_data = {
             "legal_identifier": legal_identifier,

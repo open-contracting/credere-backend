@@ -10,18 +10,18 @@ from tests.common.common_test_client import mock_cognito_client  # isort:skip # 
 from tests.common.common_test_client import app, client  # isort:skip # noqa
 
 OCP_user = {
-    "email": "OCP_test@example.com",
+    "email": "OCP_test@noreply.open-contracting.org",
     "name": "OCP Test User",
     "type": UserType.OCP.value,
 }
 FI_user = {
-    "email": "fi_test@example.com",
+    "email": "fi_test@noreply.open-contracting.org",
     "name": "FI Test User",
     "type": UserType.FI.value,
 }
 
 test_user = {
-    "email": "test@example.com",
+    "email": "test@noreply.open-contracting.org",
     "name": "Test User",
     "type": UserType.FI.value,
 }
@@ -80,15 +80,18 @@ def test_update_user(client):  # noqa
 
     # update user 3 since 1 is ocp test user and 2 FI test user
     response = client.put(
-        "/users/3", json={"email": "new_name@test.com"}, headers=OCP_headers
+        "/users/3",
+        json={"email": "new_name@noreply.open-contracting.org"},
+        headers=OCP_headers,
     )
-    assert response.json()["email"] == "new_name@test.com"
+    assert response.json()["email"] == "new_name@noreply.open-contracting.org"
     assert response.status_code == status.HTTP_200_OK
 
     response = client.put(
-        "/users/3", json={"email": "anoter_email@test.com"}, headers=FI_headers
+        "/users/3",
+        json={"email": "anoter_email@noreply.open-contracting.org"},
+        headers=FI_headers,
     )
-
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
