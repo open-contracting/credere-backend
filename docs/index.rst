@@ -12,8 +12,13 @@ This is the documentation for the `Credere` project. It provides detailed inform
   :maxdepth: 2
   :caption: Contents:
 
+  applications
+  awards
+  borrowers
   lenders
-   
+  security
+  statistics
+  users 
 
 Indices and tables
 ==================
