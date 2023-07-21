@@ -89,7 +89,14 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
 
 def fetch_new_awards(email_invitation: str = None):
     """
-    Fetch new awards and process them.
+    Fetch new awards, checks if they exist in our database. If not it checks award's borrower and check if they exist.
+    if either award and borrower doesn't exist or if borrower exist but the award doesn't it will create an application
+    in status pending
+
+    An email invitation will be sent to the proper borrower email obtained from endpoint data (In this case SECOP Colombia)
+    for each application created
+
+    you can also pass an email_invitation as parameter if you want to invite a particular borrower
 
     :param email_invitation: Optional email address to send invitations. Defaults to None.
     :type email_invitation: str or None
@@ -100,7 +107,8 @@ def fetch_new_awards(email_invitation: str = None):
 
 def fetch_previous_awards(borrower: Borrower):
     """
-    Fetch previous awards for a borrower and process them.
+    Fetch previous awards for a borrower that accepted an application. This wont generate an application,
+    it will just insert the awards in our database
 
     :param borrower: The borrower for whom to fetch and process previous awards.
     :type borrower: Borrower

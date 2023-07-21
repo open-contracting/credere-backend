@@ -20,6 +20,12 @@ This is the documentation for the `credere` project. It provides detailed inform
   background_borrower_utils
   colombia_data_access
   lapsed_applications
+  background_message_utils
+  background_SLA_overdue_applications
+  background_remove_data
+  background_send_reminder
+  background_statistics_utils
+  background_update_statistic
    
 
 Indices and tables

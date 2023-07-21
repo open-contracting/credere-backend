@@ -11,6 +11,23 @@ get_dated_applications = application_utils.get_dated_applications
 
 
 def remove_dated_data():
+    """
+    Remove dated data from the database.
+
+    This function retrieves applications with a decline, reject, or accepted status that are
+    past their due date from the database. It removes sensitive data from these applications
+    (e.g., primary_email) and sets the archived_at timestamp to the current UTC time. It also
+    removes associated borrower documents.
+
+    If the award associated with the application is not used in any other active applications,
+    it will also be deleted from the database. Additionally, if the borrower is not associated
+    with any other active applications, their personal information (legal_name, email, address,
+    legal_identifier) will be cleared.
+
+    :return: None
+    :rtype: None
+    """
+
     with contextmanager(get_db)() as session:
         dated_applications = get_dated_applications(session)
         logging.info(
