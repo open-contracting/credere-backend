@@ -69,9 +69,28 @@ def mock_response(status_code: int, content: dict, function_path: str):
 
 
 @contextmanager
+def mock_whole_process_once(
+    status_code: int, award: dict, borrower: dict, email: dict, function_path: str
+):
+    # this will mock the whole process of the fetcher once responding to make_request_with_retry in order
+    mock = MagicMock(
+        side_effect=[
+            MockResponse(status_code, award),
+            MockResponse(status_code, borrower),
+            MockResponse(status_code, email),
+        ]
+    )
+
+    with patch(function_path, mock):
+        yield mock
+
+
+@contextmanager
 def mock_whole_process(
     status_code: int, award: dict, borrower: dict, email: dict, function_path: str
 ):
+    # this will mock the whole process of the fetcher responding to make_request_with_retry in order
+    #
     mock = MagicMock(
         side_effect=[
             MockResponse(status_code, award),

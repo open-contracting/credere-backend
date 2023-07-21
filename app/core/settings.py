@@ -63,10 +63,6 @@ class Settings(BaseSettings):
     progress_to_remind_started_applications: float = config_env.get(
         "PROGRESS_TO_REMIND_STARTED_APPLICATIONS", 0.7
     )
-
-    progress_to_remind_started_applications: float = config_env.get(
-        "PROGRESS_TO_REMIND_STARTED_APPLICATIONS", 0.7
-    )
     environment: str = config_env.get("ENVIRONMENT", "development")
 
     class Config:

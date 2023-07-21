@@ -5,6 +5,7 @@ from app.schema import core
 from tests.common import common_test_client, common_test_functions
 
 from tests.common.common_test_client import start_background_db  # isort:skip # noqa
+from tests.common.common_test_client import mock_templated_email  # isort:skip # noqa
 from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
 from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
 from tests.common.common_test_client import app, client  # isort:skip # noqa
@@ -68,20 +69,14 @@ def test_fetch_empty_contracts(start_background_db, caplog):  # noqa
     assert "No new contracts" in caplog.text
 
 
-def test_fetch_new_awards_borrower_declined(client):  # noqa
+def test_fetch_new_awards_borrower_declined(client, mock_templated_email):  # noqa
     client.post("/borrowers-test", json=borrower_declined)
 
     with common_test_functions.mock_response_second_empty(
         200,
-        contracts,
+        contract,
         "app.background_processes.awards_utils.get_new_contracts",
-    ), common_test_functions.mock_function_response(
-        None,
-        "app.background_processes.awards_utils.get_existing_award",
-    ), common_test_functions.mock_function_response(
-        1,
-        "app.utils.email_utility.send_invitation_email",
-    ), common_test_functions.mock_whole_process(
+    ), common_test_functions.mock_whole_process_once(
         200,
         award,
         borrower,
@@ -94,23 +89,14 @@ def test_fetch_new_awards_borrower_declined(client):  # noqa
         )
 
 
-def test_fetch_new_awards_from_date(start_background_db, caplog):  # noqa
+def test_fetch_new_awards_from_date(start_background_db, mock_templated_email):  # noqa
     with common_test_functions.mock_response_second_empty(
         200,
         contracts,
         "app.background_processes.awards_utils.get_new_contracts",
     ), common_test_functions.mock_function_response(
-        None,
-        "app.background_processes.awards_utils.get_existing_award",
-    ), common_test_functions.mock_function_response(
         "test_hash_12345678",
         "app.background_processes.background_utils.get_secret_hash",
-    ), common_test_functions.mock_function_response(
-        1,
-        "app.utils.email_utility.send_invitation_email",
-    ), common_test_functions.mock_function_response(
-        None,
-        "app.background_processes.application_utils.get_existing_application",
     ), common_test_functions.mock_whole_process(
         200,
         award,

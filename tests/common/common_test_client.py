@@ -73,6 +73,7 @@ def mock_templated_email():
     with patch.object(
         user_dependencies.sesClient, "send_templated_email", MagicMock()
     ) as mock_send_templated_email:
+        mock_send_templated_email.return_value = {"MessageId": "123"}
         yield mock_send_templated_email
 
 
