@@ -1,1 +1,1 @@
-furo
+-r ../requirements.txt
