@@ -547,9 +547,8 @@ async def get_application(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
-    )
+    application = utils.get_application_by_id(id, session)
+    application = utils.get_modified_data_fields(application, session)
 
     if user.is_OCP():
         return application

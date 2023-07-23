@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import asc, desc, text
+from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
@@ -371,6 +371,49 @@ def get_application_by_id(id: int, session: Session) -> core.Application:
         )
 
     return application
+
+
+def get_modified_data_fields(
+    application: core.Application, session: Session
+) -> core.Application:
+    application_actions = (
+        session.query(core.ApplicationAction)
+        .join(core.Application)
+        .filter(
+            core.ApplicationAction.application_id == application.id,
+            or_(
+                core.ApplicationAction.type
+                == core.ApplicationActionType.AWARD_UPDATE.value,
+                core.ApplicationAction.type
+                == core.ApplicationActionType.BORROWER_UPDATE.value,
+            ),
+        )
+        .all()
+    )
+    modified_data_fields = {"AWARD_UPDATE": {}, "BORROWER_UPDATE": {}}
+
+    for action in application_actions:
+        action_data = action.data
+        key_prefix = (
+            "AWARD_UPDATE"
+            if action.type == core.ApplicationActionType.AWARD_UPDATE
+            else "BORROWER_UPDATE"
+        )
+        for key, value in action_data.items():
+            if (
+                key not in modified_data_fields[key_prefix]
+                or action.created_at
+                > modified_data_fields[key_prefix][key]["modified_at"]
+            ):
+                modified_data_fields[key_prefix][key] = {
+                    "modified_at": action.created_at,
+                    "user": action.user.name,
+                    "user_type": action.user.type,
+                }
+    return core.ApplicationWithRelations(
+        **application.dict(),
+        modified_data_fields=modified_data_fields,
+    )
 
 
 def check_is_application_expired(application: core.Application):
