@@ -3,8 +3,6 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
-from sqlalchemy.orm import Session
-
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
 from app.utils import email_utility
