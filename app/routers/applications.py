@@ -860,9 +860,7 @@ async def get_application(
     :raise: HTTPException with status code 401 if the user is not authorized to view the application.
 
     """
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
-    )
+    application = utils.get_application_by_id(id, session)
 
     if user.is_OCP():
         return application
