@@ -40,8 +40,7 @@ async def reject_application(
     user: core.User = Depends(get_user),
 ):
     """
-    Reject an application.
-
+    Reject an application:
     Changes the status from "STARTED" to "REJECTED".
 
     :param id: The ID of the application to reject.
@@ -108,7 +107,7 @@ async def complete_application(
     user: core.User = Depends(get_user),
 ):
     """
-    Complete an application.
+    Complete an application:
     Changes application status from "CONTRACT_UPLOADED" to "COMPLETED".
 
     :param id: The ID of the application to complete.
@@ -163,8 +162,9 @@ async def approve_application(
     user: core.User = Depends(get_user),
 ):
     """
-    Approve an application.
+    Approve an application:
     Changes application status from "STARTED" to "APPROVED".
+
     Sends an email to  SME notifying the current stage of their application.
 
     :param id: The ID of the application to approve.
@@ -882,7 +882,8 @@ async def start_application(
     session: Session = Depends(get_db),
 ):
     """
-    Start an application.
+    Start an application:
+    Changes application status from "SUBMITTED" to "STARTED".
 
     :param id: The ID of the application to start.
     :type id: int
