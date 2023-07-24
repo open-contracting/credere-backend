@@ -187,6 +187,5 @@ class StatisticResponse(BaseModel):
     statistics_kpis: Dict[Any, Any]
 
 
-class StatisticOCPResponse(BaseModel):
+class StatisticOptInResponse(BaseModel):
     opt_in_stat: Dict[Any, Any]
-    fis_choosen_by_msme: List[Any]

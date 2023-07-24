@@ -248,3 +248,18 @@ The command to update statistics is
 ```
 python -m app.commands update-statistics
 ```
+
+## Enpoints that update statistics
+
+1-Post "/applications/access-scheme"
+2-post "/applications/{id}/reject-application",
+3-post "/applications/{id}/complete-application",
+4-post "/applications/{id}/approve-application",
+5-post "/applications/{id}/start"
+6-post "/applications/confirm-credit-product",
+7-post "/applications/submit"
+8-post "/applications/email-sme/"
+9-post "/applications/complete-information-request"
+10-post "/applications/decline"
+11-post "/applications/rollback-decline",
+12-post "/applications/decline-feedback"
