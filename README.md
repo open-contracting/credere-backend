@@ -198,6 +198,11 @@ pytest --cov --cov-report=html:coverage_re
 
 this will creat a folder called coverage_re in your project
 
+## Run sphinx documentation
+```
+sphinx-autobuild -q docs docs/_build/html --watch .
+```
+
 ## Run background jobs
 
 To run the list of commands available use

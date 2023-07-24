@@ -34,6 +34,29 @@ async def get_ocp_statistics_by_lender(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Retrieve OCP statistics by lender.
+
+    This secure endpoint is accessible only to users with the OCP role. It retrieves statistics for the Online
+    Credit Platform (OCP) based on the specified filters:
+    - initial_date (optional): The initial date to filter the statistics.
+    - final_date (optional): The final date to filter the statistics.
+    - lender_id (optional): The lender ID to filter the statistics for a specific lender.
+
+    :param initial_date: The initial date to filter the statistics (optional).
+    :type initial_date: str, optional
+    :param final_date: The final date to filter the statistics (optional).
+    :type final_date: str, optional
+    :param lender_id: The lender ID to filter the statistics for a specific lender (optional).
+    :type lender_id: int, optional
+    :param current_user: The current user with the OCP role (automatically injected).
+    :type current_user: User
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
+
+    :return: Response containing the OCP statistics.
+    :rtype: ApiSchema.StatisticResponse
+    """
     try:
         if initial_date is None and final_date is None and custom_range is None:
             logging.info(
@@ -103,6 +126,20 @@ async def get_ocp_statistics_opt_in(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
+    """
+    Retrieve OCP statistics for MSME opt-in.
+
+    This secure endpoint is accessible only to users with the OCP role. It retrieves
+    statistics related to MSME opt-in and the count of FIs chosen by MSMEs in the Online Credit Platform (OCP).
+
+    :param current_user: The current user with the OCP role (automatically injected).
+    :type current_user: User
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
+
+    :return: Response containing the OCP statistics for MSME opt-in.
+    :rtype: ApiSchema.StatisticOCPResponse
+    """
     try:
         current_date = datetime.now().date()
         logging.info("Queriying opt in stats data from DB")
@@ -138,6 +175,21 @@ async def get_ocp_statistics_opt_in(
 async def get_fi_statistics(
     session: Session = Depends(get_db), user: core.User = Depends(get_user)
 ):
+    """
+    Retrieve statistics for a Financial Institution (FI).
+
+    This endpoint retrieves statistics specific to a Financial Institution (FI).
+    It provides general statistics such as the number of applications, awards, and borrowers
+    associated with the FI.
+
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
+    :param user: The current user (automatically injected).
+    :type user: core.User
+
+    :return: Response containing the statistics for the Financial Institution.
+    :rtype: ApiSchema.StatisticResponse
+    """
     try:
         current_date = datetime.now().date()
         logging.info(
