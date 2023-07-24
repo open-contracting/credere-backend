@@ -94,7 +94,7 @@ lender_with_credit_product = {
 }
 
 
-def test_create_credit_product(client):  # isort:skip # noqa
+def test_create_credit_product(client):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
