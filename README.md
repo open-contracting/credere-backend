@@ -201,6 +201,12 @@ this will creat a folder called coverage_re in your project
 
 To run sphinx server
 
+first install sphinx and autobuild
+
+```
+pip install furo sphinx-autobuild
+```
+
 ```
 sphinx-autobuild -q docs docs/_build/html --watch .
 ```
