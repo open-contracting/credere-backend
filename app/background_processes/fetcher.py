@@ -1,6 +1,8 @@
 import logging
 from contextlib import contextmanager
 
+from sqlalchemy.orm import Session
+
 from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
@@ -12,7 +14,9 @@ from .application_utils import create_application, insert_message
 from .borrower_utils import get_or_create_borrower
 
 
-def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: str):
+def fetch_new_awards_from_date(
+    last_updated_award_date: str, email_invitation: str, db_provider: Session
+):
     """
     Fetch new awards from the given date and process them.
 
@@ -32,7 +36,7 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
     while len(contracts_response.json()) > 0:
         logging.info("Contracts response length: " + str(len(contracts_response_json)))
         for entry in contracts_response_json:
-            with contextmanager(get_db)() as session:
+            with contextmanager(db_provider)() as session:
                 try:
                     award = awards_utils.create_award(entry, session)
                     borrower = get_or_create_borrower(entry, session)
@@ -87,7 +91,7 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
         contracts_response_json = contracts_response.json()
 
 
-def fetch_new_awards(email_invitation: str = None):
+def fetch_new_awards(email_invitation: str = None, db_provider: Session = get_db):
     """
     Fetch new awards, checks if they exist in our database. If not it checks award's borrower and check if they exist.
     if either award and borrower doesn't exist or if borrower exist but the award doesn't it will create an application
@@ -102,10 +106,10 @@ def fetch_new_awards(email_invitation: str = None):
     :type email_invitation: str or None
     """
     last_updated_award_date = awards_utils.get_last_updated_award_date()
-    fetch_new_awards_from_date(last_updated_award_date, email_invitation)
+    fetch_new_awards_from_date(last_updated_award_date, email_invitation, db_provider)
 
 
-def fetch_previous_awards(borrower: Borrower):
+def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):
     """
     Fetch previous awards for a borrower that accepted an application. This wont generate an application,
     it will just insert the awards in our database
@@ -125,7 +129,7 @@ def fetch_previous_awards(borrower: Borrower):
         + str(len(contracts_response_json))
     )
     for entry in contracts_response_json:
-        with contextmanager(get_db)() as session:
+        with contextmanager(db_provider)() as session:
             try:
                 awards_utils.create_award(entry, session, borrower.id, True)
                 session.commit()

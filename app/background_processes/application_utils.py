@@ -246,14 +246,14 @@ def get_lapsed_applications(session):
     return applications_to_set_to_lapsed or []
 
 
-def get_applications_to_remind_intro():
+def get_applications_to_remind_intro(db_provider: Session = get_db):
     """
     Get applications that need a reminder for the introduction.
 
     :return: A list of applications that need an introduction reminder.
     :rtype: list[core.Application]
     """
-    with contextmanager(get_db)() as session:
+    with contextmanager(db_provider)() as session:
         try:
             subquery = select(core.Message.application_id).where(
                 core.Message.type
@@ -284,14 +284,14 @@ def get_applications_to_remind_intro():
     return users or []
 
 
-def get_applications_to_remind_submit():
+def get_applications_to_remind_submit(db_provider: Session = get_db):
     """
     Get applications that need a reminder to submit.
 
     :return: A list of applications that need a submit reminder.
     :rtype: list[core.Application]
     """
-    with contextmanager(get_db)() as session:
+    with contextmanager(db_provider)() as session:
         try:
             subquery = select(core.Message.application_id).where(
                 core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER

@@ -1,6 +1,8 @@
 import logging
 from contextlib import contextmanager
 
+from sqlalchemy.orm import Session
+
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
 from app.utils import email_utility
@@ -12,7 +14,7 @@ get_applications_to_remind_intro = application_utils.get_applications_to_remind_
 get_applications_to_remind_submit = application_utils.get_applications_to_remind_submit
 
 
-def send_reminders():
+def send_reminders(db_privider: Session = get_db):
     """
     Send reminders to borrowers.
 
@@ -37,7 +39,7 @@ def send_reminders():
         logging.info("No new intro reminder to be sent")
     else:
         for application in applications_to_send_intro_reminder:
-            with contextmanager(get_db)() as session:
+            with contextmanager(db_privider)() as session:
                 try:
                     # save to DB
                     new_message = save_message_type(
