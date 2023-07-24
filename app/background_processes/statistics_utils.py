@@ -1,4 +1,4 @@
-# from datetime import datetime
+import logging
 
 from sqlalchemy import Integer, and_, distinct, func, or_, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -72,6 +72,14 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     :rtype: dict
     """
 
+    logging.info(
+        "calculating general statistics for lender "
+        + str(lender_id)
+        + " between dates "
+        + (start_date if start_date else "not provided")
+        + " and "
+        + (end_date if end_date else "not provided")
+    )
     try:
         # received--------
         applications_received_query = get_base_query(
@@ -279,6 +287,7 @@ def get_msme_opt_in_stats(session):
     :rtype: dict
     """
 
+    logging.info("calculating msme opt in stas for lender ")
     try:
         # opt in--------
         opt_in_query = session.query(Application).filter(
@@ -371,12 +380,25 @@ def get_msme_opt_in_stats(session):
             ),
             StatisticData(name="other", value=other_count),
         ]
+        # Bars graph
+        fis_choosen_by_msme_query = (
+            session.query(Lender.name, func.count(Application.id))
+            .join(Lender, Application.lender_id == Lender.id)
+            .filter(Application.borrower_submitted_at.isnot(None))
+            .group_by(Lender.name)
+            .all()
+        )
+        fis_choosen_by_msme = [
+            StatisticData(name=row[0], value=row[1])
+            for row in fis_choosen_by_msme_query
+        ]
 
         opt_in_statistics = {
             "opt_in_query_count": opt_in_query_count,
             "opt_in_percentage": opt_in_percentage,
             "sector_statistics": sectors_count,
             "rejected_reasons_count_by_reason": rejected_reasons_count_by_reason,
+            "fis_choosen_by_msme": fis_choosen_by_msme,
         }
 
     except SQLAlchemyError as e:
