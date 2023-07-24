@@ -52,6 +52,7 @@ class CognitoClient:
 
     def admin_create_user(self, username, name):
         temp_password = self.generate_password()
+
         responseCreateUser = self.client.admin_create_user(
             UserPoolId=app_settings.cognito_pool_id,
             Username=username,
@@ -59,6 +60,7 @@ class CognitoClient:
             MessageAction="SUPPRESS",
             UserAttributes=[{"Name": "email", "Value": username}],
         )
+
         email_utility.send_mail_to_new_user(self.ses, name, username, temp_password)
 
         return responseCreateUser

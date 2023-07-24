@@ -2,6 +2,8 @@ import logging
 from contextlib import contextmanager
 from datetime import datetime
 
+from sqlalchemy.orm import Session
+
 from app.db.session import get_db
 from app.schema.core import Application
 
@@ -10,8 +12,8 @@ from . import application_utils
 get_dated_applications = application_utils.get_dated_applications
 
 
-def remove_dated_data():
-    with contextmanager(get_db)() as session:
+def remove_dated_data(db_provider: Session = get_db):
+    with contextmanager(db_provider)() as session:
         dated_applications = get_dated_applications(session)
         logging.info(
             "Quantity of decline, rejecte and accepted to remove data "

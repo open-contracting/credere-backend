@@ -1,10 +1,12 @@
 import logging
 from contextlib import contextmanager
 
+from sqlalchemy.orm import Session
+
 from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
-from app.schema.core import Borrower, BorrowerStatus
+from app.schema.core import Borrower
 from app.utils import email_utility
 
 from . import awards_utils
@@ -12,7 +14,9 @@ from .application_utils import create_application, insert_message
 from .borrower_utils import get_or_create_borrower
 
 
-def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: str):
+def fetch_new_awards_from_date(
+    last_updated_award_date: str, email_invitation: str, db_provider
+):
     index = 0
     contracts_response = awards_utils.get_new_contracts(index, last_updated_award_date)
     contracts_response_json = contracts_response.json()
@@ -24,17 +28,11 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
     while len(contracts_response.json()) > 0:
         logging.info("Contracts response length: " + str(len(contracts_response_json)))
         for entry in contracts_response_json:
-            with contextmanager(get_db)() as session:
+            with contextmanager(db_provider)() as session:
                 try:
                     award = awards_utils.create_award(entry, session)
                     borrower = get_or_create_borrower(entry, session)
                     award.borrower_id = borrower.id
-
-                    if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
-                        logging.info(
-                            "Borrower chose to not receive new oportunities. Skipping app creation."
-                        )
-                        continue
 
                     application = create_application(
                         award.id,
@@ -79,15 +77,14 @@ def fetch_new_awards_from_date(last_updated_award_date: str, email_invitation: s
         contracts_response_json = contracts_response.json()
 
 
-def fetch_new_awards(email_invitation: str = None):
+def fetch_new_awards(email_invitation: str = None, db_provider: Session = get_db):
     last_updated_award_date = awards_utils.get_last_updated_award_date()
-    fetch_new_awards_from_date(last_updated_award_date, email_invitation)
+    fetch_new_awards_from_date(last_updated_award_date, email_invitation, db_provider)
 
 
-def fetch_previous_awards(borrower: Borrower):
+def fetch_previous_awards(borrower: Borrower, session: Session = get_db):
     contracts_response = awards_utils.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
-
     if not contracts_response_json:
         logging.info(f"No previous contracts for {borrower.legal_identifier}")
         return

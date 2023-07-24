@@ -176,8 +176,8 @@ def get_lapsed_applications(session):
     return applications_to_set_to_lapsed or []
 
 
-def get_applications_to_remind_intro():
-    with contextmanager(get_db)() as session:
+def get_applications_to_remind_intro(db_provider: Session = get_db):
+    with contextmanager(db_provider)() as session:
         try:
             subquery = select(core.Message.application_id).where(
                 core.Message.type
@@ -185,6 +185,8 @@ def get_applications_to_remind_intro():
             )
             users = (
                 session.query(core.Application)
+                .join(core.Borrower, core.Application.borrower_id == core.Borrower.id)
+                .join(core.Award, core.Application.award_id == core.Award.id)
                 .options(
                     joinedload(core.Application.borrower),
                     joinedload(core.Application.award),
@@ -208,8 +210,8 @@ def get_applications_to_remind_intro():
     return users or []
 
 
-def get_applications_to_remind_submit():
-    with contextmanager(get_db)() as session:
+def get_applications_to_remind_submit(db_provider: Session = get_db):
+    with contextmanager(db_provider)() as session:
         try:
             subquery = select(core.Message.application_id).where(
                 core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
