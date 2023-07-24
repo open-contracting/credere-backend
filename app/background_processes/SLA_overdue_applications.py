@@ -36,4 +36,3 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s - %(message)s",
         handlers=[logging.StreamHandler()],  # Output logs to the console
     )
-    SLA_overdue_applications()

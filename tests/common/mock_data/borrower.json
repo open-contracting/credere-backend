@@ -1,0 +1,27 @@
+[
+  {
+    "nombre_entidad": "Test Entity",
+    "nit": "123456789121",
+    "nit_entidad": "test123456789",
+    "tel_fono_entidad": "1234567890",
+    "correo_entidad": "test@example.com",
+    "direccion": "Test Address",
+    "estado_entidad": "Test State",
+    "ciudad": "Test City",
+    "website": "https://example.com",
+    "tipo_organizacion": "Test Organization Type",
+    "tipo_de_documento": "Test Document Type",
+    "numero_de_cuenta": "Test Account Number",
+    "banco": "Test Bank",
+    "tipo_cuenta": "Test Account Type",
+    "tipo_documento_representante_legal": "Test Representative Document Type",
+    "num_documento_representante_legal": "987654321",
+    "nombre_representante_legal": "Test Legal Representative",
+    "nacionalidad_representante_legal": "COLOMBIANO",
+    "direcci_n_representante_legal": "Test Representative Address",
+    "genero_representante_legal": "No Definido",
+    "es_pyme": "SI",
+    "regimen_tributario": "Test Tax Regime",
+    "pais": "CO"
+  }
+]

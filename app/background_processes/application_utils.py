@@ -261,6 +261,8 @@ def get_applications_to_remind_intro(db_provider: Session = get_db):
             )
             users = (
                 session.query(core.Application)
+                .join(core.Borrower, core.Application.borrower_id == core.Borrower.id)
+                .join(core.Award, core.Application.award_id == core.Award.id)
                 .options(
                     joinedload(core.Application.borrower),
                     joinedload(core.Application.award),
