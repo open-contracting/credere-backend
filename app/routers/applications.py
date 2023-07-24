@@ -1318,6 +1318,26 @@ async def update_apps_send_notifications(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
+    """
+    Changes application status from "'ACCEPTED" to "SUBMITTED".
+    Sends a notification to OCP and FI user.
+
+    This operation also ensures that the credit product and lender are selected before updating the status.
+
+    :param payload: The application data to update.
+    :type payload: ApiSchema.ApplicationBase
+
+    :param session: The database session.
+    :type session: Session
+
+    :param client: The Cognito client.
+    :type client: CognitoClient
+
+    :return: The updated application with borrower, award and lender details.
+    :rtype: ApiSchema.ApplicationResponse
+
+    :raises HTTPException: If credit product or lender is not selected, or if there's an error in submitting the application. # noqa: E501
+    """
     with transaction_session(session):
         try:
             application = utils.get_application_by_uuid(payload.uuid, session)
@@ -1373,23 +1393,31 @@ async def email_sme(
     user: core.User = Depends(get_user),
 ):
     """
-    Submit an application.
+    Send an email to SME and update the application status:
+    Changes the application status from "STARTED" to "INFORMATION_REQUESTED".
+    sends an email to SME notifying the request.
 
-    :param payload: The application data.
-    :type payload: ApiSchema.ApplicationBase
+    :param id: The ID of the application.
+    :type id: int
+
+    :param payload: The payload containing the message to send to SME.
+    :type payload: ApiSchema.ApplicationEmailSme
 
     :param session: The database session.
     :type session: Session
 
-    :param client: The Cognito client for sending notifications.
+    :param client: The Cognito client.
     :type client: CognitoClient
 
-    :return: The application response containing the updated application, borrower, award, and lender.
-    :rtype: ApiSchema.ApplicationResponse
+    :param user: The current user.
+    :type user: core.User
 
-    :raise: HTTPException with status code 400 if the credit product or lender is not selected, or if there is an error in submitting the application. # noqa: E501
+    :return: The updated application with its associated relations.
+    :rtype: core.ApplicationWithRelations
 
+    :raises HTTPException: If there's an error in sending the email to SME.
     """
+
     with transaction_session(session):
         try:
             application = utils.get_application_by_id(id, session)
@@ -1445,23 +1473,25 @@ async def complete_information_request(
     session: Session = Depends(get_db),
 ):
     """
-    Complete the information request for an application.
+    Complete the information request for an application:
+    Changes the application from "INFORMATION REQUESTED" status back to "STARTED" and updates the pending documents status. # noqa: E501
 
-    :param payload: The application data.
+    This operation also sends a notification about the uploaded documents to the FI.
+
+    :param payload: The application data to update.
     :type payload: ApiSchema.ApplicationBase
 
-    :param client: The Cognito client for sending notifications.
+    :param client: The Cognito client.
     :type client: CognitoClient
 
     :param session: The database session.
     :type session: Session
 
-    :return: The application response containing the updated application, borrower, award, lender, and documents.
+    :return: The updated application with borrower, award, lender, and documents details.
     :rtype: ApiSchema.ApplicationResponse
 
-    :raise: HTTPException with status code 400 if the application is not in the INFORMATION_REQUESTED status.
-
     """
+
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_application_status(
@@ -1510,6 +1540,7 @@ async def decline(
 ):
     """
     Decline an application.
+    Changes application status from "PENDING" to "DECLINED".
 
     :param payload: The application decline payload.
     :type payload: ApiSchema.ApplicationDeclinePayload
