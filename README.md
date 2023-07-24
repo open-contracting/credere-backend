@@ -197,9 +197,15 @@ pytest --cov --cov-report=html:coverage_re
 
 this will creat a folder called coverage_re in your project
 
-## Background jobs Commands
+## Documentation
 
-### Run background jobs
+To run sphinx server
+
+```
+sphinx-autobuild -q docs docs/_build/html --watch .
+```
+
+## Background jobs Commands
 
 To run the list of commands available use
 
@@ -207,23 +213,36 @@ To run the list of commands available use
 python -m app.commands --help
 ```
 
-### Command to fetch new awards is
+The background processes are set to run as cron jobs in the server.
+You can configure this using
+
+```
+crontab -e
+```
+
+### Ccommand to fetch new awards is
 
 ```
 python -m app.commands fetch-awards
 ```
 
+or
+
 ```
 python -m app.commands fetch-awards --email-invitation test@example.com
 ```
 
-this commands gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on env variables _ENVIRONMENT_ and _TEST_MAIL_RECEIVER_ values).
+These commands gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on env variables _ENVIRONMENT_ and _TEST_MAIL_RECEIVER_ values).
 
 Alternative could receive a custom email destination with **--email-invitation** argument
 
 #### Scheduled Execution (Cron)
 
-This process should be run once a day.
+This process should be run once a day. In the cron editor, and considere the deployment using th docker-compose of the project, you can use
+
+```
+0 4 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands fetch-awards >> /dev/null 2>&1
+```
 
 ### Command to remove user data from dated applications
 
@@ -237,6 +256,10 @@ Queries the applications in 'declined', 'rejected', 'completed', and 'lapsed' st
 
 This process should be run once a day.
 
+```
+0 5 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands remove-dated-application-data >> /dev/null 2>&1
+```
+
 ### Command to set application status to lapsed
 
 ```
@@ -249,6 +272,10 @@ Queries the applications in 'PENDING', 'ACCEPTED', and 'INFORMATION*REQUESTED' s
 #### Scheduled Execution (Cron)
 
 This process should be run once a day to keep the application's status updated.
+
+```
+0 6 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands update-applications-to-lapsed >> /dev/null 2>&1
+```
 
 ### Command to send mail reminders is
 
@@ -268,6 +295,10 @@ python -m app.commands send-reminders
 
 This process should be run once a day.
 
+```
+0 7 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands send-reminders >> /dev/null 2>&1
+```
+
 ### Command to send overdue appliations emails to FI users is
 
 ```
@@ -280,18 +311,40 @@ This command identifies applications that are in 'INFORMATION_REQUESTED' or 'STA
 
 This process should be run once a day to ensure that all necessary parties are notified of overdue applications in a timely manner.
 
+```
+0 8 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands sla-overdue-applications >> /dev/null 2>&1
+```
+
 ### Command to update statistics is
 
 ```
 python -m app.commands update-statistics
 ```
 
-"Performs the calculation needed to populate the statistic table with data from other tables, mainly, the Applications table."
+Performs the calculation needed to populate the statistic table with data from other tables, mainly, the Applications table.
 
 #### Scheduled Execution (Cron)
 
 This process should be run once a day to keep the statistics table updated.
 
-#### Programmatic Execution
+```
+0 6 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands update-statistics >> /dev/null 2>&1
+```
+
+#### Statistics updates
 
 This process is automatically run every time a user or MSME action adds new data that affects the statistics.
+The enpoints that update statistics are:
+
+- post "/applications/access-scheme"
+- post "/applications/{id}/reject-application",
+- post "/applications/{id}/complete-application",
+- post "/applications/{id}/approve-application",
+- post "/applications/{id}/start"
+- post "/applications/confirm-credit-product",
+- post "/applications/submit"
+- post "/applications/email-sme/"
+- post "/applications/complete-information-request"
+- post "/applications/decline"
+- post "/applications/rollback-decline",
+- post "/applications/decline-feedback"
