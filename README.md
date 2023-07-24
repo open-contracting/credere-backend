@@ -79,7 +79,6 @@ you can use .envtest as an example, it has the following keys:
 - PROGRESS_TO_REMIND_STARTED_APPLICATIONS -> % of days of lender SLA before an overdue reminder, for example a lender with a SLA of 10 days will receive the first overdue at 7 days mark
 - ENVIRONMENT -> needs to be set as "production" in order to send emails to real borrower address. If not, emails will be sent to TEST_MAIL_RECEIVER
 
-
 You should configure the pre-commit for the repo one time
 
 ```
@@ -198,7 +197,15 @@ pytest --cov --cov-report=html:coverage_re
 
 this will creat a folder called coverage_re in your project
 
-## Run background jobs
+## Documentation
+
+To run sphinx server
+
+```
+sphinx-autobuild -q docs docs/_build/html --watch .
+```
+
+## Background jobs Commands
 
 To run the list of commands available use
 
@@ -206,45 +213,138 @@ To run the list of commands available use
 python -m app.commands --help
 ```
 
-The command to fetch new awards is
+The background processes are set to run as cron jobs in the server.
+You can configure this using
+
+```
+crontab -e
+```
+
+### Ccommand to fetch new awards is
 
 ```
 python -m app.commands fetch-awards
 ```
 
-It will send invitations to the email configure in the env variable _TEST_MAIL_RECEIVER_. Alternative could receive a custom email destination with **--email-invitation** argument
+or
 
 ```
 python -m app.commands fetch-awards --email-invitation test@example.com
 ```
 
-Command to remove data from dated completed, declined, rejected and lapsed applications
+These commands gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on env variables _ENVIRONMENT_ and _TEST_MAIL_RECEIVER_ values).
+
+Alternative could receive a custom email destination with **--email-invitation** argument
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day. In the cron editor, and considere the deployment using th docker-compose of the project, you can use
+
+```
+0 4 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands fetch-awards >> /dev/null 2>&1
+```
+
+### Command to remove user data from dated applications
 
 ```
 python -m app.commands remove-dated-application-data
 ```
 
-Command to remove data from lapsed applications
+Queries the applications in 'declined', 'rejected', 'completed', and 'lapsed' status that have remained in these states longer than the time defined in the environment variable _DAYS_TO_ERASE_BORROWERS_DATA_. If no other application is using the data, it deletes all the personal data of the borrower (name, email, address, legal identifier)."
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day.
+
+```
+0 5 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands remove-dated-application-data >> /dev/null 2>&1
+```
+
+### Command to set application status to lapsed
 
 ```
 python -m app.commands update-applications-to-lapsed
 
 ```
 
-The command to send mail reminders is
+Queries the applications in 'PENDING', 'ACCEPTED', and 'INFORMATION*REQUESTED' status that have remained in these states longer than the time defined in the environment variable \_DAYS_TO_CHANGE_TO_LAPSED*, and changes their status to 'LAPSED'.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to keep the application's status updated.
+
+```
+0 6 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands update-applications-to-lapsed >> /dev/null 2>&1
+```
+
+### Command to send mail reminders is
 
 ```
 python -m app.commands send-reminders
 ```
 
-The command to send overdue appliations emails to FI users is
+- Queries the applications in 'PENDING' status that fall within the range leading up to the expiration date. This range is defined by the environment variable _REMINDER_DAYS_BEFORE_EXPIRATION_.
+
+- The intro reminder email is sent to the applications that fulfill the previous condition.
+
+- Queries the applications in 'ACCEPTED' status that fall within the range leading up to the expiration date. This range is defined by the environment variable _REMINDER_DAYS_BEFORE_EXPIRATION_.
+
+- The submit reminder email is sent to the applications that fulfill the previous condition.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day.
+
+```
+0 7 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands send-reminders >> /dev/null 2>&1
+```
+
+### Command to send overdue appliations emails to FI users is
 
 ```
 python -m app.commands sla-overdue-applications
 ```
 
-The command to update statistics is
+This command identifies applications that are in 'INFORMATION_REQUESTED' or 'STARTED' status and overdue based on the lender's service level agreement (SLA). For each overdue application, an email is sent to OCP and to the respective lender. The command also updates the **overdued_at** attribute for applications that exceed the lender's SLA days.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to ensure that all necessary parties are notified of overdue applications in a timely manner.
+
+```
+0 8 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands sla-overdue-applications >> /dev/null 2>&1
+```
+
+### Command to update statistics is
 
 ```
 python -m app.commands update-statistics
 ```
+
+Performs the calculation needed to populate the statistic table with data from other tables, mainly, the Applications table.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to keep the statistics table updated.
+
+```
+0 6 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands update-statistics >> /dev/null 2>&1
+```
+
+#### Statistics updates
+
+This process is automatically run every time a user or MSME action adds new data that affects the statistics.
+The enpoints that update statistics are:
+
+- post "/applications/access-scheme"
+- post "/applications/{id}/reject-application",
+- post "/applications/{id}/complete-application",
+- post "/applications/{id}/approve-application",
+- post "/applications/{id}/start"
+- post "/applications/confirm-credit-product",
+- post "/applications/submit"
+- post "/applications/email-sme/"
+- post "/applications/complete-information-request"
+- post "/applications/decline"
+- post "/applications/rollback-decline",
+- post "/applications/decline-feedback"
