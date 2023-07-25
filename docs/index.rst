@@ -11,14 +11,11 @@ This is the documentation for the `Credere` project. It provides detailed inform
 .. toctree::
   :maxdepth: 2
   :caption: Contents:
-
-  applications
-  awards
-  borrowers
-  lenders
-  security
-  statistics
-  users 
+  
+  general
+  routers/routers
+  utils/utils
+  
 
 Indices and tables
 ==================

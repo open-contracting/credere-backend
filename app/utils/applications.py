@@ -40,10 +40,21 @@ document_type_keys = [doc_type.name for doc_type in core.BorrowerDocumentType]
 
 
 def update_data_field(application: core.Application, payload: UpdateDataField):
+    """
+    Update a specific field in the application's `secop_data_verification` attribute.
+
+    :param application: The application to update.
+    :type application: core.Application
+
+    :param payload: The data to be updated.
+    :type payload: UpdateDataField
+
+    :raise: KeyError if the key specified in payload does not exist in the application's secop_data_verification dictionary. # noqa
+
+    """
     payload_dict = {
         key: value for key, value in payload.dict().items() if value is not None
     }
-
     key, value = next(iter(payload_dict.items()), (None, None))
     verified_data = application.secop_data_verification.copy()
     verified_data[key] = value
@@ -51,11 +62,34 @@ def update_data_field(application: core.Application, payload: UpdateDataField):
 
 
 def allowed_file(filename):
+    """
+    Checks if a file has an allowed extension.
+
+    :param filename: The name of the file to check.
+    :type filename: str
+
+    :return: True if the file has an allowed extension, False otherwise.
+    :rtype: bool
+    """
     allowed_extensions = {"png", "pdf", "jpeg", "jpg"}
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
 def validate_fields(application):
+    """
+    Validates the fields in an application's `secop_data_verification` attribute.
+
+    This function checks if all keys present in an instance of UpdateDataField exist and have truthy values in
+    the application's `secop_data_verification`. If any such keys are not present or have falsy values,
+    it logs an error and raises an HTTPException.
+
+    :param application: The application to validate.
+    :type application: core.Application
+
+    :raise HTTPException: Raises an exception with status code 409 and a BORROWER_FIELD_VERIFICATION_MISSING error
+    detail if any field is not validated.
+
+    """
     not_validated_fields = []
     app_secop_dict = application.secop_data_verification.copy()
 
@@ -73,6 +107,18 @@ def validate_fields(application):
 
 
 def validate_documents(application):
+    """
+    Validates the documents attached to an application.
+
+    This function iterates over the borrower_documents in an application. If any document is not verified,
+    it logs an error and raises an HTTPException.
+
+    :param application: The application whose documents are to be validated.
+    :type application: core.Application
+
+    :raise HTTPException: Raises an exception with status code 409 and a DOCUMENT_VERIFICATION_MISSING error detail
+    if any document is not validated.
+    """
     not_validated_documents = []
 
     for document in application.borrower_documents:
@@ -91,6 +137,28 @@ def validate_documents(application):
 
 
 def get_file(document: core.BorrowerDocument, user: core.User, session: Session):
+    """
+    Fetches a file corresponding to a document of an application.
+
+    This function raises an HTTPException if the document is not found. If the user is an OCP, it creates an
+    application action of type OCP_DOWNLOAD_DOCUMENT. If the user is an FI, it checks the user's permissions
+    and then creates an application action of type FI_DOWNLOAD_DOCUMENT.
+
+    :param document: The document associated with the file to be fetched.
+    :type document: core.BorrowerDocument
+
+    :param user: The user trying to fetch the file.
+    :type user: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :raise HTTPException: Raises an exception with status code 404 and a "Document not found" error detail
+    if the document does not exist.
+
+    :raise HTTPException: Raises an exception with status code 403 if the FI user does not have sufficient permissions
+    to fetch the file (this is implied by the call to check_FI_user_permission).
+    """
     if document is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
