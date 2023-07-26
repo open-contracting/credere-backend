@@ -3,20 +3,20 @@ from sqlalchemy import Enum
 from app.schema import core
 
 FI_user = {
-    "email": "FI_user@example.com",
+    "email": "FI_user@noreply.open-contracting.org",
     "name": "Test FI",
     "type": core.UserType.FI.value,
 }
 
 FI_user_with_lender = {
-    "email": "FI_user_with_lender@example.com",
+    "email": "FI_user_with_lender@noreply.open-contracting.org",
     "name": "Test FI with lender",
     "type": core.UserType.FI.value,
     "lender_id": 1,
 }
 
 OCP_user = {
-    "email": "OCP_user@example.com",
+    "email": "OCP_user@noreply.open-contracting.org",
     "name": "OCP_user@example.com",
     "type": core.UserType.OCP.value,
 }

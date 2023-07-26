@@ -18,7 +18,7 @@ from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
-valid_email = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.(com|co)$"
+valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
 excluded_applications = [
     core.ApplicationStatus.PENDING,
@@ -374,7 +374,7 @@ def update_application_borrower(
             detail="This application is not owned by this lender",
         )
 
-    update_models(payload, application.borrower)
+    update_models_with_validation(payload, application.borrower)
 
     session.add(application)
     session.flush()
@@ -438,7 +438,7 @@ def update_application_award(
             detail="This application is not owned by this lender",
         )
 
-    update_models_with_validation(payload, application.award)
+    update_models(payload, application.award)
 
     session.add(application)
     session.flush()
@@ -852,7 +852,6 @@ def update_application_primary_email(application: core.Application, email: str) 
         )
     confirmation_email_token = generate_uuid(email)
     application.confirmation_email_token = f"{email}---{confirmation_email_token}"
-
     application.pending_email_confirmation = True
 
     return confirmation_email_token
@@ -987,7 +986,7 @@ def check_FI_user_permission_or_OCP(
     :raises HTTPException: If the lender_id of the application and user do not match.
     """
 
-    if not user.is_OCP and application.lender_id != user.lender_id:
+    if not user.is_OCP() and application.lender_id != user.lender_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is not authorized",
@@ -1052,6 +1051,7 @@ def get_previous_awards(
             core.Award.previous == true(),
             core.Award.borrower_id == application.borrower_id,
         )
+        .order_by(core.Award.contractperiod_startdate.desc())
         .all()
     )
 

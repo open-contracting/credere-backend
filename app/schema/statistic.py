@@ -10,8 +10,13 @@ from sqlmodel import Field, SQLModel
 
 
 class StatisticType(Enum):
-    MSME_OPT_IN_STATISTICS = "MSME opt-in statistics"
-    APPLICATION_KPIS = "Application KPIs"
+    MSME_OPT_IN_STATISTICS = "MSME_OPT_IN_STATISTICS"
+    APPLICATION_KPIS = "APPLICATION_KPIS"
+
+
+class StatisticCustomRange(Enum):
+    LAST_WEEK = "LAST_WEEK"
+    LAST_MONTH = "LAST_MONTH"
 
 
 class Statistic(SQLModel, table=True):
@@ -20,6 +25,7 @@ class Statistic(SQLModel, table=True):
         sa_column=Column(SAEnum(StatisticType, name="statistic_type"))
     )
     data: dict = Field(default={}, sa_column=Column(JSON))
-    updated_at: Optional[datetime] = Field(
+    created_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
     )
+    lender_id: Optional[int] = Field(foreign_key="award.id", nullable=True)

@@ -93,6 +93,7 @@ class CognitoClient:
             boto3.exceptions: Any exceptions that occur when making the Cognito 'admin_create_user' request or sending the email. # noqa
         """
         temp_password = self.generate_password()
+
         responseCreateUser = self.client.admin_create_user(
             UserPoolId=app_settings.cognito_pool_id,
             Username=username,
@@ -100,6 +101,7 @@ class CognitoClient:
             MessageAction="SUPPRESS",
             UserAttributes=[{"Name": "email", "Value": username}],
         )
+
         email_utility.send_mail_to_new_user(self.ses, name, username, temp_password)
 
         return responseCreateUser

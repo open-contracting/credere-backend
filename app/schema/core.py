@@ -605,3 +605,6 @@ class CreditProductWithLender(CreditProductBase):
 class StatisticData(BaseModel):
     name: str
     value: int
+
+    def to_dict(self):
+        return {"name": self.name, "value": self.value}
