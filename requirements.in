@@ -13,3 +13,5 @@ httpx
 requests
 typer[all]
 python-multipart
+furo
+sphinx_autodoc_typehints
