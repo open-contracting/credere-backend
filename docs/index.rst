@@ -9,12 +9,14 @@ Welcome to Credere's documentation!
 This is the documentation for the `Credere` project. It provides detailed information about the code, modules, classes, and functions used in the application.
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 5
   :caption: Contents:
   
   general
   routers/routers
   utils/utils
+  db/db
+  core/core
   
 
 Indices and tables

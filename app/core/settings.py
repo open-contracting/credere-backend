@@ -7,6 +7,20 @@ VERSION: str = "0.1.1"
 
 
 def merge_dicts_with_condition(main_dict, override_dict):
+    """
+    Merges two dictionaries with the condition that empty strings ('') from the override_dict are not included in the
+    merged dictionary. If a key in the main_dict has a corresponding non-empty string value in override_dict,
+    the value from override_dict will replace the value from main_dict in the resulting merged dictionary.
+
+    :param main_dict: The main dictionary, which serves as the base dictionary for the merge operation.
+    :type main_dict: dict
+    :param override_dict: The dictionary that is used to update the main_dict.
+                          If a key-value pair in override_dict has a non-empty string value,
+                          it will replace the corresponding key-value pair in main_dict.
+    :type override_dict: dict
+    :return: The merged dictionary.
+    :rtype: dict
+    """
     temp_dict = {**override_dict}
     filtered_dict = {key: value for key, value in temp_dict.items() if value != ""}
     merged_dict = {**main_dict, **filtered_dict}

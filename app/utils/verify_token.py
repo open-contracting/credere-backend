@@ -29,6 +29,15 @@ class JWTAuthorizationCredentials(BaseModel):
 
 
 class verifyTokeClass(HTTPBearer):
+    """
+    An extension of HTTPBearer authentication to verify JWT (JSON Web Tokens) with public keys.
+    This class loads and keeps track of public keys from an external source and verifies incoming tokens.
+
+    :param auto_error: If set to True, automatic error responses will be sent when request authentication fails.
+                       Default is True.
+    :type auto_error: bool
+    """
+
     def __init__(self, auto_error: bool = True):
         super().__init__(auto_error=auto_error)
         self.kid_to_jwk = None
@@ -39,6 +48,14 @@ class verifyTokeClass(HTTPBearer):
             self.kid_to_jwk = {jwk["kid"]: jwk for jwk in jwks.keys}
 
     def verify_jwk_token(self, jwt_credentials: JWTAuthorizationCredentials) -> bool:
+        """
+        Verifies the provided JWT credentials with the loaded public keys.
+
+        :param jwt_credentials: JWT credentials extracted from the request.
+        :type jwt_credentials: JWTAuthorizationCredentials
+        :return: Returns True if the token is verified, False otherwise.
+        :rtype: bool
+        """
         self.load_keys()
         try:
             public_key = self.kid_to_jwk[jwt_credentials.header["kid"]]
@@ -53,6 +70,14 @@ class verifyTokeClass(HTTPBearer):
         return key.verify(jwt_credentials.message.encode(), decoded_signature)
 
     async def __call__(self, request: Request) -> Optional[JWTAuthorizationCredentials]:
+        """
+        Authenticate and verify the provided JWT token in the request.
+
+        :param request: Incoming request instance.
+        :type request: Request
+        :return: JWT credentials if the token is verified.
+        :rtype: Optional[JWTAuthorizationCredentials]
+        """
         self.load_keys()
         credentials: HTTPAuthorizationCredentials = await super().__call__(request)
 
@@ -97,6 +122,15 @@ JsonPublicKeys = None
 
 
 def get_public_keys():
+    """
+    Retrieves the public keys from the well-known JWKS (JSON Web Key Set) endpoint of AWS Cognito.
+
+    The function caches the fetched keys in a global variable `JsonPublicKeys` to avoid repetitive calls
+    to the endpoint.
+
+    :return: The parsed JWKS, an object which holds a list of keys.
+    :rtype: JWKS
+    """
     global JsonPublicKeys
     if JsonPublicKeys is None:
         JsonPublicKeys = JWKS.parse_obj(
@@ -115,6 +149,15 @@ async def get_auth_credentials(request: Request):
 async def get_current_user(
     credentials: JWTAuthorizationCredentials = Depends(get_auth_credentials),
 ) -> str:
+    """
+    Extracts the username of the current user from the provided JWT credentials.
+
+    :param credentials: JWT credentials provided by the user. Defaults to Depends(get_auth_credentials).
+    :type credentials: JWTAuthorizationCredentials
+    :raises HTTPException: If the username key is missing in the JWT claims.
+    :return: The username of the current user.
+    :rtype: str
+    """
     try:
         return credentials.claims["username"]
     except KeyError:
@@ -127,6 +170,17 @@ async def get_user(
     credentials: JWTAuthorizationCredentials = Depends(get_auth_credentials),
     session: Session = Depends(get_db),
 ) -> str:
+    """
+    Retrieves the user from the database using the username extracted from the provided JWT credentials.
+
+    :param credentials: JWT credentials provided by the user. Defaults to Depends(get_auth_credentials).
+    :type credentials: JWTAuthorizationCredentials
+    :param session: Database session to execute the query. Defaults to Depends(get_db).
+    :type session: Session
+    :raises HTTPException: If the user does not exist in the database.
+    :return: The user object retrieved from the database.
+    :rtype: User
+    """
     try:
         user = (
             session.query(User)
