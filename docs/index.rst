@@ -17,6 +17,7 @@ This is the documentation for the `Credere` project. It provides detailed inform
   utils/utils
   db/db
   core/core
+  background_processes/background_processes
   
 
 Indices and tables
