@@ -59,7 +59,7 @@ def send_application_approved_email(ses, application: Application):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates[f"APPLICATION_APPROVED_{app_settings.email_template_lang}"],
+        Template=f"{templates['APPLICATION_APPROVED']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
 
