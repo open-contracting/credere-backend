@@ -1,6 +1,6 @@
 # email template names
 templates = {
-    "NEW_USER_TEMPLATE_NAME_EN": "credere-NewAccountCreated",
+    "NEW_USER_TEMPLATE_NAME": "credere-NewAccountCreated",
     "RESET_PASSWORD_TEMPLATE_NAME": "credere-ResetPassword",
     "ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME": "credere-AccessToCreditSchemeForMSMEs",
     "INTRO_REMINDER_TEMPLATE_NAME": "credere-AccessToCreditSchemeReminder",
@@ -17,7 +17,6 @@ templates = {
     "OVERDUE_APPLICATION_FI": "credere-OverdueApplicationFI",
     "OVERDUE_APPLICATION_OCP_ADMIN": "credere-OverdueApplicationOCPadmin",
     "NEW_CONTRACT_SUBMISSION": "credere-NewContractSubmission",
-    "APPLICATION_UPDATE_EN": "credere-ApplicationUpdate",
+    "APPLICATION_UPDATE": "credere-ApplicationUpdate",
     "ALTERNATIVE_CREDIT_OPTION": "credere-AlternativeCreditOption",
-    "NEW_USER_TEMPLATE_NAME_ES": "credere-NewAccountCreated-es",
 }
