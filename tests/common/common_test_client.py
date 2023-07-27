@@ -115,7 +115,7 @@ def create_templates(ses):
     for key, value in templates.items():
         ses.create_template(
             Template={
-                "TemplateName": templates[key],
+                "TemplateName": templates[key] + app_settings.email_template_lang,
                 "SubjectPart": "Your email subject",
                 "HtmlPart": "<html><body>Your HTML content</body></html>",
                 "TextPart": "Your plain text content",
