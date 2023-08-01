@@ -30,3 +30,4 @@ npm-debug.log
 .vscode/launch.json
 .coverage
 coverage_re
+.DS_Store

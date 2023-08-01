@@ -737,6 +737,7 @@ async def update_application_award(
             payload,
         )
 
+        application = utils.get_modified_data_fields(application, session)
         return application
 
 
@@ -783,6 +784,7 @@ async def update_application_borrower(
             payload,
         )
 
+        application = utils.get_modified_data_fields(application, session)
         return application
 
 
