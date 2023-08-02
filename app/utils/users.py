@@ -16,6 +16,23 @@ from .general_utils import update_models
 def create_user(
     payload: core.User, session: Session, client: CognitoClient
 ) -> core.User:
+    """
+    Creates a new user in the database and also in the Cognito User Pool.
+
+    :param payload: The user data.
+    :type payload: core.User
+
+    :param session: The database session.
+    :type session: Session
+
+    :param client: The Cognito client.
+    :type client: CognitoClient
+
+    :return: The created user instance.
+    :rtype: core.User
+
+    :raises HTTPException: If the username already exists.
+    """
     with transaction_session(session):
         try:
             user = core.User(**payload.dict())
@@ -34,6 +51,23 @@ def create_user(
 
 
 def update_user(session: Session, payload: dict, user_id: int) -> core.User:
+    """
+    Updates a user's details in the database.
+
+    :param session: The database session.
+    :type session: Session
+
+    :param payload: The updated user data.
+    :type payload: dict
+
+    :param user_id: The ID of the user to update.
+    :type user_id: int
+
+    :return: The updated user instance.
+    :rtype: core.User
+
+    :raises HTTPException: If the user is not found or the username already exists.
+    """
     try:
         user = session.query(core.User).filter(core.User.id == user_id).first()
         if not user:
@@ -57,6 +91,27 @@ def update_user(session: Session, payload: dict, user_id: int) -> core.User:
 def get_all_users(
     page: int, page_size: int, sort_field: str, sort_order: str, session: Session
 ) -> UserListResponse:
+    """
+    Retrieve all users in the system in a paginated and sorted manner.
+
+    :param page: The page number (starting from 0) of the requested page of users.
+    :type page: int
+
+    :param page_size: The number of users to include on each page.
+    :type page_size: int
+
+    :param sort_field: The field to sort the users by.
+    :type sort_field: str
+
+    :param sort_order: The order to sort the users in. This should be either "asc" for ascending or "desc" for descending. # noqa: E501
+    :type sort_order: str
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: A paginated and sorted list of all users, along with the total count of users.
+    :rtype: UserListResponse
+    """
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
     list_query = (

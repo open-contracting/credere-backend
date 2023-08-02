@@ -18,6 +18,32 @@ get_msme_opt_in = statistics_utils.get_msme_opt_in_stats
 
 
 def update_statistics(db_provider: Session = get_db):
+    """
+    Update and store various statistics related to applications and lenders in the database.
+
+    This function retrieves and logs different types of statistics related to applications
+    and lenders. It uses the `get_general_statistics`, `get_msme_opt_in_stats`,
+    and `get_count_of_fis_choosen_by_msme` functions from the `statistics_utils` module
+    to fetch the respective statistics. The retrieved statistics are then logged using
+    the `logging.info()` function.
+
+    After fetching the general statistics, this function attempts to store them in the database
+    as an instance of the `Statistic` model. The statistics are stored with the type set to
+    `StatisticType.APPLICATION_KPIS`. The `Statistic` model contains a JSON field to store
+    the actual statistical data.
+
+    If an error occurs during the process, it is caught and logged using `logging.error()`.
+    The database session is rolled back in case of an exception to prevent any changes from
+    being committed to the database.
+
+    Note:
+    - The function utilizes the `get_db()` context manager to open a database session.
+    - The logging level and format are configured using `logging.basicConfig()`.
+
+    Example usage:
+    >>> update_statistics()
+    """
+
     with contextmanager(db_provider)() as session:
         try:
             # Get general Kpis

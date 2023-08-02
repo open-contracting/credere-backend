@@ -15,6 +15,15 @@ if app_settings.database_url:
 
 @contextmanager
 def transaction_session(db: Session):
+    """
+    Context manager for database transactions. It takes a Session instance, commits the transaction if it is successful, # noqa
+    and rolls back the transaction if any exception is raised.
+
+    :param db: The database session where the transaction is to be performed.
+    :type db: Session
+    :raises Exception: Any exception that occurs during the transaction.
+    :yield: The same database session, for use in with-statement.
+    """
     try:
         yield db
         db.commit()
@@ -24,6 +33,13 @@ def transaction_session(db: Session):
 
 
 def get_db() -> Generator:
+    """
+    Generator function to get a new database session. Yields a database session instance and closes the session after
+    it is used.
+
+    :return: The database session instance.
+    :rtype: Generator
+    """
     try:
         db = None
         if SessionLocal:

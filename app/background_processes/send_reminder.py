@@ -15,6 +15,21 @@ get_applications_to_remind_submit = application_utils.get_applications_to_remind
 
 
 def send_reminders(db_provider: Session = get_db):
+    """
+    Send reminders to borrowers.
+
+    This function retrieves applications that require a reminder email to be sent to the borrowers.
+    It first retrieves applications that need an introduction reminder and sends the emails. Then,
+    it retrieves applications that need a submit reminder and sends those emails as well.
+
+    For each application, it saves the message type (BORROWER_PENDING_APPLICATION_REMINDER or
+    BORROWER_PENDING_SUBMIT_REMINDER) to the database and updates the external_message_id after
+    the email has been sent successfully.
+
+    :return: None
+    :rtype: None
+    """
+
     applications_to_send_intro_reminder = get_applications_to_remind_intro(db_provider)
     logging.info(
         "Quantity of mails to send intro reminder "

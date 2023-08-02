@@ -6,6 +6,19 @@ from ..schema.core import User
 
 
 def OCP_only(setUser=False):
+    """
+    A decorator to check if the user is an OCP user.
+    Raises HTTPException if the user is not authenticated or not an OCP user.
+
+    :param setUser: If True, the user is passed as a keyword argument to the decorated function.
+    :type setUser: bool, optional
+
+    :return: The decorator function.
+    :rtype: function
+
+    :raises HTTPException: If the user is not authenticated or not an OCP user.
+    """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
