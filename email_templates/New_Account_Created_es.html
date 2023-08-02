@@ -55,30 +55,14 @@
       margin-bottom: 1rem;
     }
 
-    .main_content_first {
+    .main_content {
       margin-left: 2.5rem;
       margin-right: 2.5rem;
       margin-top: 2.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid lightgray;
+      height: auto;
       padding-bottom: 2rem;
-      border-bottom: 1px solid lightgray;
-      height: auto;
-    }
-
-    .main_content_second {
-      margin-left: 2.5rem;
-      margin-right: 2.5rem;
-      margin-top: 2.5rem;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid lightgray;
-      height: auto;
-    }
-
-    .main_content_third {
-      margin-left: 2.5rem;
-      margin-right: 2.5rem;
-      margin-top: 2.5rem;
-      margin-bottom: 2rem;
-      height: auto;
     }
 
     .main_content_item {
@@ -143,50 +127,20 @@
     <div class='header'>
       <img class='logoOCP' title='OCPlogo' src='{{OCP_LOGO}}' alt='OCP logo' />
     </div>
-    <div class='main_content_first'>
-      <div class='title main_content_item'>Confirm email address change on Credere</div>
+    <div class='main_content'>
+      <div class='title main_content_item'>Bienvenido a Credere</div>
       <div class='main_content_item'>
-        <p>Hi {{AWARD_SUPPLIER_NAME}}, </p>
+        <p>Su cuenta de usuario fue creada.</p>
       </div>
       <div class='action main_content_item'>
         <p>
-          You recently changed the email address that you would like to be contacted on to {{NEW_MAIL}}
+          Establece tu contraseña para empezar a usar Credere para aprobar solicitudes de crédito de las MSMEs.
         </p>
       </div>
-      <div class='action main_content_item'>
-        <p>
-          To confirm this change please click on the link to confirm that it’s really you and complete the update.
-        </p>
-      </div>
-      <div class='action main_content_item'>
-        <p>
-          If this was not you, please contact credere@open-contracting.org immediately.
-        </p>
-      </div>
-
       <div class=' login_complete_image'>
-        <a href='{{CONFIRM_EMAIL_CHANGE_URL}}'>
-          <img src='{{CONFIRM_EMAIL_CHANGE_IMAGE_LINK}}' alt='link to login' />
+        <a href='{{LOGIN_URL}}'>
+          <img src='{{SET_PASSWORD_IMAGE_LINK}}' alt='link to login' />
         </a>
-      </div>
-    </div>
-    <div class='main_content_second'>
-      <div class='title main_content_item'>About the Open Contracting Partnership</div>
-      <div class='action main_content_item'>
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ultrices justo eget diam eleifend pharetra.
-          In congue augue nec justo congue, nec tempus odio tempor. Nunc euismod fermentum diam, quis placerat orci
-          semper sit amet. Etiam eleifend elementum dignissim. Phasellus congue aliquet sem interdum ornare. Donec
-          condimentum egestas augue eget varius. Suspendisse euismod fermentum purus, a ullamcorper massa luctus vel. In
-          vehicula tortor nisi, in fermentum sem ullamcorper sit amet. Vivamus ac ante mi.
-        </p>
-      </div>
-    </div>
-    <div class='main_content_third'>
-      <div class='action main_content_item'>
-        <p>
-          You're receiving this notification because you have recently won a pubic sector contract award.
-        </p>
       </div>
     </div>
     <div class=' footer'>

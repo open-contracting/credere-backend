@@ -63,8 +63,8 @@ def get_images_base_url():
     # todo refactor required when this function receives the user language
 
     images_base_url = app_settings.images_base_url
-    if app_settings.images_lang_subpath != "":
-        images_base_url = f"{images_base_url}/{app_settings.images_lang_subpath}"
+    if app_settings.email_template_lang != "":
+        images_base_url = f"{images_base_url}/{app_settings.email_template_lang}"
 
     return images_base_url
 
@@ -104,7 +104,7 @@ def send_application_approved_email(ses, application: Application):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["APPLICATION_APPROVED"],
+        Template=f"{templates['APPLICATION_APPROVED']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
 
@@ -145,7 +145,7 @@ def send_mail_to_new_user(ses, name, username, temp_password):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [username]},
-        Template=templates["NEW_USER_TEMPLATE_NAME"],
+        Template=f"{templates['NEW_USER_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
 
@@ -178,7 +178,7 @@ def send_upload_contract_notification_to_FI(ses, application):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["NEW_CONTRACT_SUBMISSION"],
+        Template=f"{templates['NEW_CONTRACT_SUBMISSION']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
 
@@ -208,7 +208,7 @@ def send_upload_contract_confirmation(ses, application):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["CONTRACT_UPLOAD_CONFIRMATION_TEMPLATE_NAME"],
+        Template=f"{templates['CONTRACT_UPLOAD_CONFIRMATION_TEMPLATE_NAME']}-{app_settings.email_template_lang}",  # noqa
         TemplateData=json.dumps(data),
     )
 
@@ -265,13 +265,13 @@ def send_new_email_confirmation(
     message = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [new_email_address]},
-        Template=templates["EMAIL_CHANGE_TEMPLATE_NAME"],
+        Template=f"{templates['EMAIL_CHANGE_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [old_email_address]},
-        Template=templates["EMAIL_CHANGE_TEMPLATE_NAME"],
+        Template=f"{templates['EMAIL_CHANGE_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
 
@@ -309,7 +309,7 @@ def send_mail_to_reset_password(ses, username: str, temp_password: str):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [username]},
-        Template=templates["RESET_PASSWORD_TEMPLATE_NAME"],
+        Template=f"{templates['RESET_PASSWORD_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
 
@@ -362,7 +362,7 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME"],
+        Template=f"{templates['ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME']}-{app_settings.email_template_lang}",  # noqa
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
@@ -419,7 +419,7 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["INTRO_REMINDER_TEMPLATE_NAME"],
+        Template=f"{templates['INTRO_REMINDER_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     message_id = response.get("MessageId")
@@ -476,7 +476,7 @@ def send_mail_submit_reminder(
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["APPLICATION_REMINDER_TEMPLATE_NAME"],
+        Template=f"{templates['APPLICATION_REMINDER_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     message_id = response.get("MessageId")
@@ -505,7 +505,7 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [lender_email_group]},
-        Template=templates["NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME"],
+        Template=f"{templates['NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME']}-{app_settings.email_template_lang}",  # noqa
         TemplateData=json.dumps(data),
     )
 
@@ -534,7 +534,7 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
     ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [ocp_email_group]},
-        Template=templates["NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME"],
+        Template=f"{templates['NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME']}-{app_settings.email_template_lang}",  # noqa
         TemplateData=json.dumps(data),
     )
 
@@ -575,7 +575,7 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["REQUEST_SME_DATA_TEMPLATE_NAME"],
+        Template=f"{templates['REQUEST_SME_DATA_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
@@ -612,7 +612,7 @@ def send_overdue_application_email_to_FI(ses, name: str, email: str, amount: int
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["OVERDUE_APPLICATION_FI"],
+        Template=f"{templates['OVERDUE_APPLICATION_FI']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
@@ -643,7 +643,7 @@ def send_overdue_application_email_to_OCP(ses, name: str):
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [app_settings.ocp_email_group]},
-        Template=templates["OVERDUE_APPLICATION_OCP_ADMIN"],
+        Template=f"{templates['OVERDUE_APPLICATION_OCP_ADMIN']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
@@ -676,7 +676,7 @@ def send_rejected_application_email(ses, application):
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["APPLICATION_DECLINED"],
+        Template=f"{templates['APPLICATION_DECLINED']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
@@ -706,7 +706,7 @@ def send_rejected_application_email_without_alternatives(ses, application):
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["APPLICATION_DECLINED_WITHOUT_ALTERNATIVE"],
+        Template=f"{templates['APPLICATION_DECLINED_WITHOUT_ALTERNATIVE']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
@@ -741,7 +741,7 @@ def send_copied_application_notification_to_sme(ses, application):
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["ALTERNATIVE_CREDIT_OPTION"],
+        Template=f"{templates['ALTERNATIVE_CREDIT_OPTION']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")
@@ -772,7 +772,7 @@ def send_upload_documents_notifications_to_FI(ses, email: str):
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
-        Template=templates["APPLICATION_UPDATE"],
+        Template=f"{templates['APPLICATION_UPDATE']}-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )
     return response.get("MessageId")

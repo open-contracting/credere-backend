@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     images_base_url: str = config_env.get(
         "IMAGES_BASE_URL", "http://ocp22.open-contracting.org/images"
     )
-    images_lang_subpath: str = config_env.get("IMAGES_LANG_SUBPATH", "")
+    email_template_lang: str = config_env.get("EMAIL_TEMPLATE_LANG", "")
     facebook_link: str = config_env.get("FACEBOOK_LINK", "www.facebook.com")
     twitter_link: str = config_env.get("TWITTER_LINK", "www.twitter.com")
     link_link: str = config_env.get("LINK_LINK", "http://localhost:3000")
