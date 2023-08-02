@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 from sqlalchemy import DECIMAL, Column, DateTime
@@ -587,6 +587,7 @@ class ApplicationWithRelations(ApplicationRead):
     lender: Optional["LenderBase"] = None
     credit_product: Optional["CreditProductBase"] = None
     borrower_documents: Optional[List[BorrowerDocumentBase]] = None
+    modified_data_fields: Optional[Dict[str, Any]] = {}
 
 
 class LenderRead(LenderBase):
