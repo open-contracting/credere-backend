@@ -23,9 +23,6 @@ def test_info_endpoint():
     ],
 )
 def test_valid_frontend_url(url_string):
-    try:
-        url = httpx.URL(url_string)
+    url = httpx.URL(url_string)
 
-        assert url.scheme and url.host
-    except httpx.InvalidURL:
-        pytest.fail(f"Invalid Frontend URL: {url_string}")
+    assert url.scheme and url.host

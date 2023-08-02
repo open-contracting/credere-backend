@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, status
-from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
+from app.core.settings import app_settings
 from app.db.session import get_db
 from app.schema import core
 
@@ -31,6 +32,124 @@ class BorrowerTestPayload(BaseModel):
     status: core.BorrowerStatus
 
 
+@router.get(
+    "/set-test-application-as-lapsed/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_lapsed(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+    application.created_at = datetime.now(application.created_at.tzinfo) - timedelta(
+        days=app_settings.days_to_change_to_lapsed + 2
+    )
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
+    "/set-test-application-as-dated/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_dated(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+    application.borrower_declined_at = datetime.now(
+        application.created_at.tzinfo
+    ) - timedelta(days=app_settings.days_to_erase_borrower_data + 1)
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
+    "/set-application-as-started/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_started(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+
+    application.lender_started_at = datetime.now(application.created_at.tzinfo)
+    application.status = core.ApplicationStatus.STARTED.value
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
+    "/set-application-as-overdue/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_overdue(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+
+    application.status = core.ApplicationStatus.STARTED.value
+    application.lender_started_at = datetime.now(
+        application.created_at.tzinfo
+    ) - timedelta(days=application.lender.sla_days + 1)
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
+    "/set-application-as-expired/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_as_expired(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+
+    application.status = core.ApplicationStatus.PENDING.value
+    application.expired_at = datetime.now(application.created_at.tzinfo) - timedelta(
+        days=+1
+    )
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
+@router.get(
+    "/set-test-application-to-remind/id/{id}",
+    tags=["applications"],
+    response_model=core.Application,
+)
+async def set_test_application_to_remind(id: int, session: Session = Depends(get_db)):
+    application = (
+        session.query(core.Application).filter(core.Application.id == id).first()
+    )
+    application.expired_at = datetime.now(application.created_at.tzinfo) + timedelta(
+        days=1
+    )
+
+    session.commit()
+    session.refresh(application)
+
+    return application
+
+
 @router.post(
     "/create-test-credit-option",
     tags=["applications"],
@@ -44,24 +163,6 @@ async def create_test_credit_option(
     session.refresh(payload)
 
     return payload
-
-
-@router.post("/create-test-application-action", tags=["applications"])
-async def create_test_application_action(
-    payload: ApplicationActionTestPayload, session: Session = Depends(get_db)
-):
-    update_dict = jsonable_encoder(payload, exclude_unset=True)
-
-    new_action = core.ApplicationAction(
-        type=type,
-        data=update_dict,
-        application_id=payload.application_id,
-        user_id=payload.user_id,
-    )
-    session.add(new_action)
-    session.flush()
-
-    return new_action
 
 
 @router.post(
@@ -81,7 +182,11 @@ async def update_test_application_status(
     return application
 
 
-@router.post("/create-test-application", tags=["applications"])
+@router.post(
+    "/create-test-application",
+    tags=["applications"],
+    response_model=core.Application,
+)
 async def create_test_application(
     payload: ApplicationTestPayload, session: Session = Depends(get_db)
 ):
@@ -148,7 +253,7 @@ async def create_test_application(
         "size": "NOT_INFORMED",
         "missing_data": {
             "borrower_identifier": False,
-            "legal_name": False,
+            "legal_name": True,
             "email": False,
             "address": False,
             "legal_identifier": True,
@@ -185,7 +290,7 @@ async def create_test_application(
             "pais": "CO",
         },
         "status": "ACTIVE",
-        "created_at": "2023-06-22T17:48:06.152807",
+        "created_at": datetime.utcnow(),
         "declined_at": None,
         "borrower_identifier": "test_hash_12345678",
         "email": "test@example.com",
@@ -205,7 +310,6 @@ async def create_test_application(
             "email": True,
         },
         "borrower_id": 1,
-        "id": 1,
         "calculator_data": {},
         "lender_approved_at": None,
         "archived_at": None,
@@ -227,7 +331,7 @@ async def create_test_application(
         "pending_documents": True,
         "contract_amount_submitted": None,
         "borrower_declined_data": {},
-        "created_at": "2023-06-26T03:14:32.019854+00:00",
+        "created_at": datetime.utcnow(),
         "award_borrower_identifier": "test_hash_12345678",
         "pending_email_confirmation": True,
         "lender_started_at": None,
@@ -246,10 +350,32 @@ async def create_test_application(
     session.flush()
 
     db_app = core.Application(**test_application)
+    db_app.award = db_award
+    db_app.borrower = db_borrower
+
+    if payload.lender_id:
+        lender = (
+            session.query(core.Lender)
+            .filter(core.Lender.id == payload.lender_id)
+            .first()
+        )
+        db_app.lender = lender
+
     session.add(db_app)
     session.commit()
 
-    return status.HTTP_201_CREATED
+    application = (
+        session.query(core.Application)
+        .filter(core.Application.id == db_app.id)
+        .options(
+            joinedload(core.Application.award),
+            joinedload(core.Application.borrower),
+            joinedload(core.Application.lender),
+        )
+        .first()
+    )
+
+    return application
 
 
 @router.post("/change-test-application-status", tags=["applications"])
