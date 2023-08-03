@@ -1324,7 +1324,38 @@ def create_borrower_table(borrower):
         ["Sector", borrower.sector],
         ["Business Email", borrower.email],
     ]
-    table = Table(data, colWidths=[150, 350])
+    table = Table(data, colWidths=[200, 350])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
+                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+            ]
+        )
+    )
+    return table
+
+
+def createa_application_table(application):
+    data = [
+        ["Application Information", "Data"],
+        ["Financiador", application.lender.name],
+        ["Monto", application.amount_requested],
+        [
+            "Amortización",
+            f"{application.repayment_years} years, {application.repayment_months} months",
+        ],
+    ]
+
+    if application.status == core.ApplicationStatus.COMPLETED:
+        data.append(["Monto Final", application.disbursed_final_amount])
+
+    table = Table(data, colWidths=[200, 350])
     table.setStyle(
         TableStyle(
             [
@@ -1345,7 +1376,7 @@ def create_documents_table(documents):
     data = [["MSME Information & Document", "Data"]]
     for document in documents:
         data.append([document.type.value, document.name])
-    table = Table(data, colWidths=[150, 350])
+    table = Table(data, colWidths=[200, 350])
     table.setStyle(
         TableStyle(
             [
@@ -1362,7 +1393,7 @@ def create_documents_table(documents):
     return table
 
 
-def create_application_table(application, award, previous_award_amount):
+def create_award_table(application, award, previous_award_amount):
     payment_method_text = f"""
         Habilita Pago Adelantado: {award.payment_method.get("habilita_pago_adelantado", "")}
         Valor De Pago Adelantado: {award.payment_method.get("valor_de_pago_adelantado", "")}
@@ -1392,7 +1423,7 @@ def create_application_table(application, award, previous_award_amount):
         ["Contract Type", award.procurement_category],
         ["Previous Public Sector Contracts", previous_award_amount],
     ]
-    table = Table(data, colWidths=[150, 350])
+    table = Table(data, colWidths=[200, 350])
     table.setStyle(
         TableStyle(
             [

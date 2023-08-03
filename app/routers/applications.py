@@ -412,14 +412,14 @@ async def download_application(
             Paragraph("Application Details PDF", getSampleStyleSheet()["Title"])
         )
 
+        elements.append(utils.createa_application_table(application))
+        elements.append(Spacer(1, 20))
         elements.append(utils.create_borrower_table(borrower))
         elements.append(Spacer(1, 20))
-
         elements.append(utils.create_documents_table(documents))
         elements.append(Spacer(1, 20))
-
         elements.append(
-            utils.create_application_table(application, award, previous_award_amount)
+            utils.create_award_table(application, award, previous_award_amount)
         )
 
         doc.build(elements)
@@ -429,6 +429,15 @@ async def download_application(
             zip_file.writestr("application_details.pdf", buffer.getvalue())
             for document in documents:
                 zip_file.writestr(document.name, document.file)
+
+        application_action_type = (
+            core.ApplicationActionType.OCP_DOWNLOAD_APPLICATION
+            if user.is_OCP()
+            else core.ApplicationActionType.FI_DOWNLOAD_APPLICATION
+        )
+        utils.create_application_action(
+            session, user.id, application.id, application_action_type, {}
+        )
 
         headers = {
             "Content-Disposition": 'attachment; filename="application_documents.zip"',
