@@ -20,6 +20,22 @@ def create_new_award(
     borrower_id: int = None,
     previous: bool = False,
 ) -> dict:
+    """
+    Create a new award and insert it into the database.
+
+    :param source_contract_id: The unique identifier for the award's source contract.
+    :type source_contract_id: str
+    :param entry: The dictionary containing the award data.
+    :type entry: dict
+    :param borrower_id: The ID of the borrower associated with the award. (default: None)
+    :type borrower_id: int, optional
+    :param previous: Whether the award is a previous award or not. (default: False)
+    :type previous: bool, optional
+
+    :return: The newly created award data as a dictionary.
+    :rtype: dict
+    """
+
     new_award = {
         "source_contract_id": source_contract_id,
         "source_url": entry.get("urlproceso", {}).get("url", ""),
@@ -85,6 +101,18 @@ def create_new_award(
 
 
 def get_new_contracts(index: int, last_updated_award_date):
+    """
+    Get new contracts data from the source API.
+
+    :param index: The index of the contracts data to retrieve (pagination index).
+    :type index: int
+    :param last_updated_award_date: The last updated date of the award data.
+    :type last_updated_award_date: datetime or None
+
+    :return: The response object containing the new contracts data.
+    :rtype: httpx.Response
+    """
+
     offset = index * app_settings.secop_pagination_limit
     delta = timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
     converted_date = (datetime.now() - delta).strftime("%Y-%m-%dT00:00:00.000")
@@ -105,12 +133,32 @@ def get_new_contracts(index: int, last_updated_award_date):
 
 
 def get_previous_contracts(documento_proveedor):
+    """
+    Get previous contracts data for the given document provider from the source API.
+
+    :param documento_proveedor: The document provider to get previous contracts data for.
+    :type documento_proveedor: str
+
+    :return: The response object containing the previous contracts data.
+    :rtype: httpx.Response
+    """
+
     url = f"{URLS['CONTRACTS']}?$where=documento_proveedor = '{documento_proveedor}' AND fecha_de_firma IS NOT NULL"
 
     return background_utils.make_request_with_retry(url, headers)
 
 
 def get_source_contract_id(entry):
+    """
+    Get the source contract ID from the given entry data.
+
+    :param entry: The dictionary containing the award data.
+    :type entry: dict
+
+    :return: The source contract ID.
+    :rtype: str
+    """
+
     source_contract_id = entry.get("id_contrato", "")
 
     if not source_contract_id:
@@ -122,6 +170,20 @@ def get_source_contract_id(entry):
 def create_new_borrower(
     borrower_identifier: str, documento_proveedor: str, entry: dict
 ) -> dict:
+    """
+    Create a new borrower and insert it into the database.
+
+    :param borrower_identifier: The unique identifier for the borrower.
+    :type borrower_identifier: str
+    :param documento_proveedor: The document provider for the borrower.
+    :type documento_proveedor: str
+    :param entry: The dictionary containing the borrower data.
+    :type entry: dict
+
+    :return: The newly created borrower data as a dictionary.
+    :rtype: dict
+    """
+
     borrower_url = (
         f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}"
         f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
@@ -161,6 +223,18 @@ def create_new_borrower(
 
 
 def get_email(documento_proveedor, entry) -> str:
+    """
+    Get the email address for the borrower based on the given document provider and entry data.
+
+    :param documento_proveedor: The document provider for the borrower.
+    :type documento_proveedor: str
+    :param entry: The dictionary containing the borrower data.
+    :type entry: dict
+
+    :return: The email address of the borrower.
+    :rtype: str
+    """
+
     borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
     borrower_response_email = background_utils.make_request_with_retry(
         borrower_email_url, headers
@@ -207,6 +281,16 @@ def get_email(documento_proveedor, entry) -> str:
 
 
 def get_documento_proveedor(entry) -> str:
+    """
+    Get the document provider from the given entry data.
+
+    :param entry: The dictionary containing the borrower data.
+    :type entry: dict
+
+    :return: The document provider for the borrower.
+    :rtype: str
+    """
+
     documento_proveedor = entry.get("documento_proveedor", None)
     if not documento_proveedor or documento_proveedor == "No Definido":
         error_data = {"entry": entry}

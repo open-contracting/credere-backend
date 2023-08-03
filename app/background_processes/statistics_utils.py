@@ -9,6 +9,25 @@ from app.schema.core import CreditType, StatisticData, Lender  # noqa: F401 # is
 
 
 def get_base_query(sessionBase, start_date, end_date, lender_id):
+    """
+    Create the base query for filtering applications based on the provided start_date, end_date, and lender_id.
+
+    This function creates the base query for filtering applications from the database. The filtering is based on
+    the provided start_date, end_date, and lender_id (if available).
+
+    :param sessionBase: The base query representing the Application model.
+    :type sessionBase: sqlalchemy.orm.query.Query
+    :param start_date: The start date for filtering applications. (default: None)
+    :type start_date: datetime, optional
+    :param end_date: The end date for filtering applications. (default: None)
+    :type end_date: datetime, optional
+    :param lender_id: The ID of the lender for filtering applications. (default: None)
+    :type lender_id: int, optional
+
+    :return: The base query for filtering applications.
+    :rtype: sqlalchemy.orm.query.Query
+    """
+
     base_query = None
     if start_date is not None and end_date is not None:
         base_query = sessionBase.filter(
@@ -31,6 +50,28 @@ def get_base_query(sessionBase, start_date, end_date, lender_id):
 
 
 def get_general_statistics(session, start_date=None, end_date=None, lender_id=None):
+    """
+    Get general statistics about applications based on the provided parameters.
+
+    This function retrieves general statistics about applications based on the provided start_date, end_date, and
+    lender_id (if available). The statistics include the count of applications received, approved, rejected, waiting
+    for information, in progress, with credit disbursed, proportion of credit disbursed, average amount requested,
+    average repayment period, count of overdue applications, average processing time, and proportion of submitted
+    applications out of the opt-in applications.
+
+    :param session: The database session.
+    :type session: Session
+    :param start_date: The start date for filtering applications. (default: None)
+    :type start_date: datetime, optional
+    :param end_date: The end date for filtering applications. (default: None)
+    :type end_date: datetime, optional
+    :param lender_id: The ID of the lender for filtering applications. (default: None)
+    :type lender_id: int, optional
+
+    :return: A dictionary containing the general statistics about applications.
+    :rtype: dict
+    """
+
     logging.info(
         "calculating general statistics for lender "
         + str(lender_id)
@@ -232,6 +273,20 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
 
 # Group of Stat only for OCP USER (msme opt in stats)
 def get_msme_opt_in_stats(session):
+    """
+    Get statistics specific to MSME opt-in applications.
+
+    This function retrieves statistics specific to MSME opt-in applications. The statistics include the count of
+    applications opted-in, the percentage of applications opted-in, statistics related to different sectors, and
+    counts of declined reasons.
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: A dictionary containing the statistics specific to MSME opt-in applications.
+    :rtype: dict
+    """
+
     logging.info("calculating msme opt in stas for lender ")
     try:
         # opt in--------
@@ -350,3 +405,32 @@ def get_msme_opt_in_stats(session):
         raise e
 
     return opt_in_statistics
+
+
+# Stat only for OCP USER Bars graph
+def get_count_of_fis_choosen_by_msme(session):
+    """
+    Get the count of Financial Institutions (FIs) chosen by MSMEs.
+
+    This function retrieves the count of Financial Institutions (FIs) chosen by MSMEs for their applications.
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: A list of StatisticData objects containing the count of FIs chosen by MSMEs.
+    :rtype: list[StatisticData]
+    """
+
+    try:
+        fis_choosen_by_msme_query = (
+            session.query(Lender.name, func.count(Application.id))
+            .join(Lender, Application.lender_id == Lender.id)
+            .filter(Application.borrower_submitted_at.isnot(None))
+            .group_by(Lender.name)
+            .all()
+        )
+    except SQLAlchemyError as e:
+        raise e
+    return [
+        StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query
+    ]
