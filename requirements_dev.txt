@@ -52,7 +52,6 @@ colorama==0.4.6
     #   build
     #   click
     #   pytest
-    #   sphinx
     #   typer
 coverage[toml]==6.5.0
     # via

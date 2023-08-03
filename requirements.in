@@ -13,7 +13,4 @@ httpx
 requests
 typer[all]
 python-multipart
-furo
-sphinx_autodoc_typehints
-sphinx_autodoc_typehints
 reportlab
