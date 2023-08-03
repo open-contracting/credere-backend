@@ -1,5 +1,10 @@
 import logging
 import re
+
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import Table, TableStyle, Preformatted
+from reportlab.lib import colors
 from datetime import datetime
 from decimal import Decimal
 from typing import Dict, List, Optional
@@ -680,3 +685,99 @@ def check_if_application_was_already_copied(
             status_code=status.HTTP_409_CONFLICT,
             detail=api.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
         )
+
+
+def create_borrower_table(borrower):
+    data = [
+        ["Open Contracting Field", "Data"],
+        ["Legal name", borrower.legal_name],
+        ["Address", borrower.address],
+        ["National Tax ID", borrower.legal_identifier],
+        ["Registration Type", borrower.type],
+        ["Size", borrower.size],
+        ["Sector", borrower.sector],
+        ["Business Email", borrower.email],
+    ]
+    table = Table(data, colWidths=[150, 350])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
+                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+            ]
+        )
+    )
+    return table
+
+
+def create_documents_table(documents):
+    data = [["MSME Information & Document", "Data"]]
+    for document in documents:
+        data.append([document.type.value, document.name])
+    table = Table(data, colWidths=[150, 350])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
+                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+            ]
+        )
+    )
+    return table
+
+
+def create_application_table(application, award, previous_award_amount):
+    payment_method_text = f"""
+        Habilita Pago Adelantado: {award.payment_method.get("habilita_pago_adelantado", "")}
+        Valor De Pago Adelantado: {award.payment_method.get("valor_de_pago_adelantado", "")}
+        Valor Facturado: {award.payment_method.get("valor_facturado", "")}
+        Valor Pendiente De Pago: {award.payment_method.get("Vvalor_pendiente_de_pago", "")}'
+        Valor Pagado: {award.payment_method.get("valor_pagado", "")}
+        """
+
+    data = [
+        ["Open Contracting Award Data", "Data"],
+        ["Award title", award.title],
+        ["Contracting Process ID", award.contracting_process_id],
+        ["Award description", award.description],
+        ["Award date", award.award_date],
+        [
+            "Award Value Currency & Amount",
+            str(award.award_amount) + " " + award.award_currency,
+        ],
+        ["Contract Start date", award.contractperiod_startdate],
+        ["Contract End date", award.contractperiod_enddate],
+        [
+            "Payment Method",
+            Preformatted(payment_method_text, getSampleStyleSheet()["BodyText"]),
+        ],
+        ["Buyer Name", award.buyer_name],
+        ["Procurement Method", award.procurement_method],
+        ["Contract Type", award.procurement_category],
+        ["Previous Public Sector Contracts", previous_award_amount],
+    ]
+    table = Table(data, colWidths=[150, 350])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
+                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+            ]
+        )
+    )
+    return table

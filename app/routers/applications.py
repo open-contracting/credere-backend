@@ -1,4 +1,9 @@
 import logging
+import io
+import zipfile
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import Spacer, Paragraph, SimpleDocTemplate
+from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 from typing import List
 
@@ -354,6 +359,83 @@ async def get_borrower_document(
             "Content-Type": "application/octet-stream",
         }
         return StreamingResponse(file_generator(), headers=headers)
+
+
+@router.get(
+    "/applications/{application_id}/download-application",
+    tags=["applications"],
+)
+async def download_application(
+    application_id: int,
+    session: Session = Depends(get_db),
+    user: core.User = Depends(get_user),
+):
+    """
+    Retrieve all documents related to an application and stream them as a zip file.
+
+    :param application_id: The ID of the application to retrieve documents for.
+    :type application_id: int
+
+    :param session: The database session.
+    :type session: Session
+
+    :param user: The current user.
+    :type user: core.User
+
+    :return: A streaming response with a zip file containing the documents.
+    :rtype: StreamingResponse
+    """
+    with transaction_session(session):
+        application = utils.get_application_by_id(application_id, session)
+
+        borrower = application.borrower
+        award = application.award
+
+        documents = (
+            session.query(core.BorrowerDocument)
+            .filter(core.BorrowerDocument.application_id == application_id)
+            .all()
+        )
+
+        previous_award_amount = (
+            session.query(core.Award)
+            .filter(core.Award.borrower_id == application.borrower.id)
+            .count()
+        )
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+
+        elements = []
+
+        elements.append(
+            Paragraph("Application Details PDF", getSampleStyleSheet()["Title"])
+        )
+
+        elements.append(utils.create_borrower_table(borrower))
+        elements.append(Spacer(1, 20))
+
+        elements.append(utils.create_documents_table(documents))
+        elements.append(Spacer(1, 20))
+
+        elements.append(
+            utils.create_application_table(application, award, previous_award_amount)
+        )
+
+        doc.build(elements)
+
+        in_memory_zip = io.BytesIO()
+        with zipfile.ZipFile(in_memory_zip, "w") as zip_file:
+            zip_file.writestr("application_details.pdf", buffer.getvalue())
+            for document in documents:
+                zip_file.writestr(document.name, document.file)
+
+        headers = {
+            "Content-Disposition": f'attachment; filename="application_documents.zip"',
+            "Content-Type": "application/zip",
+        }
+
+        return StreamingResponse(io.BytesIO(in_memory_zip.getvalue()), headers=headers)
 
 
 @router.post(
