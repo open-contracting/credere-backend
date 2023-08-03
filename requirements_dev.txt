@@ -61,6 +61,10 @@ click==8.1.3
 colorama==0.4.6
     # via
     #   -r requirements.txt
+    #   build
+    #   click
+    #   pytest
+    #   sphinx
     #   typer
 coverage[toml]==6.5.0
     # via
@@ -171,6 +175,10 @@ packaging==23.1
     #   sphinx
 pathspec==0.11.1
     # via black
+pillow==10.0.0
+    # via
+    #   -r requirements.txt
+    #   reportlab
 pip-tools==6.13.0
     # via -r requirements_dev.in
 platformdirs==3.5.1
@@ -235,6 +243,8 @@ pyyaml==6.0
     # via
     #   pre-commit
     #   responses
+reportlab==4.0.4
+    # via -r requirements.txt
 requests==2.31.0
     # via
     #   -r requirements.txt

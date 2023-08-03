@@ -1,14 +1,14 @@
-import logging
 import io
+import logging
 import zipfile
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import Spacer, Paragraph, SimpleDocTemplate
-from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 from typing import List
 
 from botocore.exceptions import ClientError
 from fastapi.responses import StreamingResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
 
@@ -431,7 +431,7 @@ async def download_application(
                 zip_file.writestr(document.name, document.file)
 
         headers = {
-            "Content-Disposition": f'attachment; filename="application_documents.zip"',
+            "Content-Disposition": 'attachment; filename="application_documents.zip"',
             "Content-Type": "application/zip",
         }
 

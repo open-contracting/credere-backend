@@ -1,16 +1,14 @@
 import logging
 import re
-
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import Table, TableStyle, Preformatted
-from reportlab.lib import colors
 from datetime import datetime
 from decimal import Decimal
 from typing import Dict, List, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Preformatted, Table, TableStyle
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
