@@ -1,3 +1,4 @@
+import locale
 import logging
 import re
 from datetime import datetime
@@ -7,8 +8,10 @@ from typing import Dict, List, Optional
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Preformatted, Table, TableStyle
+from reportlab.platypus import Paragraph, Table, TableStyle
 from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
@@ -19,6 +22,13 @@ from app.schema.api import ApplicationListResponse, UpdateDataField
 
 from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
+
+width, height = A4
+styles = getSampleStyleSheet()
+styleN = styles["BodyText"]
+styleN.alignment = TA_LEFT
+styleBH = styles["Normal"]
+styleBH.alignment = TA_CENTER
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -40,6 +50,18 @@ OCP_cannot_modify = [
 
 
 document_type_keys = [doc_type.name for doc_type in core.BorrowerDocumentType]
+
+
+def format_currency(number):
+    locale.setlocale(locale.LC_ALL, "")
+    formatted_number = locale.format_string("%d", number, grouping=True)
+    return formatted_number
+
+
+def format_date(date_str):
+    date_object = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+    formatted_date = date_object.strftime("%Y-%m-%d")
+    return formatted_date
 
 
 def update_data_field(application: core.Application, payload: UpdateDataField):
@@ -1313,10 +1335,30 @@ def check_if_application_was_already_copied(
         )
 
 
+def create_table(data):
+    table = Table(data, colWidths=[200, 350])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
+                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+                ("WORDWRAP", (0, 0), (-1, -1)),
+            ]
+        )
+    )
+
+    return table
+
+
 def create_borrower_table(borrower):
     data = [
         ["Open Contracting Field", "Data"],
-        ["Legal name", borrower.legal_name],
+        ["Legal name", Paragraph(borrower.legal_name, styleN)],
         ["Address", borrower.address],
         ["National Tax ID", borrower.legal_identifier],
         ["Registration Type", borrower.type],
@@ -1324,28 +1366,17 @@ def create_borrower_table(borrower):
         ["Sector", borrower.sector],
         ["Business Email", borrower.email],
     ]
-    table = Table(data, colWidths=[200, 350])
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
-                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
-            ]
-        )
-    )
-    return table
+    return create_table(data)
 
 
 def createa_application_table(application):
     data = [
         ["Application Information", "Data"],
-        ["Financiador", application.lender.name],
-        ["Monto", application.amount_requested],
+        ["Financiador", Paragraph(application.lender.name, styleN)],
+        [
+            "Monto",
+            format_currency(application.amount_requested) + " " + application.currency,
+        ],
         [
             "Amortización",
             f"{application.repayment_years} years, {application.repayment_months} months",
@@ -1353,47 +1384,25 @@ def createa_application_table(application):
     ]
 
     if application.status == core.ApplicationStatus.COMPLETED:
-        data.append(["Monto Final", application.disbursed_final_amount])
-
-    table = Table(data, colWidths=[200, 350])
-    table.setStyle(
-        TableStyle(
+        data.append(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
-                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+                "Monto Final",
+                format_currency(application.disbursed_final_amount)
+                + " "
+                + application.currency,
             ]
         )
-    )
-    return table
+    return create_table(data)
 
 
 def create_documents_table(documents):
     data = [["MSME Information & Document", "Data"]]
     for document in documents:
         data.append([document.type.value, document.name])
-    table = Table(data, colWidths=[200, 350])
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
-                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
-            ]
-        )
-    )
-    return table
+    return create_table(data)
 
 
-def create_award_table(application, award, previous_award_amount):
+def create_award_table(award: core.Award, previous_award_amount: int):
     payment_method_text = f"""
         Habilita Pago Adelantado: {award.payment_method.get("habilita_pago_adelantado", "")}
         Valor De Pago Adelantado: {award.payment_method.get("valor_de_pago_adelantado", "")}
@@ -1404,37 +1413,32 @@ def create_award_table(application, award, previous_award_amount):
 
     data = [
         ["Open Contracting Award Data", "Data"],
-        ["Award title", award.title],
-        ["Contracting Process ID", award.contracting_process_id],
-        ["Award description", award.description],
+        ["Award title", Paragraph(award.title, styleN)],
+        ["Contracting Process ID", Paragraph(award.contracting_process_id, styleN)],
+        ["Award description", Paragraph(award.description, styleN)],
         ["Award date", award.award_date],
         [
             "Award Value Currency & Amount",
-            str(award.award_amount) + " " + award.award_currency,
+            Paragraph(
+                format_currency(award.award_amount) + " " + award.award_currency, styleN
+            ),
         ],
-        ["Contract Start date", award.contractperiod_startdate],
-        ["Contract End date", award.contractperiod_enddate],
+        [
+            "Contract Start date",
+            format_date(str(award.contractperiod_startdate)),
+        ],
+        [
+            "Contract End date",
+            format_date(str(award.contractperiod_enddate)),
+        ],
         [
             "Payment Method",
-            Preformatted(payment_method_text, getSampleStyleSheet()["BodyText"]),
+            Paragraph(payment_method_text, styleN),
         ],
         ["Buyer Name", award.buyer_name],
-        ["Procurement Method", award.procurement_method],
-        ["Contract Type", award.procurement_category],
+        ["Procurement Method", Paragraph(award.procurement_method, styleN)],
+        ["Contract Type", Paragraph(award.procurement_category, styleN)],
         ["Previous Public Sector Contracts", previous_award_amount],
     ]
-    table = Table(data, colWidths=[200, 350])
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
-                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
-            ]
-        )
-    )
-    return table
+
+    return create_table(data)

@@ -418,9 +418,7 @@ async def download_application(
         elements.append(Spacer(1, 20))
         elements.append(utils.create_documents_table(documents))
         elements.append(Spacer(1, 20))
-        elements.append(
-            utils.create_award_table(application, award, previous_award_amount)
-        )
+        elements.append(utils.create_award_table(award, previous_award_amount))
 
         doc.build(elements)
 
