@@ -1362,13 +1362,13 @@ def createa_application_table(application: core.Application):
 
     data = [
         ["Application Information", "Data"],
-        ["Financiador", Paragraph(application.lender.name, reportlab_mods.styleN)],
+        ["Lender", Paragraph(application.lender.name, reportlab_mods.styleN)],
         [
-            "Monto",
+            "Amount",
             application.currency + format_currency(application.amount_requested),
         ],
         [
-            "Amortización",
+            "Amortization",
             f"{application.repayment_years} years, {application.repayment_months} months",
         ],
     ]
@@ -1376,7 +1376,7 @@ def createa_application_table(application: core.Application):
     if application.status == core.ApplicationStatus.COMPLETED:
         data.append(
             [
-                "Monto Final",
+                "Final amount",
                 application.currency
                 + format_currency(application.disbursed_final_amount),
             ]
