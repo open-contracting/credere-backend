@@ -7,28 +7,18 @@ from typing import Dict, List, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Paragraph, Table, TableStyle
+from reportlab.platypus import Paragraph
 from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
+import reportlab_mods
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
 
 from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
-
-width, height = A4
-styles = getSampleStyleSheet()
-styleN = styles["BodyText"]
-styleN.alignment = TA_LEFT
-styleBH = styles["Normal"]
-styleBH.alignment = TA_CENTER
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -55,7 +45,7 @@ document_type_keys = [doc_type.name for doc_type in core.BorrowerDocumentType]
 def format_currency(number):
     locale.setlocale(locale.LC_ALL, "")
     formatted_number = locale.format_string("%d", number, grouping=True)
-    return formatted_number
+    return "$ " + formatted_number
 
 
 def format_date(date_str):
@@ -1335,47 +1325,47 @@ def check_if_application_was_already_copied(
         )
 
 
-def create_table(data):
-    table = Table(data, colWidths=[200, 350])
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
-                ("ALIGN", (0, 0), (-1, 0), "LEFT"),
-                ("WORDWRAP", (0, 0), (-1, -1)),
-            ]
-        )
-    )
+def create_borrower_table(borrower: core.Borrower):
+    """
+    Creates a table of borrower data.
 
-    return table
+    :param borrower: The borrower's data.
+    :type borrower: Borrower
 
+    :return: The generated table.
+    :rtype: Table
+    """
 
-def create_borrower_table(borrower):
     data = [
         ["Open Contracting Field", "Data"],
-        ["Legal name", Paragraph(borrower.legal_name, styleN)],
+        ["Legal name", Paragraph(borrower.legal_name, reportlab_mods.styleN)],
         ["Address", borrower.address],
         ["National Tax ID", borrower.legal_identifier],
         ["Registration Type", borrower.type],
-        ["Size", borrower.size],
-        ["Sector", borrower.sector],
+        ["Size", reportlab_mods.borrower_size_dict[borrower.size]],
+        ["Sector", reportlab_mods.sector_dict[borrower.sector]],
         ["Business Email", borrower.email],
     ]
-    return create_table(data)
+    return reportlab_mods.create_table(data)
 
 
-def createa_application_table(application):
+def createa_application_table(application: core.Application):
+    """
+    Creates a table of application information.
+
+    :param application: The application's data.
+    :type application: Application
+
+    :return: The generated table.
+    :rtype: Table
+    """
+
     data = [
         ["Application Information", "Data"],
-        ["Financiador", Paragraph(application.lender.name, styleN)],
+        ["Financiador", Paragraph(application.lender.name, reportlab_mods.styleN)],
         [
             "Monto",
-            format_currency(application.amount_requested) + " " + application.currency,
+            application.currency + format_currency(application.amount_requested),
         ],
         [
             "Amortización",
@@ -1387,22 +1377,44 @@ def createa_application_table(application):
         data.append(
             [
                 "Monto Final",
-                format_currency(application.disbursed_final_amount)
-                + " "
-                + application.currency,
+                application.currency
+                + format_currency(application.disbursed_final_amount),
             ]
         )
-    return create_table(data)
+    return reportlab_mods.create_table(data)
 
 
-def create_documents_table(documents):
+def create_documents_table(documents: List[core.BorrowerDocument]):
+    """
+    Creates a table of MSME information and documents.
+
+    :param documents: List of documents.
+    :type documents: List[Document]
+
+    :return: The generated table.
+    :rtype: Table
+    """
+
     data = [["MSME Information & Document", "Data"]]
     for document in documents:
-        data.append([document.type.value, document.name])
-    return create_table(data)
+        data.append([reportlab_mods.document_type_dict[document.type], document.name])
+    return reportlab_mods.create_table(data)
 
 
 def create_award_table(award: core.Award, previous_award_amount: int):
+    """
+    Creates a table of Open Contracting award data.
+
+    :param award: The award data.
+    :type award: core.Award
+
+    :param previous_award_amount: Previous award amount.
+    :type previous_award_amount: int
+
+    :return: The generated table.
+    :rtype: Table
+    """
+
     payment_method_text = f"""
         Habilita Pago Adelantado: {award.payment_method.get("habilita_pago_adelantado", "")}
         Valor De Pago Adelantado: {award.payment_method.get("valor_de_pago_adelantado", "")}
@@ -1413,14 +1425,18 @@ def create_award_table(award: core.Award, previous_award_amount: int):
 
     data = [
         ["Open Contracting Award Data", "Data"],
-        ["Award title", Paragraph(award.title, styleN)],
-        ["Contracting Process ID", Paragraph(award.contracting_process_id, styleN)],
-        ["Award description", Paragraph(award.description, styleN)],
-        ["Award date", award.award_date],
+        ["Award title", Paragraph(award.title, reportlab_mods.styleN)],
+        [
+            "Contracting Process ID",
+            Paragraph(award.contracting_process_id, reportlab_mods.styleN),
+        ],
+        ["Award description", Paragraph(award.description, reportlab_mods.styleN)],
+        ["Award date", format_date(str(award.award_date))],
         [
             "Award Value Currency & Amount",
             Paragraph(
-                format_currency(award.award_amount) + " " + award.award_currency, styleN
+                award.award_currency + format_currency(award.award_amount),
+                reportlab_mods.styleN,
             ),
         ],
         [
@@ -1433,12 +1449,15 @@ def create_award_table(award: core.Award, previous_award_amount: int):
         ],
         [
             "Payment Method",
-            Paragraph(payment_method_text, styleN),
+            Paragraph(payment_method_text, reportlab_mods.styleN),
         ],
         ["Buyer Name", award.buyer_name],
-        ["Procurement Method", Paragraph(award.procurement_method, styleN)],
-        ["Contract Type", Paragraph(award.procurement_category, styleN)],
+        [
+            "Procurement Method",
+            Paragraph(award.procurement_method, reportlab_mods.styleN),
+        ],
+        ["Contract Type", Paragraph(award.procurement_category, reportlab_mods.styleN)],
         ["Previous Public Sector Contracts", previous_award_amount],
     ]
 
-    return create_table(data)
+    return reportlab_mods.create_table(data)
