@@ -1,3 +1,4 @@
+import locale
 import logging
 import re
 from datetime import datetime
@@ -6,10 +7,12 @@ from typing import Dict, List, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
+from reportlab.platypus import Paragraph
 from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
+import reportlab_mods
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
@@ -37,6 +40,25 @@ OCP_cannot_modify = [
 
 
 document_type_keys = [doc_type.name for doc_type in core.BorrowerDocumentType]
+
+
+def format_currency(number, currency):
+    if isinstance(number, str):
+        try:
+            number = int(number)
+        except ValueError:
+            return "-"
+    locale.setlocale(locale.LC_ALL, "")
+    formatted_number = locale.format_string("%d", number, grouping=True)
+    return f"{currency}$ " + formatted_number
+
+
+def format_date(date_str):
+    if date_str == "None":
+        return "-"
+    date_object = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+    formatted_date = date_object.strftime("%Y-%m-%d")
+    return formatted_date
 
 
 def update_data_field(application: core.Application, payload: UpdateDataField):
@@ -1308,3 +1330,315 @@ def check_if_application_was_already_copied(
             status_code=status.HTTP_409_CONFLICT,
             detail=api.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
         )
+
+
+def create_borrower_table(
+    borrower: core.Borrower, application: core.Application, lang: str
+):
+    """
+    Creates a table of borrower data.
+
+    :param borrower: The borrower's data.
+    :type borrower: Borrower
+
+    :param lang: The lang requested.
+    :type lang: str
+
+    :return: The generated table.
+    :rtype: Table
+    """
+
+    data = [
+        [
+            reportlab_mods.get_translated_string("MSME Data", lang),
+            reportlab_mods.get_translated_string("Data", lang),
+        ],
+        [
+            reportlab_mods.get_translated_string("Legal Name", lang),
+            Paragraph(borrower.legal_name, reportlab_mods.styleN),
+        ],
+        [
+            reportlab_mods.get_translated_string("Address", lang),
+            Paragraph(borrower.address, reportlab_mods.styleN),
+        ],
+        [
+            reportlab_mods.get_translated_string("National Tax ID", lang),
+            borrower.legal_identifier,
+        ],
+        [
+            reportlab_mods.get_translated_string("Registration Type", lang),
+            borrower.type,
+        ],
+        [
+            reportlab_mods.get_translated_string("Size", lang),
+            reportlab_mods.get_translated_string(
+                reportlab_mods.borrower_size_dict[borrower.size], lang
+            ),
+        ],
+        [
+            reportlab_mods.get_translated_string("Sector", lang),
+            reportlab_mods.get_translated_string(
+                reportlab_mods.sector_dict[borrower.sector], lang
+            ),
+        ],
+        [
+            reportlab_mods.get_translated_string("Business Email", lang),
+            application.primary_email,
+        ],
+    ]
+    return reportlab_mods.create_table(data)
+
+
+def get_pdf_file_name(application: core.Application, lang: str):
+    name = reportlab_mods.get_translated_string("Application Details", lang).replace(
+        " ", "_"
+    )
+    filename = (
+        f"{name}-{application.borrower.legal_identifier}"
+        + f"-{application.award.source_contract_id}.pdf"
+    )
+    return filename
+
+
+def create_pdf_title(title: str, lang: str, subtitle: bool = False):
+    """
+    Creates a table title for the application PDF.
+
+    :param title: The document's title.
+    :type title: str
+
+    :param lang: The lang requested.
+    :type lang: str
+
+    :param subtitle: If the title is subtitle.
+    :type subtitle: bool
+
+    :return: The generated title.
+    :rtype: Paragraph
+    """
+    if subtitle:
+        return Paragraph(
+            reportlab_mods.get_translated_string(title, lang),
+            reportlab_mods.styleSubTitle,
+        )
+    else:
+        return Paragraph(
+            reportlab_mods.get_translated_string(title, lang), reportlab_mods.styleTitle
+        )
+
+
+def create_table_cell(text: str, lang: str):
+    """
+    Creates a table cell for the application PDF.
+
+    :param text: The text of the cell.
+    :type text: str
+
+    :param lang: The lang requested.
+    :type lang: str
+
+    :return: The generated cell text.
+    :rtype: Paragraph
+    """
+    return Paragraph(
+        reportlab_mods.get_translated_string(text, lang), reportlab_mods.styleN
+    )
+
+
+def create_application_table(application: core.Application, lang: str):
+    """
+    Creates a table of application information.
+
+    :param application: The application's data.
+    :type application: Application
+
+    :param lang: The lang requested.
+    :type lang: str
+
+    :return: The generated table.
+    :rtype: Table
+    """
+
+    data = [
+        [
+            reportlab_mods.get_translated_string("Financing Options", lang),
+            reportlab_mods.get_translated_string("Data", lang),
+        ],
+        [
+            reportlab_mods.get_translated_string("Lender", lang),
+            application.lender.name,
+        ],
+        [
+            reportlab_mods.get_translated_string("Amount requested", lang),
+            format_currency(application.amount_requested, application.currency),
+        ],
+    ]
+
+    if application.credit_product.type == core.CreditType.LOAN:
+        data.append(
+            [
+                reportlab_mods.get_translated_string("Type", lang),
+                reportlab_mods.get_translated_string("Loan", lang),
+            ],
+        )
+        data.append(
+            [
+                reportlab_mods.get_translated_string("Payment start date", lang),
+                format_date(str(application.payment_start_date)),
+            ],
+        )
+        data.append(
+            [
+                reportlab_mods.get_translated_string("Repayment terms", lang),
+                reportlab_mods.get_translated_string(
+                    "{repayment_years} year(s), {repayment_months} month(s)",
+                    lang,
+                    {
+                        "repayment_years": application.repayment_years,
+                        "repayment_months": application.repayment_months,
+                    },
+                ),
+            ],
+        )
+    else:
+        data.append(
+            [
+                reportlab_mods.get_translated_string("Type", lang),
+                reportlab_mods.get_translated_string("Credit Line", lang),
+            ],
+        )
+
+    if application.status == core.ApplicationStatus.COMPLETED:
+        data.append(
+            [
+                reportlab_mods.get_translated_string("Contract amount", lang),
+                format_currency(
+                    application.contract_amount_submitted, application.currency
+                ),
+            ]
+        )
+        data.append(
+            [
+                reportlab_mods.get_translated_string("Credit amount", lang),
+                format_currency(
+                    application.disbursed_final_amount, application.currency
+                ),
+            ]
+        )
+    return reportlab_mods.create_table(data)
+
+
+def create_documents_table(documents: List[core.BorrowerDocument], lang: str):
+    """
+    Creates a table of MSME information and documents.
+
+    :param documents: List of documents.
+    :type documents: List[Document]
+
+    :param lang: The lang requested.
+    :type lang: str
+
+    :return: The generated table.
+    :rtype: Table
+    """
+
+    data = [
+        [
+            reportlab_mods.get_translated_string("MSME Documents", lang),
+            reportlab_mods.get_translated_string("Data", lang),
+        ]
+    ]
+    for document in documents:
+        data.append([reportlab_mods.document_type_dict[document.type], document.name])
+    return reportlab_mods.create_table(data)
+
+
+def create_award_table(award: core.Award, lang: str):
+    """
+    Creates a table of Open Contracting award data.
+
+    :param award: The award data.
+    :type award: core.Award
+
+    :param previous_awards: Previous award amount.
+    :type previous_awards:  List[core.Award]
+
+    :param lang: The lang requested.
+    :type lang: str
+
+    :return: The generated table.
+    :rtype: Table
+    """
+
+    payment_method_text = f"""Habilita Pago Adelantado: {
+    format_currency(award.payment_method.get("habilita_pago_adelantado", ""), award.award_currency)
+}
+Valor De Pago Adelantado: {
+    format_currency(award.payment_method.get("valor_de_pago_adelantado", ""), award.award_currency)
+}
+Valor Facturado: {
+    format_currency(award.payment_method.get("valor_facturado", ""), award.award_currency)
+}
+Valor Pendiente De Pago: {
+    format_currency(award.payment_method.get("valor_pendiente_de_pago", ""), award.award_currency)
+}
+Valor Pagado: {
+    format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
+}
+"""
+
+    data = [
+        [
+            reportlab_mods.get_translated_string("Award Data", lang),
+            reportlab_mods.get_translated_string("Data", lang),
+        ],
+        [
+            reportlab_mods.get_translated_string("Award Title", lang),
+            Paragraph(award.title, reportlab_mods.styleN),
+        ],
+        [
+            reportlab_mods.get_translated_string("Contracting Process ID", lang),
+            Paragraph(award.contracting_process_id, reportlab_mods.styleN),
+        ],
+        [
+            reportlab_mods.get_translated_string("Award Description", lang),
+            Paragraph(award.description, reportlab_mods.styleN),
+        ],
+        [
+            reportlab_mods.get_translated_string("Award Date", lang),
+            format_date(str(award.award_date)),
+        ],
+        [
+            reportlab_mods.get_translated_string("Award Value Currency & Amount", lang),
+            format_currency(award.award_amount, award.award_currency),
+        ],
+        [
+            reportlab_mods.get_translated_string("Contract Start Date", lang),
+            format_date(str(award.contractperiod_startdate)),
+        ],
+        [
+            reportlab_mods.get_translated_string("Contract End Date", lang),
+            format_date(str(award.contractperiod_enddate)),
+        ],
+        [
+            reportlab_mods.get_translated_string("Payment Method", lang),
+            payment_method_text,
+        ],
+        [
+            reportlab_mods.get_translated_string("Buyer Name", lang),
+            Paragraph(
+                award.buyer_name,
+                reportlab_mods.styleN,
+            ),
+        ],
+        [
+            reportlab_mods.get_translated_string("Procurement Method", lang),
+            Paragraph(award.procurement_method, reportlab_mods.styleN),
+        ],
+        [
+            reportlab_mods.get_translated_string("Contract Type", lang),
+            Paragraph(award.procurement_category, reportlab_mods.styleN),
+        ],
+    ]
+
+    return reportlab_mods.create_table(data)
