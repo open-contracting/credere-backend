@@ -1,10 +1,33 @@
-from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Table, TableStyle
+from transifex.native import tx
 
 from app.schema import core
+
+pdfmetrics.registerFont(
+    TTFont("GTEestiProDisplay", "./fonts/GTEestiProDisplay-Regular.ttf")
+)
+pdfmetrics.registerFont(
+    TTFont("GTEestiProDisplayBd", "./fonts/GTEestiProDisplay-Bold.ttf")
+)
+pdfmetrics.registerFont(
+    TTFont("GTEestiProDisplayIt", "./fonts/GTEestiProDisplay-RegularItalic.ttf")
+)
+pdfmetrics.registerFont(
+    TTFont("GTEestiProDisplayBI", "./fonts/GTEestiProDisplay-BoldItalic.ttf")
+)
+pdfmetrics.registerFontFamily(
+    "GTEestiProDisplay",
+    normal="GTEestiProDisplay",
+    bold="GTEestiProDisplayBd",
+    italic="GTEestiProDisplayIt",
+    boldItalic="GTEestiProDisplayBI",
+)
+
 
 document_type_dict = {
     core.BorrowerDocumentType.INCORPORATION_DOCUMENT: "Incorporation Document",
@@ -18,9 +41,9 @@ document_type_dict = {
 
 borrower_size_dict = {
     core.BorrowerSize.NOT_INFORMED: "Not informed",
-    core.BorrowerSize.MICRO: "Micro",
-    core.BorrowerSize.SMALL: "Small",
-    core.BorrowerSize.MEDIUM: "Medium",
+    core.BorrowerSize.MICRO: "0 to 10",
+    core.BorrowerSize.SMALL: "11 to 50",
+    core.BorrowerSize.MEDIUM: "51 to 200",
 }
 
 sector_dict = {
@@ -47,9 +70,22 @@ sector_dict = {
 width, height = A4
 styles = getSampleStyleSheet()
 styleN = styles["BodyText"]
+styleN.fontName = "GTEestiProDisplay"
 styleN.alignment = TA_LEFT
 styleBH = styles["Normal"]
+styleBH.fontName = "GTEestiProDisplay"
 styleBH.alignment = TA_CENTER
+
+styleTitle = styles["Title"]
+styleTitle.fontName = "GTEestiProDisplay"
+
+styleSubTitle = styles["Heading2"]
+styleSubTitle.fontName = "GTEestiProDisplay"
+
+
+def get_translated_string(key, lang, params=None) -> str:
+    translation = tx.translate(key, lang, params=params)
+    return translation
 
 
 def create_table(data):
@@ -57,13 +93,15 @@ def create_table(data):
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("BACKGROUND", (0, 0), (-1, 0), "#D6E100"),
+                ("TEXTCOLOR", (0, 0), (-1, 0), "#444444"),
                 ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTNAME", (0, 0), (-1, 0), "GTEestiProDisplay"),
                 ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), "#F8F9FA"),
+                ("BACKGROUND", (0, 1), (-1, -1), "#F2F2F2"),
+                ("FONTNAME", (0, 0), (-1, -1), "GTEestiProDisplay"),
                 ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("WORDWRAP", (0, 0), (-1, -1)),
             ]
         )

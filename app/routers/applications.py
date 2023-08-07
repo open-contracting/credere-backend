@@ -7,8 +7,7 @@ from typing import List
 from botocore.exceptions import ClientError
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import SimpleDocTemplate, Spacer
 from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
 
@@ -362,11 +361,12 @@ async def get_borrower_document(
 
 
 @router.get(
-    "/applications/{application_id}/download-application",
+    "/applications/{application_id}/download-application/{lang}",
     tags=["applications"],
 )
 async def download_application(
     application_id: int,
+    lang: str,
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
 ):
@@ -397,34 +397,39 @@ async def download_application(
             .all()
         )
 
-        previous_award_amount = (
-            session.query(core.Award)
-            .filter(core.Award.borrower_id == application.borrower.id)
-            .count()
-        )
+        previous_awards = utils.get_previous_awards(application, session)
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)
 
         elements = []
 
-        elements.append(
-            Paragraph("Application Details PDF", getSampleStyleSheet()["Title"])
-        )
+        elements.append(utils.create_pdf_title("Application Details", lang))
 
-        elements.append(utils.createa_application_table(application))
+        elements.append(utils.create_application_table(application, lang))
         elements.append(Spacer(1, 20))
-        elements.append(utils.create_borrower_table(borrower))
+        elements.append(utils.create_borrower_table(borrower, application, lang))
         elements.append(Spacer(1, 20))
-        elements.append(utils.create_documents_table(documents))
+        elements.append(utils.create_documents_table(documents, lang))
         elements.append(Spacer(1, 20))
-        elements.append(utils.create_award_table(award, previous_award_amount))
+        elements.append(utils.create_award_table(award, lang))
+
+        if previous_awards and len(previous_awards) > 0:
+            elements.append(Spacer(1, 20))
+            elements.append(
+                utils.create_pdf_title("Previous Public Sector Contracts", lang, True)
+            )
+            for award in previous_awards:
+                elements.append(utils.create_award_table(award, lang))
+                elements.append(Spacer(1, 20))
 
         doc.build(elements)
 
+        filename = utils.get_pdf_file_name(application, lang)
+
         in_memory_zip = io.BytesIO()
         with zipfile.ZipFile(in_memory_zip, "w") as zip_file:
-            zip_file.writestr("application_details.pdf", buffer.getvalue())
+            zip_file.writestr(filename, buffer.getvalue())
             for document in documents:
                 zip_file.writestr(document.name, document.file)
 
@@ -438,7 +443,7 @@ async def download_application(
         )
 
         headers = {
-            "Content-Disposition": 'attachment; filename="application_documents.zip"',
+            "Content-Disposition": f'attachment; filename="{filename}"',
             "Content-Type": "application/zip",
         }
 

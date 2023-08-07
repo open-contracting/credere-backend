@@ -78,6 +78,8 @@ class Settings(BaseSettings):
         "PROGRESS_TO_REMIND_STARTED_APPLICATIONS", 0.7
     )
     environment: str = config_env.get("ENVIRONMENT", "development")
+    transifex_token: str = config_env.get("TRANSIFEX_TOKEN", None)
+    transifex_secret: str = config_env.get("TRANSIFEX_SECRET", None)
 
     class Config:
         env_file = ".env"
