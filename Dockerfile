@@ -18,9 +18,11 @@ RUN \
 COPY ./.env /code/.env
 COPY ./alembic.ini /code/alembic.ini
 COPY ./migrations /code/migrations
+COPY ./reportlab_mods.py /code/reportlab_mods.py
+COPY ./fonts /code/fonts
 COPY ./app /code/app
 
 # Run Alembic migrations
-RUN alembic upgrade head
+# RUN alembic upgrade head
 # 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
