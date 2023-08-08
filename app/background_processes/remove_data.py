@@ -62,11 +62,12 @@ def remove_dated_data(db_provider: Session = get_db):
                     )
                     # Delete the associated Award if no other active applications uses the award
                     if len(active_applications_with_same_award) == 0:
-                        session.delete(application.award)
                         application.borrower.legal_name = ""
                         application.borrower.email = ""
                         application.borrower.address = ""
                         application.borrower.legal_identifier = ""
+                        application.borrower.source_data = ""
+
                     session.commit()
 
                 except Exception as e:
