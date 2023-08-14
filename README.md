@@ -59,7 +59,7 @@ you can use .envtest as an example, it has the following keys:
 - COGNITO_POOL_ID -> cognito pool id
 - EMAIL_SENDER_ADDRESS -> authorized sender in cognito
 - FRONTEND_URL -> frontend url, use http://localhost:3000/ for dev
-- SENTRY_DNS -> the DNS for sentry
+- SENTRY_DSN -> the DSN for sentry
 - COLOMBIA_SECOP_APP_TOKEN -> token to set header to fetch SECOP data
 - SECOP_PAGINATION_LIMIT -> page size to fetch SECOP data
 - SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION -> days used to compare field ultima_actualizacion the first time a fetching to SECOP data is made (or no awards in database)
