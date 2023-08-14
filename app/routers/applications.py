@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Spacer
-from sqlalchemy import and_
+from sqlalchemy import and_, text
 from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
@@ -1183,7 +1183,17 @@ async def credit_product_options(
         utils.check_is_application_expired(application)
         utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
 
-        loans = (
+        filter = None
+        if application.borrower.type.lower() == "persona natural colombiana":
+            filter = text(
+                f"(borrower_types->>'{core.BorrowerType.NATURAL_PERSON.value}')::boolean is True"
+            )
+        else:
+            filter = text(
+                f"(borrower_types->>'{core.BorrowerType.LEGAL_PERSON.value}')::boolean is True"
+            )
+
+        loans_query = (
             session.query(core.CreditProduct)
             .join(core.Lender)
             .options(joinedload(core.CreditProduct.lender))
@@ -1194,12 +1204,12 @@ async def credit_product_options(
                     core.CreditProduct.lower_limit <= payload.amount_requested,
                     core.CreditProduct.upper_limit >= payload.amount_requested,
                     ~core.Lender.id.in_(previous_lenders),
+                    filter,
                 )
             )
-            .all()
         )
 
-        credit_lines = (
+        credit_lines_query = (
             session.query(core.CreditProduct)
             .join(core.Lender)
             .options(joinedload(core.CreditProduct.lender))
@@ -1210,10 +1220,13 @@ async def credit_product_options(
                     core.CreditProduct.lower_limit <= payload.amount_requested,
                     core.CreditProduct.upper_limit >= payload.amount_requested,
                     ~core.Lender.id.in_(previous_lenders),
+                    filter,
                 )
             )
-            .all()
         )
+
+        loans = loans_query.all()
+        credit_lines = credit_lines_query.all()
 
         return ApiSchema.CreditProductListResponse(
             loans=loans, credit_lines=credit_lines
