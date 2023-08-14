@@ -105,6 +105,11 @@ class CreditType(Enum):
     CREDIT_LINE = "CREDIT_LINE"
 
 
+class BorrowerType(Enum):
+    NATURAL_PERSON = "NATURAL_PERSON"
+    LEGAL_PERSON = "LEGAL_PERSON"
+
+
 class CreditProductBase(SQLModel):
     borrower_size: BorrowerSize = Field(
         sa_column=Column(SAEnum(BorrowerSize, name="borrower_size")), nullable=False
@@ -121,6 +126,7 @@ class CreditProductBase(SQLModel):
     type: CreditType = Field(
         sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
     )
+    borrower_types: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     required_document_types: dict = Field(
         default={}, sa_column=Column(JSON), nullable=False
     )
