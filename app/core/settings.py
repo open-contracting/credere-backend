@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     database_url: str = config_env.get("DATABASE_URL", None)
     test_database_url: str = config_env.get("TEST_DATABASE_URL", None)
     frontend_url: str = config_env.get("FRONTEND_URL", "http://localhost:3000")
-    sentry_dsn: str = config_env.get("SENTRY_DNS", None)
+    sentry_dsn: str = config_env.get("SENTRY_DSN", None)
     images_base_url: str = config_env.get(
         "IMAGES_BASE_URL", "http://ocp22.open-contracting.org/images"
     )

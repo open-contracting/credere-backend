@@ -1586,11 +1586,16 @@ Valor Pagado: {
     format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
 }
 """
+    secop_link = '<link href="' + award.source_url + '">' + award.source_url + "</link>"
 
     data = [
         [
             reportlab_mods.get_translated_string("Award Data", lang),
             reportlab_mods.get_translated_string("Data", lang),
+        ],
+        [
+            reportlab_mods.get_translated_string("View data in SECOP II", lang),
+            Paragraph(secop_link, reportlab_mods.styleN),
         ],
         [
             reportlab_mods.get_translated_string("Award Title", lang),
