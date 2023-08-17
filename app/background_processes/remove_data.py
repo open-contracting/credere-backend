@@ -42,6 +42,7 @@ def remove_dated_data(db_provider: Session = get_db):
             for application in dated_applications:
                 try:
                     # save to DB
+                    application.award.previous = True
                     application.primary_email = ""
                     application.archived_at = datetime.utcnow()
 
