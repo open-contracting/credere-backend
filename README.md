@@ -59,7 +59,7 @@ you can use .envtest as an example, it has the following keys:
 - COGNITO_POOL_ID -> cognito pool id
 - EMAIL_SENDER_ADDRESS -> authorized sender in cognito
 - FRONTEND_URL -> frontend url, use http://localhost:3000/ for dev
-- SENTRY_DNS -> the DNS for sentry
+- SENTRY_DSN -> the DSN for sentry
 - COLOMBIA_SECOP_APP_TOKEN -> token to set header to fetch SECOP data
 - SECOP_PAGINATION_LIMIT -> page size to fetch SECOP data
 - SECOP_DEFAULT_DAYS_FROM_ULTIMA_ACTUALIZACION -> days used to compare field ultima_actualizacion the first time a fetching to SECOP data is made (or no awards in database)
@@ -70,16 +70,74 @@ you can use .envtest as an example, it has the following keys:
 - FACEBOOK_LINK -> link to OCP Facebook account
 - TWITTER_LINK -> link to OCP Twitter account
 - LINK_LINK -> link to (Pending to define)
-- TEST_MAIL_RECEIVER -> email used to send invitations when fetching new awards (Will be removed
+- TEST_MAIL_RECEIVER -> email used to send invitations when fetching new awards or emails to borrower.
 - DAYS_TO_ERASE_BORROWERS_DATA -> the number of days to wait before deleting borrower data
 - DAYS_TO_CHANGE_TO_LAPSED -> the number of days to wait before changing the status of an application to 'Lapsed'
 - OCP_EMAIL_GROUP -> list of ocp users for notifications
 - MAX_FILE_SIZE_MB -> max file size allowed to be uploaded
+- TEST_DATABASE_URL -> Local test database in order to not drop and generate the main local database all the time
+- PROGRESS_TO_REMIND_STARTED_APPLICATIONS -> % of days of lender SLA before an overdue reminder, for example a lender with a SLA of 10 days will receive the first overdue at 7 days mark
+- ENVIRONMENT -> needs to be set as "production" in order to send emails to real borrower address. If not, emails will be sent to TEST_MAIL_RECEIVER
 
 You should configure the pre-commit for the repo one time
 
 ```
 pre-commit install
+```
+
+## Repository structure
+
+```
+app/                                      # Main application module
+│ ├── main.py                             # Main FastAPI application entry point
+│ ├── init.py                             # Initialization of the application
+│ ├── commands.py                         # Contains Typer commands to run background processes
+│ ├── routers/                            # FastAPI routers for dividing the app into smaller sub-applications
+│ │ ├── applications.py                   # Router for application endpoints
+│ │ ├── statistics.py                     # Router for statistics endpoints
+│ │ ├── awards.py                         # Router for awards endpoints
+│ │ ├── users.py                          # Router for user endpoints
+│ │ ├── security.py                       # Router for security related endpoints
+│ │ ├── borrowers.py                      # Router for borrower endpoints
+│ │ └── lenders.py                        # Router for lender endpoints
+│ ├── utils/                              # Contains utility functions for the application
+│ │ ├── permissions.py                    # Utility for managing permissions
+│ │ ├── verify_token.py                   # Utility for JWT token verification
+│ │ ├── general_utils.py                  # General utility functions for the app
+│ │ ├── applications.py                   # Utility functions specific to applications
+│ │ ├── email_utility.py                  # Utility for email handling
+│ │ ├── users.py                          # Utility functions specific to users
+│ │ └── lenders.py                        # Utility functions specific to lenders
+│ ├── db/                                 # Handles SQLAlchemy database operations
+│ │ ├── session.py                        # SQLAlchemy session management
+│ ├── core/                               # Contains core settings and configurations
+│ │ ├── email_templates.py                # Email templates for the application
+│ │ ├── settings.py                       # Main settings file for the application, might contain FastAPI and database configurations
+│ │ └── user_dependencies.py              # Manages user dependencies, possibly through FastAPI's dependency injection
+│ ├── background_processes/               # Background tasks for the application
+│ │ ├── application_utils.py              # Utility functions related to applications
+│ │ ├── lapsed_applications.py            # Set applications as lapsed, if the conditions are met, available as a command
+│ │ ├── update_statistic.py               # Updates statistics, available as a command
+│ │ ├── colombia_data_access.py           # Handles data retrieval and processing for contracts, awards, and borrowers.
+│ │ ├── remove_data.py                    # Handles removal of dated application data, available as a command
+│ │ ├── awards_utils.py                   # Utility functions related to awards
+│ │ ├── fetcher.py                        # Fetches new awards, available as a command
+│ │ ├── send_reminder.py                  # Sends reminders mails, available as a command
+│ │ ├── SLA_overdue_applications.py       # Sets overdue applications, available as a command
+│ │ ├── background_utils.py               # General utilities
+│ │ ├── statistics_utils.py               # Utility functions for statistics
+│ │ ├── message_utils.py                  # Utility functions for messaging
+│ │ └── borrower_utils.py                 # Utility functions for borrowers
+│ ├── email_templates/                    # Contains email templates for the application
+│ └── schema/                             # Contains SQLAlchemy schema definitions for the application
+│ ├── diagram                             # Diagram for the schema
+│ ├── statistic.py                        # Statistic schema definition
+│ ├── core.py                             # Core schema definition
+│ ├── api.py                              # API schema definition
+│ └── user_tables/                        # User table schema definition
+
+
+
 ```
 
 ## Development process
@@ -180,7 +238,35 @@ To run test locally
 pytest tests -W error
 ```
 
-## Run background jobs
+You can get coverage information in console by running the following command
+
+```
+pytest --cov
+```
+
+and you can generate an html report using the following command
+
+```
+pytest --cov --cov-report=html:coverage_re
+```
+
+this will creat a folder called coverage_re in your project
+
+## Documentation
+
+To run sphinx server
+
+first install sphinx and autobuild
+
+```
+pip install furo sphinx-autobuild
+```
+
+```
+sphinx-autobuild -q docs docs/_build/html --watch .
+```
+
+## Background jobs Commands
 
 To run the list of commands available use
 
@@ -188,33 +274,138 @@ To run the list of commands available use
 python -m app.commands --help
 ```
 
-The command to fetch new awards is
+The background processes are set to run as cron jobs in the server.
+You can configure this using
+
+```
+crontab -e
+```
+
+### Ccommand to fetch new awards is
 
 ```
 python -m app.commands fetch-awards
 ```
 
-It will send invitations to the email configure in the env variable _TEST_MAIL_RECEIVER_. Alternative could receive a custom email destination with **--email-invitation** argument
+or
 
 ```
 python -m app.commands fetch-awards --email-invitation test@example.com
 ```
 
-Command to remove data from dated completed, declined, rejected and lapsed applications
+These commands gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on env variables _ENVIRONMENT_ and _TEST_MAIL_RECEIVER_ values).
+
+Alternative could receive a custom email destination with **--email-invitation** argument
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day. In the cron editor, and considere the deployment using th docker-compose of the project, you can use
+
+```
+0 4 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands fetch-awards >> /dev/null 2>&1
+```
+
+### Command to remove user data from dated applications
 
 ```
 python -m app.commands remove-dated-application-data
 ```
 
-Command to remove data from lapsed applications
+Queries the applications in 'declined', 'rejected', 'completed', and 'lapsed' status that have remained in these states longer than the time defined in the environment variable _DAYS_TO_ERASE_BORROWERS_DATA_. If no other application is using the data, it deletes all the personal data of the borrower (name, email, address, legal identifier)."
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day.
+
+```
+0 5 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands remove-dated-application-data >> /dev/null 2>&1
+```
+
+### Command to set application status to lapsed
 
 ```
 python -m app.commands update-applications-to-lapsed
 
 ```
 
-The command to send mail reminders is
+Queries the applications in 'PENDING', 'ACCEPTED', and 'INFORMATION*REQUESTED' status that have remained in these states longer than the time defined in the environment variable \_DAYS_TO_CHANGE_TO_LAPSED*, and changes their status to 'LAPSED'.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to keep the application's status updated.
+
+```
+0 6 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands update-applications-to-lapsed >> /dev/null 2>&1
+```
+
+### Command to send mail reminders is
 
 ```
 python -m app.commands send-reminders
 ```
+
+- Queries the applications in 'PENDING' status that fall within the range leading up to the expiration date. This range is defined by the environment variable _REMINDER_DAYS_BEFORE_EXPIRATION_.
+
+- The intro reminder email is sent to the applications that fulfill the previous condition.
+
+- Queries the applications in 'ACCEPTED' status that fall within the range leading up to the expiration date. This range is defined by the environment variable _REMINDER_DAYS_BEFORE_EXPIRATION_.
+
+- The submit reminder email is sent to the applications that fulfill the previous condition.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day.
+
+```
+0 7 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands send-reminders >> /dev/null 2>&1
+```
+
+### Command to send overdue appliations emails to FI users is
+
+```
+python -m app.commands sla-overdue-applications
+```
+
+This command identifies applications that are in 'INFORMATION_REQUESTED' or 'STARTED' status and overdue based on the lender's service level agreement (SLA). For each overdue application, an email is sent to OCP and to the respective lender. The command also updates the **overdued_at** attribute for applications that exceed the lender's SLA days.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to ensure that all necessary parties are notified of overdue applications in a timely manner.
+
+```
+0 8 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands sla-overdue-applications >> /dev/null 2>&1
+```
+
+### Command to update statistics is
+
+```
+python -m app.commands update-statistics
+```
+
+Performs the calculation needed to populate the statistic table with data from other tables, mainly, the Applications table.
+
+#### Scheduled Execution (Cron)
+
+This process should be run once a day to keep the statistics table updated.
+
+```
+0 6 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands update-statistics >> /dev/null 2>&1
+```
+
+#### Statistics updates
+
+This process is automatically run every time a user or MSME action adds new data that affects the statistics.
+The enpoints that update statistics are:
+
+- post "/applications/access-scheme"
+- post "/applications/{id}/reject-application",
+- post "/applications/{id}/complete-application",
+- post "/applications/{id}/approve-application",
+- post "/applications/{id}/start"
+- post "/applications/confirm-credit-product",
+- post "/applications/submit"
+- post "/applications/email-sme/"
+- post "/applications/complete-information-request"
+- post "/applications/decline"
+- post "/applications/rollback-decline",
+- post "/applications/decline-feedback"

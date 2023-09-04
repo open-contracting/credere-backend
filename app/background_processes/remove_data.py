@@ -2,6 +2,8 @@ import logging
 from contextlib import contextmanager
 from datetime import datetime
 
+from sqlalchemy.orm import Session
+
 from app.db.session import get_db
 from app.schema.core import Application
 
@@ -10,8 +12,25 @@ from . import application_utils
 get_dated_applications = application_utils.get_dated_applications
 
 
-def remove_dated_data():
-    with contextmanager(get_db)() as session:
+def remove_dated_data(db_provider: Session = get_db):
+    """
+    Remove dated data from the database.
+
+    This function retrieves applications with a decline, reject, or accepted status that are
+    past their due date from the database. It removes sensitive data from these applications
+    (e.g., primary_email) and sets the archived_at timestamp to the current UTC time. It also
+    removes associated borrower documents.
+
+    If the award associated with the application is not used in any other active applications,
+    it will also be deleted from the database. Additionally, if the borrower is not associated
+    with any other active applications, their personal information (legal_name, email, address,
+    legal_identifier) will be cleared.
+
+    :return: None
+    :rtype: None
+    """
+
+    with contextmanager(db_provider)() as session:
         dated_applications = get_dated_applications(session)
         logging.info(
             "Quantity of decline, rejecte and accepted to remove data "
@@ -23,6 +42,7 @@ def remove_dated_data():
             for application in dated_applications:
                 try:
                     # save to DB
+                    application.award.previous = True
                     application.primary_email = ""
                     application.archived_at = datetime.utcnow()
 
@@ -43,11 +63,12 @@ def remove_dated_data():
                     )
                     # Delete the associated Award if no other active applications uses the award
                     if len(active_applications_with_same_award) == 0:
-                        session.delete(application.award)
                         application.borrower.legal_name = ""
                         application.borrower.email = ""
                         application.borrower.address = ""
                         application.borrower.legal_identifier = ""
+                        application.borrower.source_data = ""
+
                     session.commit()
 
                 except Exception as e:

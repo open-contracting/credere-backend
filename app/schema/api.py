@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -12,6 +12,8 @@ from app.schema.core import User
 class ERROR_CODES(Enum):
     BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
     DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
+    APPLICATION_LAPSED = "APPLICATION_LAPSED"
+    APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
 class BasePagination(BaseModel):
@@ -77,8 +79,6 @@ class UpdateDataField(BaseModel):
     address: Optional[bool]
     legal_identifier: Optional[bool]
     type: Optional[bool]
-    sector: Optional[bool]
-    size: Optional[bool]
 
 
 class ApplicationUpdate(BaseModel):
@@ -181,3 +181,11 @@ class UserResponse(BaseModel):
 class LoginResponse(UserResponse):
     access_token: str
     refresh_token: str
+
+
+class StatisticResponse(BaseModel):
+    statistics_kpis: Dict[Any, Any]
+
+
+class StatisticOptInResponse(BaseModel):
+    opt_in_stat: Dict[Any, Any]

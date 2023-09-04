@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 from sqlalchemy import DECIMAL, Column, DateTime
@@ -19,6 +19,9 @@ class BorrowerDocumentType(Enum):
     FINANCIAL_STATEMENT = "FINANCIAL_STATEMENT"
     SIGNED_CONTRACT = "SIGNED_CONTRACT"
     COMPLIANCE_REPORT = "COMPLIANCE_REPORT"
+    SHAREHOLDER_COMPOSITION = "SHAREHOLDER_COMPOSITION"
+    CHAMBER_OF_COMMERCE = "CHAMBER_OF_COMMERCE"
+    THREE_LAST_BANK_STATEMENT = "THREE_LAST_BANK_STATEMENT"
 
 
 class ApplicationStatus(Enum):
@@ -55,6 +58,7 @@ class MessageType(Enum):
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
     EMAIL_CHANGE_CONFIRMATION = "EMAIL_CHANGE_CONFIRMATION"
+    APPLICATION_COPIED = "APPLICATION_COPIED"
 
 
 class UserType(Enum):
@@ -71,6 +75,7 @@ class ApplicationActionType(Enum):
     FI_COMPLETE_APPLICATION = "FI_COMPLETE_APPLICATION"
     FI_DOWNLOAD_DOCUMENT = "FI_DOWNLOAD_DOCUMENT"
     FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
+    OCP_DOWNLOAD_APPLICATION = "OCP_DOWNLOAD_APPLICATION"
     FI_START_APPLICATION = "FI_START_APPLICATION"
     FI_REQUEST_INFORMATION = "FI_REQUEST_INFORMATION"
     OCP_DOWNLOAD_DOCUMENT = "OCP_DOWNLOAD_DOCUMENT"
@@ -87,6 +92,8 @@ class ApplicationActionType(Enum):
     DATA_VALIDATION_UPDATE = "DATA_VALIDATION_UPDATE"
     BORROWER_DOCUMENT_UPDATE = "BORROWER_DOCUMENT_UPDATE"
     BORROWER_UPLOADED_CONTRACT = "BORROWER_UPLOADED_CONTRACT"
+    APPLICATION_COPIED_FROM = "APPLICATION_COPIED_FROM"
+    COPIED_APPLICATION = "COPIED_APPLICATION"
 
 
 class BorrowerSize(Enum):
@@ -99,6 +106,11 @@ class BorrowerSize(Enum):
 class CreditType(Enum):
     LOAN = "LOAN"
     CREDIT_LINE = "CREDIT_LINE"
+
+
+class BorrowerType(Enum):
+    NATURAL_PERSON = "NATURAL_PERSON"
+    LEGAL_PERSON = "LEGAL_PERSON"
 
 
 class CreditProductBase(SQLModel):
@@ -117,6 +129,7 @@ class CreditProductBase(SQLModel):
     type: CreditType = Field(
         sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
     )
+    borrower_types: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     required_document_types: dict = Field(
         default={}, sa_column=Column(JSON), nullable=False
     )
@@ -202,12 +215,13 @@ class ApplicationBase(SQLModel):
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
-    award_borrower_identifier: str = Field(default="", unique=True, nullable=False)
+    award_borrower_identifier: str = Field(default="", nullable=False)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id")
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
     contract_amount_submitted: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
+
     disbursed_final_amount: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
@@ -233,6 +247,9 @@ class ApplicationBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     borrower_declined_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    overdued_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     borrower_declined_preferences_data: dict = Field(
@@ -580,6 +597,7 @@ class ApplicationWithRelations(ApplicationRead):
     lender: Optional["LenderBase"] = None
     credit_product: Optional["CreditProductBase"] = None
     borrower_documents: Optional[List[BorrowerDocumentBase]] = None
+    modified_data_fields: Optional[Dict[str, Any]] = {}
 
 
 class LenderRead(LenderBase):
@@ -593,3 +611,11 @@ class LenderWithRelations(LenderRead):
 class CreditProductWithLender(CreditProductBase):
     id: int
     lender: Optional["Lender"] = None
+
+
+class StatisticData(BaseModel):
+    name: str
+    value: int
+
+    def to_dict(self):
+        return {"name": self.name, "value": self.value}

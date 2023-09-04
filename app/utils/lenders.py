@@ -11,6 +11,16 @@ from .general_utils import update_models
 
 
 def get_all_lenders(session: Session) -> LenderListResponse:
+    """
+    Retrieve all lenders from the database.
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: A response object containing all lenders, the total count of lenders,
+             and the current page and page size (in this case, both are equal to the total count).
+    :rtype: LenderListResponse
+    """
     lenders_query = session.query(core.Lender)
 
     total_count = lenders_query.count()
@@ -51,6 +61,21 @@ def create_lender(session: Session, payload: dict) -> core.Lender:
 def create_credit_product(
     session: Session, payload: dict, lender_id
 ) -> core.CreditProduct:
+    """
+    Create a new lender and associated credit products in the database.
+
+    :param session: The database session.
+    :type session: Session
+
+    :param payload: A dictionary containing the data for the new lender
+                    and optionally a list of credit products.
+    :type payload: dict
+
+    :return: The created lender instance.
+    :rtype: core.Lender
+
+    :raises HTTPException: If the lender already exists in the database.
+    """
     lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
     if not lender:
         raise HTTPException(
@@ -65,6 +90,24 @@ def create_credit_product(
 
 
 def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lender:
+    """
+    Update a lender in the database.
+
+    :param session: The database session.
+    :type session: Session
+
+    :param payload: A dictionary containing the data to update the lender.
+    :type payload: dict
+
+    :param lender_id: The ID of the lender to update.
+    :type lender_id: int
+
+    :return: The updated lender instance.
+    :rtype: core.Lender
+
+    :raises HTTPException: If the lender with the given ID doesn't exist
+                           or if a lender with the same details already exists.
+    """
     try:
         lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
         if not lender:
@@ -88,6 +131,23 @@ def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lende
 def update_credit_product(
     session: Session, payload: dict, credit_product_id: int
 ) -> core.CreditProduct:
+    """
+    Update a credit product in the database.
+
+    :param session: The database session.
+    :type session: Session
+
+    :param payload: A dictionary containing the data to update the credit product.
+    :type payload: dict
+
+    :param credit_product_id: The ID of the credit product to update.
+    :type credit_product_id: int
+
+    :return: The updated credit product instance.
+    :rtype: core.CreditProduct
+
+    :raises HTTPException: If the credit product with the given ID doesn't exist.
+    """
     credit_product = (
         session.query(core.CreditProduct)
         .filter(core.CreditProduct.id == credit_product_id)

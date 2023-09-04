@@ -14,5 +14,9 @@ templates = {
     "APPLICATION_DECLINED": "credere-ApplicationDeclined",
     "APPLICATION_DECLINED_WITHOUT_ALTERNATIVE": "credere-ApplicationDeclinedWithoutAlternativeOption",
     "APPLICATION_APPROVED": "credere-ApplicationApproved",
+    "OVERDUE_APPLICATION_FI": "credere-OverdueApplicationFI",
+    "OVERDUE_APPLICATION_OCP_ADMIN": "credere-OverdueApplicationOCPadmin",
     "NEW_CONTRACT_SUBMISSION": "credere-NewContractSubmission",
+    "APPLICATION_UPDATE": "credere-ApplicationUpdate",
+    "ALTERNATIVE_CREDIT_OPTION": "credere-AlternativeCreditOption",
 }

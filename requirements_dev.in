@@ -1,8 +1,8 @@
 -r requirements.txt
-black==22.6.0
+black
 coveralls
 flake8
-isort==5.12.0
+isort
 moto[cognitoidp]
 pip-tools
 pre-commit
