@@ -41,6 +41,8 @@ fastapi==0.95.1
     #   sentry-sdk
 future==0.18.3
     # via pyseeyou
+greenlet==2.0.2
+    # via sqlalchemy
 h11==0.14.0
     # via httpcore
 httpcore==0.17.2
@@ -90,8 +92,6 @@ python-dateutil==2.8.2
 python-dotenv==1.0.0
     # via -r requirements.in
 python-jose==3.3.0
-    # via -r requirements.in
-python-multipart==0.0.6
     # via -r requirements.in
 pytz==2023.3
     # via transifex-python

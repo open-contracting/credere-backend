@@ -12,6 +12,5 @@ jose
 httpx
 requests
 typer[all]
-python-multipart
 reportlab
 transifex-python
