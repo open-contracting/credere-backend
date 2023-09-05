@@ -113,6 +113,7 @@ async def complete_application(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     user: core.User = Depends(get_user),
+    client: CognitoClient = Depends(get_cognito_client),
 ):
     """
     Complete an application:
@@ -129,6 +130,9 @@ async def complete_application(
 
     :param user: The current user.
     :type user: core.User
+
+    :param client: The Cognito client.
+    :type client: CognitoClient
 
     :return: The completed application with its associated relations.
     :rtype: core.ApplicationWithRelations
@@ -152,6 +156,13 @@ async def complete_application(
             {
                 "disbursed_final_amount": payload.disbursed_final_amount,
             },
+        )
+        message_id = client.send_application_credit_disbursed(application)
+        utils.create_message(
+            application,
+            core.MessageType.CREDIT_DISBURSED,
+            session,
+            message_id,
         )
         background_tasks.add_task(update_statistics)
         return application
@@ -1479,6 +1490,13 @@ async def update_apps_send_notifications(
                 ocp_email_group=app_settings.ocp_email_group,
                 lender_name=application.lender.name,
                 lender_email_group=application.lender.email_group,
+            )
+            message_id = client.send_application_submission_completed(application)
+            utils.create_message(
+                application,
+                core.MessageType.SUBMITION_COMPLETE,
+                session,
+                message_id,
             )
             background_tasks.add_task(update_statistics)
             return ApiSchema.ApplicationResponse(
