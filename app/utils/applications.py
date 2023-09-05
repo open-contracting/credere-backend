@@ -12,10 +12,11 @@ from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
-import pdf_utils
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
+from pdf_utils import create_table, styleN, get_translated_string, borrower_size_dict, sector_dict, styleTitle, \
+    styleSubTitle, document_type_dict
 
 from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
@@ -1350,47 +1351,45 @@ def create_borrower_table(
 
     data = [
         [
-            reportlab_mods.get_translated_string("MSME Data", lang),
-            reportlab_mods.get_translated_string("Data", lang),
+            get_translated_string("MSME Data", lang),
+            get_translated_string("Data", lang),
         ],
         [
-            reportlab_mods.get_translated_string("Legal Name", lang),
-            Paragraph(borrower.legal_name, reportlab_mods.styleN),
+            get_translated_string("Legal Name", lang),
+            Paragraph(borrower.legal_name, styleN),
         ],
         [
-            reportlab_mods.get_translated_string("Address", lang),
-            Paragraph(borrower.address, reportlab_mods.styleN),
+            get_translated_string("Address", lang),
+            Paragraph(borrower.address, styleN),
         ],
         [
-            reportlab_mods.get_translated_string("National Tax ID", lang),
+            get_translated_string("National Tax ID", lang),
             borrower.legal_identifier,
         ],
         [
-            reportlab_mods.get_translated_string("Registration Type", lang),
+            get_translated_string("Registration Type", lang),
             borrower.type,
         ],
         [
-            reportlab_mods.get_translated_string("Size", lang),
-            reportlab_mods.get_translated_string(
-                reportlab_mods.borrower_size_dict[borrower.size], lang
+            get_translated_string("Size", lang),
+            get_translated_string(borrower_size_dict[borrower.size], lang
             ),
         ],
         [
-            reportlab_mods.get_translated_string("Sector", lang),
-            reportlab_mods.get_translated_string(
-                reportlab_mods.sector_dict[borrower.sector], lang
+            get_translated_string("Sector", lang),
+            get_translated_string(sector_dict[borrower.sector], lang
             ),
         ],
         [
-            reportlab_mods.get_translated_string("Business Email", lang),
+            get_translated_string("Business Email", lang),
             application.primary_email,
         ],
     ]
-    return reportlab_mods.create_table(data)
+    return create_table(data)
 
 
 def get_pdf_file_name(application: core.Application, lang: str):
-    name = reportlab_mods.get_translated_string("Application Details", lang).replace(
+    name = get_translated_string("Application Details", lang).replace(
         " ", "_"
     )
     filename = (
@@ -1418,12 +1417,12 @@ def create_pdf_title(title: str, lang: str, subtitle: bool = False):
     """
     if subtitle:
         return Paragraph(
-            reportlab_mods.get_translated_string(title, lang),
-            reportlab_mods.styleSubTitle,
+            get_translated_string(title, lang),
+            styleSubTitle,
         )
     else:
         return Paragraph(
-            reportlab_mods.get_translated_string(title, lang), reportlab_mods.styleTitle
+            get_translated_string(title, lang), styleTitle
         )
 
 
@@ -1441,7 +1440,7 @@ def create_table_cell(text: str, lang: str):
     :rtype: Paragraph
     """
     return Paragraph(
-        reportlab_mods.get_translated_string(text, lang), reportlab_mods.styleN
+        get_translated_string(text, lang), styleN
     )
 
 
@@ -1461,15 +1460,15 @@ def create_application_table(application: core.Application, lang: str):
 
     data = [
         [
-            reportlab_mods.get_translated_string("Financing Options", lang),
-            reportlab_mods.get_translated_string("Data", lang),
+            get_translated_string("Financing Options", lang),
+            get_translated_string("Data", lang),
         ],
         [
-            reportlab_mods.get_translated_string("Lender", lang),
+            get_translated_string("Lender", lang),
             application.lender.name,
         ],
         [
-            reportlab_mods.get_translated_string("Amount requested", lang),
+            get_translated_string("Amount requested", lang),
             format_currency(application.amount_requested, application.currency),
         ],
     ]
@@ -1477,20 +1476,20 @@ def create_application_table(application: core.Application, lang: str):
     if application.credit_product.type == core.CreditType.LOAN:
         data.append(
             [
-                reportlab_mods.get_translated_string("Type", lang),
-                reportlab_mods.get_translated_string("Loan", lang),
+                get_translated_string("Type", lang),
+                get_translated_string("Loan", lang),
             ],
         )
         data.append(
             [
-                reportlab_mods.get_translated_string("Payment start date", lang),
+                get_translated_string("Payment start date", lang),
                 format_date(str(application.payment_start_date)),
             ],
         )
         data.append(
             [
-                reportlab_mods.get_translated_string("Repayment terms", lang),
-                reportlab_mods.get_translated_string(
+                get_translated_string("Repayment terms", lang),
+                get_translated_string(
                     "{repayment_years} year(s), {repayment_months} month(s)",
                     lang,
                     {
@@ -1503,15 +1502,15 @@ def create_application_table(application: core.Application, lang: str):
     else:
         data.append(
             [
-                reportlab_mods.get_translated_string("Type", lang),
-                reportlab_mods.get_translated_string("Credit Line", lang),
+                get_translated_string("Type", lang),
+                get_translated_string("Credit Line", lang),
             ],
         )
 
     if application.status == core.ApplicationStatus.COMPLETED:
         data.append(
             [
-                reportlab_mods.get_translated_string("Contract amount", lang),
+                get_translated_string("Contract amount", lang),
                 format_currency(
                     application.contract_amount_submitted, application.currency
                 ),
@@ -1519,13 +1518,13 @@ def create_application_table(application: core.Application, lang: str):
         )
         data.append(
             [
-                reportlab_mods.get_translated_string("Credit amount", lang),
+                get_translated_string("Credit amount", lang),
                 format_currency(
                     application.disbursed_final_amount, application.currency
                 ),
             ]
         )
-    return reportlab_mods.create_table(data)
+    return create_table(data)
 
 
 def create_documents_table(documents: List[core.BorrowerDocument], lang: str):
@@ -1544,13 +1543,13 @@ def create_documents_table(documents: List[core.BorrowerDocument], lang: str):
 
     data = [
         [
-            reportlab_mods.get_translated_string("MSME Documents", lang),
-            reportlab_mods.get_translated_string("Data", lang),
+            get_translated_string("MSME Documents", lang),
+            get_translated_string("Data", lang),
         ]
     ]
     for document in documents:
-        data.append([reportlab_mods.document_type_dict[document.type], document.name])
-    return reportlab_mods.create_table(data)
+        data.append([document_type_dict[document.type], document.name])
+    return create_table(data)
 
 
 def create_award_table(award: core.Award, lang: str):
@@ -1590,60 +1589,60 @@ Valor Pagado: {
 
     data = [
         [
-            reportlab_mods.get_translated_string("Award Data", lang),
-            reportlab_mods.get_translated_string("Data", lang),
+            get_translated_string("Award Data", lang),
+            get_translated_string("Data", lang),
         ],
         [
-            reportlab_mods.get_translated_string("View data in SECOP II", lang),
-            Paragraph(secop_link, reportlab_mods.styleN),
+            get_translated_string("View data in SECOP II", lang),
+            Paragraph(secop_link, styleN),
         ],
         [
-            reportlab_mods.get_translated_string("Award Title", lang),
-            Paragraph(award.title, reportlab_mods.styleN),
+            get_translated_string("Award Title", lang),
+            Paragraph(award.title, styleN),
         ],
         [
-            reportlab_mods.get_translated_string("Contracting Process ID", lang),
-            Paragraph(award.contracting_process_id, reportlab_mods.styleN),
+            get_translated_string("Contracting Process ID", lang),
+            Paragraph(award.contracting_process_id, styleN),
         ],
         [
-            reportlab_mods.get_translated_string("Award Description", lang),
-            Paragraph(award.description, reportlab_mods.styleN),
+            get_translated_string("Award Description", lang),
+            Paragraph(award.description, styleN),
         ],
         [
-            reportlab_mods.get_translated_string("Award Date", lang),
+            get_translated_string("Award Date", lang),
             format_date(str(award.award_date)),
         ],
         [
-            reportlab_mods.get_translated_string("Award Value Currency & Amount", lang),
+            get_translated_string("Award Value Currency & Amount", lang),
             format_currency(award.award_amount, award.award_currency),
         ],
         [
-            reportlab_mods.get_translated_string("Contract Start Date", lang),
+            get_translated_string("Contract Start Date", lang),
             format_date(str(award.contractperiod_startdate)),
         ],
         [
-            reportlab_mods.get_translated_string("Contract End Date", lang),
+            get_translated_string("Contract End Date", lang),
             format_date(str(award.contractperiod_enddate)),
         ],
         [
-            reportlab_mods.get_translated_string("Payment Method", lang),
+            get_translated_string("Payment Method", lang),
             payment_method_text,
         ],
         [
-            reportlab_mods.get_translated_string("Buyer Name", lang),
+            get_translated_string("Buyer Name", lang),
             Paragraph(
                 award.buyer_name,
-                reportlab_mods.styleN,
+                styleN,
             ),
         ],
         [
-            reportlab_mods.get_translated_string("Procurement Method", lang),
-            Paragraph(award.procurement_method, reportlab_mods.styleN),
+            get_translated_string("Procurement Method", lang),
+            Paragraph(award.procurement_method, styleN),
         ],
         [
-            reportlab_mods.get_translated_string("Contract Type", lang),
-            Paragraph(award.procurement_category, reportlab_mods.styleN),
+            get_translated_string("Contract Type", lang),
+            Paragraph(award.procurement_category, styleN),
         ],
     ]
 
-    return reportlab_mods.create_table(data)
+    return create_table(data)
