@@ -459,7 +459,7 @@ def send_overdue_reminders(session: Session):
     """
     applications = get_all_applications_with_status(
         [
-            core.ApplicationStatus.INFORMATION_REQUESTED,
+            core.ApplicationStatus.CONTRACT_UPLOADED,
             core.ApplicationStatus.STARTED,
         ],
         session,
