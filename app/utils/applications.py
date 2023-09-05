@@ -15,8 +15,8 @@ from sqlalchemy.sql.expression import true
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
-from reportlab_mods import create_table, styleN, get_translated_string, borrower_size_dict, sector_dict, styleTitle, \
-    styleSubTitle, document_type_dict
+from reportlab_mods import (borrower_size_dict, create_table, document_type_dict, get_translated_string, sector_dict,
+                            styleN, styleSubTitle, styleTitle)
 
 from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
