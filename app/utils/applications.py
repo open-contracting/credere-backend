@@ -1372,13 +1372,11 @@ def create_borrower_table(
         ],
         [
             get_translated_string("Size", lang),
-            get_translated_string(borrower_size_dict[borrower.size], lang
-            ),
+            get_translated_string(borrower_size_dict[borrower.size], lang),
         ],
         [
             get_translated_string("Sector", lang),
-            get_translated_string(sector_dict[borrower.sector], lang
-            ),
+            get_translated_string(sector_dict[borrower.sector], lang),
         ],
         [
             get_translated_string("Business Email", lang),
