@@ -11,7 +11,7 @@ def test_info_endpoint():
     response = client.get("/info")
     assert response.status_code == 200
     assert response.json() == {
-        "Title": "Credence backend",
+        "Title": "Credere backend",
         "version": app_settings.version,
     }
 
