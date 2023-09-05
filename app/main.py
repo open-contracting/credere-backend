@@ -51,9 +51,9 @@ logging.basicConfig(
 
 @app.get("/")
 def read_root():
-    return {"Title": "Credence backend"}
+    return {"Title": "Credere backend"}
 
 
 @app.api_route("/info")
 async def info():
-    return {"Title": "Credence backend", "version": app_settings.version}
+    return {"Title": "Credere backend", "version": app_settings.version}
