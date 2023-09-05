@@ -37,6 +37,7 @@ pdfmetrics.registerFontFamily(
 )
 
 
+# Keep in sync with DOCUMENT_TYPES_NAMES in credere-frontend
 document_type_dict = {
     core.BorrowerDocumentType.INCORPORATION_DOCUMENT: "Incorporation Document",
     core.BorrowerDocumentType.SUPPLIER_REGISTRATION_DOCUMENT: "Supplier Registration Document",
@@ -45,8 +46,12 @@ document_type_dict = {
     core.BorrowerDocumentType.FINANCIAL_STATEMENT: "Financial Statement",
     core.BorrowerDocumentType.SIGNED_CONTRACT: "Signed Contract",
     core.BorrowerDocumentType.COMPLIANCE_REPORT: "Compliance Report",
+    core.BorrowerDocumentType.SHAREHOLDER_COMPOSITION: "Shareholder composition",
+    core.BorrowerDocumentType.CHAMBER_OF_COMMERCE: "Chamber of Commerce",
+    core.BorrowerDocumentType.THREE_LAST_BANK_STATEMENT: "Three last bank statement",
 }
 
+# Keep in sync with MSME_TYPES_NAMES in credere-frontend
 borrower_size_dict = {
     core.BorrowerSize.NOT_INFORMED: "Not informed",
     core.BorrowerSize.MICRO: "0 to 10",
@@ -54,25 +59,31 @@ borrower_size_dict = {
     core.BorrowerSize.MEDIUM: "51 to 200",
 }
 
+# Keep in sync with SECTOR_TYPES in credere-frontend
 sector_dict = {
-    "accommodation_and_food_services": "Accommodation and Food Services",
-    "administration": "Administration",
-    "agriculture_forestry_fishing_and_hunting": "Agriculture, Forestry, Fishing and Hunting",
-    "arts_entertainment_and_recreation": "Arts, Entertainment and Recreation",
-    "construction": "Construction",
-    "educational_services": "Educational Services",
-    "finance_and_insurance": "Finance and Insurance",
-    "healthcare_and_social_assistance": "Healthcare and Social Assistance",
-    "information": "Information",
-    "manufacturing": "Manufacturing",
-    "mining": "Mining",
-    "other_services": "Other Services",
-    "professional_scientific_and_technical_services": "Professional, Scientific and Technical Services",
-    "real_estate_and_rental_and_leasing": "Real Estate and Rental and Leasing",
-    "retail_trade": "Retail Trade",
-    "transportation_and_warehousing": "Transportation and Warehousing",
-    "utilities": "Utilities",
-    "wholesale_trade": "Wholesale Trade",
+    "agricultura": "Agricultura, ganadería, caza, silvicultura y pesca",
+    "minas": "Explotación de minas y canteras",
+    "manufactura": "Industrias manufactureras",
+    "electricidad": "Suministro de electricidad, gas, vapor y aire acondicionado",
+    "agua": "Distribución de agua; evacuación y tratamiento de aguas residuales, gestión de desechos y actividades de "
+            "saneamiento ambiental",
+    "construccion": "Construcción",
+    "Transporte y almacenamiento": "Transporte",
+    "alojamiento": "Alojamiento y servicios de comida",
+    "comunicaciones": "Información y comunicaciones",
+    "actividades_financieras": "Actividades financieras y de seguros",
+    "actividades_inmobiliarias": "Actividades inmobiliarias",
+    "actividades_profesionales": "Actividades profesionales, científicas y técnicas",
+    "actividades_servicios_administrativos": "Actividades de servicios administrativos y de apoyo",
+    "administracion_publica": "Administración pública y defensa; planes de seguridad social de afiliación obligatoria",
+    "educacion": "Educación",
+    "atencion_salud": "Actividades de atención de la salud humana y de asistencia social",
+    "actividades_artisticas": "Actividades artísticas, de entretenimiento y recreación",
+    "otras_actividades": "Otras actividades de servicios",
+    "actividades_hogares": "Actividades de los hogares individuales en calidad de empleadores; actividades no "
+                           "diferenciadas de los hogares individuales como productores de bienes yservicios para uso "
+                           "propio",
+    "actividades_organizaciones_extraterritoriales": "Actividades de organizaciones y entidades extraterritoriales'",
 }
 
 width, height = A4
