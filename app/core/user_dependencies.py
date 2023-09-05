@@ -387,17 +387,6 @@ class CognitoClient:
         return message_id
 
     def send_rejected_email_to_sme(self, application, options):
-        if options:
-            message_id = email_utility.send_rejected_application_email(
-                self.ses, application
-            )
-            return message_id
-        message_id = email_utility.send_rejected_application_email_without_alternatives(
-            self.ses, application
-        )
-        return message_id
-
-    def send_application_approved_to_sme(self, application: Application):
         """
         Sends a rejection email to the SME, potentially with alternatives.
 
@@ -411,7 +400,66 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
+        if options:
+            message_id = email_utility.send_rejected_application_email(
+                self.ses, application
+            )
+            return message_id
+        message_id = email_utility.send_rejected_application_email_without_alternatives(
+            self.ses, application
+        )
+        return message_id
+
+    def send_application_approved_to_sme(self, application: Application):
+        """
+        Sends a approved confirmation email to the SME.
+
+        Args:
+            application: An object representing the application details.
+
+        Returns:
+            A string representing the message id of the sent email.
+
+        Raises:
+            boto3.exceptions: Any exceptions that occur when sending the email.
+        """
         message_id = email_utility.send_application_approved_email(
+            self.ses, application
+        )
+        return message_id
+
+    def send_application_submission_completed(self, application: Application):
+        """
+        Sends a submission confirmation email to the SME.
+
+        Args:
+            application: An object representing the application details.
+
+        Returns:
+            A string representing the message id of the sent email.
+
+        Raises:
+            boto3.exceptions: Any exceptions that occur when sending the email.
+        """
+        message_id = email_utility.send_application_submission_completed(
+            self.ses, application
+        )
+        return message_id
+
+    def send_application_credit_disbursed(self, application: Application):
+        """
+        Sends a credit disbursed confirmation email to the SME.
+
+        Args:
+            application: An object representing the application details.
+
+        Returns:
+            A string representing the message id of the sent email.
+
+        Raises:
+            boto3.exceptions: Any exceptions that occur when sending the email.
+        """
+        message_id = email_utility.send_application_credit_disbursed(
             self.ses, application
         )
         return message_id

@@ -1,0 +1,201 @@
+<html lang='en'>
+  <head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Application Submitted</title>
+    <meta name='description' content='Figma htmlGenerator' />
+    <meta name='author' content='htmlGenerator' />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        color: #000;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 21px;
+      }
+
+      .wrapperGlobal {
+        max-width: 600px;
+        min-width: 300px;
+      }
+
+      .pre_header_table {
+        height: 56px;
+        display: table;
+        width: 100%;
+      }
+
+      .pre_header_table_cell {
+        display: table-cell;
+        text-align: center;
+        vertical-align: middle;
+      }
+
+      .header {
+        background-color: #323232;
+        height: 100px;
+      }
+
+      .logoOCP {
+        padding-left: 15%;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .main_content_first {
+        margin-left: 2.5rem;
+        margin-right: 2.5rem;
+        margin-top: 2.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid lightgray;
+        height: auto;
+      }
+
+      .main_content_second {
+        margin-left: 2.5rem;
+        margin-right: 2.5rem;
+        margin-top: 2.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid lightgray;
+        height: auto;
+      }
+
+      .main_content_third {
+        margin-left: 2.5rem;
+        margin-right: 2.5rem;
+        margin-top: 2.5rem;
+        margin-bottom: 2rem;
+        height: auto;
+      }
+
+      .main_content_item {
+        margin-top: 0.3rem;
+        margin-bottom: 1rem;
+      }
+
+      .title {
+        color: rgba(0, 0, 0, 1);
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .login_complete_image {
+        padding-top: 1rem;
+      }
+
+      .footer {
+        background-color: #e0e6ee;
+        height: 135px;
+      }
+
+      .footer_icons_div_table {
+        height: 60%;
+        display: table;
+        width: 100%;
+      }
+
+      .footer_icons_div_table_cell {
+        display: table-cell;
+        text-align: center;
+        vertical-align: middle;
+      }
+
+      .icons_img {
+        display: inline-block;
+        margin: 0 5px;
+        width: 24px;
+        height: 24px;
+      }
+
+      .footer_copyrigth_div {
+        text-align: center;
+      }
+
+      .footer_copyrigth {
+        margin-bottom: 2rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class='wrapperGlobal'>
+      <div class='pre_header_table'>
+        <div class='pre_header_table_cell'>
+          <a href='{{LINK-TO-WEB-VERSION}}'>
+            <p>View this email in your browser</p>
+          </a>
+        </div>
+      </div>
+      <div class='header'>
+        <img class='logoOCP' title='OCPlogo' src='{{OCP_LOGO}}' alt='OCP logo' />
+      </div>
+      <div class='main_content_first'>
+        <div class='title main_content_item'>Application Submission Complete</div>
+        <div class='main_content_item'>
+          <p>Hi {{AWARD_SUPPLIER_NAME}},</p>
+        </div>
+        <div class='action main_content_item'>
+          <p>Thank you for submitting your credit application using Credere. Your application has been sent to {{FI}}.</p>
+        </div>
+        <div class='action main_content_item'>
+          <p>
+            Pending some checks by {{FI}}, we will be in touch via email to let you know if the application has been approved and
+            tell you the next steps for funds to be disbursed to you.
+          </p>
+        </div>
+        <div class='action main_content_item'>
+          <p>
+            In the meantime if you have any questions, you can reach out to member of the Open Contracting Partnership team at:
+            credere@open-contracting.org.
+          </p>
+        </div>
+      </div>
+      <div class='main_content_second'>
+        <div class='title main_content_item'>About the Open Contracting Partnership</div>
+        <div class='action main_content_item'>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ultrices justo eget diam eleifend pharetra. In congue
+            augue nec justo congue, nec tempus odio tempor. Nunc euismod fermentum diam, quis placerat orci semper sit amet. Etiam
+            eleifend elementum dignissim. Phasellus congue aliquet sem interdum ornare. Donec condimentum egestas augue eget varius.
+            Suspendisse euismod fermentum purus, a ullamcorper massa luctus vel. In vehicula tortor nisi, in fermentum sem
+            ullamcorper sit amet. Vivamus ac ante mi.
+          </p>
+        </div>
+      </div>
+      <div class='main_content_third'>
+        <div class='action main_content_item'>
+          <p>You're receiving this notification because you have recently won a pubic sector contract award.</p>
+        </div>
+      </div>
+      <div class='footer'>
+        <div class='footer_icons_div_table'>
+          <div class='footer_icons_div_table_cell'>
+            <a href='{{TWITTER_LINK}}'>
+              <img class='icons_img' title='Twitter' src='{{TWITTER_LOGO}}' alt='Twitter logo' />
+            </a>
+            <a href='{{FACEBOOK_LINK}}'>
+              <img class='icons_img' title='Facebook' src='{{FB_LOGO}}' alt='facebook logo' />
+            </a>
+            <a href='{{LINK_LINK}}'>
+              <img class='icons_img' title='link' src='{{LINK_LOGO}}' alt='link logo' />
+            </a>
+          </div>
+        </div>
+        <div class='footer_copyrigth_div'>
+          <p class='footer_copyrigth'>Copyright © 2023 Open Contracting Partnership. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

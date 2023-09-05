@@ -19,4 +19,6 @@ templates = {
     "NEW_CONTRACT_SUBMISSION": "credere-NewContractSubmission",
     "APPLICATION_UPDATE": "credere-ApplicationUpdate",
     "ALTERNATIVE_CREDIT_OPTION": "credere-AlternativeCreditOption",
+    "APPLICATION_SUBMITTED_COMPLETED": "credere-ApplicationSubmissionCompleted",
+    "APPLICATION_CREDIT_DISBURSED": "credere-ApplicationCreditDisbursed",
 }

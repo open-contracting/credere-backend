@@ -109,6 +109,62 @@ def send_application_approved_email(ses, application: Application):
     )
 
 
+def send_application_submission_completed(ses, application: Application):
+    """
+    Sends an email notification when an application is submitted.
+
+    The email is sent to the primary email address associated
+    with the application. The function utilizes the SES (Simple Email Service) client to send the email.
+
+    :param ses: SES client instance used to send emails.
+    :type ses: botocore.client.SES
+    :param application: The application object which has been approved.
+    :type application: Application
+    """
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+    }
+
+    destinations = set_destionations(application.primary_email)
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={"ToAddresses": [destinations]},
+        Template=f"{templates['APPLICATION_SUBMITTED_COMPLETED']}-{app_settings.email_template_lang}",
+        TemplateData=json.dumps(data),
+    )
+
+
+def send_application_credit_disbursed(ses, application: Application):
+    """
+    Sends an email notification when an application has the credit dibursed.
+
+    The email is sent to the primary email address associated
+    with the application. The function utilizes the SES (Simple Email Service) client to send the email.
+
+    :param ses: SES client instance used to send emails.
+    :type ses: botocore.client.SES
+    :param application: The application object which has been approved.
+    :type application: Application
+    """
+    data = {
+        **generate_common_data(),
+        "FI": application.lender.name,
+        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+    }
+
+    destinations = set_destionations(application.primary_email)
+
+    ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={"ToAddresses": [destinations]},
+        Template=f"{templates['APPLICATION_CREDIT_DISBURSED']}-{app_settings.email_template_lang}",
+        TemplateData=json.dumps(data),
+    )
+
+
 def send_mail_to_new_user(ses, name, username, temp_password):
     """
     Sends an email to a new user with a link to set their password.
