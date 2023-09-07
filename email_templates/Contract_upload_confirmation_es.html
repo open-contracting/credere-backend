@@ -55,14 +55,30 @@
       margin-bottom: 1rem;
     }
 
-    .main_content {
+    .main_content_first {
+      margin-left: 2.5rem;
+      margin-right: 2.5rem;
+      margin-top: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid lightgray;
+      height: auto;
+    }
+
+    .main_content_second {
+      margin-left: 2.5rem;
+      margin-right: 2.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid lightgray;
+      height: auto;
+    }
+
+    .main_content_third {
       margin-left: 2.5rem;
       margin-right: 2.5rem;
       margin-top: 2.5rem;
       margin-bottom: 2rem;
-      border-bottom: 1px solid lightgray;
       height: auto;
-      padding-bottom: 2rem;
     }
 
     .main_content_item {
@@ -120,20 +136,38 @@
     <div class='header'>
       <img class='logoOCP' title='OCPlogo' src='{{OCP_LOGO}}' alt='OCP logo' />
     </div>
-    <div class='main_content'>
-      <div class='title main_content_item'>Bienvenido a Credere</div>
+    <div class='main_content_first'>
+      <div class='title main_content_item'>Gracias por subir el contrato firmado.</div>
       <div class='main_content_item'>
-        <p>Su cuenta de usuario fue creada.</p>
+        <p>Estimado/a, {{AWARD_SUPPLIER_NAME}}, </p>
       </div>
       <div class='action main_content_item'>
         <p>
-          Establece tu contraseña para empezar a usar Credere para aprobar solicitudes de crédito de las MIPYMES.
+          Hemos recibido la copia firmada de su contrato con {{BUYER_NAME}} para la adjudicación {{TENDER_TITLE}}.
         </p>
       </div>
-      <div class=' login_complete_image'>
-        <a href='{{LOGIN_URL}}'>
-          <img src='{{SET_PASSWORD_IMAGE_LINK}}' alt='link to login' />
-        </a>
+      <div class='action main_content_item'>
+        <p>
+          El proveedor de crédito ahora revisará el contrato y se comunicará con usted para desembolsar los fondos.
+        </p>
+      </div>
+      <div class='action main_content_item'>
+        <p>
+          Gracias por utilizar Credere. Si tiene algún comentario, comuníquese con credere@open-contracting.org.
+        </p>
+      </div>
+    </div>
+    <div class='main_content_second'>
+      <div class='title main_content_item'>Sobre Open Contracting Partnership</div>
+      <div class='action main_content_item'>
+        <p>
+          Open Contracting Partnership es una organización benéfica pública independiente sin fines de lucro 501(c)(3) que trabaja en más de 50 países.
+          Somos una colaboración que rompe los silos entre gobiernos, empresas, sociedad civil y tecnólogos para abrir y transformar
+          la contratación pública en todo el mundo. Al unir datos abiertos y gobierno abierto, nos aseguramos de que
+          el dinero público se gaste de manera abierta, justa y efectiva en contratos públicos, el origen de gasto más importante
+          de la mayoría de los gobiernos. Son el principal riesgo de corrupción para un gobierno y son vitales para
+          garantizar que los ciudadanos obtengan los servicios que merecen.
+        </p>
       </div>
     </div>
     <div class=' footer'>
