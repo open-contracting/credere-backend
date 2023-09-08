@@ -58,13 +58,13 @@ def test_create_and_get_user(client):  # noqa
 
     # try to get all users
     response = client.get(
-        "/users?page=0&page_size=5&sort_field=user_created_at&sort_order=desc",
+        "/users?page=0&page_size=5&sort_field=credere_user_created_at&sort_order=desc",
         headers=OCP_headers,
     )
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get(
-        "/users?page=0&page_size=5&sort_field=user_created_at&sort_order=desc",
+        "/users?page=0&page_size=5&sort_field=credere_user_created_at&sort_order=desc",
         headers=FI_headers,
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
