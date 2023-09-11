@@ -7,97 +7,93 @@ from urllib.parse import quote
 from app.core.settings import app_settings
 from app.schema.core import Application
 
-BASE_TEMPLATES_PATH = os.path.join(Path(__file__).absolute().parent.parent.parent, 'email_templates')
+BASE_TEMPLATES_PATH = os.path.join(
+    Path(__file__).absolute().parent.parent.parent, "email_templates"
+)
 
 # Templates files names and email subject
 TEMPLATE_FILES = {
     "Access_to_credit_reminder": {
         "es": "Recordatorio - Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato estatal",
-        "en": "Reminder - Opportunity to access MSME credit for being awarded a public contract"
+        "en": "Reminder - Opportunity to access MSME credit for being awarded a public contract",
     },
-    "Access_to_credit_scheme_for_MSMEs":{
+    "Access_to_credit_scheme_for_MSMEs": {
         "es": "Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato estatal",
-        "en": "Opportunity to access MSME credit for being awarded a public contract"
+        "en": "Opportunity to access MSME credit for being awarded a public contract",
     },
     "alternative_credit_msme": {
         "es": "Alternative credit option",
-        "en": "Opción de crédito alternativa"
+        "en": "Opción de crédito alternativa",
     },
     "Application_approved": {
         "es": "Your credit application has been approved",
-        "en": "Su solicitud de crédito ha sido aprobada"
+        "en": "Su solicitud de crédito ha sido aprobada",
     },
     "Application_credit_disbursed": {
         "es": "Credit Disbursed",
-        "en": "Crédito desembolsado"
+        "en": "Crédito desembolsado",
     },
     "Application_declined": {
         "es": "Your credit application has been declined",
-        "en": "Su solicitud de crédito ha sido rechazada"
+        "en": "Su solicitud de crédito ha sido rechazada",
     },
     "Application_declined_without_alternative": {
         "es": "Your credit application has been declined",
-        "en": "Su solicitud de crédito ha sido rechazada"
+        "en": "Su solicitud de crédito ha sido rechazada",
     },
     "Application_submitted": {
         "es": "Application Submission Complete",
-        "en": "Envío de aplicación completada"
+        "en": "Envío de aplicación completada",
     },
     "Complete_application_reminder": {
         "es": "Complete your credit application",
-        "en": "Complete su solicitud de crédito"
+        "en": "Complete su solicitud de crédito",
     },
     "Confirm_email_address_change": {
         "es": "Confirm email address change",
-        "en": "Confirmar cambio de dirección de correo electrónico"
+        "en": "Confirmar cambio de dirección de correo electrónico",
     },
     "Contract_upload_confirmation": {
         "es": "Thank you for uploading the signed contract",
-        "en": "Gracias por subir su contrato firmado"
+        "en": "Gracias por subir su contrato firmado",
     },
     "Credit_application_submitted": {
         "es": "Your credit application has been submitted",
-        "en": "Su solicitud de crédito ha sido enviada"
+        "en": "Su solicitud de crédito ha sido enviada",
     },
     "FI_Documents_Updated_FI_user": {
         "es": "Application updated",
-        "en": "Aplicación actualizada"
+        "en": "Aplicación actualizada",
     },
     "FI_New_application_submission_FI_user": {
         "es": "New application submission",
-        "en": "Nueva aplicación recibida"
+        "en": "Nueva aplicación recibida",
     },
-    "New_Account_Created": {
-        "es": "Welcome",
-        "en": "Bienvenido/a"
-    },
+    "New_Account_Created": {"es": "Welcome", "en": "Bienvenido/a"},
     "New_application_submission_OCP_user": {
         "es": "New application submission",
-        "en": "Nueva aplicación recibida"
+        "en": "Nueva aplicación recibida",
     },
     "New_contract_submission": {
         "es": "New contract submission",
-        "en": "Una MIPYME ha subido su contrato"
+        "en": "Una MIPYME ha subido su contrato",
     },
     "Overdue_application_FI": {
         "es": "You have credit applications that need processing",
-        "en": "Tiene solicitudes de crédito que necesitan procesamiento"
+        "en": "Tiene solicitudes de crédito que necesitan procesamiento",
     },
     "Overdue_application_OCP_admin": {
         "es": "New overdue application",
-        "en": "Nueva solicitud vencida"
+        "en": "Nueva solicitud vencida",
     },
     "Request_data_to_SME": {
         "es": "New message from a financial institution",
-        "en": "Nuevo mensaje de una institución financiera"
+        "en": "Nuevo mensaje de una institución financiera",
     },
-    "Reset_password": {
-        "es": "Reset password",
-        "en": "Restablecer contraseña"
-    },
+    "Reset_password": {"es": "Reset password", "en": "Restablecer contraseña"},
     "Upload_contract": {
         "es": "Please upload your contract",
-        "en": "Por favor sube tu contrato"
+        "en": "Por favor sube tu contrato",
     },
 }
 
@@ -137,7 +133,8 @@ def generate_common_data():
         "TWITTER_LOGO": app_settings.images_base_url + "/twiterlogo.png",
         "FB_LOGO": app_settings.images_base_url + "/facebook.png",
         "LINK_LOGO": app_settings.images_base_url + "/link.png",
-        "STRIVE_LOGO": app_settings.images_base_url + "/strive_logo_lockup_horizontal_positive.png",
+        "STRIVE_LOGO": app_settings.images_base_url
+        + "/strive_logo_lockup_horizontal_positive.png",
         "TWITTER_LINK": app_settings.twitter_link,
         "FACEBOOK_LINK": app_settings.facebook_link,
         "LINK_LINK": app_settings.link_link,
@@ -163,11 +160,13 @@ def get_images_base_url():
 
 
 def prepare_html(template_name, parameters):
-    subject = f"Credere - {TEMPLATE_FILES[template_name][app_settings.email_template_lang]}"
-    if app_settings.email_template_lang == 'es':
+    subject = (
+        f"Credere - {TEMPLATE_FILES[template_name][app_settings.email_template_lang]}"
+    )
+    if app_settings.email_template_lang == "es":
         template_name = f"{template_name}_es"
     template_name = f"{template_name}.html"
-    with open(os.path.join(BASE_TEMPLATES_PATH, template_name), encoding='utf-8') as f:
+    with open(os.path.join(BASE_TEMPLATES_PATH, template_name), encoding="utf-8") as f:
         html = f.read()
     for key in parameters.keys():
         to_replace = "{{" + key + "}}"
@@ -175,7 +174,7 @@ def prepare_html(template_name, parameters):
     data = {
         **generate_common_data(),
         "CONTENT": html,
-        "SUBJECT": f"Credere - {subject}"
+        "SUBJECT": f"Credere - {subject}",
     }
     return data
 
@@ -216,7 +215,7 @@ def send_application_approved_email(ses, application: Application):
         "UPLOAD_CONTRACT_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/upload-contract",
         "UPLOAD_CONTRACT_IMAGE_LINK": f"{images_base_url}/uploadContract.png",
     }
-    data = prepare_html('Access_to_credit_reminder', html_data)
+    data = prepare_html("Access_to_credit_reminder", html_data)
 
     send_email(ses, application.primary_email, data)
 
@@ -238,7 +237,9 @@ def send_application_submission_completed(ses, application: Application):
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
 
-    send_email(ses, application.primary_email, prepare_html('Application_submitted', html_data))
+    send_email(
+        ses, application.primary_email, prepare_html("Application_submitted", html_data)
+    )
 
 
 def send_application_credit_disbursed(ses, application: Application):
@@ -259,7 +260,11 @@ def send_application_credit_disbursed(ses, application: Application):
         "FI_EMAIL": application.lender.email_group,
     }
 
-    send_email(ses, application.primary_email, prepare_html('Application_credit_disbursed', html_data))
+    send_email(
+        ses,
+        application.primary_email,
+        prepare_html("Application_credit_disbursed", html_data),
+    )
 
 
 def send_mail_to_new_user(ses, name, username, temp_password):
@@ -286,13 +291,13 @@ def send_mail_to_new_user(ses, name, username, temp_password):
         "USER": name,
         "SET_PASSWORD_IMAGE_LINK": f"{images_base_url}/set_password.png",
         "LOGIN_URL": app_settings.frontend_url
-                     + "/create-password?key="
-                     + quote(temp_password)
-                     + "&email="
-                     + quote(username),
+        + "/create-password?key="
+        + quote(temp_password)
+        + "&email="
+        + quote(username),
     }
 
-    send_email(ses, username, prepare_html('New_Account_Created', html_data))
+    send_email(ses, username, prepare_html("New_Account_Created", html_data))
 
 
 def send_upload_contract_notification_to_FI(ses, application):
@@ -316,7 +321,11 @@ def send_upload_contract_notification_to_FI(ses, application):
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    send_email(ses, application.lender.email_group, prepare_html('New_contract_submission', html_data))
+    send_email(
+        ses,
+        application.lender.email_group,
+        prepare_html("New_contract_submission", html_data),
+    )
 
 
 def send_upload_contract_confirmation(ses, application):
@@ -338,16 +347,20 @@ def send_upload_contract_confirmation(ses, application):
         "BUYER_NAME": application.award.buyer_name,
     }
 
-    send_email(ses, application.lender.email_group, prepare_html('Contract_upload_confirmation', html_data))
+    send_email(
+        ses,
+        application.lender.email_group,
+        prepare_html("Contract_upload_confirmation", html_data),
+    )
 
 
 def send_new_email_confirmation(
-        ses,
-        borrower_name: str,
-        new_email: str,
-        old_email: str,
-        confirmation_email_token: str,
-        application_uuid: str,
+    ses,
+    borrower_name: str,
+    new_email: str,
+    old_email: str,
+    confirmation_email_token: str,
+    application_uuid: str,
 ):
     """
     Sends an email to confirm the new primary email for the borrower.
@@ -373,11 +386,11 @@ def send_new_email_confirmation(
 
     images_base_url = get_images_base_url()
     confirm_email_change_url = (
-            app_settings.frontend_url
-            + "/application/"
-            + quote(application_uuid)
-            + "/change-primary-email?token="
-            + quote(confirmation_email_token)
+        app_settings.frontend_url
+        + "/application/"
+        + quote(application_uuid)
+        + "/change-primary-email?token="
+        + quote(confirmation_email_token)
     )
     html_data = {
         "NEW_MAIL": new_email,
@@ -389,7 +402,7 @@ def send_new_email_confirmation(
     new_email_address = set_destionations(new_email)
     old_email_address = set_destionations(old_email)
 
-    data = prepare_html('Confirm_email_address_change', html_data)
+    data = prepare_html("Confirm_email_address_change", html_data)
 
     response = send_email(ses, new_email_address, data)
     send_email(ses, old_email_address, data)
@@ -417,14 +430,14 @@ def send_mail_to_reset_password(ses, username: str, temp_password: str):
     html_data = {
         "USER_ACCOUNT": username,
         "RESET_PASSWORD_URL": app_settings.frontend_url
-                              + "/create-password?key="
-                              + quote(temp_password)
-                              + "&email="
-                              + quote(username),
+        + "/create-password?key="
+        + quote(temp_password)
+        + "&email="
+        + quote(username),
         "RESET_PASSWORD_IMAGE": images_base_url + "/ResetPassword.png",
     }
 
-    send_email(ses, username, prepare_html('Reset_password', html_data))
+    send_email(ses, username, prepare_html("Reset_password", html_data))
 
 
 def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_title):
@@ -463,7 +476,9 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
-    return send_email(ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data))
+    return send_email(
+        ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data)
+    )
 
 
 def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender_title):
@@ -497,9 +512,9 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
         "FIND_OUT_MORE_URL": app_settings.frontend_url
-                             + "/application/"
-                             + quote(uuid)
-                             + "/intro",
+        + "/application/"
+        + quote(uuid)
+        + "/intro",
         "FIND_OUT_MORE_IMAGE_LINK": images_base_url + "/findoutmore.png",
         "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
@@ -511,11 +526,13 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         f"{app_settings.environment} - Email to: {email} sent to {destinations}"
     )
 
-    return send_email(ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data))
+    return send_email(
+        ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data)
+    )
 
 
 def send_mail_submit_reminder(
-        ses, uuid, email, borrower_name, buyer_name, tender_title
+    ses, uuid, email, borrower_name, buyer_name, tender_title
 ):
     """
     Sends a submission reminder email to the provided email address.
@@ -544,12 +561,12 @@ def send_mail_submit_reminder(
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
         "APPLY_FOR_CREDIT_URL": app_settings.frontend_url
-                                + "/application/"
-                                + quote(uuid)
-                                + "/intro",
+        + "/application/"
+        + quote(uuid)
+        + "/intro",
         "APPLY_FOR_CREDIT_IMAGE_LINK": images_base_url + "/applyForCredit.png",
         "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
-        "REMOVE_ME_URL": F"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
+        "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
     return send_email(ses, email, prepare_html("Access_to_credit_reminder", html_data))
@@ -571,7 +588,11 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    send_email(ses, lender_email_group, prepare_html("FI_New_application_submission_FI_user", html_data))
+    send_email(
+        ses,
+        lender_email_group,
+        prepare_html("FI_New_application_submission_FI_user", html_data),
+    )
 
 
 def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
@@ -594,7 +615,11 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    send_email(ses, ocp_email_group, prepare_html("New_application_submission_OCP_user", html_data))
+    send_email(
+        ses,
+        ocp_email_group,
+        prepare_html("New_application_submission_OCP_user", html_data),
+    )
 
 
 def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
@@ -674,7 +699,11 @@ def send_overdue_application_email_to_OCP(ses, name: str):
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    return send_email(ses, app_settings.ocp_email_group, prepare_html("Overdue_application_OCP_admin", html_data))
+    return send_email(
+        ses,
+        app_settings.ocp_email_group,
+        prepare_html("Overdue_application_OCP_admin", html_data),
+    )
 
 
 def send_rejected_application_email(ses, application):
@@ -694,10 +723,12 @@ def send_rejected_application_email(ses, application):
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
         "FIND_ALTENATIVE_URL": app_settings.frontend_url
-                               + f"/application/{quote(application.uuid)}/find-alternative-credit",
+        + f"/application/{quote(application.uuid)}/find-alternative-credit",
         "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
     }
-    return send_email(ses, application.primary_email, prepare_html("Application_declined", html_data))
+    return send_email(
+        ses, application.primary_email, prepare_html("Application_declined", html_data)
+    )
 
 
 def send_rejected_application_email_without_alternatives(ses, application):
@@ -718,8 +749,11 @@ def send_rejected_application_email_without_alternatives(ses, application):
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
-    return send_email(ses, application.primary_email, prepare_html("Application_declined_without_alternative",
-                                                                   html_data))
+    return send_email(
+        ses,
+        application.primary_email,
+        prepare_html("Application_declined_without_alternative", html_data),
+    )
 
 
 def send_copied_application_notification_to_sme(ses, application):
@@ -742,7 +776,11 @@ def send_copied_application_notification_to_sme(ses, application):
         "CONTINUE_URL": f"{app_settings.frontend_url}/application/{application.uuid}/credit-options",
     }
 
-    return send_email(ses, application.primary_email, prepare_html("alternative_credit_msme", html_data))
+    return send_email(
+        ses,
+        application.primary_email,
+        prepare_html("alternative_credit_msme", html_data),
+    )
 
 
 def send_upload_documents_notifications_to_FI(ses, email: str):
@@ -765,4 +803,6 @@ def send_upload_documents_notifications_to_FI(ses, email: str):
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    return send_email(ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data))
+    return send_email(
+        ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data)
+    )
