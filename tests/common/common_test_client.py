@@ -17,7 +17,7 @@ from app.core.settings import app_settings
 from app.db.session import get_db
 from app.routers import applications, lenders, security, statistics, users
 from app.schema import core
-from app.utils.email_utility import TEMPLATE_FILES
+
 from tests.common.utils import create_enums
 from tests.protected_routes import users_test  # noqa
 from tests.protected_routes import applications_test, borrowers_test  # noqa
