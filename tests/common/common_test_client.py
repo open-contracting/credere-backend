@@ -13,11 +13,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core import user_dependencies
-from app.core.email_templates import templates
 from app.core.settings import app_settings
 from app.db.session import get_db
 from app.routers import applications, lenders, security, statistics, users
 from app.schema import core
+from app.utils.email_utility import TEMPLATE_FILES
 from tests.common.utils import create_enums
 from tests.protected_routes import users_test  # noqa
 from tests.protected_routes import applications_test, borrowers_test  # noqa
@@ -112,10 +112,10 @@ def mock_ses_client():
 
 
 def create_templates(ses):
-    for key, value in templates.items():
+    for key in ["-es", ""]:
         ses.create_template(
             Template={
-                "TemplateName": templates[key] + "-" + app_settings.email_template_lang,
+                "TemplateName": f"credere-main{key}",
                 "SubjectPart": "Your email subject",
                 "HtmlPart": "<html><body>Your HTML content</body></html>",
                 "TextPart": "Your plain text content",
