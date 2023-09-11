@@ -15,8 +15,9 @@ from sqlalchemy.sql.expression import true
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
-from reportlab_mods import (borrower_size_dict, create_table, document_type_dict, get_translated_string, sector_dict,
-                            styleN, styleSubTitle, styleTitle)
+from reportlab_mods import (borrower_size_dict, create_table,
+                            document_type_dict, get_translated_string,
+                            sector_dict, styleN, styleSubTitle, styleTitle)
 
 from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
@@ -1387,9 +1388,7 @@ def create_borrower_table(
 
 
 def get_pdf_file_name(application: core.Application, lang: str):
-    name = get_translated_string("Application Details", lang).replace(
-        " ", "_"
-    )
+    name = get_translated_string("Application Details", lang).replace(" ", "_")
     filename = (
         f"{name}-{application.borrower.legal_identifier}"
         + f"-{application.award.source_contract_id}.pdf"
@@ -1419,9 +1418,7 @@ def create_pdf_title(title: str, lang: str, subtitle: bool = False):
             styleSubTitle,
         )
     else:
-        return Paragraph(
-            get_translated_string(title, lang), styleTitle
-        )
+        return Paragraph(get_translated_string(title, lang), styleTitle)
 
 
 def create_table_cell(text: str, lang: str):
@@ -1437,9 +1434,7 @@ def create_table_cell(text: str, lang: str):
     :return: The generated cell text.
     :rtype: Paragraph
     """
-    return Paragraph(
-        get_translated_string(text, lang), styleN
-    )
+    return Paragraph(get_translated_string(text, lang), styleN)
 
 
 def create_application_table(application: core.Application, lang: str):

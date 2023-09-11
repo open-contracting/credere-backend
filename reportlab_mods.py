@@ -66,7 +66,7 @@ sector_dict = {
     "manufactura": "Industrias manufactureras",
     "electricidad": "Suministro de electricidad, gas, vapor y aire acondicionado",
     "agua": "Distribución de agua; evacuación y tratamiento de aguas residuales, gestión de desechos y actividades de "
-            "saneamiento ambiental",
+    "saneamiento ambiental",
     "construccion": "Construcción",
     "Transporte y almacenamiento": "Transporte",
     "alojamiento": "Alojamiento y servicios de comida",
@@ -81,8 +81,8 @@ sector_dict = {
     "actividades_artisticas": "Actividades artísticas, de entretenimiento y recreación",
     "otras_actividades": "Otras actividades de servicios",
     "actividades_hogares": "Actividades de los hogares individuales en calidad de empleadores; actividades no "
-                           "diferenciadas de los hogares individuales como productores de bienes yservicios para uso "
-                           "propio",
+    "diferenciadas de los hogares individuales como productores de bienes yservicios para uso "
+    "propio",
     "actividades_organizaciones_extraterritoriales": "Actividades de organizaciones y entidades extraterritoriales'",
 }
 
