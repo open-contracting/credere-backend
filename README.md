@@ -142,7 +142,7 @@ app/                                      # Main application module
 
 ## Development process
 
-### Identation and formatting
+### Indentation and formatting
 
 Black formater extention for VS code is being used for formatting, no config needed (ext id ms-python.black-formatter)
 
@@ -409,3 +409,20 @@ The enpoints that update statistics are:
 - post "/applications/decline"
 - post "/applications/rollback-decline",
 - post "/applications/decline-feedback"
+
+## First admin user set up
+
+1. Create a user in Cognito
+- Create the user manually in the pool from the AWS console.
+- Mark "Don’t send invitation" and mark the option of verified email address.
+- After adding the new user to the pool, get the username from Cognito.
+
+2. Create the user in the Credere database
+- Insert in the user table from the Credere database a record for the user.
+- INSERT INTO public.credere_user(type, language, email, name, external_id)
+VALUES ("OCP", "es", {EMAIL}, “Admin User”, {COGNITO_USER_ID});
+
+3. Reset the password through the Frontend
+- Go to the login page
+- Click "Forgot Password?"
+- You will receive the email to set the password and after that configure the MFA for the new user.
