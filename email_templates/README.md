@@ -2,7 +2,7 @@
 
 This project uses SES services from AWS to store email templates and send emails.
 
-## AWS SES console configuration
+## AWS SES Configuration
 
 ### Verified identities
 
@@ -23,7 +23,7 @@ In AWS SES, for the verified entity sending the mail, we must set:
 
 ## AWS CLI use to create, update and send mails
 
-first we must install the AWS CLI.
+First we must install the AWS CLI.
 
 For AWS CLI installation instrucctions please refer to the docs at:
 [https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
@@ -36,7 +36,15 @@ For a full list of SES commands, please refer to:
 
 Examples of the commands most frequently used:
 
-## Create template
+## Create templates
+
+### Parameters in templates
+
+Templeates are in HTML. To introduce a parameter you can add **{{PARAMETER_NAME}}** as text inside any HTML attribute or text, for replace text or URLs for example.
+
+In the code, when using the **send_templated_email** method from the SES client, add the **PARAMETER_NAME** as key in the dict passed as **TemplateData** parameter of the methodfun.
+
+If the parameter is an URL for an image, you can follow the URL structure use in the function **generate_common_data** where the ENV variable **app_settings.images_base_url** is used to create the full URL.
 
 ### AWS SES Command Example
 
