@@ -22,78 +22,78 @@ TEMPLATE_FILES = {
         "en": "Opportunity to access MSME credit for being awarded a public contract",
     },
     "alternative_credit_msme": {
-        "es": "Alternative credit option",
-        "en": "Opción de crédito alternativa",
+        "en": "Alternative credit option",
+        "es": "Opción de crédito alternativa",
     },
     "Application_approved": {
-        "es": "Your credit application has been approved",
-        "en": "Su solicitud de crédito ha sido aprobada",
+        "en": "Your credit application has been approved",
+        "es": "Su solicitud de crédito ha sido aprobada",
     },
     "Application_credit_disbursed": {
-        "es": "Credit Disbursed",
-        "en": "Crédito desembolsado",
+        "en": "Credit Disbursed",
+        "es": "Crédito desembolsado",
     },
     "Application_declined": {
-        "es": "Your credit application has been declined",
-        "en": "Su solicitud de crédito ha sido rechazada",
+        "en": "Your credit application has been declined",
+        "es": "Su solicitud de crédito ha sido rechazada",
     },
     "Application_declined_without_alternative": {
-        "es": "Your credit application has been declined",
-        "en": "Su solicitud de crédito ha sido rechazada",
+        "en": "Your credit application has been declined",
+        "es": "Su solicitud de crédito ha sido rechazada",
     },
     "Application_submitted": {
-        "es": "Application Submission Complete",
-        "en": "Envío de aplicación completada",
+        "en": "Application Submission Complete",
+        "es": "Envío de aplicación completada",
     },
     "Complete_application_reminder": {
-        "es": "Complete your credit application",
-        "en": "Complete su solicitud de crédito",
+        "en": "Complete your credit application",
+        "es": "Complete su solicitud de crédito",
     },
     "Confirm_email_address_change": {
-        "es": "Confirm email address change",
-        "en": "Confirmar cambio de dirección de correo electrónico",
+        "en": "Confirm email address change",
+        "es": "Confirmar cambio de dirección de correo electrónico",
     },
     "Contract_upload_confirmation": {
-        "es": "Thank you for uploading the signed contract",
-        "en": "Gracias por subir su contrato firmado",
+        "en": "Thank you for uploading the signed contract",
+        "es": "Gracias por subir su contrato firmado",
     },
     "Credit_application_submitted": {
-        "es": "Your credit application has been submitted",
-        "en": "Su solicitud de crédito ha sido enviada",
+        "en": "Your credit application has been submitted",
+        "es": "Su solicitud de crédito ha sido enviada",
     },
     "FI_Documents_Updated_FI_user": {
-        "es": "Application updated",
-        "en": "Aplicación actualizada",
+        "en": "Application updated",
+        "es": "Aplicación actualizada",
     },
     "FI_New_application_submission_FI_user": {
-        "es": "New application submission",
-        "en": "Nueva aplicación recibida",
+        "en": "New application submission",
+        "es": "Nueva aplicación recibida",
     },
-    "New_Account_Created": {"es": "Welcome", "en": "Bienvenido/a"},
+    "New_Account_Created": {"en": "Welcome", "es": "Bienvenido/a"},
     "New_application_submission_OCP_user": {
-        "es": "New application submission",
-        "en": "Nueva aplicación recibida",
+        "en": "New application submission",
+        "es": "Nueva aplicación recibida",
     },
     "New_contract_submission": {
-        "es": "New contract submission",
-        "en": "Una MIPYME ha subido su contrato",
+        "en": "New contract submission",
+        "es": "Una MIPYME ha subido su contrato",
     },
     "Overdue_application_FI": {
-        "es": "You have credit applications that need processing",
-        "en": "Tiene solicitudes de crédito que necesitan procesamiento",
+        "en": "You have credit applications that need processing",
+        "es": "Tiene solicitudes de crédito que necesitan procesamiento",
     },
     "Overdue_application_OCP_admin": {
-        "es": "New overdue application",
-        "en": "Nueva solicitud vencida",
+        "en": "New overdue application",
+        "es": "Nueva solicitud vencida",
     },
     "Request_data_to_SME": {
-        "es": "New message from a financial institution",
-        "en": "Nuevo mensaje de una institución financiera",
+        "en": "New message from a financial institution",
+        "es": "Nuevo mensaje de una institución financiera",
     },
-    "Reset_password": {"es": "Reset password", "en": "Restablecer contraseña"},
+    "Reset_password": {"en": "Reset password", "es": "Restablecer contraseña"},
     "Upload_contract": {
-        "es": "Please upload your contract",
-        "en": "Por favor sube tu contrato",
+        "en": "Please upload your contract",
+        "es": "Por favor sube tu contrato",
     },
 }
 
@@ -174,7 +174,7 @@ def prepare_html(template_name, parameters):
     data = {
         **generate_common_data(),
         "CONTENT": html,
-        "SUBJECT": f"Credere - {subject}",
+        "SUBJECT": f"{subject}",
     }
     return data
 
