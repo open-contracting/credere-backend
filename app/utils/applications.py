@@ -1549,7 +1549,14 @@ def create_documents_table(documents: List[core.BorrowerDocument], lang: str):
         ]
     ]
     for document in documents:
-        data.append([reportlab_mods.document_type_dict[document.type], document.name])
+        data.append(
+            [
+                reportlab_mods.get_translated_string(
+                    reportlab_mods.document_type_dict[document.type], lang
+                ),
+                document.name,
+            ]
+        )
     return reportlab_mods.create_table(data)
 
 
