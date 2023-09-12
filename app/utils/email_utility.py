@@ -1,10 +1,101 @@
 import json
 import logging
+import os
+from pathlib import Path
 from urllib.parse import quote
 
-from app.core.email_templates import templates
 from app.core.settings import app_settings
 from app.schema.core import Application
+
+BASE_TEMPLATES_PATH = os.path.join(
+    Path(__file__).absolute().parent.parent.parent, "email_templates"
+)
+
+# Templates files names and email subject
+TEMPLATE_FILES = {
+    "Access_to_credit_reminder": {
+        "es": "Recordatorio - Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato estatal",
+        "en": "Reminder - Opportunity to access MSME credit for being awarded a public contract",
+    },
+    "Access_to_credit_scheme_for_MSMEs": {
+        "es": "Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato estatal",
+        "en": "Opportunity to access MSME credit for being awarded a public contract",
+    },
+    "alternative_credit_msme": {
+        "es": "Alternative credit option",
+        "en": "Opción de crédito alternativa",
+    },
+    "Application_approved": {
+        "es": "Your credit application has been approved",
+        "en": "Su solicitud de crédito ha sido aprobada",
+    },
+    "Application_credit_disbursed": {
+        "es": "Credit Disbursed",
+        "en": "Crédito desembolsado",
+    },
+    "Application_declined": {
+        "es": "Your credit application has been declined",
+        "en": "Su solicitud de crédito ha sido rechazada",
+    },
+    "Application_declined_without_alternative": {
+        "es": "Your credit application has been declined",
+        "en": "Su solicitud de crédito ha sido rechazada",
+    },
+    "Application_submitted": {
+        "es": "Application Submission Complete",
+        "en": "Envío de aplicación completada",
+    },
+    "Complete_application_reminder": {
+        "es": "Complete your credit application",
+        "en": "Complete su solicitud de crédito",
+    },
+    "Confirm_email_address_change": {
+        "es": "Confirm email address change",
+        "en": "Confirmar cambio de dirección de correo electrónico",
+    },
+    "Contract_upload_confirmation": {
+        "es": "Thank you for uploading the signed contract",
+        "en": "Gracias por subir su contrato firmado",
+    },
+    "Credit_application_submitted": {
+        "es": "Your credit application has been submitted",
+        "en": "Su solicitud de crédito ha sido enviada",
+    },
+    "FI_Documents_Updated_FI_user": {
+        "es": "Application updated",
+        "en": "Aplicación actualizada",
+    },
+    "FI_New_application_submission_FI_user": {
+        "es": "New application submission",
+        "en": "Nueva aplicación recibida",
+    },
+    "New_Account_Created": {"es": "Welcome", "en": "Bienvenido/a"},
+    "New_application_submission_OCP_user": {
+        "es": "New application submission",
+        "en": "Nueva aplicación recibida",
+    },
+    "New_contract_submission": {
+        "es": "New contract submission",
+        "en": "Una MIPYME ha subido su contrato",
+    },
+    "Overdue_application_FI": {
+        "es": "You have credit applications that need processing",
+        "en": "Tiene solicitudes de crédito que necesitan procesamiento",
+    },
+    "Overdue_application_OCP_admin": {
+        "es": "New overdue application",
+        "en": "Nueva solicitud vencida",
+    },
+    "Request_data_to_SME": {
+        "es": "New message from a financial institution",
+        "en": "Nuevo mensaje de una institución financiera",
+    },
+    "Reset_password": {"es": "Reset password", "en": "Restablecer contraseña"},
+    "Upload_contract": {
+        "es": "Please upload your contract",
+        "en": "Por favor sube tu contrato",
+    },
+}
 
 
 def set_destionations(email: str):
@@ -38,11 +129,12 @@ def generate_common_data():
     """
 
     return {
-        "LINK-TO-WEB-VERSION": app_settings.frontend_url,
         "OCP_LOGO": app_settings.images_base_url + "/logoocp.jpg",
         "TWITTER_LOGO": app_settings.images_base_url + "/twiterlogo.png",
         "FB_LOGO": app_settings.images_base_url + "/facebook.png",
         "LINK_LOGO": app_settings.images_base_url + "/link.png",
+        "STRIVE_LOGO": app_settings.images_base_url
+        + "/strive_logo_lockup_horizontal_positive.png",
         "TWITTER_LINK": app_settings.twitter_link,
         "FACEBOOK_LINK": app_settings.facebook_link,
         "LINK_LINK": app_settings.link_link,
@@ -60,13 +152,44 @@ def get_images_base_url():
     :rtype: str
     """
 
-    # todo refactor required when this function receives the user language
-
     images_base_url = app_settings.images_base_url
     if app_settings.email_template_lang != "":
         images_base_url = f"{images_base_url}/{app_settings.email_template_lang}"
 
     return images_base_url
+
+
+def prepare_html(template_name, parameters):
+    subject = (
+        f"Credere - {TEMPLATE_FILES[template_name][app_settings.email_template_lang]}"
+    )
+    if app_settings.email_template_lang == "es":
+        template_name = f"{template_name}_es"
+    template_name = f"{template_name}.html"
+    with open(os.path.join(BASE_TEMPLATES_PATH, template_name), encoding="utf-8") as f:
+        html = f.read()
+    for key in parameters.keys():
+        to_replace = "{{" + key + "}}"
+        html = html.replace(to_replace, str(parameters[key]))
+    data = {
+        **generate_common_data(),
+        "CONTENT": html,
+        "SUBJECT": f"Credere - {subject}",
+    }
+    return data
+
+
+def send_email(ses, email, data):
+    destinations = set_destionations(email)
+
+    response = ses.send_templated_email(
+        Source=app_settings.email_sender_address,
+        Destination={"ToAddresses": [destinations]},
+        Template=f"credere-main-{app_settings.email_template_lang}",
+        TemplateData=json.dumps(data),
+    )
+
+    return response.get("MessageId")
 
 
 def send_application_approved_email(ses, application: Application):
@@ -82,31 +205,19 @@ def send_application_approved_email(ses, application: Application):
     :param application: The application object which has been approved.
     :type application: Application
     """
-    # todo refactor required when this function receives the user language
 
     images_base_url = get_images_base_url()
-
-    data = {
-        **generate_common_data(),
+    html_data = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
         "TENDER_TITLE": application.award.title,
         "BUYER_NAME": application.award.buyer_name,
-        "UPLOAD_CONTRACT_URL": app_settings.frontend_url
-        + "/application/"
-        + quote(application.uuid)
-        + "/upload-contract",
-        "UPLOAD_CONTRACT_IMAGE_LINK": images_base_url + "/uploadContract.png",
+        "UPLOAD_CONTRACT_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/upload-contract",
+        "UPLOAD_CONTRACT_IMAGE_LINK": f"{images_base_url}/uploadContract.png",
     }
+    data = prepare_html("Access_to_credit_reminder", html_data)
 
-    destinations = set_destionations(application.primary_email)
-
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['APPLICATION_APPROVED']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
-    )
+    send_email(ses, application.primary_email, data)
 
 
 def send_application_submission_completed(ses, application: Application):
@@ -121,19 +232,13 @@ def send_application_submission_completed(ses, application: Application):
     :param application: The application object which has been approved.
     :type application: Application
     """
-    data = {
-        **generate_common_data(),
+    html_data = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
 
-    destinations = set_destionations(application.primary_email)
-
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['APPLICATION_SUBMITTED_COMPLETED']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    send_email(
+        ses, application.primary_email, prepare_html("Application_submitted", html_data)
     )
 
 
@@ -149,19 +254,16 @@ def send_application_credit_disbursed(ses, application: Application):
     :param application: The application object which has been approved.
     :type application: Application
     """
-    data = {
-        **generate_common_data(),
+    html_data = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+        "FI_EMAIL": application.lender.email_group,
     }
 
-    destinations = set_destionations(application.primary_email)
-
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['APPLICATION_CREDIT_DISBURSED']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    send_email(
+        ses,
+        application.primary_email,
+        prepare_html("Application_credit_disbursed", html_data),
     )
 
 
@@ -183,12 +285,9 @@ def send_mail_to_new_user(ses, name, username, temp_password):
     :type temp_password: str
     """
 
-    # todo refactor required when this function receives the user language
-
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "USER": name,
         "SET_PASSWORD_IMAGE_LINK": f"{images_base_url}/set_password.png",
         "LOGIN_URL": app_settings.frontend_url
@@ -198,12 +297,7 @@ def send_mail_to_new_user(ses, name, username, temp_password):
         + quote(username),
     }
 
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [username]},
-        Template=f"{templates['NEW_USER_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
-    )
+    send_email(ses, username, prepare_html("New_Account_Created", html_data))
 
 
 def send_upload_contract_notification_to_FI(ses, application):
@@ -220,22 +314,17 @@ def send_upload_contract_notification_to_FI(ses, application):
     :type application: core.Application
     """
 
-    # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    destinations = set_destionations(application.lender.email_group)
-
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['NEW_CONTRACT_SUBMISSION']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    send_email(
+        ses,
+        application.lender.email_group,
+        prepare_html("New_contract_submission", html_data),
     )
 
 
@@ -251,21 +340,17 @@ def send_upload_contract_confirmation(ses, application):
     :param application: The application associated with the contract.
     :type application: core.Application
     """
-    # todo refactor required when this function receives the user language
-    data = {
-        **generate_common_data(),
+
+    html_data = {
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
         "TENDER_TITLE": application.award.title,
         "BUYER_NAME": application.award.buyer_name,
     }
 
-    destinations = set_destionations(application.primary_email)
-
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['CONTRACT_UPLOAD_CONFIRMATION_TEMPLATE_NAME']}-{app_settings.email_template_lang}",  # noqa
-        TemplateData=json.dumps(data),
+    send_email(
+        ses,
+        application.lender.email_group,
+        prepare_html("Contract_upload_confirmation", html_data),
     )
 
 
@@ -300,38 +385,29 @@ def send_new_email_confirmation(
     """
 
     images_base_url = get_images_base_url()
-    CONFIRM_EMAIL_CHANGE_URL = (
+    confirm_email_change_url = (
         app_settings.frontend_url
         + "/application/"
         + quote(application_uuid)
         + "/change-primary-email?token="
         + quote(confirmation_email_token)
     )
-    data = {
-        **generate_common_data(),
+    html_data = {
         "NEW_MAIL": new_email,
         "AWARD_SUPPLIER_NAME": borrower_name,
-        "CONFIRM_EMAIL_CHANGE_URL": CONFIRM_EMAIL_CHANGE_URL,
+        "CONFIRM_EMAIL_CHANGE_URL": confirm_email_change_url,
         "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": images_base_url + "/confirmemailchange.png",
     }
 
     new_email_address = set_destionations(new_email)
     old_email_address = set_destionations(old_email)
 
-    message = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [new_email_address]},
-        Template=f"{templates['EMAIL_CHANGE_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
-    )
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [old_email_address]},
-        Template=f"{templates['EMAIL_CHANGE_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
-    )
+    data = prepare_html("Confirm_email_address_change", html_data)
 
-    return message["MessageId"]
+    response = send_email(ses, new_email_address, data)
+    send_email(ses, old_email_address, data)
+
+    return response
 
 
 def send_mail_to_reset_password(ses, username: str, temp_password: str):
@@ -351,8 +427,7 @@ def send_mail_to_reset_password(ses, username: str, temp_password: str):
 
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "USER_ACCOUNT": username,
         "RESET_PASSWORD_URL": app_settings.frontend_url
         + "/create-password?key="
@@ -362,12 +437,7 @@ def send_mail_to_reset_password(ses, username: str, temp_password: str):
         "RESET_PASSWORD_IMAGE": images_base_url + "/ResetPassword.png",
     }
 
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [username]},
-        Template=f"{templates['RESET_PASSWORD_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
-    )
+    send_email(ses, username, prepare_html("Reset_password", html_data))
 
 
 def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_title):
@@ -396,32 +466,19 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
 
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "FIND_OUT_MORE_IMAGE_LINK": images_base_url + "/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
-        "FIND_OUT_MORE_URL": app_settings.frontend_url
-        + "/application/"
-        + quote(uuid)
-        + "/intro",
-        "REMOVE_ME_URL": app_settings.frontend_url
-        + "/application/"
-        + quote(uuid)
-        + "/decline",
+        "FIND_OUT_MORE_IMAGE_LINK": f"{images_base_url}/findoutmore.png",
+        "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
+        "FIND_OUT_MORE_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/intro",
+        "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
-    destinations = set_destionations(email)
-
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME']}-{app_settings.email_template_lang}",  # noqa
-        TemplateData=json.dumps(data),
+    return send_email(
+        ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data)
     )
-    return response.get("MessageId")
 
 
 def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender_title):
@@ -449,8 +506,8 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
     """
 
     images_base_url = get_images_base_url()
-    data = {
-        **generate_common_data(),
+
+    html_data = {
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
@@ -460,10 +517,7 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         + "/intro",
         "FIND_OUT_MORE_IMAGE_LINK": images_base_url + "/findoutmore.png",
         "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
-        "REMOVE_ME_URL": app_settings.frontend_url
-        + "/application/"
-        + quote(uuid)
-        + "/decline",
+        "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
     destinations = set_destionations(email)
@@ -472,15 +526,9 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         f"{app_settings.environment} - Email to: {email} sent to {destinations}"
     )
 
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['INTRO_REMINDER_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    return send_email(
+        ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data)
     )
-    message_id = response.get("MessageId")
-    logging.info(message_id)
-    return response.get("MessageId")
 
 
 def send_mail_submit_reminder(
@@ -508,8 +556,7 @@ def send_mail_submit_reminder(
     :return: The MessageId of the sent email.
     :rtype: str"""
     images_base_url = get_images_base_url()
-    data = {
-        **generate_common_data(),
+    html_data = {
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
@@ -519,25 +566,10 @@ def send_mail_submit_reminder(
         + "/intro",
         "APPLY_FOR_CREDIT_IMAGE_LINK": images_base_url + "/applyForCredit.png",
         "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
-        "REMOVE_ME_URL": app_settings.frontend_url
-        + "/application/"
-        + quote(uuid)
-        + "/decline",
+        "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
-    destinations = set_destionations(email)
-    logging.info(
-        f"{app_settings.environment} - Email to: {email} sent to {destinations}"
-    )
 
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['APPLICATION_REMINDER_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
-    )
-    message_id = response.get("MessageId")
-    logging.info(message_id)
-    return response.get("MessageId")
+    return send_email(ses, email, prepare_html("Access_to_credit_reminder", html_data))
 
 
 def send_notification_new_app_to_fi(ses, lender_email_group):
@@ -549,20 +581,17 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
     :param lender_email_group: List of email addresses belonging to the lender.
     :type lender_email_group: list[str]
     """
-    # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [lender_email_group]},
-        Template=f"{templates['NEW_APPLICATION_SUBMISSION_FI_TEMPLATE_NAME']}-{app_settings.email_template_lang}",  # noqa
-        TemplateData=json.dumps(data),
+    send_email(
+        ses,
+        lender_email_group,
+        prepare_html("FI_New_application_submission_FI_user", html_data),
     )
 
 
@@ -580,18 +609,16 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
     # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "FI": lender_name,
         "LOGIN_URL": app_settings.frontend_url + "/login",
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [ocp_email_group]},
-        Template=f"{templates['NEW_APPLICATION_SUBMISSION_OCP_TEMPLATE_NAME']}-{app_settings.email_template_lang}",  # noqa
-        TemplateData=json.dumps(data),
+    send_email(
+        ses,
+        ocp_email_group,
+        prepare_html("New_application_submission_OCP_user", html_data),
     )
 
 
@@ -612,29 +639,16 @@ def send_mail_request_to_sme(ses, uuid, lender_name, email_message, sme_email):
     :return: The unique identifier for the sent message.
     :rtype: str
     """
-    # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "FI": lender_name,
         "FI_MESSAGE": email_message,
-        "LOGIN_DOCUMENTS_URL": app_settings.frontend_url
-        + "/application/"
-        + quote(uuid)
-        + "/documents",
-        "LOGIN_IMAGE_LINK": images_base_url + "/uploadDocument.png",
+        "LOGIN_DOCUMENTS_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/documents",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/uploadDocument.png",
     }
 
-    destinations = set_destionations(sme_email)
-
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['REQUEST_SME_DATA_TEMPLATE_NAME']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
-    )
-    return response.get("MessageId")
+    return send_email(ses, sme_email, prepare_html("Request_data_to_SME", html_data))
 
 
 def send_overdue_application_email_to_FI(ses, name: str, email: str, amount: int):
@@ -652,26 +666,17 @@ def send_overdue_application_email_to_FI(ses, name: str, email: str, amount: int
     :return: The unique identifier for the sent message.
     :rtype: str
     """
-    # todo refactor required when this function receives the user language
+
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "USER": name,
         "NUMBER_APPLICATIONS": amount,
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    destinations = set_destionations(email)
-
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['OVERDUE_APPLICATION_FI']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
-    )
-    return response.get("MessageId")
+    return send_email(ses, email, prepare_html("Overdue_application_FI", html_data))
 
 
 def send_overdue_application_email_to_OCP(ses, name: str):
@@ -685,24 +690,20 @@ def send_overdue_application_email_to_OCP(ses, name: str):
     :return: The unique identifier for the sent message.
     :rtype: str
     """
-    # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "USER": name,
         "FI": name,
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [app_settings.ocp_email_group]},
-        Template=f"{templates['OVERDUE_APPLICATION_OCP_ADMIN']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    return send_email(
+        ses,
+        app_settings.ocp_email_group,
+        prepare_html("Overdue_application_OCP_admin", html_data),
     )
-    return response.get("MessageId")
 
 
 def send_rejected_application_email(ses, application):
@@ -716,26 +717,18 @@ def send_rejected_application_email(ses, application):
     :return: The unique identifier for the sent message.
     :rtype: str
     """
-    # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
         "FIND_ALTENATIVE_URL": app_settings.frontend_url
         + f"/application/{quote(application.uuid)}/find-alternative-credit",
         "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
     }
-    destinations = set_destionations(application.primary_email)
-
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['APPLICATION_DECLINED']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    return send_email(
+        ses, application.primary_email, prepare_html("Application_declined", html_data)
     )
-    return response.get("MessageId")
 
 
 def send_rejected_application_email_without_alternatives(ses, application):
@@ -752,20 +745,15 @@ def send_rejected_application_email_without_alternatives(ses, application):
     """
     # todo refactor required when this function receives the user language
 
-    data = {
-        **generate_common_data(),
+    html_data = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
-    destinations = set_destionations(application.primary_email)
-
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['APPLICATION_DECLINED_WITHOUT_ALTERNATIVE']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    return send_email(
+        ses,
+        application.primary_email,
+        prepare_html("Application_declined_without_alternative", html_data),
     )
-    return response.get("MessageId")
 
 
 def send_copied_application_notification_to_sme(ses, application):
@@ -782,25 +770,17 @@ def send_copied_application_notification_to_sme(ses, application):
     """
     # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
-    data = {
-        **generate_common_data(),
+    html_data = {
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-        "CONTINUE_IMAGE_LINK": images_base_url + "/continueInCredere.png",
-        "CONTINUE_URL": app_settings.frontend_url
-        + "/application/"
-        + application.uuid
-        + "/credit-options",
+        "CONTINUE_IMAGE_LINK": f"{images_base_url}/continueInCredere.png",
+        "CONTINUE_URL": f"{app_settings.frontend_url}/application/{application.uuid}/credit-options",
     }
 
-    destinations = set_destionations(application.primary_email)
-
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['ALTERNATIVE_CREDIT_OPTION']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    return send_email(
+        ses,
+        application.primary_email,
+        prepare_html("alternative_credit_msme", html_data),
     )
-    return response.get("MessageId")
 
 
 def send_upload_documents_notifications_to_FI(ses, email: str):
@@ -815,20 +795,14 @@ def send_upload_documents_notifications_to_FI(ses, email: str):
     :return: The unique identifier for the sent message.
     :rtype: str
     """
-    # todo refactor required when this function receives the user language
+
     images_base_url = get_images_base_url()
-    data = {
+    html_data = {
         **generate_common_data(),
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    destinations = set_destionations(email)
-
-    response = ses.send_templated_email(
-        Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
-        Template=f"{templates['APPLICATION_UPDATE']}-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+    return send_email(
+        ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data)
     )
-    return response.get("MessageId")

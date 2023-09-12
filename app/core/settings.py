@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     images_base_url: str = config_env.get(
         "IMAGES_BASE_URL", "https://credere.open-contracting.org/images"
     )
-    email_template_lang: str = config_env.get("EMAIL_TEMPLATE_LANG", "")
+    email_template_lang: str = config_env.get("EMAIL_TEMPLATE_LANG", "es")
     facebook_link: str = config_env.get("FACEBOOK_LINK", "www.facebook.com")
     twitter_link: str = config_env.get("TWITTER_LINK", "www.twitter.com")
     link_link: str = config_env.get("LINK_LINK", "http://localhost:3000")
