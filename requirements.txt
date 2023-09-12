@@ -31,6 +31,7 @@ click==8.1.3
     # via
     #   transifex-python
     #   typer
+    #   uvicorn
 colorama==0.4.6
     # via typer
 ecdsa==0.18.0
@@ -41,8 +42,12 @@ fastapi==0.95.1
     #   sentry-sdk
 future==0.18.3
     # via pyseeyou
+greenlet==2.0.2
+    # via sqlalchemy
 h11==0.14.0
-    # via httpcore
+    # via
+    #   httpcore
+    #   uvicorn
 httpcore==0.17.2
     # via httpx
 httpx==0.24.1
@@ -151,3 +156,5 @@ urllib3==1.26.15
     #   botocore
     #   requests
     #   sentry-sdk
+uvicorn==0.22.0
+    # via -r requirements.in

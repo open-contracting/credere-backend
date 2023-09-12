@@ -19,6 +19,9 @@ class BorrowerDocumentType(Enum):
     FINANCIAL_STATEMENT = "FINANCIAL_STATEMENT"
     SIGNED_CONTRACT = "SIGNED_CONTRACT"
     COMPLIANCE_REPORT = "COMPLIANCE_REPORT"
+    SHAREHOLDER_COMPOSITION = "SHAREHOLDER_COMPOSITION"
+    CHAMBER_OF_COMMERCE = "CHAMBER_OF_COMMERCE"
+    THREE_LAST_BANK_STATEMENT = "THREE_LAST_BANK_STATEMENT"
 
 
 class ApplicationStatus(Enum):
@@ -548,6 +551,7 @@ class UserWithLender(UserBase):
 
 
 class User(UserBase, table=True):
+    __tablename__ = "credere_user"
     application_actions: List["ApplicationAction"] = Relationship(back_populates="user")
     lender: Optional["Lender"] = Relationship(back_populates="users")
 
@@ -561,7 +565,7 @@ class ApplicationAction(SQLModel, table=True):
     data: dict = Field(default={}, sa_column=Column(JSON))
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="actions")
-    user_id: int = Field(default=None, foreign_key="user.id")
+    user_id: int = Field(default=None, foreign_key="credere_user.id")
     user: Optional[User] = Relationship(back_populates="application_actions")
     created_at: Optional[datetime] = Field(
         sa_column=Column(

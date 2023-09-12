@@ -1,0 +1,175 @@
+<html lang='en'>
+
+<head>
+    <meta charset='utf-8'/>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+    <title>Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato estatal</title>
+    <meta name='description' content='Figma htmlGenerator'/>
+    <meta name='author' content='htmlGenerator'/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            color: #000;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 21px;
+        }
+
+        .wrapperGlobal {
+            max-width: 600px;
+            min-width: 300px;
+        }
+
+        .header {
+            background-color: #323232;
+            height: 100px;
+        }
+
+        .logoOCP {
+            padding-left: 15%;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .logoStrive {
+            max-width: 25%;
+            margin-bottom: -0.5rem;
+        }
+
+        .main_content_first {
+            margin-left: 2.5rem;
+            margin-right: 2.5rem;
+            margin-top: 2.5rem;
+            padding-bottom: 2rem;
+            height: auto;
+            border-bottom: 1px solid lightgray;
+        }
+
+        .main_content_second {
+            margin-left: 2.5rem;
+            margin-right: 2.5rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid lightgray;
+            height: auto;
+        }
+
+        .main_content_third {
+            margin: 1rem 2.5rem;
+            height: auto;
+        }
+
+        .main_content_item {
+            margin-top: 0.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .title {
+            color: rgba(0, 0, 0, 1);
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+
+        .footer {
+            background-color: #e0e6ee;
+            height: 135px;
+        }
+
+        .footer_icons_div_table {
+            height: 60%;
+            display: table;
+            width: 100%;
+        }
+
+        .footer_icons_div_table_cell {
+            display: table-cell;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .icons_img {
+            display: inline-block;
+            margin: 0 5px;
+            width: 24px;
+            height: 24px;
+        }
+
+        .footer_copyrigth_div {
+            text-align: center;
+        }
+
+        .footer_copyrigth {
+            margin-bottom: 2rem;
+        }
+
+        .center {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+<div class='wrapperGlobal'>
+    <div class='header'>
+        <img class='logoOCP' title='OCPlogo' src='{{OCP_LOGO}}' alt='OCP logo'/>
+    </div>
+
+    <div class='main_content_first'>
+
+    {{CONTENT}}
+
+    </div>
+
+    <div class='main_content_second'>
+        <div class='title main_content_item'>Sobre Open Contracting Partnership</div>
+        <div class='action main_content_item'>
+            <p>
+                Open Contracting Partnership es una organización benéfica pública independiente sin fines de lucro
+                501(c)(3) que trabaja en más de 50 países.
+                Somos una colaboración que rompe los silos entre gobiernos, empresas, sociedad civil y tecnólogos para
+                abrir y transformar la contratación pública en todo el mundo.
+            </p>
+        </div>
+    </div>
+    <div class='main_content_third center'>
+        <div class='title main_content_item'>Supported by <img class='logoStrive' title='StriveLogo' src='{{STRIVE_LOGO}}'
+                                                               alt='Strive logo'/></div>
+        <div class='action main_content_item'>
+            <p>
+                This tool is funded by Strive Community, a global philanthropic initiative launched by the Mastercard
+                Center for Inclusive Growth and Caribou Digital, which aims to support 5 million small businesses
+                globally to build resilience and grow.
+            </p>
+        </div>
+    </div>
+    <div class=' footer'>
+        <div class='footer_icons_div_table'>
+            <div class='footer_icons_div_table_cell'>
+                <a href='{{TWITTER_LINK}}'>
+                    <img class=' icons_img' title='Twitter' src='{{TWITTER_LOGO}}' alt='Twitter logo'/>
+                </a>
+                <a href='{{FACEBOOK_LINK}}'>
+                    <img class='icons_img' title='Facebook' src='{{FB_LOGO}}' alt='facebook logo'/>
+                </a>
+                <a href='{{LINK_LINK}}'>
+                    <img class='icons_img' title='link' src='{{LINK_LOGO}}' alt='link logo'/>
+                </a>
+            </div>
+        </div>
+        <div class='footer_copyrigth_div'>
+            <p class='footer_copyrigth'>
+                Copyright © 2023 Open Contracting Partnership. All rights reserved.
+            </p>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

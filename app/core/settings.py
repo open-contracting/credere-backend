@@ -49,9 +49,9 @@ class Settings(BaseSettings):
     frontend_url: str = config_env.get("FRONTEND_URL", "http://localhost:3000")
     sentry_dsn: str = config_env.get("SENTRY_DSN", None)
     images_base_url: str = config_env.get(
-        "IMAGES_BASE_URL", "http://ocp22.open-contracting.org/images"
+        "IMAGES_BASE_URL", "https://credere.open-contracting.org/images"
     )
-    email_template_lang: str = config_env.get("EMAIL_TEMPLATE_LANG", "")
+    email_template_lang: str = config_env.get("EMAIL_TEMPLATE_LANG", "es")
     facebook_link: str = config_env.get("FACEBOOK_LINK", "www.facebook.com")
     twitter_link: str = config_env.get("TWITTER_LINK", "www.twitter.com")
     link_link: str = config_env.get("LINK_LINK", "http://localhost:3000")
