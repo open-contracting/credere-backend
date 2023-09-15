@@ -396,6 +396,7 @@ class LenderBase(SQLModel):
     email_group: str = Field(default="")
     type: str = Field(default="")
     sla_days: Optional[int]
+    logo_filename: str = Field(default="")
 
 
 class Lender(LenderBase, table=True):
