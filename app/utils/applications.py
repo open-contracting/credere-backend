@@ -15,12 +15,21 @@ from sqlalchemy.sql.expression import true
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
-from reportlab_mods import (borrower_size_dict, create_table,
-                            document_type_dict, get_translated_string,
-                            sector_dict, styleN, styleSubTitle, styleTitle)
 
 from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
+
+from reportlab_mods import (  # noqa: F401 #isort:skip
+    borrower_size_dict,  # noqa: F401 #isort:skip
+    create_table,  # noqa: F401 #isort:skip
+    document_type_dict,  # noqa: F401 #isort:skip
+    get_translated_string,  # noqa: F401 #isort:skip
+    sector_dict,  # noqa: F401 #isort:skip
+    styleN,  # noqa: F401 #isort:skip
+    styleSubTitle,  # noqa: F401 #isort:skip
+    styleTitle,  # noqa: F401 #isort:skip
+)  # noqa: F401 #isort:skip
+
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -1541,7 +1550,13 @@ def create_documents_table(documents: List[core.BorrowerDocument], lang: str):
         ]
     ]
     for document in documents:
-        data.append([document_type_dict[document.type], document.name])
+        data.append(
+            [
+                get_translated_string(document_type_dict[document.type], lang),
+                document.name,
+            ]
+        )
+
     return create_table(data)
 
 
