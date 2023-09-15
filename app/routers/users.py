@@ -135,7 +135,6 @@ def setup_mfa(
         response = client.verify_software_token(
             user.secret, user.session, user.temp_password
         )
-        logging.info(response)
 
         return ApiSchema.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
