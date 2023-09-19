@@ -160,6 +160,10 @@ def get_images_base_url():
 
 
 def prepare_html(template_name, parameters):
+    """
+    Reads the content of the file in template_name, replace its parameters, and prepare the rest of the main
+    parameters and Subject to send the email via AWS.
+    """
     subject = (
         f"Credere - {TEMPLATE_FILES[template_name][app_settings.email_template_lang]}"
     )

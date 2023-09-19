@@ -426,3 +426,8 @@ VALUES ("OCP", "es", {EMAIL}, “Admin User”, {COGNITO_USER_ID});
 - Go to the login page
 - Click "Forgot Password?"
 - You will receive the email to set the password and after that configure the MFA for the new user.
+
+
+## Email templates
+
+See [email_templates](email_templates/README.md)
