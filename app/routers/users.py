@@ -132,9 +132,7 @@ def setup_mfa(
     :rtype: ApiSchema.ResponseBase
     """
     try:
-        response = client.verify_software_token(
-            user.secret, user.session, user.temp_password
-        )
+        client.verify_software_token(user.secret, user.session, user.temp_password)
 
         return ApiSchema.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
