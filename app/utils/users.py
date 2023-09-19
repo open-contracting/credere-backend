@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import asc, desc, text
@@ -36,7 +37,7 @@ def create_user(
     with transaction_session(session):
         try:
             user = core.User(**payload.dict())
-
+            user.created_at = datetime.now()
             session.add(user)
             cognitoResponse = client.admin_create_user(payload.email, payload.name)
             user.external_id = cognitoResponse["User"]["Username"]
@@ -120,7 +121,7 @@ def get_all_users(
         .options(
             joinedload(core.User.lender),
         )
-        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"), core.User.id)
     )
 
     total_count = list_query.count()
