@@ -98,7 +98,7 @@ TEMPLATE_FILES = {
 }
 
 
-def set_destionations(email: str):
+def set_destinations(email: str, to_msme=True):
     """
     Sets the email destination for the application based on the environment.
 
@@ -109,10 +109,13 @@ def set_destionations(email: str):
     :param email: The email to be set as destination.
     :type email: str
 
+    :param to_msme: If the email is for an MSME.
+    :type email: boolean
+
     :return: Returns the destination email.
     :rtype: str
     """
-    if app_settings.environment == "production":
+    if app_settings.environment == "production" or not to_msme:
         return email
     return app_settings.test_mail_receiver
 
@@ -183,8 +186,8 @@ def prepare_html(template_name, parameters):
     return data
 
 
-def send_email(ses, email, data):
-    destinations = set_destionations(email)
+def send_email(ses, email, data, to_msme=True):
+    destinations = set_destinations(email, to_msme)
 
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
@@ -301,7 +304,7 @@ def send_mail_to_new_user(ses, name, username, temp_password):
         + quote(username),
     }
 
-    send_email(ses, username, prepare_html("New_Account_Created", html_data))
+    send_email(ses, username, prepare_html("New_Account_Created", html_data), False)
 
 
 def send_upload_contract_notification_to_FI(ses, application):
@@ -329,6 +332,7 @@ def send_upload_contract_notification_to_FI(ses, application):
         ses,
         application.lender.email_group,
         prepare_html("New_contract_submission", html_data),
+        False
     )
 
 
@@ -355,6 +359,7 @@ def send_upload_contract_confirmation(ses, application):
         ses,
         application.lender.email_group,
         prepare_html("Contract_upload_confirmation", html_data),
+        False
     )
 
 
@@ -403,8 +408,8 @@ def send_new_email_confirmation(
         "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": images_base_url + "/confirmemailchange.png",
     }
 
-    new_email_address = set_destionations(new_email)
-    old_email_address = set_destionations(old_email)
+    new_email_address = set_destinations(new_email)
+    old_email_address = set_destinations(old_email)
 
     data = prepare_html("Confirm_email_address_change", html_data)
 
@@ -441,7 +446,7 @@ def send_mail_to_reset_password(ses, username: str, temp_password: str):
         "RESET_PASSWORD_IMAGE": images_base_url + "/ResetPassword.png",
     }
 
-    send_email(ses, username, prepare_html("Reset_password", html_data))
+    send_email(ses, username, prepare_html("Reset_password", html_data), False)
 
 
 def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_title):
@@ -524,7 +529,7 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
-    destinations = set_destionations(email)
+    destinations = set_destinations(email)
 
     logging.info(
         f"{app_settings.environment} - Email to: {email} sent to {destinations}"
@@ -596,6 +601,7 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
         ses,
         lender_email_group,
         prepare_html("FI_New_application_submission_FI_user", html_data),
+        False
     )
 
 
@@ -610,7 +616,7 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
     :param lender_name: Name of the lender associated with the new application.
     :type lender_name: str
     """
-    # todo refactor required when this function receives the user language
+
     images_base_url = get_images_base_url()
 
     html_data = {
@@ -623,6 +629,7 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
         ses,
         ocp_email_group,
         prepare_html("New_application_submission_OCP_user", html_data),
+        False
     )
 
 
@@ -680,7 +687,7 @@ def send_overdue_application_email_to_FI(ses, name: str, email: str, amount: int
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    return send_email(ses, email, prepare_html("Overdue_application_FI", html_data))
+    return send_email(ses, email, prepare_html("Overdue_application_FI", html_data), False)
 
 
 def send_overdue_application_email_to_OCP(ses, name: str):
@@ -707,6 +714,7 @@ def send_overdue_application_email_to_OCP(ses, name: str):
         ses,
         app_settings.ocp_email_group,
         prepare_html("Overdue_application_OCP_admin", html_data),
+        False
     )
 
 
@@ -808,5 +816,5 @@ def send_upload_documents_notifications_to_FI(ses, email: str):
     }
 
     return send_email(
-        ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data)
+        ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data), False
     )
