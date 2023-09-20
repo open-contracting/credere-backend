@@ -15,10 +15,10 @@ from sqlalchemy.sql.expression import true
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
-from .translation import get_translated_string
 
 from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
+from .translation import get_translated_string
 
 from reportlab_mods import (  # noqa: F401 #isort:skip
     borrower_size_dict,  # noqa: F401 #isort:skip

@@ -4,13 +4,13 @@ import zipfile
 from datetime import datetime
 from typing import List
 
+import pandas as pd
 from botocore.exceptions import ClientError
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Spacer
 from sqlalchemy import and_, text
 from sqlalchemy.orm import Session, joinedload
-import pandas as pd
 
 import app.utils.applications as utils
 from app.background_processes import application_utils
