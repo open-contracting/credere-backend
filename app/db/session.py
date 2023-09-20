@@ -11,6 +11,9 @@ SessionLocal = None
 if app_settings.database_url:
     engine = create_engine(app_settings.database_url)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+if app_settings.test_database_url:
+    engine = create_engine(app_settings.test_database_url)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
