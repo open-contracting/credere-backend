@@ -36,7 +36,7 @@ def test_fetch_previous_borrower_awards_empty(start_background_db, caplog):  # n
             "app.background_processes.awards_utils.get_previous_contracts",
         ):
             fetcher.fetch_previous_awards(
-                core.Borrower(**borrower_result), common_test_client.get_test_db()
+                core.Borrower(**borrower_result), common_test_client.get_test_db
             )
 
     assert "No previous contracts" in caplog.text

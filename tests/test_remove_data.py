@@ -18,10 +18,10 @@ def test_remove_data(client):  # noqa
         json={"status": core.ApplicationStatus.DECLINED.value},
     )
 
-    remove_dated_data(common_test_client.get_test_db())
+    remove_dated_data(common_test_client.get_test_db)
 
 
 def test_remove_data_no_dated_application(client):  # noqa
     client.post("/create-test-application", json=application_payload)
 
-    remove_dated_data(common_test_client.get_test_db())
+    remove_dated_data(common_test_client.get_test_db)
