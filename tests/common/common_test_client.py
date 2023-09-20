@@ -33,7 +33,7 @@ class MockResponse:
         return self.json_data
 
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", app_settings.test_database_url)
+SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL", app_settings.test_database_url)
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 create_enums(engine)
