@@ -32,7 +32,7 @@ FI_user_with_lender = {
 
 
 def test_update_statistic(start_background_db):  # noqa
-    update_statistics(common_test_client.get_test_db)
+    update_statistics(common_test_client.get_test_db())
 
 
 def test_statistics(client):  # noqa
