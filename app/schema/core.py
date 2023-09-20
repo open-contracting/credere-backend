@@ -124,9 +124,8 @@ class CreditProductBase(SQLModel):
     upper_limit: Decimal = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
     )
-    interest_rate: Decimal = Field(
-        sa_column=Column(DECIMAL(precision=5, scale=2), nullable=False)
-    )
+    interest_rate: str = Field(default="", nullable=False)
+    additional_information: str = Field(default="", nullable=False)
     type: CreditType = Field(
         sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
     )
