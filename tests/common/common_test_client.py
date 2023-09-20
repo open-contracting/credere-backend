@@ -33,13 +33,11 @@ class MockResponse:
         return self.json_data
 
 
-SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL", app_settings.test_database_url)
+SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-create_enums(engine)
-
 SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+create_enums(engine)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,11 +48,10 @@ logging.basicConfig(
 
 def get_test_db() -> Session:
     try:
-        db = None
-        if SessionTesting:
-            db = SessionTesting()
-
+        db = SessionTesting()
         yield db
+    except Exception as e:
+        logging.error('Error creating database ', e)
     finally:
         if db:
             db.close()
