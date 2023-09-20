@@ -15,6 +15,7 @@ from sqlalchemy.sql.expression import true
 from app.background_processes.background_utils import generate_uuid
 from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
+from .translation import get_translated_string
 
 from ..schema import api, core
 from .general_utils import update_models, update_models_with_validation
@@ -23,7 +24,6 @@ from reportlab_mods import (  # noqa: F401 #isort:skip
     borrower_size_dict,  # noqa: F401 #isort:skip
     create_table,  # noqa: F401 #isort:skip
     document_type_dict,  # noqa: F401 #isort:skip
-    get_translated_string,  # noqa: F401 #isort:skip
     sector_dict,  # noqa: F401 #isort:skip
     styleN,  # noqa: F401 #isort:skip
     styleSubTitle,  # noqa: F401 #isort:skip
@@ -535,6 +535,36 @@ def get_all_active_applications(
         page=page,
         page_size=page_size,
     )
+
+
+def get_all_fi_applications_emails(
+        session: Session,
+        lender_id,
+        lang: str
+):
+    applications_query = (
+        session.query(core.Application)
+        .join(core.Borrower)
+        .options(
+            joinedload(core.Application.borrower),
+        )
+        .filter(
+            core.Application.status.notin_(excluded_applications),
+            core.Application.archived_at.is_(None),
+            core.Application.lender_id == lender_id,
+            core.Application.lender_id.is_not(None),
+        )
+    )
+    applicants_list = []
+    for application in applications_query.all():
+        applicants_list.append({
+            get_translated_string('National Tax ID', lang): application.borrower.legal_identifier,
+            get_translated_string('Legal Name', lang): application.borrower.legal_name,
+            get_translated_string('Email Address', lang): application.primary_email,
+            get_translated_string('Submission Date', lang): application.borrower_submitted_at,
+            get_translated_string('Stage', lang): get_translated_string(application.status.name.capitalize(), lang)
+        })
+    return applicants_list
 
 
 def get_all_FI_user_applications(

@@ -4,6 +4,7 @@ botocore
 fastapi
 httpx
 jose
+pandas
 pydantic
 python-dotenv
 python-jose

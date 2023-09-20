@@ -10,6 +10,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Spacer
 from sqlalchemy import and_, text
 from sqlalchemy.orm import Session, joinedload
+import pandas as pd
 
 import app.utils.applications as utils
 from app.background_processes import application_utils
@@ -1029,6 +1030,24 @@ async def start_application(
         # TODO add action
         background_tasks.add_task(update_statistics)
         return application
+
+
+@router.get(
+    "/applications/export/{lang}",
+    tags=["applications"],
+    response_class=StreamingResponse
+)
+async def export_applications(
+    lang: str,
+    user: core.User = Depends(get_user),
+    session: Session = Depends(get_db),
+):
+    df = pd.DataFrame(utils.get_all_fi_applications_emails(session, user.lender_id, lang))
+    stream = io.StringIO()
+    df.to_csv(stream, index=False)
+    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=export.csv"
+    return response
 
 
 @router.get(
