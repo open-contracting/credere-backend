@@ -222,7 +222,7 @@ def send_application_approved_email(ses, application: Application):
         "UPLOAD_CONTRACT_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/upload-contract",
         "UPLOAD_CONTRACT_IMAGE_LINK": f"{images_base_url}/uploadContract.png",
     }
-    data = prepare_html("Access_to_credit_reminder", html_data)
+    data = prepare_html("Application_approved", html_data)
 
     send_email(ses, application.primary_email, data)
 
