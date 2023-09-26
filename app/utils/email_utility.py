@@ -26,20 +26,20 @@ TEMPLATE_FILES = {
         "es": "Opción de crédito alternativa",
     },
     "Application_approved": {
-        "en": "Your credit application has been approved",
-        "es": "Su solicitud de crédito ha sido aprobada",
+        "en": "Your credit application has been pre-approved",
+        "es": "Tu solicitud de crédito ha sido pre-aprobada",
     },
     "Application_credit_disbursed": {
-        "en": "Credit Disbursed",
-        "es": "Crédito desembolsado",
+        "en": "Your credit application has been approved",
+        "es": "Tu solicitud de crédito ha sido aprobada",
     },
     "Application_declined": {
         "en": "Your credit application has been declined",
-        "es": "Su solicitud de crédito ha sido rechazada",
+        "es": "Tu solicitud de crédito ha sido rechazada",
     },
     "Application_declined_without_alternative": {
         "en": "Your credit application has been declined",
-        "es": "Su solicitud de crédito ha sido rechazada",
+        "es": "Tu solicitud de crédito ha sido rechazada",
     },
     "Application_submitted": {
         "en": "Application Submission Complete",
@@ -47,7 +47,7 @@ TEMPLATE_FILES = {
     },
     "Complete_application_reminder": {
         "en": "Complete your credit application",
-        "es": "Complete su solicitud de crédito",
+        "es": "Completa tu solicitud de crédito",
     },
     "Confirm_email_address_change": {
         "en": "Confirm email address change",
@@ -55,11 +55,11 @@ TEMPLATE_FILES = {
     },
     "Contract_upload_confirmation": {
         "en": "Thank you for uploading the signed contract",
-        "es": "Gracias por subir su contrato firmado",
+        "es": "Gracias por subir tu contrato firmado",
     },
     "Credit_application_submitted": {
         "en": "Your credit application has been submitted",
-        "es": "Su solicitud de crédito ha sido enviada",
+        "es": "Tu solicitud de crédito ha sido enviada",
     },
     "FI_Documents_Updated_FI_user": {
         "en": "Application updated",
@@ -80,7 +80,7 @@ TEMPLATE_FILES = {
     },
     "Overdue_application_FI": {
         "en": "You have credit applications that need processing",
-        "es": "Tiene solicitudes de crédito que necesitan procesamiento",
+        "es": "Tienes solicitudes de crédito que necesitan procesamiento",
     },
     "Overdue_application_OCP_admin": {
         "en": "New overdue application",
