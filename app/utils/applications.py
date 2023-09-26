@@ -1055,6 +1055,7 @@ def create_or_update_borrower_document(
         existing_document.name = filename
         existing_document.verified = verified
         existing_document.submitted_at = datetime.utcnow()
+        session.flush()
         return existing_document
     else:
         new_document = {
@@ -1067,6 +1068,7 @@ def create_or_update_borrower_document(
 
         db_obj = core.BorrowerDocument(**new_document)
         session.add(db_obj)
+        session.flush()
         return db_obj
 
 
