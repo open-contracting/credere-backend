@@ -6,7 +6,7 @@
 #
 alembic==1.11.1
     # via -r requirements.txt
-anyio==3.6.2
+anyio==3.7.1
     # via
     #   -r requirements.txt
     #   httpcore
@@ -29,7 +29,7 @@ botocore==1.29.136
     #   s3transfer
 build==0.10.0
     # via pip-tools
-certifi==2023.5.7
+certifi==2023.7.22
     # via
     #   -r requirements.txt
     #   httpcore
@@ -62,7 +62,7 @@ coverage[toml]==6.5.0
     #   pytest-cov
 coveralls==3.3.1
     # via -r requirements_dev.in
-cryptography==41.0.1
+cryptography==41.0.4
     # via
     #   moto
     #   python-jose
@@ -75,7 +75,7 @@ ecdsa==0.18.0
     #   -r requirements.txt
     #   moto
     #   python-jose
-fastapi==0.95.1
+fastapi==0.95.2
     # via
     #   -r requirements.txt
     #   sentry-sdk
@@ -297,7 +297,7 @@ sqlalchemy2-stubs==0.0.2a34
     #   sqlmodel
 sqlmodel==0.0.8
     # via -r requirements.txt
-starlette==0.26.1
+starlette==0.27.0
     # via
     #   -r requirements.txt
     #   fastapi
