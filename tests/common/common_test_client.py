@@ -51,7 +51,7 @@ def get_test_db() -> Session:
         db = SessionTesting()
         yield db
     except Exception as e:
-        logging.error('Error creating database ', e)
+        logging.error("Error creating database ", e)
     finally:
         if db:
             db.close()

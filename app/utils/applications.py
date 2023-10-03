@@ -537,11 +537,7 @@ def get_all_active_applications(
     )
 
 
-def get_all_fi_applications_emails(
-        session: Session,
-        lender_id,
-        lang: str
-):
+def get_all_fi_applications_emails(session: Session, lender_id, lang: str):
     applications_query = (
         session.query(core.Application)
         .join(core.Borrower)
@@ -557,13 +553,23 @@ def get_all_fi_applications_emails(
     )
     applicants_list = []
     for application in applications_query.all():
-        applicants_list.append({
-            get_translated_string('National Tax ID', lang): application.borrower.legal_identifier,
-            get_translated_string('Legal Name', lang): application.borrower.legal_name,
-            get_translated_string('Email Address', lang): application.primary_email,
-            get_translated_string('Submission Date', lang): application.borrower_submitted_at,
-            get_translated_string('Stage', lang): get_translated_string(application.status.name.capitalize(), lang)
-        })
+        applicants_list.append(
+            {
+                get_translated_string(
+                    "National Tax ID", lang
+                ): application.borrower.legal_identifier,
+                get_translated_string(
+                    "Legal Name", lang
+                ): application.borrower.legal_name,
+                get_translated_string("Email Address", lang): application.primary_email,
+                get_translated_string(
+                    "Submission Date", lang
+                ): application.borrower_submitted_at,
+                get_translated_string("Stage", lang): get_translated_string(
+                    application.status.name.capitalize(), lang
+                ),
+            }
+        )
     return applicants_list
 
 

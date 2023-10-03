@@ -1035,14 +1035,16 @@ async def start_application(
 @router.get(
     "/applications/export/{lang}",
     tags=["applications"],
-    response_class=StreamingResponse
+    response_class=StreamingResponse,
 )
 async def export_applications(
     lang: str,
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
-    df = pd.DataFrame(utils.get_all_fi_applications_emails(session, user.lender_id, lang))
+    df = pd.DataFrame(
+        utils.get_all_fi_applications_emails(session, user.lender_id, lang)
+    )
     stream = io.StringIO()
     df.to_csv(stream, index=False)
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
