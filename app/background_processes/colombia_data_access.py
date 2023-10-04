@@ -125,7 +125,7 @@ def get_new_contracts(index: int, last_updated_award_date):
 
     url = (
         f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
-        "&$order=ultima_actualizacion&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
+        "&$order=ultima_actualizacion desc null last&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
         f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
 
