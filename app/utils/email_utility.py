@@ -332,7 +332,7 @@ def send_upload_contract_notification_to_FI(ses, application):
         ses,
         application.lender.email_group,
         prepare_html("New_contract_submission", html_data),
-        False
+        False,
     )
 
 
@@ -359,7 +359,7 @@ def send_upload_contract_confirmation(ses, application):
         ses,
         application.lender.email_group,
         prepare_html("Contract_upload_confirmation", html_data),
-        False
+        False,
     )
 
 
@@ -601,7 +601,7 @@ def send_notification_new_app_to_fi(ses, lender_email_group):
         ses,
         lender_email_group,
         prepare_html("FI_New_application_submission_FI_user", html_data),
-        False
+        False,
     )
 
 
@@ -629,7 +629,7 @@ def send_notification_new_app_to_ocp(ses, ocp_email_group, lender_name):
         ses,
         ocp_email_group,
         prepare_html("New_application_submission_OCP_user", html_data),
-        False
+        False,
     )
 
 
@@ -687,7 +687,9 @@ def send_overdue_application_email_to_FI(ses, name: str, email: str, amount: int
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    return send_email(ses, email, prepare_html("Overdue_application_FI", html_data), False)
+    return send_email(
+        ses, email, prepare_html("Overdue_application_FI", html_data), False
+    )
 
 
 def send_overdue_application_email_to_OCP(ses, name: str):
@@ -714,7 +716,7 @@ def send_overdue_application_email_to_OCP(ses, name: str):
         ses,
         app_settings.ocp_email_group,
         prepare_html("Overdue_application_OCP_admin", html_data),
-        False
+        False,
     )
 
 
