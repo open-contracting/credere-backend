@@ -21,7 +21,7 @@ def fetch_new_awards_from_date(
     Fetch new awards from the given date and process them.
 
     :param last_updated_award_date: Date string in the format 'YYYY-MM-DD'.
-    :type last_updated_award_date: str
+    :type last_updated_award_date: datetime
     :param email_invitation: Optional email address to send invitations. Defaults to None.
     :type email_invitation: str or None
     """

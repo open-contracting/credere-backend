@@ -13,11 +13,6 @@ def fetch_awards(email_invitation: str = None):
 
 
 @app.command()
-def fetch_new_awards_from_date(date: str, email_invitation: str = None):
-    background_processes.fetcher.fetch_new_awards_from_date(date, email_invitation)
-
-
-@app.command()
 def remove_dated_application_data():
     background_processes.remove_data.remove_dated_data()
 
