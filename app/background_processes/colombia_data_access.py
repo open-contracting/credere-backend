@@ -109,19 +109,18 @@ def get_new_contracts(index: int, last_updated_award_date):
     :param last_updated_award_date: The last updated date of the award data.
     :type last_updated_award_date: datetime or None
 
-    :return: The response object containing the new contracts data.
+    :return: The response object containing the new contract's data.
     :rtype: httpx.Response
     """
 
     offset = index * app_settings.secop_pagination_limit
     delta = timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
-    converted_date = (datetime.now() - delta).strftime("%Y-%m-%dT00:00:00.000")
+    date_format = "%Y-%m-%dT%H:%M:%S.000"
+    converted_date = (datetime.now() - delta).strftime(date_format)
 
     if last_updated_award_date:
-        delta = timedelta(days=1)
-        converted_date = (last_updated_award_date - delta).strftime(
-            "%Y-%m-%dT00:00:00.000"
-        )
+        delta = timedelta(seconds=1)
+        converted_date = (last_updated_award_date + delta).strftime(date_format)
 
     url = (
         f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
