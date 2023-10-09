@@ -1027,7 +1027,6 @@ async def start_application(
 
         application.status = core.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
-        # TODO add action
         background_tasks.add_task(update_statistics)
         return application
 

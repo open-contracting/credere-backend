@@ -757,7 +757,6 @@ def send_rejected_application_email_without_alternatives(ses, application):
     :return: The unique identifier for the sent message.
     :rtype: str
     """
-    # todo refactor required when this function receives the user language
 
     html_data = {
         "FI": application.lender.name,
@@ -782,7 +781,6 @@ def send_copied_application_notification_to_sme(ses, application):
     :return: The unique identifier for the sent message.
     :rtype: str
     """
-    # todo refactor required when this function receives the user language
     images_base_url = get_images_base_url()
     html_data = {
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
