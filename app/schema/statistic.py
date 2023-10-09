@@ -28,4 +28,4 @@ class Statistic(SQLModel, table=True):
     created_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
     )
-    lender_id: Optional[int] = Field(foreign_key="award.id", nullable=True)
+    lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
