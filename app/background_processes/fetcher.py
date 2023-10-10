@@ -3,7 +3,6 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
-from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db
 from app.schema.core import Borrower
