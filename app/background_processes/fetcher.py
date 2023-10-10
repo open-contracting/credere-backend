@@ -53,20 +53,10 @@ def fetch_new_awards_from_date(
 
                     message = insert_message(application, session)
 
-                    if app_settings.environment == "production":
-                        if not email_invitation or email_invitation == "":
-                            email_invitation = borrower.email
-                    else:
-                        email_invitation = app_settings.test_mail_receiver
-
-                    logging.info(
-                        f"{app_settings.environment} - Email to: {borrower.email} sent to {email_invitation}"
-                    )
-
                     messageId = email_utility.send_invitation_email(
                         sesClient,
                         application.uuid,
-                        email_invitation,
+                        borrower.email,
                         borrower.legal_name,
                         award.buyer_name,
                         award.title,

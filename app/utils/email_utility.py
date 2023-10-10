@@ -189,6 +189,9 @@ def prepare_html(template_name, parameters):
 def send_email(ses, email, data, to_msme=True):
     destinations = set_destinations(email, to_msme)
 
+    logging.info(
+        f"{app_settings.environment} - Email to: {email} sent to {destinations}"
+    )
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
