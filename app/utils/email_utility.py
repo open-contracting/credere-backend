@@ -532,12 +532,6 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
-    destinations = set_destinations(email)
-
-    logging.info(
-        f"{app_settings.environment} - Email to: {email} sent to {destinations}"
-    )
-
     return send_email(
         ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data)
     )
