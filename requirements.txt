@@ -42,6 +42,8 @@ fastapi==0.95.2
     #   sentry-sdk
 future==0.18.3
     # via pyseeyou
+greenlet==3.0.0
+    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore

@@ -87,6 +87,10 @@ future==0.18.3
     # via
     #   -r requirements.txt
     #   pyseeyou
+greenlet==3.0.0
+    # via
+    #   -r requirements.txt
+    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
