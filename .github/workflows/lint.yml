@@ -2,7 +2,6 @@ name: Lint
 on: [push, pull_request]
 env:
   BASEDIR: https://raw.githubusercontent.com/open-contracting/standard-maintenance-scripts/main
-  STANDARD_MAINTENANCE_SCRIPTS_IGNORE: jose,pytest-mock,python-multipart,reportlab_mods,uvicorn
 jobs:
   build:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
@@ -24,4 +23,8 @@ jobs:
       - shell: bash
         run: curl -s -S --retry 3 $BASEDIR/tests/script.sh | bash -
       - run: pip install -r requirements_dev.txt
-      - run: pytest /tmp/test_requirements.py
+      - env:
+          # https://fastapi.tiangolo.com/tutorial/request-files/
+          # uvicorn is run as a command in a Dockerfile.
+          STANDARD_MAINTENANCE_SCRIPTS_IGNORE: python-multipart,uvicorn
+        run: pytest /tmp/test_requirements.py

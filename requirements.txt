@@ -42,8 +42,6 @@ fastapi==0.95.2
     #   sentry-sdk
 future==0.18.3
     # via pyseeyou
-greenlet==2.0.2
-    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -61,8 +59,6 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-jose==1.0.0
-    # via -r requirements.in
 mako==1.2.4
     # via alembic
 markdown-it-py==3.0.0

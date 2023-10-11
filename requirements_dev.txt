@@ -87,10 +87,6 @@ future==0.18.3
     # via
     #   -r requirements.txt
     #   pyseeyou
-greenlet==2.0.2
-    # via
-    #   -r requirements.txt
-    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -121,8 +117,6 @@ jmespath==1.0.1
     #   -r requirements.txt
     #   boto3
     #   botocore
-jose==1.0.0
-    # via -r requirements.txt
 mako==1.2.4
     # via
     #   -r requirements.txt
