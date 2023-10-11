@@ -75,7 +75,7 @@ pandas==2.1.0
     # via -r requirements.in
 parsimonious==0.10.0
     # via pyseeyou
-pillow==10.0.0
+pillow==10.0.1
     # via reportlab
 psycopg2==2.9.6
     # via sqlalchemy
@@ -159,7 +159,7 @@ typing-extensions==4.5.0
     #   typer
 tzdata==2023.3
     # via pandas
-urllib3==1.26.15
+urllib3==1.26.17
     # via
     #   botocore
     #   requests
