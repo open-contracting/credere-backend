@@ -87,7 +87,7 @@ future==0.18.3
     # via
     #   -r requirements.txt
     #   pyseeyou
-greenlet==2.0.2
+greenlet==3.0.0
     # via
     #   -r requirements.txt
     #   sqlalchemy
@@ -121,8 +121,6 @@ jmespath==1.0.1
     #   -r requirements.txt
     #   boto3
     #   botocore
-jose==1.0.0
-    # via -r requirements.txt
 mako==1.2.4
     # via
     #   -r requirements.txt
@@ -165,7 +163,7 @@ parsimonious==0.10.0
     #   pyseeyou
 pathspec==0.11.1
     # via black
-pillow==10.0.0
+pillow==10.0.1
     # via
     #   -r requirements.txt
     #   reportlab
@@ -322,7 +320,7 @@ tzdata==2023.3
     # via
     #   -r requirements.txt
     #   pandas
-urllib3==1.26.15
+urllib3==1.26.17
     # via
     #   -r requirements.txt
     #   botocore
