@@ -25,20 +25,16 @@ def set_lapsed_applications(db_provider: Session = get_db):
 
     with contextmanager(db_provider)() as session:
         lapsed_applications = get_lapses_applications(session)
-        logging.info("Quantity of lapsed application " + str(len(lapsed_applications)))
-        if len(lapsed_applications) == 0:
-            logging.info("No application to remove data")
-        else:
-            for application in lapsed_applications:
-                try:
-                    # save to DB
-                    application.status = ApplicationStatus.LAPSED
-                    application.application_lapsed_at = datetime.utcnow()
-                    session.commit()
+        for application in lapsed_applications:
+            try:
+                # save to DB
+                application.status = ApplicationStatus.LAPSED
+                application.application_lapsed_at = datetime.utcnow()
+                session.commit()
 
-                except Exception as e:
-                    logging.error(f"there was an error setting to lapsed: {e}")
-                    session.rollback()
+            except Exception as e:
+                logging.error(f"there was an error setting to lapsed: {e}")
+                session.rollback()
 
 
 if __name__ == "__main__":
