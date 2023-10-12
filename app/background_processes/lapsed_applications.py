@@ -9,6 +9,8 @@ from app.schema.core import ApplicationStatus
 
 from . import application_utils
 
+logger = logging.getLogger(__name__)
+
 get_lapses_applications = application_utils.get_lapsed_applications
 
 
@@ -25,9 +27,9 @@ def set_lapsed_applications(db_provider: Session = get_db):
 
     with contextmanager(db_provider)() as session:
         lapsed_applications = get_lapses_applications(session)
-        logging.info("Quantity of lapsed application " + str(len(lapsed_applications)))
+        logger.info("Quantity of lapsed application " + str(len(lapsed_applications)))
         if len(lapsed_applications) == 0:
-            logging.info("No application to remove data")
+            logger.info("No application to remove data")
         else:
             for application in lapsed_applications:
                 try:
@@ -37,7 +39,7 @@ def set_lapsed_applications(db_provider: Session = get_db):
                     session.commit()
 
                 except Exception as e:
-                    logging.error(f"there was an error setting to lapsed: {e}")
+                    logger.exception(f"there was an error setting to lapsed: {e}")
                     session.rollback()
 
 

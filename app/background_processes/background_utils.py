@@ -10,6 +10,8 @@ import sentry_sdk
 
 from app.db.session import app_settings
 
+logger = logging.getLogger(__name__)
+
 pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
 
@@ -98,7 +100,7 @@ def make_request_with_retry(url, headers):
         response.raise_for_status()
         return response
     except (httpx.TimeoutException, httpx.HTTPStatusError) as error:
-        logging.error(f"Request failed: {error}")
+        logger.exception(f"Request failed: {error}")
         return None
     finally:
         client.close()

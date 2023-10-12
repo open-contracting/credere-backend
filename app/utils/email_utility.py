@@ -7,6 +7,8 @@ from urllib.parse import quote
 from app.core.settings import app_settings
 from app.schema.core import Application
 
+logger = logging.getLogger(__name__)
+
 BASE_TEMPLATES_PATH = os.path.join(
     Path(__file__).absolute().parent.parent.parent, "email_templates"
 )
@@ -189,7 +191,7 @@ def prepare_html(template_name, parameters):
 def send_email(ses, email, data, to_msme=True):
     destinations = set_destinations(email, to_msme)
 
-    logging.info(
+    logger.info(
         f"{app_settings.environment} - Email to: {email} sent to {destinations}"
     )
     response = ses.send_templated_email(

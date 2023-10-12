@@ -30,6 +30,7 @@ from reportlab_mods import (  # noqa: F401 #isort:skip
     styleTitle,  # noqa: F401 #isort:skip
 )  # noqa: F401 #isort:skip
 
+logger = logging.getLogger(__name__)
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -131,7 +132,7 @@ def validate_fields(application):
         if key not in app_secop_dict or not app_secop_dict[key]:
             not_validated_fields.append(key)
     if not_validated_fields:
-        logging.error(f"Following fields were not validated: {not_validated_fields}")
+        logger.error(f"Following fields were not validated: {not_validated_fields}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=api.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
@@ -157,7 +158,7 @@ def validate_documents(application):
             not_validated_documents.append(document.type.name)
 
     if not_validated_documents:
-        logging.error(
+        logger.error(
             f"Following documents were not validated: {not_validated_documents}"
         )
 

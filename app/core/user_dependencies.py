@@ -13,6 +13,8 @@ from app.utils import email_utility
 
 from ..core.settings import app_settings
 
+logger = logging.getLogger(__name__)
+
 
 def generate_password_fn():
     """
@@ -163,7 +165,7 @@ class CognitoClient:
             authentication_result = response["AuthenticationResult"]
             if "ExpiresIn" in authentication_result:
                 expiration_time = authentication_result["ExpiresIn"]
-                logging.info("Session expiration time (in seconds):", expiration_time)
+                logger.info("Session expiration time (in seconds):", expiration_time)
 
         return response
 

@@ -7,6 +7,8 @@ from app.schema.core import Application, ApplicationStatus  # noqa: F401 # isort
 from app.schema.core import Borrower, CreditProduct  # noqa: F401 # isort:skip
 from app.schema.core import CreditType, StatisticData, Lender  # noqa: F401 # isort:skip
 
+logger = logging.getLogger(__name__)
+
 
 def get_base_query(sessionBase, start_date, end_date, lender_id):
     """
@@ -72,7 +74,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     :rtype: dict
     """
 
-    logging.info(
+    logger.info(
         "calculating general statistics for lender "
         + str(lender_id)
         + " between dates "
@@ -287,7 +289,7 @@ def get_msme_opt_in_stats(session):
     :rtype: dict
     """
 
-    logging.info("calculating msme opt in stas for lender ")
+    logger.info("calculating msme opt in stas for lender ")
     try:
         # opt in--------
         opt_in_query = session.query(Application).filter(

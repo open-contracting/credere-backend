@@ -9,6 +9,8 @@ from app.schema.core import Application
 
 from . import application_utils
 
+logger = logging.getLogger(__name__)
+
 get_dated_applications = application_utils.get_dated_applications
 
 
@@ -32,12 +34,12 @@ def remove_dated_data(db_provider: Session = get_db):
 
     with contextmanager(db_provider)() as session:
         dated_applications = get_dated_applications(session)
-        logging.info(
+        logger.info(
             "Quantity of decline, rejecte and accepted to remove data "
             + str(len(dated_applications))
         )
         if len(dated_applications) == 0:
-            logging.info("No application to remove data")
+            logger.info("No application to remove data")
         else:
             for application in dated_applications:
                 try:
@@ -72,7 +74,7 @@ def remove_dated_data(db_provider: Session = get_db):
                     session.commit()
 
                 except Exception as e:
-                    logging.error(f"there was an error deleting the data: {e}")
+                    logger.exception(f"there was an error deleting the data: {e}")
                     session.rollback()
 
 

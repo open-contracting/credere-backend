@@ -17,6 +17,8 @@ from ..schema.core import User
 from ..schema.statistic import Statistic, StatisticCustomRange, StatisticType
 from ..utils.permissions import OCP_only
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -94,7 +96,7 @@ async def get_ocp_statistics_by_lender(
             )
 
     except ClientError() as e:
-        logging.error(e)
+        logger.exception(e)
 
     return ApiSchema.StatisticResponse(
         statistics_kpis=statistics_kpis,
@@ -143,7 +145,7 @@ async def get_ocp_statistics_opt_in(
             opt_in_stats = statistics_utils.get_msme_opt_in_stats(session)
 
     except ClientError as e:
-        logging.error(e)
+        logger.exception(e)
     return ApiSchema.StatisticOptInResponse(
         opt_in_stat=opt_in_stats,
     )
@@ -192,7 +194,7 @@ async def get_fi_statistics(
             )
 
     except ClientError as e:
-        logging.error(e)
+        logger.exception(e)
 
     return ApiSchema.StatisticResponse(
         statistics_kpis=statistics_kpis,

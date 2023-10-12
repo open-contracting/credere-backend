@@ -13,6 +13,8 @@ from app.schema.api import UserListResponse
 from ..schema import core
 from .general_utils import update_models
 
+logger = logging.getLogger(__name__)
+
 
 def create_user(
     payload: core.User, session: Session, client: CognitoClient
@@ -44,7 +46,7 @@ def create_user(
 
             return user
         except (client.exceptions().UsernameExistsException, IntegrityError) as e:
-            logging.error(e)
+            logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Username already exists",
@@ -82,7 +84,7 @@ def update_user(session: Session, payload: dict, user_id: int) -> core.User:
 
         return user
     except IntegrityError as e:
-        logging.error(e)
+        logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="User already exists",
