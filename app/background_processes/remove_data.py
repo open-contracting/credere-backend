@@ -34,45 +34,38 @@ def remove_dated_data(db_provider: Session = get_db):
 
     with contextmanager(db_provider)() as session:
         dated_applications = get_dated_applications(session)
-        logger.info(
-            "Quantity of decline, rejecte and accepted to remove data "
-            + str(len(dated_applications))
-        )
-        if len(dated_applications) == 0:
-            logger.info("No application to remove data")
-        else:
-            for application in dated_applications:
-                try:
-                    # save to DB
-                    application.award.previous = True
-                    application.primary_email = ""
-                    application.archived_at = datetime.utcnow()
+        for application in dated_applications:
+            try:
+                # save to DB
+                application.award.previous = True
+                application.primary_email = ""
+                application.archived_at = datetime.utcnow()
 
-                    for document in application.borrower_documents:
-                        session.delete(document)
+                for document in application.borrower_documents:
+                    session.delete(document)
 
-                    # Check if there are any other active applications that use the same award
-                    active_applications_with_same_award = (
-                        session.query(Application)
-                        .filter(
-                            Application.award_id == application.award_id,
-                            Application.id != application.id,
-                            Application.archived_at.is_(
-                                None
-                            ),  # Check that the application is active
-                        )
-                        .all()
+                # Check if there are any other active applications that use the same award
+                active_applications_with_same_award = (
+                    session.query(Application)
+                    .filter(
+                        Application.award_id == application.award_id,
+                        Application.id != application.id,
+                        Application.archived_at.is_(
+                            None
+                        ),  # Check that the application is active
                     )
-                    # Delete the associated Award if no other active applications uses the award
-                    if len(active_applications_with_same_award) == 0:
-                        application.borrower.legal_name = ""
-                        application.borrower.email = ""
-                        application.borrower.address = ""
-                        application.borrower.legal_identifier = ""
-                        application.borrower.source_data = ""
+                    .all()
+                )
+                # Delete the associated Award if no other active applications uses the award
+                if len(active_applications_with_same_award) == 0:
+                    application.borrower.legal_name = ""
+                    application.borrower.email = ""
+                    application.borrower.address = ""
+                    application.borrower.legal_identifier = ""
+                    application.borrower.source_data = ""
 
-                    session.commit()
+                session.commit()
 
-                except Exception as e:
-                    logger.exception(f"there was an error deleting the data: {e}")
-                    session.rollback()
+            except Exception as e:
+                logger.exception(f"there was an error deleting the data: {e}")
+                session.rollback()

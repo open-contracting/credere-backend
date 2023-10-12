@@ -74,14 +74,6 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     :rtype: dict
     """
 
-    logger.info(
-        "calculating general statistics for lender "
-        + str(lender_id)
-        + " between dates "
-        + (start_date if start_date else "not provided")
-        + " and "
-        + (end_date if end_date else "not provided")
-    )
     try:
         # received--------
         applications_received_query = get_base_query(
