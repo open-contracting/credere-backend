@@ -8,10 +8,9 @@ from typing import Generator
 
 import boto3
 
+from app.core.settings import app_settings
 from app.schema.core import Application
 from app.utils import email_utility
-
-from ..core.settings import app_settings
 
 logger = logging.getLogger(__name__)
 

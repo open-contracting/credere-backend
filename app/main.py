@@ -4,9 +4,8 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.settings import app_settings
 from app.utils.general_utils import sentry_filter_transactions
-
-from .core.settings import app_settings
 
 from .routers import applications, lenders, users  # isort:skip
 from .routers import statistics  # isort:skip

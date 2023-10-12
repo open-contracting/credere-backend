@@ -6,8 +6,9 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
-from app.db.session import app_settings, get_db, transaction_session
+from app.db.session import get_db, transaction_session
 from app.schema import core
 from app.utils import email_utility
 
