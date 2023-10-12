@@ -125,11 +125,3 @@ def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):
                     f"There was an error creating the previous award for {borrower.legal_identifier}. {e}"
                 )
                 session.rollback()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-        handlers=[logging.StreamHandler()],  # Output logs to the console
-    )

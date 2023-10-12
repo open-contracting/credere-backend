@@ -99,12 +99,3 @@ def send_reminders(db_provider: Session = get_db):
                         f"there was an error sending mail or updating the sent status: {e}"
                     )
                     session.rollback()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-        handlers=[logging.StreamHandler()],  # Output logs to the console
-    )
-    send_reminders()

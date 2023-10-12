@@ -40,7 +40,6 @@ def update_statistics(db_provider: Session = get_db):
 
     Note:
     - The function utilizes the `get_db()` context manager to open a database session.
-    - The logging level and format are configured using `logging.basicConfig()`.
 
     Example usage:
     >>> update_statistics()
@@ -142,12 +141,3 @@ def update_statistics(db_provider: Session = get_db):
         except Exception as e:
             logger.exception(f"there was an error saving statistics: {e}")
             session.rollback()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-        handlers=[logging.StreamHandler()],  # Output logs to the console
-    )
-    update_statistics()

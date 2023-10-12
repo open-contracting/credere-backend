@@ -76,12 +76,3 @@ def remove_dated_data(db_provider: Session = get_db):
                 except Exception as e:
                     logger.exception(f"there was an error deleting the data: {e}")
                     session.rollback()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-        handlers=[logging.StreamHandler()],  # Output logs to the console
-    )
-    remove_dated_data()
