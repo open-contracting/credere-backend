@@ -16,6 +16,8 @@ from ..utils.permissions import OCP_only
 from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
 from fastapi import HTTPException, Query, Response, status  # isort:skip # noqa
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -95,7 +97,7 @@ def change_password(
 
         return ApiSchema.ResponseBase(detail="Password changed")
     except ClientError as e:
-        logging.error(e)
+        logger.exception(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -136,7 +138,7 @@ def setup_mfa(
 
         return ApiSchema.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
-        logging.error(e)
+        logger.exception(e)
 
         if e.response["Error"]["Code"] == "NotAuthorizedException":
             raise HTTPException(
@@ -192,7 +194,7 @@ def login(
         )
 
     except ClientError as e:
-        logging.error(e)
+        logger.exception(e)
 
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
@@ -261,7 +263,7 @@ def login_mfa(
             )
 
     except ClientError as e:
-        logging.error(e)
+        logger.exception(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -303,7 +305,7 @@ def logout(
         access_token = authorization.split(" ")[1]
         client.logout_user(access_token)
     except ClientError as e:
-        logging.error(e)
+        logger.exception(e)
 
     return ApiSchema.ResponseBase(detail="User logged out successfully")
 
@@ -362,7 +364,7 @@ def forgot_password(
 
         return ApiSchema.ResponseBase(detail=detail)
     except Exception as e:
-        logging.error(e)
+        logger.exception(e)
         # always return 200 to avoid user enumeration
         return ApiSchema.ResponseBase(detail=detail)
 

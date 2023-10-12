@@ -9,6 +9,8 @@ from app.schema.api import LenderListResponse
 from ..schema import core
 from .general_utils import update_models
 
+logger = logging.getLogger(__name__)
+
 
 def get_all_lenders(session: Session) -> LenderListResponse:
     """
@@ -51,7 +53,7 @@ def create_lender(session: Session, payload: dict) -> core.Lender:
 
         return lender
     except IntegrityError as e:
-        logging.error(e)
+        logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Lender already exists",
@@ -121,7 +123,7 @@ def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lende
 
         return lender
     except IntegrityError as e:
-        logging.error(e)
+        logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Lender already exists",

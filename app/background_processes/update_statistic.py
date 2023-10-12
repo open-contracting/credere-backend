@@ -11,6 +11,8 @@ from app.schema.statistic import Statistic, StatisticType
 
 from . import statistics_utils
 
+logger = logging.getLogger(__name__)
+
 # any
 get_statistics_kpis = statistics_utils.get_general_statistics
 # OCP
@@ -25,20 +27,19 @@ def update_statistics(db_provider: Session = get_db):
     and lenders. It uses the `get_general_statistics`, `get_msme_opt_in_stats`,
     and `get_count_of_fis_choosen_by_msme` functions from the `statistics_utils` module
     to fetch the respective statistics. The retrieved statistics are then logged using
-    the `logging.info()` function.
+    the `logger.info()` function.
 
     After fetching the general statistics, this function attempts to store them in the database
     as an instance of the `Statistic` model. The statistics are stored with the type set to
     `StatisticType.APPLICATION_KPIS`. The `Statistic` model contains a JSON field to store
     the actual statistical data.
 
-    If an error occurs during the process, it is caught and logged using `logging.error()`.
+    If an error occurs during the process, it is caught and logged using `logger.exception()`.
     The database session is rolled back in case of an exception to prevent any changes from
     being committed to the database.
 
     Note:
     - The function utilizes the `get_db()` context manager to open a database session.
-    - The logging level and format are configured using `logging.basicConfig()`.
 
     Example usage:
     >>> update_statistics()
@@ -138,14 +139,5 @@ def update_statistics(db_provider: Session = get_db):
             session.commit()
 
         except Exception as e:
-            logging.error(f"there was an error saving statistics: {e}")
+            logger.exception(f"there was an error saving statistics: {e}")
             session.rollback()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-        handlers=[logging.StreamHandler()],  # Output logs to the console
-    )
-    update_statistics()

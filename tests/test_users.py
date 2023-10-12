@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import status
 
 import tests.common.common_test_client as common_test_client
@@ -25,12 +23,6 @@ test_user = {
     "name": "Test User",
     "type": UserType.FI.value,
 }
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-    handlers=[logging.StreamHandler()],  # Output logs to the console
-)
 
 
 def test_get_me(client):  # noqa
@@ -118,7 +110,6 @@ def test_login(client):  # noqa
     responseSetupPassword = client.put(
         "/users/change-password", json=setupPasswordPayload
     )
-    logging.info(responseSetupPassword.json())
     assert responseSetupPassword.status_code == status.HTTP_200_OK
 
     loginPayload = {
@@ -126,7 +117,6 @@ def test_login(client):  # noqa
         "password": common_test_client.tempPassword,
     }
     responseLogin = client.post("/users/login", json=loginPayload)
-    logging.info(responseLogin.json())
 
     assert responseLogin.status_code == status.HTTP_200_OK
     assert responseLogin.json()["access_token"] is not None
@@ -135,7 +125,6 @@ def test_login(client):  # noqa
         "/secure-endpoint-example",
         headers={"Authorization": "Bearer " + responseLogin.json()["access_token"]},
     )
-    logging.info(responseAccessProtectedRoute.json())
 
     assert responseAccessProtectedRoute.status_code == status.HTTP_200_OK
     assert (
@@ -147,10 +136,8 @@ def test_login(client):  # noqa
         "/secure-endpoint-example-username-extraction",
         headers={"Authorization": "Bearer " + responseLogin.json()["access_token"]},
     )
-    logging.info(responseAccessProtectedRouteWithUser.json())
 
     assert responseAccessProtectedRouteWithUser.status_code == status.HTTP_200_OK
-    logging.info(responseAccessProtectedRouteWithUser.json())
     assert (
         responseAccessProtectedRouteWithUser.json()["username"]
         == setupPasswordPayload["username"]

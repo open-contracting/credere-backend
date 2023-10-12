@@ -9,6 +9,8 @@ from app.schema.core import ApplicationStatus
 
 from . import application_utils
 
+logger = logging.getLogger(__name__)
+
 get_lapses_applications = application_utils.get_lapsed_applications
 
 
@@ -33,14 +35,5 @@ def set_lapsed_applications(db_provider: Session = get_db):
                 session.commit()
 
             except Exception as e:
-                logging.error(f"there was an error setting to lapsed: {e}")
+                logger.exception(f"there was an error setting to lapsed: {e}")
                 session.rollback()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-        handlers=[logging.StreamHandler()],  # Output logs to the console
-    )
-    set_lapsed_applications()

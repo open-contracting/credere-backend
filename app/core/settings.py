@@ -1,3 +1,5 @@
+import logging
+import logging.config
 import os
 
 from dotenv import dotenv_values
@@ -35,6 +37,7 @@ config_env = merge_dicts_with_condition(dotenv_values(".env"), os.environ)
 class Settings(BaseSettings):
     app_name: str = "Credere API"
     version: str = config_env.get("VERSION", VERSION)
+    log_level: int = config_env.get("LOG_LEVEL", logging.INFO)
     aws_region: str = config_env.get("AWS_REGION", "us-west-2")
     cognito_pool_id: str = config_env.get("COGNITO_POOL_ID", None)
     aws_access_key: str = config_env.get("AWS_ACCESS_KEY", None)
@@ -86,6 +89,30 @@ class Settings(BaseSettings):
 
 
 app_settings = Settings()
+
+logging.config.dictConfig(
+    {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "console": {
+                "format": "%(asctime)s %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            },
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "console",
+            },
+        },
+        "loggers": {
+            "": {
+                "handlers": ["console"],
+                "level": app_settings.log_level,
+            },
+        },
+    }
+)
 
 # email template names
 NEW_USER_TEMPLATE_NAME = "credere-NewAccountCreated"

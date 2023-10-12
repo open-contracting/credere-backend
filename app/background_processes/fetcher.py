@@ -12,6 +12,8 @@ from . import awards_utils
 from .application_utils import create_application, insert_message
 from .borrower_utils import get_or_create_borrower
 
+logger = logging.getLogger(__name__)
+
 
 def fetch_new_awards_from_date(
     last_updated_award_date: str, email_invitation: str, db_provider: Session
@@ -29,11 +31,11 @@ def fetch_new_awards_from_date(
     contracts_response_json = contracts_response.json()
 
     if not contracts_response_json:
-        logging.info("No new contracts")
+        logger.info("No new contracts")
         return
 
     while len(contracts_response.json()) > 0:
-        logging.info("Contracts response length: " + str(len(contracts_response_json)))
+        logger.info("Contracts response length: " + str(len(contracts_response_json)))
         for entry in contracts_response_json:
             with contextmanager(db_provider)() as session:
                 try:
@@ -62,9 +64,11 @@ def fetch_new_awards_from_date(
                     )
                     message.external_message_id = messageId
                     session.commit()
-                    logging.info("Application created")
+                    logger.info("Application created")
                 except Exception as e:
-                    logging.error(f"There was an error creating the application. {e}")
+                    logger.exception(
+                        f"There was an error creating the application. {e}"
+                    )
                     session.rollback()
 
         index += 1
@@ -103,10 +107,10 @@ def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):
     contracts_response = awards_utils.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
     if not contracts_response_json:
-        logging.info(f"No previous contracts for {borrower.legal_identifier}")
+        logger.info(f"No previous contracts for {borrower.legal_identifier}")
         return
 
-    logging.info(
+    logger.info(
         f"Previous contracts for {borrower.legal_identifier} response length: "
         + str(len(contracts_response_json))
     )
@@ -117,15 +121,7 @@ def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):
                 session.commit()
 
             except Exception as e:
-                logging.error(
+                logger.exception(
                     f"There was an error creating the previous award for {borrower.legal_identifier}. {e}"
                 )
                 session.rollback()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-        handlers=[logging.StreamHandler()],  # Output logs to the console
-    )

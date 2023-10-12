@@ -30,6 +30,8 @@ from fastapi import Depends, Query, status  # isort:skip # noqa
 from fastapi import Form, UploadFile  # isort:skip # noqa
 from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # noqa
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -1526,7 +1528,7 @@ async def update_apps_send_notifications(
                 lender=application.lender,
             )
         except ClientError as e:
-            logging.error(e)
+            logger.exception(e)
             return HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error submiting the application",
@@ -1609,7 +1611,7 @@ async def email_sme(
             background_tasks.add_task(update_statistics)
             return application
         except ClientError as e:
-            logging.error(e)
+            logger.exception(e)
             return HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error",

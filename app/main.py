@@ -1,12 +1,9 @@
-import logging
-
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.settings import app_settings
 from app.utils.general_utils import sentry_filter_transactions
-
-from .core.settings import app_settings
 
 from .routers import applications, lenders, users  # isort:skip
 from .routers import statistics  # isort:skip
@@ -40,13 +37,6 @@ app.include_router(users.router)
 app.include_router(applications.router)
 app.include_router(lenders.router)
 app.include_router(statistics.router)
-
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-    handlers=[logging.StreamHandler()],  # Output logs to the console
-)
 
 
 @app.get("/")

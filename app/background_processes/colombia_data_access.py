@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from app.db.session import app_settings
+from app.core.settings import app_settings
 
 from . import background_utils
 
