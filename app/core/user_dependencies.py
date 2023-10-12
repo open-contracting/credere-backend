@@ -164,7 +164,7 @@ class CognitoClient:
             authentication_result = response["AuthenticationResult"]
             if "ExpiresIn" in authentication_result:
                 expiration_time = authentication_result["ExpiresIn"]
-                logger.info("Session expiration time (in seconds):", expiration_time)
+                logger.info("Session expiration time (in seconds): %s", expiration_time)
 
         return response
 
