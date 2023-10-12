@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Any, Generator
 from unittest.mock import MagicMock, patch
@@ -39,19 +38,11 @@ SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 create_enums(engine)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-    handlers=[logging.StreamHandler()],  # Output logs to the console
-)
-
 
 def get_test_db() -> Session:
     try:
         db = SessionTesting()
         yield db
-    except Exception as e:
-        logging.error("Error creating database ", e)
     finally:
         if db:
             db.close()
@@ -88,7 +79,6 @@ def start_application():
 
 @pytest.fixture(scope="function")
 def app() -> Generator[FastAPI, Any, None]:
-    logging.info("Creating test database")
     core.User.metadata.create_all(engine)  # Create the tables.
     _app = start_application()
     yield _app
@@ -146,7 +136,6 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
     create_templates(ses_client)
 
     def generate_test_password():
-        logging.info("generate_password")
         return tempPassword
 
     def _get_test_cognito_client():
