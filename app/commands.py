@@ -1,5 +1,3 @@
-import logging
-
 import typer
 
 from app import background_processes
@@ -38,9 +36,4 @@ def SLA_overdue_applications():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
-        handlers=[logging.StreamHandler()],  # Output logs to the console
-    )
     app()
