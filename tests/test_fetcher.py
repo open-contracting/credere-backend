@@ -62,7 +62,6 @@ def test_fetch_empty_contracts(start_background_db, caplog):  # noqa
             200, [], "app.background_processes.awards_utils.get_new_contracts"
         ):
             fetcher.fetch_new_awards(
-                "",
                 common_test_client.get_test_db,
             )
 
@@ -84,7 +83,6 @@ def test_fetch_new_awards_borrower_declined(client, mock_templated_email):  # no
         "app.background_processes.background_utils.make_request_with_retry",
     ):
         fetcher.fetch_new_awards(
-            "test@noreply.open-contracting.org",
             common_test_client.get_test_db,
         )
 
@@ -105,7 +103,6 @@ def test_fetch_new_awards_from_date(start_background_db, mock_templated_email): 
         "app.background_processes.background_utils.make_request_with_retry",
     ):
         fetcher.fetch_new_awards(
-            "",
             common_test_client.get_test_db,
         )
 

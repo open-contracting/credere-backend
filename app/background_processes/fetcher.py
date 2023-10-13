@@ -16,26 +16,26 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_new_awards_from_date(
-    last_updated_award_date: str, email_invitation: str, db_provider: Session
+    last_updated_award_date: str,
+        db_provider: Session,
+        until_date: str = None
 ):
     """
     Fetch new awards from the given date and process them.
 
     :param last_updated_award_date: Date string in the format 'YYYY-MM-DD'.
     :type last_updated_award_date: datetime
-    :param email_invitation: Optional email address to send invitations. Defaults to None.
-    :type email_invitation: str or None
     """
     index = 0
-    contracts_response = awards_utils.get_new_contracts(index, last_updated_award_date)
+    contracts_response = awards_utils.get_new_contracts(index, last_updated_award_date, until_date)
     contracts_response_json = contracts_response.json()
 
     if not contracts_response_json:
         logger.info("No new contracts")
         return
-
-    while len(contracts_response.json()) > 0:
-        logger.info("Contracts response length: " + str(len(contracts_response_json)))
+    total = 0
+    while contracts_response.json():
+        total += len(contracts_response_json)
         for entry in contracts_response_json:
             with contextmanager(db_provider)() as session:
                 try:
@@ -70,15 +70,15 @@ def fetch_new_awards_from_date(
                         f"There was an error creating the application. {e}"
                     )
                     session.rollback()
-
         index += 1
         contracts_response = awards_utils.get_new_contracts(
-            index, last_updated_award_date
+            index, last_updated_award_date, until_date
         )
         contracts_response_json = contracts_response.json()
+    logger.info('Total fetched contracts: %d', total)
 
 
-def fetch_new_awards(email_invitation: str = None, db_provider: Session = get_db):
+def fetch_new_awards(db_provider: Session = get_db):
     """
     Fetch new awards, checks if they exist in our database. If not it checks award's borrower and check if they exist.
     if either award and borrower doesn't exist or if borrower exist but the award doesn't it will create an application
@@ -88,12 +88,13 @@ def fetch_new_awards(email_invitation: str = None, db_provider: Session = get_db
     (In this case SECOP Colombia) for each application created
 
     you can also pass an email_invitation as parameter if you want to invite a particular borrower
-
-    :param email_invitation: Optional email address to send invitations. Defaults to None.
-    :type email_invitation: str or None
     """
     last_updated_award_date = awards_utils.get_last_updated_award_date()
-    fetch_new_awards_from_date(last_updated_award_date, email_invitation, db_provider)
+    fetch_new_awards_from_date(last_updated_award_date, db_provider)
+
+
+def fetch_contracts_from_date(from_date: str, until_date: str, db_provider: Session = get_db):
+    fetch_new_awards_from_date(from_date, db_provider, until_date)
 
 
 def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):

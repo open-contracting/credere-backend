@@ -287,15 +287,7 @@ crontab -e
 python -m app.commands fetch-awards
 ```
 
-or
-
-```
-python -m app.commands fetch-awards --email-invitation test@example.com
-```
-
-These commands gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on env variables _ENVIRONMENT_ and _TEST_MAIL_RECEIVER_ values).
-
-Alternative could receive a custom email destination with **--email-invitation** argument
+This command gets new contracts since the last updated award date. For each new contract, an award is created, a borrower is either retrieved or created, and if the borrower has not declined opportunities, an application is created for them. An invitation email is sent to the borrower (or the test email, depending on env variables _ENVIRONMENT_ and _TEST_MAIL_RECEIVER_ values).
 
 #### Scheduled Execution (Cron)
 

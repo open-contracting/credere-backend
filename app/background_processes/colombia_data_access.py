@@ -100,33 +100,34 @@ def create_new_award(
     return new_award
 
 
-def get_new_contracts(index: int, last_updated_award_date):
-    """
-    Get new contracts data from the source API.
-
-    :param index: The index of the contracts data to retrieve (pagination index).
-    :type index: int
-    :param last_updated_award_date: The last updated date of the award data.
-    :type last_updated_award_date: datetime or None
-
-    :return: The response object containing the new contract's data.
-    :rtype: httpx.Response
-    """
+def get_new_contracts(index: int, from_date, until_date=None):
 
     offset = index * app_settings.secop_pagination_limit
     delta = timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
     date_format = "%Y-%m-%dT%H:%M:%S.000"
     converted_date = (datetime.now() - delta).strftime(date_format)
 
-    if last_updated_award_date:
+    if from_date and not until_date:
         delta = timedelta(seconds=1)
-        converted_date = (last_updated_award_date + delta).strftime(date_format)
+        converted_date = (from_date + delta).strftime(date_format)
 
-    url = (
-        f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
-        "&$order=ultima_actualizacion desc null last&$where=es_pyme = 'Si' AND estado_contrato = 'Borrador' "
-        f"AND ultima_actualizacion >= '{converted_date}' AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
-    )
+    base_url = (
+            f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
+            "&$order=ultima_actualizacion desc null last&$where=es_pyme = 'Si' "
+            f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
+        )
+
+    if from_date and until_date:
+        url = (
+            f"{base_url}"
+            f"AND ultima_actualizacion >= '{from_date}' "
+            f"AND ultima_actualizacion < '{until_date}' "
+        )
+    else:
+        url = (
+            f"{base_url}"
+            f"AND estado_contrato = 'Borrador' AND ultima_actualizacion >= '{converted_date}'"
+        )
 
     return background_utils.make_request_with_retry(url, headers)
 

@@ -6,8 +6,13 @@ app = typer.Typer()
 
 
 @app.command()
-def fetch_awards(email_invitation: str = None):
-    background_processes.fetcher.fetch_new_awards(email_invitation)
+def fetch_awards():
+    background_processes.fetcher.fetch_new_awards()
+
+
+@app.command()
+def fetch_contracts_from_date(from_date: str, until_date: str):
+    background_processes.fetcher.fetch_contracts_from_date(from_date, until_date)
 
 
 @app.command()

@@ -104,7 +104,7 @@ def create_new_award(
     )
 
 
-def get_new_contracts(index: int, last_updated_award_date):
+def get_new_contracts(index: int, last_updated_award_date, until_date = None):
     """
     Get new contracts starting from the specified index and last updated award date.
 
@@ -117,7 +117,7 @@ def get_new_contracts(index: int, last_updated_award_date):
     :rtype: [dict]
     """
 
-    return data_access.get_new_contracts(index, last_updated_award_date)
+    return data_access.get_new_contracts(index, last_updated_award_date, until_date)
 
 
 def get_previous_contracts(documento_proveedor):
