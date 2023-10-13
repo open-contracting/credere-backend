@@ -37,7 +37,7 @@ config_env = merge_dicts_with_condition(dotenv_values(".env"), os.environ)
 class Settings(BaseSettings):
     app_name: str = "Credere API"
     version: str = config_env.get("VERSION", VERSION)
-    log_level: int = config_env.get("LOG_LEVEL", logging.INFO)
+    log_level: int | str = config_env.get("LOG_LEVEL", logging.INFO)
     aws_region: str = config_env.get("AWS_REGION", "us-west-2")
     cognito_pool_id: str = config_env.get("COGNITO_POOL_ID", None)
     aws_access_key: str = config_env.get("AWS_ACCESS_KEY", None)
