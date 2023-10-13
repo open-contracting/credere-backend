@@ -104,7 +104,7 @@ def create_new_award(
     )
 
 
-def get_new_contracts(index: int, last_updated_award_date, until_date = None):
+def get_new_contracts(index: int, last_updated_award_date, until_date=None):
     """
     Get new contracts starting from the specified index and last updated award date.
 
