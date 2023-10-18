@@ -361,8 +361,8 @@ def forgot_password(
     detail = "An email with a reset link was sent to end user"
     try:
         client.reset_password(user.username)
-    except Exception as e:
-        logger.exception(e)
+    except Exception:
+        logger.exception("Error resetting password")
 
     # always return 200 to avoid user enumeration
     return ApiSchema.ResponseBase(detail=detail)
