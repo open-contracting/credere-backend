@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from typing import Generator
 
@@ -6,6 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
 from app.core.settings import app_settings
+
+logger = logging.getLogger(__name__)
 
 SessionLocal = None
 if app_settings.database_url:
@@ -33,6 +36,16 @@ def transaction_session(db: Session):
     except Exception:
         db.rollback()
         raise
+
+
+@contextmanager
+def transaction_session_logger(session: Session, msg: str, *args):
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        logger.exception(msg, *args)
+        session.rollback()
 
 
 def get_db() -> Generator:

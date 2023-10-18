@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
+from app.db.session import get_db, transaction_session_logger
 from app.schema.core import ApplicationStatus
 
 from . import application_utils
@@ -28,12 +28,6 @@ def set_lapsed_applications(db_provider: Session = get_db):
     with contextmanager(db_provider)() as session:
         lapsed_applications = get_lapses_applications(session)
         for application in lapsed_applications:
-            try:
-                # save to DB
+            with transaction_session_logger(session, "Error setting to lapsed"):
                 application.status = ApplicationStatus.LAPSED
                 application.application_lapsed_at = datetime.utcnow()
-                session.commit()
-
-            except Exception as e:
-                logger.exception(f"there was an error setting to lapsed: {e}")
-                session.rollback()

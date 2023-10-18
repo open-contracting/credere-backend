@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
+from app.db.session import get_db, transaction_session_logger
 from app.schema import core
 from app.schema.statistic import Statistic, StatisticType
 
@@ -46,7 +46,7 @@ def update_statistics(db_provider: Session = get_db):
     """
 
     with contextmanager(db_provider)() as session:
-        try:
+        with transaction_session_logger(session, "Error saving statistics"):
             # Get general Kpis
             statistic_kpis = get_statistics_kpis(session, None, None, None)
             # Try to get the existing row
@@ -135,9 +135,3 @@ def update_statistics(db_provider: Session = get_db):
                     )
 
                 session.add(statistic_kpi_data)
-
-            session.commit()
-
-        except Exception as e:
-            logger.exception(f"there was an error saving statistics: {e}")
-            session.rollback()

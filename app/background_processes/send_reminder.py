@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from sqlalchemy.orm import Session
 
 from app.core.user_dependencies import sesClient
-from app.db.session import get_db
+from app.db.session import get_db, transaction_session_logger
 from app.utils import email_utility
 
 from . import application_utils
@@ -42,8 +42,9 @@ def send_reminders(db_provider: Session = get_db):
     else:
         for application in applications_to_send_intro_reminder:
             with contextmanager(db_provider)() as session:
-                try:
-                    # save to DB
+                with transaction_session_logger(
+                    session, "Error sending mail or updating the sent status"
+                ):
                     new_message = save_message_type(
                         application.id, session, "BORROWER_PENDING_APPLICATION_REMINDER"
                     )
@@ -58,12 +59,6 @@ def send_reminders(db_provider: Session = get_db):
                     )
                     new_message.external_message_id = messageID
                     logger.info("Mail sent and status updated")
-                    session.commit()
-                except Exception as e:
-                    logger.exception(
-                        f"there was an error sending mail or updating the sent status: {e}"
-                    )
-                    session.rollback()
 
     applications_to_send_submit_reminder = get_applications_to_remind_submit(
         db_provider
@@ -77,7 +72,9 @@ def send_reminders(db_provider: Session = get_db):
     else:
         for application in applications_to_send_submit_reminder:
             with contextmanager(db_provider)() as session:
-                try:
+                with transaction_session_logger(
+                    session, "Error sending mail or updating the sent status"
+                ):
                     # Db message table update
                     new_message = save_message_type(
                         application.id, session, "BORROWER_PENDING_SUBMIT_REMINDER"
@@ -93,9 +90,3 @@ def send_reminders(db_provider: Session = get_db):
                     )
                     new_message.external_message_id = messageID
                     logger.info("Mail sent and status updated")
-                    session.commit()
-                except Exception as e:
-                    logger.exception(
-                        f"there was an error sending mail or updating the sent status: {e}"
-                    )
-                    session.rollback()

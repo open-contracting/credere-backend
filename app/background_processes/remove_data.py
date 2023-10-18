@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
+from app.db.session import get_db, transaction_session_logger
 from app.schema.core import Application
 
 from . import application_utils
@@ -35,8 +35,7 @@ def remove_dated_data(db_provider: Session = get_db):
     with contextmanager(db_provider)() as session:
         dated_applications = get_dated_applications(session)
         for application in dated_applications:
-            try:
-                # save to DB
+            with transaction_session_logger(session, "Error deleting the data"):
                 application.award.previous = True
                 application.primary_email = ""
                 application.archived_at = datetime.utcnow()
@@ -63,9 +62,3 @@ def remove_dated_data(db_provider: Session = get_db):
                     application.borrower.address = ""
                     application.borrower.legal_identifier = ""
                     application.borrower.source_data = ""
-
-                session.commit()
-
-            except Exception as e:
-                logger.exception(f"there was an error deleting the data: {e}")
-                session.rollback()
