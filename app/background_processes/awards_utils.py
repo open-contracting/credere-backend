@@ -5,6 +5,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm.session import Session
 
 from app.db.session import get_db
+from app.exceptions import SkippedAwardError
 from app.schema.core import Award
 
 from . import background_utils
@@ -168,9 +169,7 @@ def create_award(entry, session: Session, borrower_id=None, previous=False) -> A
 
     # if award already exists
     if get_existing_award(source_contract_id, session):
-        background_utils.raise_sentry_error(
-            f"Skipping Award [previous {previous}] - Already exists on database", entry
-        )
+        raise SkippedAwardError(f"[{previous=}] Award already exists for {entry=}")
 
     new_award = create_new_award(source_contract_id, entry, borrower_id, previous)
 

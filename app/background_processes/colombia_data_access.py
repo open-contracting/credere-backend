@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from app.core.settings import app_settings
+from app.exceptions import SkippedAwardError
 
 from . import background_utils
 
@@ -36,6 +37,9 @@ def create_new_award(
     :rtype: dict
     """
 
+    proceso_de_compra = entry["proceso_de_compra"]
+    proveedor_adjudicado = entry["proveedor_adjudicado"]
+
     new_award = {
         "source_contract_id": source_contract_id,
         "source_url": entry.get("urlproceso", {}).get("url", ""),
@@ -46,7 +50,7 @@ def create_new_award(
         "contractperiod_enddate": entry.get("fecha_de_fin_del_contrato", None),
         "procurement_method": entry.get("modalidad_de_contratacion", ""),
         "buyer_name": entry.get("nombre_entidad", ""),
-        "contracting_process_id": entry.get("proceso_de_compra", ""),
+        "contracting_process_id": proceso_de_compra,
         "procurement_category": entry.get("tipo_de_contrato", ""),
         "previous": previous,
         "payment_method": {
@@ -60,39 +64,28 @@ def create_new_award(
     }
 
     award_url = (
-        f"{URLS['AWARDS']}?$where=id_del_portafolio='{entry['proceso_de_compra']}'"
-        f" AND nombre_del_proveedor='{entry['proveedor_adjudicado']}'"
+        f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
+        f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
     )
 
     award_response = background_utils.make_request_with_retry(award_url, headers)
+    award_response_json = award_response.json()
+    len_award_response_json = len(award_response_json)
 
-    if len(award_response.json()) > 1 or len(award_response.json()) == 0:
-        error_data = {
-            "entry": entry,
-            "proveedor_adjudicado": entry["proveedor_adjudicado"],
-            "id_del_portafolio": entry["proceso_de_compra"],
-            "response": award_response.json(),
-        }
-        background_utils.raise_sentry_error(
-            (
-                f"Skipping Award [previous {previous}]"
-                " - Zero or more than one results for 'proceso_de_compra' and 'proveedor_adjudicado'"
-            ),
-            error_data,
+    if len_award_response_json != 1:
+        raise SkippedAwardError(
+            f"[{previous=}] {len_award_response_json} results for {proceso_de_compra=} and {proveedor_adjudicado=} "
+            f"({entry=} response={award_response_json})"
         )
 
-    award_response_json = award_response.json()[0]
+    remote_award = award_response_json[0]
 
-    new_award["description"] = award_response_json.get(
-        "descripci_n_del_procedimiento", ""
-    )
-    new_award["award_date"] = award_response_json.get("fecha_adjudicacion", None)
-    new_award["source_data_awards"] = award_response_json
+    new_award["description"] = remote_award.get("descripci_n_del_procedimiento", "")
+    new_award["award_date"] = remote_award.get("fecha_adjudicacion", None)
+    new_award["source_data_awards"] = remote_award
 
-    new_award["contract_status"] = award_response_json.get(
-        "estado_del_procedimiento", ""
-    )
-    new_award["title"] = award_response_json.get("nombre_del_procedimiento", "")
+    new_award["contract_status"] = remote_award.get("estado_del_procedimiento", "")
+    new_award["title"] = remote_award.get("nombre_del_procedimiento", "")
 
     if borrower_id:
         new_award["borrower_id"] = borrower_id
@@ -161,7 +154,7 @@ def get_source_contract_id(entry):
     source_contract_id = entry.get("id_contrato", "")
 
     if not source_contract_id:
-        background_utils.raise_sentry_error("Skipping Award - No id_contrato", entry)
+        raise SkippedAwardError(f"No id_contrato in {entry=}")
 
     return source_contract_id
 
@@ -188,34 +181,31 @@ def create_new_borrower(
         f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
     )
     borrower_response = background_utils.make_request_with_retry(borrower_url, headers)
+    borrower_response_json = borrower_response.json()
+    len_borrower_response_json = len(borrower_response_json)
 
-    if len(borrower_response.json()) > 1:
-        error_data = {
-            "entry": entry,
-            "documento_proveedor": documento_proveedor,
-            "response": borrower_response.json(),
-        }
-        background_utils.raise_sentry_error(
-            "Skipping Award - There are more than one borrower for this borrower identifier",
-            error_data,
+    if len_borrower_response_json > 1:
+        raise SkippedAwardError(
+            f"{len_borrower_response_json} borrowers for {documento_proveedor=} "
+            f"({entry=} response={borrower_response_json})"
         )
 
-    borrower_response_json = borrower_response.json()[0]
+    remote_borrower = borrower_response_json[0]
     email = get_email(documento_proveedor, entry)
 
     new_borrower = {
         "borrower_identifier": borrower_identifier,
-        "legal_name": borrower_response_json.get("nombre_entidad", ""),
+        "legal_name": remote_borrower.get("nombre_entidad", ""),
         "email": email,
         "address": "Direccion: {}\nCiudad: {}\nProvincia: {}\nEstado: {}".format(
-            borrower_response_json.get("direccion", "No provisto"),
-            borrower_response_json.get("ciudad", "No provisto"),
-            borrower_response_json.get("provincia", "No provisto"),
-            borrower_response_json.get("estado", "No provisto"),
+            remote_borrower.get("direccion", "No provisto"),
+            remote_borrower.get("ciudad", "No provisto"),
+            remote_borrower.get("provincia", "No provisto"),
+            remote_borrower.get("estado", "No provisto"),
         ),
-        "legal_identifier": borrower_response_json.get("nit_entidad", ""),
-        "type": borrower_response_json.get("tipo_organizacion", ""),
-        "source_data": borrower_response_json,
+        "legal_identifier": remote_borrower.get("nit_entidad", ""),
+        "type": remote_borrower.get("tipo_organizacion", ""),
+        "source_data": remote_borrower,
     }
 
     return new_borrower
@@ -238,42 +228,33 @@ def get_email(documento_proveedor, entry) -> str:
     borrower_response_email = background_utils.make_request_with_retry(
         borrower_email_url, headers
     )
+    borrower_response_email_json = borrower_response_email.json()
+    len_borrower_response_email_json = len(borrower_response_email_json)
 
-    if len(borrower_response_email.json()) == 0:
-        error_data = {
-            "entry": entry,
-            "response": borrower_response_email.json(),
-        }
-        background_utils.raise_sentry_error(
-            "Skipping Award - No email for borrower", error_data
+    if len_borrower_response_email_json == 0:
+        raise SkippedAwardError(
+            f"0 emails for borrower ({entry=} response={borrower_response_email_json})"
         )
 
-    borrower_response_email_json = borrower_response_email.json()[0]
-    email = borrower_response_email_json.get("correo_entidad", "")
+    remote_email = borrower_response_email_json[0]
+    email = remote_email.get("correo_entidad", "")
 
     if not background_utils.is_valid_email(email):
-        error_data = {
-            "entry": entry,
-            "response": borrower_response_email_json,
-        }
-        background_utils.raise_sentry_error(
-            "Skipping Award - Borrower has no valid email address", error_data
+        raise SkippedAwardError(
+            f"First email for borrower is invalid ({remote_email=} {entry=})"
         )
 
-    if len(borrower_response_email.json()) > 1:
+    if len_borrower_response_email_json > 1:
         same_email = True
-        for borrower_email in borrower_response_email.json():
+        for borrower_email in borrower_response_email_json:
             if borrower_email.get("correo_entidad", "") != email:
                 same_email = False
                 break
 
         if not same_email:
-            error_data = {
-                "entry": entry,
-                "response": borrower_response_email.json(),
-            }
-            background_utils.raise_sentry_error(
-                "Skipping Award - More than one email for borrower", error_data
+            raise SkippedAwardError(
+                f"{len_borrower_response_email_json} emails for borrower "
+                f"({entry=} response={borrower_response_email_json})"
             )
 
     return email
@@ -292,11 +273,6 @@ def get_documento_proveedor(entry) -> str:
 
     documento_proveedor = entry.get("documento_proveedor", None)
     if not documento_proveedor or documento_proveedor == "No Definido":
-        error_data = {"entry": entry}
-
-        background_utils.raise_sentry_error(
-            "Skipping Award - documento_proveedor is 'No Definido'",
-            error_data,
-        )
+        raise SkippedAwardError(f"documento_proveedor is 'No Definido' ({entry=})")
 
     return documento_proveedor

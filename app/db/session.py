@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
 from app.core.settings import app_settings
+from app.exceptions import SkippedAwardError
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,10 @@ def transaction_session_logger(session: Session, msg: str, *args):
     try:
         yield session
         session.commit()
+    # Don't display tracebacks in emails from cron jobs for anticipated errors.
+    except SkippedAwardError:
+        logger.error(msg, *args)
+        session.rollback()
     except Exception:
         logger.exception(msg, *args)
         session.rollback()

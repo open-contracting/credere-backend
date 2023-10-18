@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db, transaction_session
+from app.exceptions import SkippedAwardError
 from app.schema import core
 from app.utils import email_utility
 
@@ -115,15 +116,8 @@ def create_application(
     # if application already exists
     application = get_existing_application(award_borrower_identifier, session)
     if application:
-        error_data = {
-            "legal_identifier": legal_identifier,
-            "source_contract_id": source_contract_id,
-            "application_id": application.id,
-        }
-
-        background_utils.raise_sentry_error(
-            f"Skipping Award - Application ID {application.id} already exists on for award {source_contract_id}",
-            error_data,
+        raise SkippedAwardError(
+            f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}"
         )
 
     new_uuid: str = background_utils.generate_uuid(award_borrower_identifier)
