@@ -101,7 +101,6 @@ def create_new_award(
 
 
 def get_new_contracts(index: int, from_date, until_date=None):
-
     offset = index * app_settings.secop_pagination_limit
     delta = timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
     date_format = "%Y-%m-%dT%H:%M:%S.000"
@@ -112,10 +111,10 @@ def get_new_contracts(index: int, from_date, until_date=None):
         converted_date = (from_date + delta).strftime(date_format)
 
     base_url = (
-            f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
-            "&$order=ultima_actualizacion desc null last&$where=es_pyme = 'Si' "
-            f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
-        )
+        f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
+        "&$order=ultima_actualizacion desc null last&$where=es_pyme = 'Si' "
+        f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
+    )
 
     if from_date and until_date:
         url = (

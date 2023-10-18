@@ -16,9 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_new_awards_from_date(
-    last_updated_award_date: str,
-        db_provider: Session,
-        until_date: str = None
+    last_updated_award_date: str, db_provider: Session, until_date: str = None
 ):
     """
     Fetch new awards from the given date and process them.
@@ -27,7 +25,9 @@ def fetch_new_awards_from_date(
     :type last_updated_award_date: datetime
     """
     index = 0
-    contracts_response = awards_utils.get_new_contracts(index, last_updated_award_date, until_date)
+    contracts_response = awards_utils.get_new_contracts(
+        index, last_updated_award_date, until_date
+    )
     contracts_response_json = contracts_response.json()
 
     if not contracts_response_json:
@@ -75,7 +75,7 @@ def fetch_new_awards_from_date(
             index, last_updated_award_date, until_date
         )
         contracts_response_json = contracts_response.json()
-    logger.info('Total fetched contracts: %d', total)
+    logger.info("Total fetched contracts: %d", total)
 
 
 def fetch_new_awards(db_provider: Session = get_db):
@@ -93,7 +93,9 @@ def fetch_new_awards(db_provider: Session = get_db):
     fetch_new_awards_from_date(last_updated_award_date, db_provider)
 
 
-def fetch_contracts_from_date(from_date: str, until_date: str, db_provider: Session = get_db):
+def fetch_contracts_from_date(
+    from_date: str, until_date: str, db_provider: Session = get_db
+):
     fetch_new_awards_from_date(from_date, db_provider, until_date)
 
 
