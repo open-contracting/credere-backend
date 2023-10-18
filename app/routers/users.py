@@ -361,12 +361,11 @@ def forgot_password(
     detail = "An email with a reset link was sent to end user"
     try:
         client.reset_password(user.username)
-
-        return ApiSchema.ResponseBase(detail=detail)
     except Exception as e:
         logger.exception(e)
-        # always return 200 to avoid user enumeration
-        return ApiSchema.ResponseBase(detail=detail)
+
+    # always return 200 to avoid user enumeration
+    return ApiSchema.ResponseBase(detail=detail)
 
 
 @router.get("/users/{user_id}", tags=["users"], response_model=User)
