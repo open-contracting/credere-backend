@@ -6,7 +6,6 @@ import re
 import uuid
 
 import httpx
-import sentry_sdk
 
 from app.core.settings import app_settings
 
@@ -29,20 +28,6 @@ def is_valid_email(email: str) -> bool:
     if re.search(pattern, email):
         return True
     return False
-
-
-def raise_sentry_error(message: str, payload: dict):
-    """
-    Raise a Sentry error with the given message and payload.
-
-    :param message: The error message to be sent to Sentry.
-    :type message: str
-    :param payload: The payload to be sent along with the error message.
-    :type payload: dict
-    """
-
-    sentry_sdk.capture_exception(message, payload)
-    raise ValueError(message)
 
 
 def generate_uuid(string: str) -> str:

@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from sqlalchemy.orm import Session
 
 from app.core.user_dependencies import sesClient
-from app.db.session import get_db
+from app.db.session import get_db, transaction_session_logger
 from app.schema.core import Borrower
 from app.utils import email_utility
 
@@ -16,9 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_new_awards_from_date(
-    last_updated_award_date: str,
-        db_provider: Session,
-        until_date: str = None
+    last_updated_award_date: str, db_provider: Session, until_date: str = None
 ):
     """
     Fetch new awards from the given date and process them.
@@ -27,7 +25,9 @@ def fetch_new_awards_from_date(
     :type last_updated_award_date: datetime
     """
     index = 0
-    contracts_response = awards_utils.get_new_contracts(index, last_updated_award_date, until_date)
+    contracts_response = awards_utils.get_new_contracts(
+        index, last_updated_award_date, until_date
+    )
     contracts_response_json = contracts_response.json()
 
     if not contracts_response_json:
@@ -38,7 +38,9 @@ def fetch_new_awards_from_date(
         total += len(contracts_response_json)
         for entry in contracts_response_json:
             with contextmanager(db_provider)() as session:
-                try:
+                with transaction_session_logger(
+                    session, "Error creating the application"
+                ):
                     award = awards_utils.create_award(entry, session)
                     borrower = get_or_create_borrower(entry, session)
                     award.borrower_id = borrower.id
@@ -63,19 +65,12 @@ def fetch_new_awards_from_date(
                         award.title,
                     )
                     message.external_message_id = messageId
-                    session.commit()
-                    logger.info("Application created")
-                except Exception as e:
-                    logger.exception(
-                        f"There was an error creating the application. {e}"
-                    )
-                    session.rollback()
         index += 1
         contracts_response = awards_utils.get_new_contracts(
             index, last_updated_award_date, until_date
         )
         contracts_response_json = contracts_response.json()
-    logger.info('Total fetched contracts: %d', total)
+    logger.info("Total fetched contracts: %d", total)
 
 
 def fetch_new_awards(db_provider: Session = get_db):
@@ -93,7 +88,9 @@ def fetch_new_awards(db_provider: Session = get_db):
     fetch_new_awards_from_date(last_updated_award_date, db_provider)
 
 
-def fetch_contracts_from_date(from_date: str, until_date: str, db_provider: Session = get_db):
+def fetch_contracts_from_date(
+    from_date: str, until_date: str, db_provider: Session = get_db
+):
     fetch_new_awards_from_date(from_date, db_provider, until_date)
 
 
@@ -117,12 +114,9 @@ def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):
     )
     for entry in contracts_response_json:
         with contextmanager(db_provider)() as session:
-            try:
+            with transaction_session_logger(
+                session,
+                "Error creating the previous award for %s",
+                borrower.legal_identifier,
+            ):
                 awards_utils.create_award(entry, session, borrower.id, True)
-                session.commit()
-
-            except Exception as e:
-                logger.exception(
-                    f"There was an error creating the previous award for {borrower.legal_identifier}. {e}"
-                )
-                session.rollback()

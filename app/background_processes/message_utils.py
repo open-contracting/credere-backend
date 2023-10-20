@@ -34,15 +34,12 @@ def save_message_type(application_id: int, session: Session, message):
         Exception: If there is an error during the creation or saving of the message.
         (Note: It is generally not recommended to catch a generic `Exception` in the caller.)
     """
-    try:
-        # Create a new message
-        new_message = Message(
-            application_id=application_id, type=getattr(core.MessageType, message)
-        )
+    # Create a new message
+    new_message = Message(
+        application_id=application_id, type=getattr(core.MessageType, message)
+    )
 
-        # Add new message to the session
-        session.add(new_message)
-        session.flush()
-        return new_message
-    except Exception as e:
-        raise e
+    # Add new message to the session
+    session.add(new_message)
+    session.flush()
+    return new_message

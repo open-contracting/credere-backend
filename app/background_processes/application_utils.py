@@ -3,12 +3,12 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 from sqlalchemy import and_, or_, select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.settings import app_settings
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db, transaction_session
+from app.exceptions import SkippedAwardError
 from app.schema import core
 from app.utils import email_utility
 
@@ -116,15 +116,8 @@ def create_application(
     # if application already exists
     application = get_existing_application(award_borrower_identifier, session)
     if application:
-        error_data = {
-            "legal_identifier": legal_identifier,
-            "source_contract_id": source_contract_id,
-            "application_id": application.id,
-        }
-
-        background_utils.raise_sentry_error(
-            f"Skipping Award - Application ID {application.id} already exists on for award {source_contract_id}",
-            error_data,
+        raise SkippedAwardError(
+            f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}"
         )
 
     new_uuid: str = background_utils.generate_uuid(award_borrower_identifier)
@@ -153,46 +146,43 @@ def get_dated_applications(session):
     :return: A list of applications that meet the date-based criteria.
     :rtype: list[core.Application]
     """
-    try:
-        applications_to_remove_data = (
-            session.query(core.Application)
-            .options(
-                joinedload(core.Application.borrower),
-                joinedload(core.Application.borrower_documents),
-            )
-            .filter(
-                or_(
-                    and_(
-                        core.Application.status == ApplicationStatus.DECLINED,
-                        core.Application.borrower_declined_at
-                        + timedelta(days=app_settings.days_to_erase_borrower_data)
-                        < datetime.now(),
-                    ),
-                    and_(
-                        core.Application.status == ApplicationStatus.REJECTED,
-                        core.Application.lender_rejected_at
-                        + timedelta(days=app_settings.days_to_erase_borrower_data)
-                        < datetime.now(),
-                    ),
-                    and_(
-                        core.Application.status == ApplicationStatus.COMPLETED,
-                        core.Application.lender_approved_at
-                        + timedelta(days=app_settings.days_to_erase_borrower_data)
-                        < datetime.now(),
-                    ),
-                    and_(
-                        core.Application.status == ApplicationStatus.LAPSED,
-                        core.Application.application_lapsed_at
-                        + timedelta(days=app_settings.days_to_erase_borrower_data)
-                        < datetime.now(),
-                    ),
-                ),
-                core.Application.archived_at.is_(None),
-            )
-            .all()
+    applications_to_remove_data = (
+        session.query(core.Application)
+        .options(
+            joinedload(core.Application.borrower),
+            joinedload(core.Application.borrower_documents),
         )
-    except SQLAlchemyError as e:
-        raise e
+        .filter(
+            or_(
+                and_(
+                    core.Application.status == ApplicationStatus.DECLINED,
+                    core.Application.borrower_declined_at
+                    + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    < datetime.now(),
+                ),
+                and_(
+                    core.Application.status == ApplicationStatus.REJECTED,
+                    core.Application.lender_rejected_at
+                    + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    < datetime.now(),
+                ),
+                and_(
+                    core.Application.status == ApplicationStatus.COMPLETED,
+                    core.Application.lender_approved_at
+                    + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    < datetime.now(),
+                ),
+                and_(
+                    core.Application.status == ApplicationStatus.LAPSED,
+                    core.Application.application_lapsed_at
+                    + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    < datetime.now(),
+                ),
+            ),
+            core.Application.archived_at.is_(None),
+        )
+        .all()
+    )
 
     return applications_to_remove_data or []
 
@@ -207,42 +197,37 @@ def get_lapsed_applications(session):
     :return: A list of applications that meet the lapsed status criteria.
     :rtype: list[core.Application]
     """
-    try:
-        applications_to_set_to_lapsed = (
-            session.query(core.Application)
-            .options(
-                joinedload(core.Application.borrower),
-                joinedload(core.Application.borrower_documents),
-            )
-            .filter(
-                or_(
-                    and_(
-                        core.Application.status == ApplicationStatus.PENDING,
-                        core.Application.created_at
-                        + timedelta(days=app_settings.days_to_change_to_lapsed)
-                        < datetime.now(),
-                    ),
-                    and_(
-                        core.Application.status == ApplicationStatus.ACCEPTED,
-                        core.Application.borrower_accepted_at
-                        + timedelta(days=app_settings.days_to_change_to_lapsed)
-                        < datetime.now(),
-                    ),
-                    and_(
-                        core.Application.status
-                        == ApplicationStatus.INFORMATION_REQUESTED,
-                        core.Application.information_requested_at
-                        + timedelta(days=app_settings.days_to_change_to_lapsed)
-                        < datetime.now(),
-                    ),
-                ),
-                core.Application.archived_at.is_(None),
-            )
-            .all()
+    applications_to_set_to_lapsed = (
+        session.query(core.Application)
+        .options(
+            joinedload(core.Application.borrower),
+            joinedload(core.Application.borrower_documents),
         )
-
-    except SQLAlchemyError as e:
-        raise e
+        .filter(
+            or_(
+                and_(
+                    core.Application.status == ApplicationStatus.PENDING,
+                    core.Application.created_at
+                    + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    < datetime.now(),
+                ),
+                and_(
+                    core.Application.status == ApplicationStatus.ACCEPTED,
+                    core.Application.borrower_accepted_at
+                    + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    < datetime.now(),
+                ),
+                and_(
+                    core.Application.status == ApplicationStatus.INFORMATION_REQUESTED,
+                    core.Application.information_requested_at
+                    + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    < datetime.now(),
+                ),
+            ),
+            core.Application.archived_at.is_(None),
+        )
+        .all()
+    )
 
     return applications_to_set_to_lapsed or []
 
@@ -255,35 +240,31 @@ def get_applications_to_remind_intro(db_provider: Session = get_db):
     :rtype: list[core.Application]
     """
     with contextmanager(db_provider)() as session:
-        try:
-            subquery = select(core.Message.application_id).where(
-                core.Message.type
-                == core.MessageType.BORROWER_PENDING_APPLICATION_REMINDER
+        subquery = select(core.Message.application_id).where(
+            core.Message.type == core.MessageType.BORROWER_PENDING_APPLICATION_REMINDER
+        )
+        users = (
+            session.query(core.Application)
+            .join(core.Borrower, core.Application.borrower_id == core.Borrower.id)
+            .join(core.Award, core.Application.award_id == core.Award.id)
+            .options(
+                joinedload(core.Application.borrower),
+                joinedload(core.Application.award),
             )
-            users = (
-                session.query(core.Application)
-                .join(core.Borrower, core.Application.borrower_id == core.Borrower.id)
-                .join(core.Award, core.Application.award_id == core.Award.id)
-                .options(
-                    joinedload(core.Application.borrower),
-                    joinedload(core.Application.award),
+            .filter(
+                and_(
+                    core.Application.status == ApplicationStatus.PENDING,
+                    core.Application.expired_at > datetime.now(),
+                    core.Application.expired_at
+                    <= datetime.now()
+                    + timedelta(days=app_settings.reminder_days_before_expiration),
+                    ~core.Application.id.in_(subquery),
+                    core.Borrower.status == core.BorrowerStatus.ACTIVE,
                 )
-                .filter(
-                    and_(
-                        core.Application.status == ApplicationStatus.PENDING,
-                        core.Application.expired_at > datetime.now(),
-                        core.Application.expired_at
-                        <= datetime.now()
-                        + timedelta(days=app_settings.reminder_days_before_expiration),
-                        ~core.Application.id.in_(subquery),
-                        core.Borrower.status == core.BorrowerStatus.ACTIVE,
-                    )
-                )
-                .all()
             )
+            .all()
+        )
 
-        except SQLAlchemyError as e:
-            raise e
     return users or []
 
 
@@ -295,31 +276,28 @@ def get_applications_to_remind_submit(db_provider: Session = get_db):
     :rtype: list[core.Application]
     """
     with contextmanager(db_provider)() as session:
-        try:
-            subquery = select(core.Message.application_id).where(
-                core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
+        subquery = select(core.Message.application_id).where(
+            core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
+        )
+        users = (
+            session.query(core.Application)
+            .options(
+                joinedload(core.Application.borrower),
+                joinedload(core.Application.award),
             )
-            users = (
-                session.query(core.Application)
-                .options(
-                    joinedload(core.Application.borrower),
-                    joinedload(core.Application.award),
+            .filter(
+                and_(
+                    core.Application.status == ApplicationStatus.ACCEPTED,
+                    core.Application.expired_at > datetime.now(),
+                    core.Application.expired_at
+                    <= datetime.now()
+                    + timedelta(days=app_settings.reminder_days_before_expiration),
+                    ~core.Application.id.in_(subquery),
                 )
-                .filter(
-                    and_(
-                        core.Application.status == ApplicationStatus.ACCEPTED,
-                        core.Application.expired_at > datetime.now(),
-                        core.Application.expired_at
-                        <= datetime.now()
-                        + timedelta(days=app_settings.reminder_days_before_expiration),
-                        ~core.Application.id.in_(subquery),
-                    )
-                )
-                .all()
             )
+            .all()
+        )
 
-        except SQLAlchemyError as e:
-            raise e
     return users or []
 
 
