@@ -10,6 +10,9 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.sql import func
 from sqlmodel import Field, Relationship, SQLModel
 
+# Otherwise, alembic "Detected removed table 'statistic'".
+import app.schema.statistic  # noqa: F401
+
 
 class BorrowerDocumentType(Enum):
     INCORPORATION_DOCUMENT = "INCORPORATION_DOCUMENT"
@@ -138,7 +141,7 @@ class CreditProductBase(SQLModel):
     )
     other_fees_description: str = Field(default="", nullable=False)
     more_info_url: str = Field(default="", nullable=False)
-    lender_id: int = Field(foreign_key="lender.id", nullable=False)
+    lender_id: int = Field(foreign_key="lender.id", nullable=False, index=True)
 
 
 class CreditProduct(CreditProductBase, table=True):
@@ -208,15 +211,15 @@ class BorrowerDocument(BorrowerDocumentBase, table=True):
 
 
 class ApplicationBase(SQLModel):
-    award_id: Optional[int] = Field(foreign_key="award.id", nullable=True)
-    uuid: str = Field(unique=True, index=True, nullable=False)
+    award_id: Optional[int] = Field(foreign_key="award.id", nullable=True, index=True)
+    uuid: str = Field(unique=True, nullable=False)
     primary_email: str = Field(default="", nullable=False)
     status: ApplicationStatus = Field(
         sa_column=Column(SAEnum(ApplicationStatus, name="application_status")),
         default=ApplicationStatus.PENDING,
     )
     award_borrower_identifier: str = Field(default="", nullable=False)
-    borrower_id: Optional[int] = Field(foreign_key="borrower.id")
+    borrower_id: Optional[int] = Field(foreign_key="borrower.id", index=True)
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
     contract_amount_submitted: Optional[Decimal] = Field(
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
@@ -434,7 +437,7 @@ class LenderCreate(LenderBase):
 class AwardBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     borrower_id: Optional[int] = Field(foreign_key="borrower.id", nullable=True)
-    source_contract_id: str = Field(default="")
+    source_contract_id: str = Field(default="", index=True)
     title: str = Field(default="")
     description: str = Field(default="")
     award_date: Optional[datetime] = Field(
@@ -528,7 +531,7 @@ class UserBase(SQLModel):
     language: str = Field(default="es", description="ISO 639-1 language code")
     email: str = Field(unique=True, nullable=False)
     name: str = Field(default="")
-    external_id: str = Field(default="")
+    external_id: str = Field(default="", index=True)
     lender_id: Optional[int] = Field(
         default=None, foreign_key="lender.id", nullable=True
     )
