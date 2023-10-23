@@ -1,7 +1,9 @@
 import logging
 import logging.config
 import os
+import re
 
+import sentry_sdk
 from dotenv import dotenv_values
 from pydantic import BaseSettings
 
@@ -27,6 +29,26 @@ def merge_dicts_with_condition(main_dict, override_dict):
     filtered_dict = {key: value for key, value in temp_dict.items() if value != ""}
     merged_dict = {**main_dict, **filtered_dict}
     return merged_dict
+
+
+def sentry_filter_transactions(event, hint):
+    """
+    Filter transactions to be sent to Sentry.
+    This function prevents transactions that interact with AWS Cognito from being sent to Sentry.
+
+    :param event: The event data.
+    :type event: dict
+
+    :param hint: A dictionary of extra data passed to the function.
+    :type hint: dict
+
+    :return: The event data if it should be sent to Sentry, otherwise None.
+    :rtype: dict or None
+    """
+    data_url = event["breadcrumbs"]["values"][0]["data"]["url"] or None
+    if data_url and re.search(r"https://cognito-idp.*\.amazonaws\.com", data_url):
+        return None
+    return event
 
 
 # load local file development variables
@@ -113,6 +135,14 @@ logging.config.dictConfig(
         },
     }
 )
+
+if app_settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=app_settings.sentry_dsn,
+        before_send=sentry_filter_transactions,
+        # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+    )
 
 # email template names
 NEW_USER_TEMPLATE_NAME = "credere-NewAccountCreated"
