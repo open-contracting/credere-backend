@@ -29,7 +29,7 @@ TEMPLATE_FILES = {
     },
     "Application_approved": {
         "en": "Your credit application has been pre-approved",
-        "es": "Tu solicitud de crédito ha sido pre-aprobada",
+        "es": "Revisión de tu aplicación completada exitosamente",
     },
     "Application_credit_disbursed": {
         "en": "Your credit application has been approved",
