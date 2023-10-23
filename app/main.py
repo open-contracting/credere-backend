@@ -1,21 +1,11 @@
-import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.settings import app_settings
-from app.utils.general_utils import sentry_filter_transactions
 
 from .routers import applications, lenders, users  # isort:skip
 from .routers import statistics  # isort:skip
 
-
-if app_settings.sentry_dsn:
-    sentry_sdk.init(
-        dsn=app_settings.sentry_dsn,
-        before_send=sentry_filter_transactions,
-        # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-        traces_sample_rate=1.0,
-    )
 
 app = FastAPI()
 

@@ -45,8 +45,8 @@ def transaction_session_logger(session: Session, msg: str, *args):
         yield session
         session.commit()
     # Don't display tracebacks in emails from cron jobs for anticipated errors.
-    except SkippedAwardError:
-        logger.error(msg, *args)
+    except SkippedAwardError as e:
+        logger.error(f"{msg}: {e}", *args)
         session.rollback()
     except Exception:
         logger.exception(msg, *args)
