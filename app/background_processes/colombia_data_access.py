@@ -74,8 +74,8 @@ def create_new_award(
 
     if len_award_response_json != 1:
         raise SkippedAwardError(
-            f"[{previous=}] {len_award_response_json} results for {proceso_de_compra=} and {proveedor_adjudicado=} "
-            f"({entry=} response={award_response_json})"
+            f"[{previous=}] {len_award_response_json} awards from {award_url} "
+            f"(response={award_response_json})"
         )
 
     remote_award = award_response_json[0]
@@ -233,7 +233,8 @@ def get_email(documento_proveedor, entry) -> str:
 
     if len_borrower_response_email_json == 0:
         raise SkippedAwardError(
-            f"0 emails for borrower ({entry=} response={borrower_response_email_json})"
+            f"0 borrower emails from {borrower_email_url} "
+            f"(response={borrower_response_email_json})"
         )
 
     remote_email = borrower_response_email_json[0]
@@ -253,8 +254,8 @@ def get_email(documento_proveedor, entry) -> str:
 
         if not same_email:
             raise SkippedAwardError(
-                f"{len_borrower_response_email_json} emails for borrower "
-                f"({entry=} response={borrower_response_email_json})"
+                f"{len_borrower_response_email_json} borrower emails from {borrower_email_url} "
+                f"(response={borrower_response_email_json})"
             )
 
     return email
@@ -273,6 +274,8 @@ def get_documento_proveedor(entry) -> str:
 
     documento_proveedor = entry.get("documento_proveedor", None)
     if not documento_proveedor or documento_proveedor == "No Definido":
-        raise SkippedAwardError(f"documento_proveedor is 'No Definido' ({entry=})")
+        raise SkippedAwardError(
+            f"No borrower identifier in {documento_proveedor=} ({entry=})"
+        )
 
     return documento_proveedor
