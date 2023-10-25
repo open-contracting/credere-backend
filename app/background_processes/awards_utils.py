@@ -169,7 +169,9 @@ def create_award(entry, session: Session, borrower_id=None, previous=False) -> A
 
     # if award already exists
     if get_existing_award(source_contract_id, session):
-        raise SkippedAwardError(f"[{previous=}] Award already exists for {entry=}")
+        raise SkippedAwardError(
+            f"[{previous=}] Award already exists with {source_contract_id=} ({entry=})"
+        )
 
     new_award = create_new_award(source_contract_id, entry, borrower_id, previous)
 
