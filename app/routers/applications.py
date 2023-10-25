@@ -74,6 +74,13 @@ async def reject_application(
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
+        if application.status not in (core.ApplicationStatus.CONTRACT_UPLOADED, core.ApplicationStatus.STARTED):
+            message = "Application status is not {} or {}".format(core.ApplicationStatus.STARTED.name,
+                                                                  core.ApplicationStatus.CONTRACT_UPLOADED.name)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=message,
+            )
         utils.reject_application(application, payload)
         utils.create_application_action(
             session,
