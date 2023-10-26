@@ -305,6 +305,7 @@ def complete_application(
     application.disbursed_final_amount = disbursed_final_amount
     application.status = core.ApplicationStatus.COMPLETED
     application.lender_completed_at = current_time
+    application.overdued_at = None
 
 
 def create_application_action(
