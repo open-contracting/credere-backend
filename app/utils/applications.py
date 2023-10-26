@@ -39,6 +39,7 @@ excluded_applications = [
     core.ApplicationStatus.PENDING,
     core.ApplicationStatus.ACCEPTED,
     core.ApplicationStatus.DECLINED,
+    core.ApplicationStatus.LAPSED,
 ]
 
 OCP_cannot_modify = [
