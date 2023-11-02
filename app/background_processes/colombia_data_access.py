@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import datetime, timedelta
 
 from app.core.settings import app_settings
@@ -240,23 +241,14 @@ def get_email(documento_proveedor, entry) -> str:
     remote_email = borrower_response_email_json[0]
     email = remote_email.get("correo_entidad", "")
 
+    if len_borrower_response_email_json > 1:
+        email = Counter(borrower_email['correo_entidad']
+                        for borrower_email in borrower_response_email_json).most_common(1)[0][0]
+
     if not background_utils.is_valid_email(email):
         raise SkippedAwardError(
-            f"First email for borrower is invalid ({remote_email=} {entry=})"
+            f"Invalid borrower email ({email=} {entry=})"
         )
-
-    if len_borrower_response_email_json > 1:
-        same_email = True
-        for borrower_email in borrower_response_email_json:
-            if borrower_email.get("correo_entidad", "") != email:
-                same_email = False
-                break
-
-        if not same_email:
-            raise SkippedAwardError(
-                f"{len_borrower_response_email_json} borrower emails from {borrower_email_url} "
-                f"(response={borrower_response_email_json})"
-            )
 
     return email
 

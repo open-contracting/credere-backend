@@ -24,8 +24,8 @@ def is_valid_email(email: str) -> bool:
     :return: True if the email is valid, False otherwise.
     :rtype: bool
     """
-
-    if re.search(pattern, email):
+    email = email.strip()
+    if email and re.search(pattern, email):
         return True
     return False
 
