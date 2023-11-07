@@ -325,7 +325,7 @@ tzdata==2023.3
     # via
     #   -r requirements.txt
     #   pandas
-urllib3==1.26.17
+urllib3==1.26.18
     # via
     #   -r requirements.txt
     #   botocore
