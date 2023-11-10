@@ -16,6 +16,16 @@ URLS = {
 headers = {"X-App-Token": app_settings.colombia_secop_app_token}
 
 
+def _get_remote_award(proceso_de_compra, proveedor_adjudicado):
+    award_url = (
+        f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
+        f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
+    )
+    award_response = background_utils.make_request_with_retry(award_url, headers)
+    award_response_json = award_response.json()
+    return award_response_json, award_url
+
+
 def create_new_award(
     source_contract_id: str,
     entry: dict,
@@ -64,52 +74,39 @@ def create_new_award(
         "source_data_contracts": entry,
     }
 
-    award_url = (
-        f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
-        f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
+    award_response_json, award_url = _get_remote_award(
+        proceso_de_compra, proveedor_adjudicado
     )
 
-    award_response = background_utils.make_request_with_retry(award_url, headers)
-    award_response_json = award_response.json()
-    len_award_response_json = len(award_response_json)
-
-    if len_award_response_json == 0:
-        # We retry with nombre_del_proveedor set to No Adjudicado as sometimes the award information is available in
-        # this endpoint but without the name of the supplier yet.
-        award_url = (
-            f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}' AND nombre_del_proveedor='No "
-            f"Adjudicado' "
-        )
-        award_response = background_utils.make_request_with_retry(award_url, headers)
-        award_response_json = award_response.json()
+    if not award_response_json:
+        # Retry with nombre_del_proveedor="No Adjudicado", in case award data is available, but not the supplier name.
+        award_response_json, _ = _get_remote_award(proceso_de_compra, "No Adjudicado")
         if not award_response_json:
-            raise SkippedAwardError(f"[{previous=}] Non awards found from {award_url}")
-    elif len_award_response_json > 1:
-        # If there is more than one award for the given supplier, we check if the relevant data is the same for all.
-        award_info = set()
-        for award in award_response_json:
-            award_info.add(
-                (
-                    award.get("descripci_n_del_procedimiento", ""),
-                    award.get("fecha_adjudicacion", None),
-                    award.get("estado_del_procedimiento", ""),
-                    award.get("nombre_del_procedimiento", ""),
-                )
+            raise SkippedAwardError(f"[{previous=}] 0 awards from {award_url}")
+
+    # It's okay if there are many awards, as long as the award data is consistent.
+    remote_awards = set()
+    for award in award_response_json:
+        remote_awards.add(
+            (
+                award.get("descripci_n_del_procedimiento", ""),
+                award.get("fecha_adjudicacion", None),
+                award.get("estado_del_procedimiento", ""),
+                award.get("nombre_del_procedimiento", ""),
             )
-        if len(award_info) > 1:
-            raise SkippedAwardError(
-                f"[{previous=}] {len_award_response_json} non equal awards from {award_url} "
-                f"(response={award_response_json})"
-            )
+        )
+    if len(remote_awards) > 1:
+        raise SkippedAwardError(
+            f"[{previous=}] {len(award_response_json)} awards ({len(remote_awards)} unique) from {award_url} "
+            f"(response={award_response_json})"
+        )
 
-    remote_award = award_response_json[0]
-
-    new_award["description"] = remote_award.get("descripci_n_del_procedimiento", "")
-    new_award["award_date"] = remote_award.get("fecha_adjudicacion", None)
-    new_award["source_data_awards"] = remote_award
-
-    new_award["contract_status"] = remote_award.get("estado_del_procedimiento", "")
-    new_award["title"] = remote_award.get("nombre_del_procedimiento", "")
+    remote_award = remote_awards.pop()
+    new_award["description"] = remote_award[0]
+    new_award["award_date"] = remote_award[1]
+    new_award["contract_status"] = remote_award[2]
+    new_award["title"] = remote_award[3]
+    new_award["source_data_awards"] = award_response_json[0]
 
     if borrower_id:
         new_award["borrower_id"] = borrower_id
