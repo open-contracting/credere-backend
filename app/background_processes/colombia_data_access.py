@@ -76,20 +76,26 @@ def create_new_award(
     if len_award_response_json == 0:
         # We retry with nombre_del_proveedor set to No Adjudicado as sometimes the award information is available in
         # this endpoint but without the name of the supplier yet.
-        award_url = f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}' AND nombre_del_proveedor='No " \
-                    f"Adjudicado' "
+        award_url = (
+            f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}' AND nombre_del_proveedor='No "
+            f"Adjudicado' "
+        )
         award_response = background_utils.make_request_with_retry(award_url, headers)
         award_response_json = award_response.json()
         if not award_response_json:
-            raise SkippedAwardError(
-                f"[{previous=}] Non awards found from {award_url}"
-            )
+            raise SkippedAwardError(f"[{previous=}] Non awards found from {award_url}")
     elif len_award_response_json > 1:
         # If there is more than one award for the given supplier, we check if the relevant data is the same for all.
         award_info = set()
         for award in award_response_json:
-            award_info.add((award.get("descripci_n_del_procedimiento", ""), award.get("fecha_adjudicacion", None),
-                            award.get("estado_del_procedimiento", ""), award.get("nombre_del_procedimiento", "")))
+            award_info.add(
+                (
+                    award.get("descripci_n_del_procedimiento", ""),
+                    award.get("fecha_adjudicacion", None),
+                    award.get("estado_del_procedimiento", ""),
+                    award.get("nombre_del_procedimiento", ""),
+                )
+            )
         if len(award_info) > 1:
             raise SkippedAwardError(
                 f"[{previous=}] {len_award_response_json} non equal awards from {award_url} "
