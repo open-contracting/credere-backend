@@ -191,9 +191,7 @@ def prepare_html(template_name, parameters):
 def send_email(ses, email, data, to_msme=True):
     email = email.strip()
     if not email:
-        logger.warning(
-            f"{app_settings.environment} - Skipping emtpy email address"
-        )
+        logger.warning(f"{app_settings.environment} - Skipping empty email address")
         return ""
 
     destinations = set_destinations(email, to_msme)

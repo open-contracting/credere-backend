@@ -159,7 +159,7 @@ typing-extensions==4.5.0
     #   typer
 tzdata==2023.3
     # via pandas
-urllib3==1.26.17
+urllib3==1.26.18
     # via
     #   botocore
     #   requests
