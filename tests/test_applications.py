@@ -203,7 +203,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
 
     # this will mock the previous award get to return an empty array
     with patch(
-        "app.background_processes.awards_utils.get_previous_contracts",
+        "app.background_processes.colombia_data_access.get_previous_contracts",
         return_value=MockResponse(status.HTTP_200_OK, {}),
     ):
         response = client.post("/applications/access-scheme", json=application_base)

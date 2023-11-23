@@ -12,7 +12,7 @@ from . import background_utils
 from . import colombia_data_access as data_access
 
 
-def get_existing_award(source_contract_id: str, session: Session):
+def _get_existing_award(source_contract_id: str, session: Session):
     """
     Get an existing award based on the source contract ID.
 
@@ -52,7 +52,7 @@ def get_last_updated_award_date():
         return award.source_last_updated_at
 
 
-def insert_award(award: Award, session: Session):
+def _insert_award(award: Award, session: Session):
     """
     Insert a new award into the database.
 
@@ -75,80 +75,6 @@ def insert_award(award: Award, session: Session):
     return obj_db
 
 
-def create_new_award(
-    source_contract_id: str,
-    entry: dict,
-    borrower_id: int = None,
-    previous: bool = False,
-) -> dict:
-    """
-    Create a new award.
-
-    :param source_contract_id: The unique identifier for the award's source contract.
-    :type source_contract_id: str
-
-    :param entry: The dictionary containing the award data.
-    :type entry: dict
-
-    :param borrower_id: The ID of the borrower associated with the award. (default: None)
-    :type borrower_id: int, optional
-
-    :param previous: Whether the award is a previous award or not. (default: False)
-    :type previous: bool, optional
-
-    :return: The newly created award.
-    :rtype: dict
-    """
-
-    return data_access.create_new_award(
-        source_contract_id, entry, borrower_id, previous
-    )
-
-
-def get_new_contracts(index: int, last_updated_award_date, until_date=None):
-    """
-    Get new contracts starting from the specified index and last updated award date.
-
-    :param index: The index from which to start fetching new contracts.
-    :type index: int
-    :param last_updated_award_date: The date of the last updated award.
-    :type last_updated_award_date: datetime
-
-    :return: The new contracts.
-    :rtype: [dict]
-    """
-
-    return data_access.get_new_contracts(index, last_updated_award_date, until_date)
-
-
-def get_previous_contracts(documento_proveedor):
-    """
-    Get previous contracts for a given provider document.
-
-    :param documento_proveedor: The provider document for which to fetch previous contracts.
-    :type documento_proveedor: str
-
-    :return: The previous contracts.
-    :rtype: [dict]
-    """
-
-    return data_access.get_previous_contracts(documento_proveedor)
-
-
-def get_source_contract_id(entry):
-    """
-    Get the source contract ID from the entry.
-
-    :param entry: The entry containing the source contract ID.
-    :type entry: dict
-
-    :return: The source contract ID.
-    :rtype: str
-    """
-
-    return data_access.get_source_contract_id(entry)
-
-
 def create_award(entry, session: Session, borrower_id=None, previous=False) -> Award:
     """
     Create a new award and insert it into the database.
@@ -165,16 +91,18 @@ def create_award(entry, session: Session, borrower_id=None, previous=False) -> A
     :return: The inserted award.
     :rtype: Award
     """
-    source_contract_id = get_source_contract_id(entry)
+    source_contract_id = data_access.get_source_contract_id(entry)
 
     # if award already exists
-    if get_existing_award(source_contract_id, session):
+    if _get_existing_award(source_contract_id, session):
         raise SkippedAwardError(
             f"[{previous=}] Award already exists with {source_contract_id=} ({entry=})"
         )
 
-    new_award = create_new_award(source_contract_id, entry, borrower_id, previous)
+    new_award = data_access.create_new_award(
+        source_contract_id, entry, borrower_id, previous
+    )
 
-    award = insert_award(new_award, session)
+    award = _insert_award(new_award, session)
 
     return award

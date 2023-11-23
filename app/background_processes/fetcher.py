@@ -9,6 +9,7 @@ from app.schema.core import Borrower
 from app.utils import email_utility
 
 from . import awards_utils
+from . import colombia_data_access as data_access
 from .application_utils import create_application, insert_message
 from .borrower_utils import get_or_create_borrower
 
@@ -25,7 +26,7 @@ def fetch_new_awards_from_date(
     :type last_updated_award_date: datetime
     """
     index = 0
-    contracts_response = awards_utils.get_new_contracts(
+    contracts_response = data_access.get_new_contracts(
         index, last_updated_award_date, until_date
     )
     contracts_response_json = contracts_response.json()
@@ -66,7 +67,7 @@ def fetch_new_awards_from_date(
                     )
                     message.external_message_id = messageId
         index += 1
-        contracts_response = awards_utils.get_new_contracts(
+        contracts_response = data_access.get_new_contracts(
             index, last_updated_award_date, until_date
         )
         contracts_response_json = contracts_response.json()
@@ -102,7 +103,7 @@ def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):
     :param borrower: The borrower for whom to fetch and process previous awards.
     :type borrower: Borrower
     """
-    contracts_response = awards_utils.get_previous_contracts(borrower.legal_identifier)
+    contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
     if not contracts_response_json:
         logger.info(f"No previous contracts for {borrower.legal_identifier}")

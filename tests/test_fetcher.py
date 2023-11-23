@@ -33,7 +33,7 @@ def test_fetch_previous_borrower_awards_empty(start_background_db, caplog):  # n
         with common_test_functions.mock_response(
             200,
             [],
-            "app.background_processes.awards_utils.get_previous_contracts",
+            "app.background_processes.colombia_data_access.get_previous_contracts",
         ):
             fetcher.fetch_previous_awards(
                 core.Borrower(**borrower_result), common_test_client.get_test_db
@@ -47,7 +47,7 @@ def test_fetch_previous_borrower_awards(start_background_db, caplog):  # noqa
         with common_test_functions.mock_response(
             200,
             contracts,
-            "app.background_processes.awards_utils.get_previous_contracts",
+            "app.background_processes.colombia_data_access.get_previous_contracts",
         ):
             fetcher.fetch_previous_awards(
                 core.Borrower(**borrower_result), common_test_client.get_test_db
@@ -59,7 +59,7 @@ def test_fetch_previous_borrower_awards(start_background_db, caplog):  # noqa
 def test_fetch_empty_contracts(start_background_db, caplog):  # noqa
     with caplog.at_level("INFO"):
         with common_test_functions.mock_response(
-            200, [], "app.background_processes.awards_utils.get_new_contracts"
+            200, [], "app.background_processes.colombia_data_access.get_new_contracts"
         ):
             fetcher.fetch_new_awards(
                 common_test_client.get_test_db,
@@ -74,7 +74,7 @@ def test_fetch_new_awards_borrower_declined(client, mock_templated_email):  # no
     with common_test_functions.mock_response_second_empty(
         200,
         contract,
-        "app.background_processes.awards_utils.get_new_contracts",
+        "app.background_processes.colombia_data_access.get_new_contracts",
     ), common_test_functions.mock_whole_process_once(
         200,
         award,
@@ -91,7 +91,7 @@ def test_fetch_new_awards_from_date(start_background_db, mock_templated_email): 
     with common_test_functions.mock_response_second_empty(
         200,
         contracts,
-        "app.background_processes.awards_utils.get_new_contracts",
+        "app.background_processes.colombia_data_access.get_new_contracts",
     ), common_test_functions.mock_function_response(
         "test_hash_12345678",
         "app.background_processes.background_utils.get_secret_hash",
