@@ -6,11 +6,11 @@ from datetime import datetime
 import typer
 
 import app.utils.statistics as statistics_utils
-from app import background_processes, mail, models
+from app import mail, models
 from app.aws import sesClient
-from app.background_processes import application_utils
 from app.db import get_db, transaction_session, transaction_session_logger
 from app.settings import app_settings
+from app.utils import background
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +31,12 @@ def fetch_awards():
     """
     with contextmanager(get_db)() as session:
         last_updated_award_date = models.Award.last_updated(session)
-    background_processes.fetcher.fetch_new_awards_from_date(last_updated_award_date, get_db)
+    background.fetch_new_awards_from_date(last_updated_award_date, get_db)
 
 
 @app.command()
 def fetch_contracts_from_date(from_date: str, until_date: str):
-    background_processes.fetcher.fetch_new_awards_from_date(from_date, get_db, until_date)
+    background.fetch_new_awards_from_date(from_date, get_db, until_date)
 
 
 @app.command()
@@ -56,7 +56,7 @@ def remove_dated_application_data():
     """
 
     with contextmanager(get_db)() as session:
-        dated_applications = application_utils.get_dated_applications(session)
+        dated_applications = background.get_dated_applications(session)
         for application in dated_applications:
             with transaction_session_logger(session, "Error deleting the data"):
                 application.award.previous = True
@@ -94,7 +94,7 @@ def update_applications_to_lapsed():
     to "LAPSED" and sets the application_lapsed_at timestamp to the current UTC time.
     """
     with contextmanager(get_db)() as session:
-        lapsed_applications = application_utils.get_lapsed_applications(session)
+        lapsed_applications = background.get_lapsed_applications(session)
         for application in lapsed_applications:
             with transaction_session_logger(session, "Error setting to lapsed"):
                 application.status = models.ApplicationStatus.LAPSED
@@ -114,7 +114,7 @@ def send_reminders():
     BORROWER_PENDING_SUBMIT_REMINDER) to the database and updates the external_message_id after
     the email has been sent successfully.
     """
-    applications_to_send_intro_reminder = application_utils.get_applications_to_remind_intro(get_db)
+    applications_to_send_intro_reminder = background.get_applications_to_remind_intro(get_db)
     logger.info("Quantity of mails to send intro reminder " + str(len(applications_to_send_intro_reminder)))
     if len(applications_to_send_intro_reminder) == 0:
         logger.info("No new intro reminder to be sent")
@@ -137,7 +137,7 @@ def send_reminders():
                     new_message.external_message_id = messageID
                     logger.info("Mail sent and status updated")
 
-    applications_to_send_submit_reminder = application_utils.get_applications_to_remind_submit(get_db)
+    applications_to_send_submit_reminder = background.get_applications_to_remind_submit(get_db)
     logger.info("Quantity of mails to send submit reminder " + str(len(applications_to_send_submit_reminder)))
     if len(applications_to_send_submit_reminder) == 0:
         logger.info("No new submit reminder to be sent")
@@ -175,7 +175,7 @@ def SLA_overdue_applications():
     Send SLA (Service Level Agreement) overdue reminders to borrowers.
     """
     with contextmanager(get_db)() as session:
-        applications = application_utils.get_all_applications_with_status(
+        applications = background.get_all_applications_with_status(
             [
                 models.ApplicationStatus.CONTRACT_UPLOADED,
                 models.ApplicationStatus.STARTED,
@@ -185,7 +185,7 @@ def SLA_overdue_applications():
         overdue_lenders = defaultdict(lambda: {"count": 0})
         for application in applications:
             with transaction_session(session):
-                days_passed = application_utils.get_application_days_passed(application, session)
+                days_passed = background.get_application_days_passed(application, session)
                 if days_passed > application.lender.sla_days * app_settings.progress_to_remind_started_applications:
                     if "email" not in overdue_lenders[application.lender.id]:
                         overdue_lenders[application.lender.id]["email"] = application.lender.email_group

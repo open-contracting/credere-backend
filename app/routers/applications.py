@@ -16,10 +16,9 @@ import app.utils.applications as utils
 from app import models, parsers, serializers
 from app.auth import OCP_only, get_current_user, get_user
 from app.aws import CognitoClient, get_cognito_client
-from app.background_processes import application_utils
-from app.background_processes.fetcher import fetch_previous_awards
 from app.db import get_db, transaction_session
 from app.settings import app_settings
+from app.utils import background
 from app.utils.statistics import update_statistics
 
 from fastapi import Depends, Query, status  # isort:skip # noqa
@@ -151,7 +150,7 @@ async def complete_application(
         utils.check_FI_user_permission(application, user)
         utils.check_application_status(application, models.ApplicationStatus.CONTRACT_UPLOADED)
         utils.complete_application(application, payload.disbursed_final_amount)
-        application.completed_in_days = application_utils.get_application_days_passed(application, session)
+        application.completed_in_days = background.get_application_days_passed(application, session)
         utils.create_application_action(
             session,
             user.id,
@@ -1144,7 +1143,7 @@ async def access_scheme(
         application.status = models.ApplicationStatus.ACCEPTED
         application.expired_at = None
 
-        background_tasks.add_task(fetch_previous_awards, application.borrower)
+        background_tasks.add_task(background.fetch_previous_awards, application.borrower)
         background_tasks.add_task(update_statistics)
 
         return serializers.ApplicationResponse(

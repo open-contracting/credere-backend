@@ -1,8 +1,8 @@
 from contextlib import contextmanager
 
 from app import models
-from app.background_processes import fetcher
 from app.commands import fetch_awards
+from app.utils import background
 from tests.common import common_test_client, common_test_functions
 
 from tests.common.common_test_client import start_background_db  # isort:skip # noqa
@@ -32,7 +32,7 @@ def test_fetch_previous_borrower_awards_empty(start_background_db, caplog):  # n
             [],
             "app.background_processes.colombia_data_access.get_previous_contracts",
         ):
-            fetcher.fetch_previous_awards(models.Borrower(**borrower_result), common_test_client.get_test_db)
+            background.fetch_previous_awards(models.Borrower(**borrower_result), common_test_client.get_test_db)
 
     assert "No previous contracts" in caplog.text
 
@@ -44,7 +44,7 @@ def test_fetch_previous_borrower_awards(start_background_db, caplog):  # noqa
             contracts,
             "app.background_processes.colombia_data_access.get_previous_contracts",
         ):
-            fetcher.fetch_previous_awards(models.Borrower(**borrower_result), common_test_client.get_test_db)
+            background.fetch_previous_awards(models.Borrower(**borrower_result), common_test_client.get_test_db)
 
     assert "Previous contracts for" in caplog.text
 
