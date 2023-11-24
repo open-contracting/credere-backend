@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session, joinedload
 import app.utils.lenders as utils
 from app.schema import api as ApiSchema
 
+from ..auth import OCP_only, get_current_user
 from ..db.session import get_db, transaction_session
 from ..schema import core
-from ..utils.verify_token import OCP_only, get_current_user
 
 router = APIRouter()
 

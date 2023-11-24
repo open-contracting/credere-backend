@@ -7,15 +7,15 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user, get_user
 from app.schema import api as ApiSchema
-from app.utils.verify_token import get_current_user, get_user
 
+from ..auth import OCP_only
 from ..background_processes import statistics_utils
 from ..db.session import get_db
 from ..schema import core
 from ..schema.core import User
 from ..schema.statistic import Statistic, StatisticCustomRange, StatisticType
-from ..utils.verify_token import OCP_only
 
 logger = logging.getLogger(__name__)
 

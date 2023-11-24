@@ -8,15 +8,15 @@ from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
+from app.auth import get_current_user
 from app.schema import api as ApiSchema
 from app.schema.api import UserListResponse
-from app.utils.verify_token import get_current_user
 
+from ..auth import OCP_only
 from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
 from ..schema import core
 from ..schema.core import BasicUser, SetupMFA, User, UserWithLender
-from ..utils.verify_token import OCP_only
 
 from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
 from fastapi import HTTPException, Query, Response, status  # isort:skip # noqa
