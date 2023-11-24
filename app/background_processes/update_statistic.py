@@ -77,8 +77,7 @@ def update_statistics(db_provider: Session = get_db):
                 data.dict() for data in statistics_msme_opt_in["sector_statistics"]
             ]
             statistics_msme_opt_in["rejected_reasons_count_by_reason"] = [
-                data.dict()
-                for data in statistics_msme_opt_in["rejected_reasons_count_by_reason"]
+                data.dict() for data in statistics_msme_opt_in["rejected_reasons_count_by_reason"]
             ]
             statistics_msme_opt_in["fis_choosen_by_msme"] = [
                 data.dict() for data in statistics_msme_opt_in["fis_choosen_by_msme"]

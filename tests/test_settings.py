@@ -4,9 +4,7 @@ import os
 import pytest
 
 
-@pytest.mark.skipif(
-    not os.getenv("TEST_SETTINGS"), reason="settings tests must be run separately"
-)
+@pytest.mark.skipif(not os.getenv("TEST_SETTINGS"), reason="settings tests must be run separately")
 def test_log_level(monkeypatch, capsys):
     monkeypatch.setenv("LOG_LEVEL", "WARNING")
 

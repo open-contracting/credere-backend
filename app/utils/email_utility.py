@@ -9,9 +9,7 @@ from app.schema.core import Application
 
 logger = logging.getLogger(__name__)
 
-BASE_TEMPLATES_PATH = os.path.join(
-    Path(__file__).absolute().parent.parent.parent, "email_templates"
-)
+BASE_TEMPLATES_PATH = os.path.join(Path(__file__).absolute().parent.parent.parent, "email_templates")
 
 # Templates files names and email subject
 TEMPLATE_FILES = {
@@ -138,8 +136,7 @@ def generate_common_data():
         "TWITTER_LOGO": app_settings.images_base_url + "/twiterlogo.png",
         "FB_LOGO": app_settings.images_base_url + "/facebook.png",
         "LINK_LOGO": app_settings.images_base_url + "/link.png",
-        "STRIVE_LOGO": app_settings.images_base_url
-        + "/strive_logo_lockup_horizontal_positive.png",
+        "STRIVE_LOGO": app_settings.images_base_url + "/strive_logo_lockup_horizontal_positive.png",
         "TWITTER_LINK": app_settings.twitter_link,
         "FACEBOOK_LINK": app_settings.facebook_link,
         "LINK_LINK": app_settings.link_link,
@@ -169,9 +166,7 @@ def prepare_html(template_name, parameters):
     Reads the content of the file in template_name, replace its parameters, and prepare the rest of the main
     parameters and Subject to send the email via AWS.
     """
-    subject = (
-        f"Credere - {TEMPLATE_FILES[template_name][app_settings.email_template_lang]}"
-    )
+    subject = f"Credere - {TEMPLATE_FILES[template_name][app_settings.email_template_lang]}"
     if app_settings.email_template_lang == "es":
         template_name = f"{template_name}_es"
     template_name = f"{template_name}.html"
@@ -196,9 +191,7 @@ def send_email(ses, email, data, to_msme=True):
 
     destinations = set_destinations(email, to_msme)
 
-    logger.info(
-        f"{app_settings.environment} - Email to: {email} sent to {destinations}"
-    )
+    logger.info(f"{app_settings.environment} - Email to: {email} sent to {destinations}")
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
@@ -254,9 +247,7 @@ def send_application_submission_completed(ses, application: Application):
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
 
-    send_email(
-        ses, application.primary_email, prepare_html("Application_submitted", html_data)
-    )
+    send_email(ses, application.primary_email, prepare_html("Application_submitted", html_data))
 
 
 def send_application_credit_disbursed(ses, application: Application):
@@ -495,9 +486,7 @@ def send_invitation_email(ses, uuid, email, borrower_name, buyer_name, tender_ti
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
-    return send_email(
-        ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data)
-    )
+    return send_email(ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data))
 
 
 def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender_title):
@@ -530,23 +519,16 @@ def send_mail_intro_reminder(ses, uuid, email, borrower_name, buyer_name, tender
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "FIND_OUT_MORE_URL": app_settings.frontend_url
-        + "/application/"
-        + quote(uuid)
-        + "/intro",
+        "FIND_OUT_MORE_URL": app_settings.frontend_url + "/application/" + quote(uuid) + "/intro",
         "FIND_OUT_MORE_IMAGE_LINK": images_base_url + "/findoutmore.png",
         "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
-    return send_email(
-        ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data)
-    )
+    return send_email(ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data))
 
 
-def send_mail_submit_reminder(
-    ses, uuid, email, borrower_name, buyer_name, tender_title
-):
+def send_mail_submit_reminder(ses, uuid, email, borrower_name, buyer_name, tender_title):
     """
     Sends a submission reminder email to the provided email address.
 
@@ -573,10 +555,7 @@ def send_mail_submit_reminder(
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "APPLY_FOR_CREDIT_URL": app_settings.frontend_url
-        + "/application/"
-        + quote(uuid)
-        + "/intro",
+        "APPLY_FOR_CREDIT_URL": app_settings.frontend_url + "/application/" + quote(uuid) + "/intro",
         "APPLY_FOR_CREDIT_IMAGE_LINK": images_base_url + "/applyForCredit.png",
         "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
@@ -691,9 +670,7 @@ def send_overdue_application_email_to_FI(ses, name: str, email: str, amount: int
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    return send_email(
-        ses, email, prepare_html("Overdue_application_FI", html_data), False
-    )
+    return send_email(ses, email, prepare_html("Overdue_application_FI", html_data), False)
 
 
 def send_overdue_application_email_to_OCP(ses, name: str):
@@ -744,9 +721,7 @@ def send_rejected_application_email(ses, application):
         + f"/application/{quote(application.uuid)}/find-alternative-credit",
         "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
     }
-    return send_email(
-        ses, application.primary_email, prepare_html("Application_declined", html_data)
-    )
+    return send_email(ses, application.primary_email, prepare_html("Application_declined", html_data))
 
 
 def send_rejected_application_email_without_alternatives(ses, application):
@@ -819,6 +794,4 @@ def send_upload_documents_notifications_to_FI(ses, email: str):
         "LOGIN_URL": app_settings.frontend_url + "/login",
     }
 
-    return send_email(
-        ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data), False
-    )
+    return send_email(ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data), False)

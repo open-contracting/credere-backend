@@ -29,10 +29,6 @@ async def create_test_user_headers(
     response = client.initiate_auth(payload.email, tempPassword)
     if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
         session = response["Session"]
-        response = client.respond_to_auth_challenge(
-            payload.email, session, "NEW_PASSWORD_REQUIRED", new_password
-        )
+        response = client.respond_to_auth_challenge(payload.email, session, "NEW_PASSWORD_REQUIRED", new_password)
 
-    return {
-        "Authorization": "Bearer " + response["AuthenticationResult"]["AccessToken"]
-    }
+    return {"Authorization": "Bearer " + response["AuthenticationResult"]["AccessToken"]}

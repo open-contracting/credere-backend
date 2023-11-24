@@ -38,9 +38,7 @@ def test_update_statistic(start_background_db):  # noqa
 def test_statistics(client):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
-    FI_headers = client.post(
-        "/create-test-user-headers", json=FI_user_with_lender
-    ).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user_with_lender).json()
     response = client.get("/statistics-ocp", headers=OCP_headers)
     assert response.status_code == status.HTTP_200_OK
 

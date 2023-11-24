@@ -74,18 +74,14 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     """
 
     # received--------
-    applications_received_query = get_base_query(
-        session.query(Application), start_date, end_date, lender_id
-    ).filter(
+    applications_received_query = get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
         Application.borrower_submitted_at.isnot(None),
     )
 
     applications_received_count = applications_received_query.count()
 
     # approved-------
-    applications_approved_query = get_base_query(
-        session.query(Application), start_date, end_date, lender_id
-    ).filter(
+    applications_approved_query = get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
         or_(
             Application.status == ApplicationStatus.APPROVED,
             Application.status == ApplicationStatus.CONTRACT_UPLOADED,
@@ -96,18 +92,14 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     applications_approved_count = applications_approved_query.count()
 
     # rejected--------
-    applications_rejected_query = get_base_query(
-        session.query(Application), start_date, end_date, lender_id
-    ).filter(
+    applications_rejected_query = get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
         Application.status == ApplicationStatus.REJECTED,
     )
 
     applications_rejected_count = applications_rejected_query.count()
 
     # waiting---------
-    applications_waiting_query = get_base_query(
-        session.query(Application), start_date, end_date, lender_id
-    ).filter(
+    applications_waiting_query = get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
         Application.status == ApplicationStatus.INFORMATION_REQUESTED,
     )
 
@@ -132,20 +124,13 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
         Application.status == ApplicationStatus.COMPLETED,
     )
 
-    applications_with_credit_disbursed_count = (
-        applications_with_credit_disbursed.count()
-    )
+    applications_with_credit_disbursed_count = applications_with_credit_disbursed.count()
 
     # credit disbursed %---------
-    if (
-        applications_approved_count == 0
-        or applications_with_credit_disbursed_count == 0
-    ):
+    if applications_approved_count == 0 or applications_with_credit_disbursed_count == 0:
         proportion_of_disbursed = 0
     else:
-        proportion_of_disbursed = int(
-            applications_with_credit_disbursed_count / applications_approved_count * 100
-        )
+        proportion_of_disbursed = int(applications_with_credit_disbursed_count / applications_approved_count * 100)
 
     # Average amount requested
     average_amount_requested_query = get_base_query(
@@ -159,19 +144,13 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
 
     average_amount_requested_result = average_amount_requested_query.scalar()
     average_amount_requested = (
-        int(average_amount_requested_result)
-        if average_amount_requested_result is not None
-        else 0
+        int(average_amount_requested_result) if average_amount_requested_result is not None else 0
     )
 
     # Average Repayment Period
     average_repayment_period_query = (
         get_base_query(
-            session.query(
-                func.avg(
-                    Application.repayment_years * 12 + Application.repayment_months
-                ).cast(Integer)
-            ),
+            session.query(func.avg(Application.repayment_years * 12 + Application.repayment_months).cast(Integer)),
             start_date,
             end_date,
             lender_id,
@@ -188,9 +167,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     average_repayment_period = average_repayment_period_query.scalar() or 0
 
     # Overdue Application
-    applications_overdue_query = get_base_query(
-        session.query(Application), start_date, end_date, lender_id
-    ).filter(
+    applications_overdue_query = get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
         Application.overdued_at.isnot(None),
     )
 
@@ -207,11 +184,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     )
 
     average_processing_time_result = average_processing_time_query.scalar()
-    average_processing_time = (
-        int(average_processing_time_result)
-        if average_processing_time_result is not None
-        else 0
-    )
+    average_processing_time = int(average_processing_time_result) if average_processing_time_result is not None else 0
     #  get_proportion_of_submited_out_of_opt_in
     application_accepted_query = (
         get_base_query(session.query(Application), start_date, end_date, lender_id)
@@ -220,25 +193,15 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     )
 
     if lender_id is not None:
-        application_divisor = (
-            session.query(Application)
-            .filter(Application.borrower_submitted_at.isnot(None))
-            .count()
-        )
+        application_divisor = session.query(Application).filter(Application.borrower_submitted_at.isnot(None)).count()
     else:
-        application_divisor = (
-            session.query(Application)
-            .filter(Application.borrower_accepted_at.isnot(None))
-            .count()
-        )
+        application_divisor = session.query(Application).filter(Application.borrower_accepted_at.isnot(None)).count()
 
     # Calculate the proportion
     if application_accepted_query == 0:
         proportion_of_submitted_out_of_opt_in = 0
     else:
-        proportion_of_submitted_out_of_opt_in = round(
-            (application_accepted_query / application_divisor) * 100, 2
-        )
+        proportion_of_submitted_out_of_opt_in = round((application_accepted_query / application_divisor) * 100, 2)
 
     general_statistics = {
         "applications_received_count": applications_received_count,
@@ -288,9 +251,7 @@ def get_msme_opt_in_stats(session):
     total_applications = session.query(Application).count()
     if total_applications != 0:
         opt_in_percentage = (
-            session.query(Application)
-            .filter(Application.borrower_accepted_at.isnot(None))
-            .count()
+            session.query(Application).filter(Application.borrower_accepted_at.isnot(None)).count()
             / total_applications
         ) * 100
         opt_in_percentage = round(opt_in_percentage, 2)
@@ -300,48 +261,32 @@ def get_msme_opt_in_stats(session):
     # opt proportion by sector %--------
     # Calculate total submitted application count
     sectors_count_query = (
-        session.query(
-            Borrower.sector, func.count(distinct(Application.id)).label("count")
-        )
+        session.query(Borrower.sector, func.count(distinct(Application.id)).label("count"))
         .join(Application, Borrower.id == Application.borrower_id)
-        .filter(
-            and_(Application.borrower_accepted_at.isnot(None), Borrower.sector != "")
-        )
+        .filter(and_(Application.borrower_accepted_at.isnot(None), Borrower.sector != ""))
         .group_by(Borrower.sector)
         .all()
     )
-    sectors_count = [
-        StatisticData(name=row[0], value=row[1]) for row in sectors_count_query
-    ]
+    sectors_count = [StatisticData(name=row[0], value=row[1]) for row in sectors_count_query]
 
     # Count of Declined reasons bars chart
-    declined_applications = session.query(Application).filter(
-        Application.borrower_declined_at.isnot(None)
-    )
+    declined_applications = session.query(Application).filter(Application.borrower_declined_at.isnot(None))
 
     # Count occurrences for each case
     dont_need_access_credit_count = declined_applications.filter(
-        text(
-            "(borrower_declined_preferences_data->>'dont_need_access_credit')::boolean is True"
-        )
+        text("(borrower_declined_preferences_data->>'dont_need_access_credit')::boolean is True")
     ).count()
 
     already_have_acredit_count = declined_applications.filter(
-        text(
-            "(borrower_declined_preferences_data->>'already_have_acredit')::boolean is True"
-        )
+        text("(borrower_declined_preferences_data->>'already_have_acredit')::boolean is True")
     ).count()
 
     preffer_to_go_to_bank_count = declined_applications.filter(
-        text(
-            "(borrower_declined_preferences_data->>'preffer_to_go_to_bank')::boolean is True"
-        )
+        text("(borrower_declined_preferences_data->>'preffer_to_go_to_bank')::boolean is True")
     ).count()
 
     dont_want_access_credit_count = declined_applications.filter(
-        text(
-            "(borrower_declined_preferences_data->>'dont_want_access_credit')::boolean is True"
-        )
+        text("(borrower_declined_preferences_data->>'dont_want_access_credit')::boolean is True")
     ).count()
 
     other_count = declined_applications.filter(
@@ -369,9 +314,7 @@ def get_msme_opt_in_stats(session):
         .group_by(Lender.name)
         .all()
     )
-    fis_choosen_by_msme = [
-        StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query
-    ]
+    fis_choosen_by_msme = [StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query]
 
     opt_in_statistics = {
         "opt_in_query_count": opt_in_query_count,
@@ -406,6 +349,4 @@ def get_count_of_fis_choosen_by_msme(session):
         .all()
     )
 
-    return [
-        StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query
-    ]
+    return [StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query]

@@ -59,9 +59,7 @@ def create_lender(session: Session, payload: dict) -> core.Lender:
         )
 
 
-def create_credit_product(
-    session: Session, payload: dict, lender_id
-) -> core.CreditProduct:
+def create_credit_product(session: Session, payload: dict, lender_id) -> core.CreditProduct:
     """
     Create a new lender and associated credit products in the database.
 
@@ -79,9 +77,7 @@ def create_credit_product(
     """
     lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
     if not lender:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
 
     return core.CreditProduct.create(session, **payload.dict(), lender=lender)
 
@@ -108,9 +104,7 @@ def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lende
     try:
         lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
         if not lender:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
 
         update_dict = jsonable_encoder(payload, exclude_unset=True)
         return lender.update(session, **update_dict)
@@ -122,9 +116,7 @@ def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lende
         )
 
 
-def update_credit_product(
-    session: Session, payload: dict, credit_product_id: int
-) -> core.CreditProduct:
+def update_credit_product(session: Session, payload: dict, credit_product_id: int) -> core.CreditProduct:
     """
     Update a credit product in the database.
 
@@ -142,15 +134,9 @@ def update_credit_product(
 
     :raises HTTPException: If the credit product with the given ID doesn't exist.
     """
-    credit_product = (
-        session.query(core.CreditProduct)
-        .filter(core.CreditProduct.id == credit_product_id)
-        .first()
-    )
+    credit_product = session.query(core.CreditProduct).filter(core.CreditProduct.id == credit_product_id).first()
     if not credit_product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
 
     update_dict = jsonable_encoder(payload, exclude_unset=True)
     return credit_product.update(session, **update_dict)

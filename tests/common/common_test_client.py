@@ -57,9 +57,7 @@ def start_background_db():
 
 @pytest.fixture(scope="function")
 def mock_templated_email():
-    with patch.object(
-        user_dependencies.sesClient, "send_templated_email", MagicMock()
-    ) as mock_send_templated_email:
+    with patch.object(user_dependencies.sesClient, "send_templated_email", MagicMock()) as mock_send_templated_email:
         mock_send_templated_email.return_value = {"MessageId": "123"}
         yield mock_send_templated_email
 
@@ -116,9 +114,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
     cognito_client = boto3.client("cognito-idp", config=my_config)
     ses_client = boto3.client("ses", config=my_config)
 
-    cognito_pool_id = cognito_client.create_user_pool(PoolName="TestUserPool")[
-        "UserPool"
-    ]["Id"]
+    cognito_pool_id = cognito_client.create_user_pool(PoolName="TestUserPool")["UserPool"]["Id"]
 
     app_settings.cognito_pool_id = cognito_pool_id
 
@@ -158,9 +154,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
             session.close()
 
     # Override the clients dependencies with the mock implementations
-    app.dependency_overrides[
-        user_dependencies.get_cognito_client
-    ] = _get_test_cognito_client
+    app.dependency_overrides[user_dependencies.get_cognito_client] = _get_test_cognito_client
     app.dependency_overrides[get_db] = _get_test_db
 
     with TestClient(app) as client:

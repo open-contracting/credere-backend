@@ -58,9 +58,7 @@ application_with_credit_product = {
 }
 application_lapsed_payload = {"status": core.ApplicationStatus.LAPSED.value}
 application_declined_payload = {"status": core.ApplicationStatus.DECLINED.value}
-borrower_declined_oportunity_payload = {
-    "status": core.BorrowerStatus.DECLINE_OPPORTUNITIES.value
-}
+borrower_declined_oportunity_payload = {"status": core.BorrowerStatus.DECLINE_OPPORTUNITIES.value}
 application_credit_option = {
     "uuid": "123-456-789",
     "borrower_size": core.BorrowerSize.SMALL.value,
@@ -129,9 +127,7 @@ update_borrower = {"legal_name": "new_legal_name"}
 def test_reject_application(client, mock_templated_email):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
-    FI_headers = client.post(
-        "/create-test-user-headers", json=FI_user_with_lender
-    ).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user_with_lender).json()
     client.post("/create-test-credit-option", json=test_credit_option)
     client.post("/create-test-application", json=application_with_lender_payload)
 
@@ -156,9 +152,7 @@ def test_reject_application(client, mock_templated_email):  # noqa
     assert response.json()["status"] == core.ApplicationStatus.REJECTED.value
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.post(
-        "/applications/find-alternative-credit-option", json=application_base
-    )
+    response = client.post("/applications/find-alternative-credit-option", json=application_base)
     assert response.status_code == status.HTTP_200_OK
 
 
@@ -190,14 +184,10 @@ def test_access_expired_application(client):  # noqa
 def test_approve_application_cicle(client, mock_templated_email):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
-    FI_headers = client.post(
-        "/create-test-user-headers", json=FI_user_with_lender
-    ).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user_with_lender).json()
 
     client.post("/lenders", json=lender_2, headers=OCP_headers)
-    FI_headers_2 = client.post(
-        "/create-test-user-headers", json=FI_user_with_lender_2
-    ).json()
+    FI_headers_2 = client.post("/create-test-user-headers", json=FI_user_with_lender_2).json()
     client.post("/create-test-credit-option", json=test_credit_option)
     client.post("/create-test-application", json=application_with_lender_payload)
 
@@ -207,29 +197,20 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         return_value=MockResponse(status.HTTP_200_OK, {}),
     ):
         response = client.post("/applications/access-scheme", json=application_base)
-        assert (
-            response.json()["application"]["status"]
-            == core.ApplicationStatus.ACCEPTED.value
-        )
+        assert response.json()["application"]["status"] == core.ApplicationStatus.ACCEPTED.value
         assert response.status_code == status.HTTP_200_OK
 
         # Application should be accepted now so it cannot be accepted again
         response = client.post("/applications/access-scheme", json=application_base)
         assert response.status_code == status.HTTP_409_CONFLICT
 
-    response = client.post(
-        "/applications/credit-product-options", json=application_credit_option
-    )
+    response = client.post("/applications/credit-product-options", json=application_credit_option)
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.post(
-        "/applications/select-credit-product", json=application_select_credit_option
-    )
+    response = client.post("/applications/select-credit-product", json=application_select_credit_option)
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.post(
-        "/applications/confirm-credit-product", json=application_base
-    )
+    response = client.post("/applications/confirm-credit-product", json=application_base)
     assert response.status_code == status.HTTP_200_OK
 
     # FI user tries to fecth previous awards
@@ -288,10 +269,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     assert response.status_code == status.HTTP_409_CONFLICT
 
     response = client.post("/applications/submit", json=application_base)
-    assert (
-        response.json()["application"]["status"]
-        == core.ApplicationStatus.SUBMITTED.value
-    )
+    assert response.json()["application"]["status"] == core.ApplicationStatus.SUBMITTED.value
     assert response.status_code == status.HTTP_200_OK
 
     # tries to upload document before application starting
@@ -311,15 +289,11 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     # different FI user tries to update the award
-    response = client.put(
-        "/applications/1/award", json=update_award, headers=FI_headers_2
-    )
+    response = client.put("/applications/1/award", json=update_award, headers=FI_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # different FI user tries to update the borrower
-    response = client.put(
-        "/applications/1/award", json=update_borrower, headers=FI_headers_2
-    )
+    response = client.put("/applications/1/award", json=update_borrower, headers=FI_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # Fi user starts application
@@ -384,9 +358,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         headers=FI_headers,
     )
 
-    assert (
-        response.json()["status"] == core.ApplicationStatus.INFORMATION_REQUESTED.value
-    )
+    assert response.json()["status"] == core.ApplicationStatus.INFORMATION_REQUESTED.value
     assert response.status_code == status.HTTP_200_OK
 
     # borrower uploads the wrong type of document
@@ -438,13 +410,8 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         response = client.get("/applications/documents/id/100", headers=OCP_headers)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-        response = client.post(
-            "/applications/complete-information-request", json={"uuid": "123-456-789"}
-        )
-        assert (
-            response.json()["application"]["status"]
-            == core.ApplicationStatus.STARTED.value
-        )
+        response = client.post("/applications/complete-information-request", json={"uuid": "123-456-789"})
+        assert response.json()["application"]["status"] == core.ApplicationStatus.STARTED.value
         assert response.status_code == status.HTTP_200_OK
 
     # lender tries to approve the application without verifing legal_name
@@ -502,10 +469,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         json={"uuid": "123-456-789", "contract_amount_submitted": 100000},
     )
     assert response.status_code == status.HTTP_200_OK
-    assert (
-        response.json()["application"]["status"]
-        == core.ApplicationStatus.CONTRACT_UPLOADED.value
-    )
+    assert response.json()["application"]["status"] == core.ApplicationStatus.CONTRACT_UPLOADED.value
 
     response = client.post(
         "/applications/1/complete-application",
@@ -519,9 +483,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
 def test_get_applications(client):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
-    FI_headers = client.post(
-        "/create-test-user-headers", json=FI_user_with_lender
-    ).json()
+    FI_headers = client.post("/create-test-user-headers", json=FI_user_with_lender).json()
 
     client.post("/create-test-credit-option", json=test_credit_option)
     client.post("/create-test-application", json=application_with_lender_payload)
@@ -532,9 +494,7 @@ def test_get_applications(client):  # noqa
     )
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.get(
-        "/applications/admin-list/?page=1&page_size=4&sort_field=borrower.legal_name&sort_order=asc"
-    )
+    response = client.get("/applications/admin-list/?page=1&page_size=4&sort_field=borrower.legal_name&sort_order=asc")
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     response = client.get("/applications/id/1", headers=OCP_headers)
@@ -577,14 +537,8 @@ def test_application_declined(client, mock_templated_email):  # noqa
         "/applications/decline",
         json={"uuid": "123-456-789", "decline_this": False, "decline_all": True},
     )
-    assert (
-        response.json()["application"]["status"]
-        == core.ApplicationStatus.DECLINED.value
-    )
-    assert (
-        response.json()["borrower"]["status"]
-        == core.BorrowerStatus.DECLINE_OPPORTUNITIES.value
-    )
+    assert response.json()["application"]["status"] == core.ApplicationStatus.DECLINED.value
+    assert response.json()["borrower"]["status"] == core.BorrowerStatus.DECLINE_OPPORTUNITIES.value
     assert response.status_code == status.HTTP_200_OK
 
     response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
@@ -593,23 +547,15 @@ def test_application_declined(client, mock_templated_email):  # noqa
 
 def test_application_rollback_declined(client):  # isort:skip # noqa
     client.post("/create-test-application", json=application_declined_payload)
-    client.post(
-        "/change-test-borrower-status", json=borrower_declined_oportunity_payload
-    )
+    client.post("/change-test-borrower-status", json=borrower_declined_oportunity_payload)
 
-    response = client.post(
-        "/applications/rollback-decline", json={"uuid": "123-456-789"}
-    )
+    response = client.post("/applications/rollback-decline", json={"uuid": "123-456-789"})
 
-    assert (
-        response.json()["application"]["status"] == core.ApplicationStatus.PENDING.value
-    )
+    assert response.json()["application"]["status"] == core.ApplicationStatus.PENDING.value
     assert response.json()["borrower"]["status"] == core.BorrowerStatus.ACTIVE.value
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.post(
-        "/applications/rollback-decline", json={"uuid": "123-456-789"}
-    )
+    response = client.post("/applications/rollback-decline", json={"uuid": "123-456-789"})
     assert response.status_code == status.HTTP_409_CONFLICT
 
 
@@ -630,8 +576,5 @@ def test_application_declined_feedback(client):  # isort:skip # noqa
     }
 
     response = client.post("/applications/decline-feedback", json=declined_feedback)
-    assert (
-        response.json()["application"]["status"]
-        == core.ApplicationStatus.DECLINED.value
-    )
+    assert response.json()["application"]["status"] == core.ApplicationStatus.DECLINED.value
     assert response.status_code == status.HTTP_200_OK

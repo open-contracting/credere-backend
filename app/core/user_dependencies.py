@@ -74,9 +74,7 @@ class CognitoClient:
         key = app_settings.cognito_client_secret
         message = bytes(username + app_client_id, "utf-8")
         key = bytes(key, "utf-8")
-        return base64.b64encode(
-            hmac.new(key, message, digestmod=hashlib.sha256).digest()
-        ).decode()
+        return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
     def admin_create_user(self, username, name):
         """
@@ -209,15 +207,11 @@ class CognitoClient:
         Notes:
             The 'verify_software_token' method validates the MFA code provided by the user. If the code is valid, the method will return a successful response. # noqa
         """
-        response = self.client.verify_software_token(
-            AccessToken=access_token, Session=session, UserCode=mfa_code
-        )
+        response = self.client.verify_software_token(AccessToken=access_token, Session=session, UserCode=mfa_code)
 
         return response
 
-    def respond_to_auth_challenge(
-        self, username, session, challenge_name, new_password="", mfa_code=""
-    ):
+    def respond_to_auth_challenge(self, username, session, challenge_name, new_password="", mfa_code=""):
         """
         Responds to the authentication challenge provided by AWS Cognito.
 
@@ -254,9 +248,7 @@ class CognitoClient:
             access_token = response["SecretCode"]
             session = response["Session"]
 
-            response = self.client.verify_software_token(
-                AccessToken=access_token, Session=session, UserCode=mfa_code
-            )
+            response = self.client.verify_software_token(AccessToken=access_token, Session=session, UserCode=mfa_code)
             session = response["Session"]
             return self.client.respond_to_auth_challenge(
                 ClientId=app_settings.cognito_client_id,
@@ -307,9 +299,7 @@ class CognitoClient:
             if attribute["Name"] == "sub":
                 username = attribute["Value"]
                 break
-        response = self.client.admin_user_global_sign_out(
-            UserPoolId=app_settings.cognito_pool_id, Username=username
-        )
+        response = self.client.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=username)
 
         return response
 
@@ -362,9 +352,7 @@ class CognitoClient:
             boto3.exceptions: Any exceptions that occur when sending the emails.
         """
         email_utility.send_notification_new_app_to_fi(self.ses, lender_email_group)
-        email_utility.send_notification_new_app_to_ocp(
-            self.ses, ocp_email_group, lender_name
-        )
+        email_utility.send_notification_new_app_to_ocp(self.ses, ocp_email_group, lender_name)
 
     def send_request_to_sme(self, uuid, lender_name, email_message, sme_email):
         """
@@ -382,9 +370,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = email_utility.send_mail_request_to_sme(
-            self.ses, uuid, lender_name, email_message, sme_email
-        )
+        message_id = email_utility.send_mail_request_to_sme(self.ses, uuid, lender_name, email_message, sme_email)
         return message_id
 
     def send_rejected_email_to_sme(self, application, options):
@@ -402,13 +388,9 @@ class CognitoClient:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
         if options:
-            message_id = email_utility.send_rejected_application_email(
-                self.ses, application
-            )
+            message_id = email_utility.send_rejected_application_email(self.ses, application)
             return message_id
-        message_id = email_utility.send_rejected_application_email_without_alternatives(
-            self.ses, application
-        )
+        message_id = email_utility.send_rejected_application_email_without_alternatives(self.ses, application)
         return message_id
 
     def send_application_approved_to_sme(self, application: Application):
@@ -424,9 +406,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = email_utility.send_application_approved_email(
-            self.ses, application
-        )
+        message_id = email_utility.send_application_approved_email(self.ses, application)
         return message_id
 
     def send_application_submission_completed(self, application: Application):
@@ -442,9 +422,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = email_utility.send_application_submission_completed(
-            self.ses, application
-        )
+        message_id = email_utility.send_application_submission_completed(self.ses, application)
         return message_id
 
     def send_application_credit_disbursed(self, application: Application):
@@ -460,9 +438,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = email_utility.send_application_credit_disbursed(
-            self.ses, application
-        )
+        message_id = email_utility.send_application_credit_disbursed(self.ses, application)
         return message_id
 
     def send_new_email_confirmation_to_sme(

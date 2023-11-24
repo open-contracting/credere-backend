@@ -101,33 +101,23 @@ def test_create_credit_product(client):  # noqa
     client.post("/lenders", json=lender, headers=OCP_headers)
 
     # FI tries to create credit product
-    response = client.post(
-        "/lenders/1/credit-products", json=credit_product, headers=FI_headers
-    )
+    response = client.post("/lenders/1/credit-products", json=credit_product, headers=FI_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    response = client.post(
-        "/lenders/1/credit-products", json=credit_product, headers=OCP_headers
-    )
+    response = client.post("/lenders/1/credit-products", json=credit_product, headers=OCP_headers)
     assert response.status_code == status.HTTP_200_OK
 
     # OCP user tries to create a credit product for a non existent lender
-    response = client.post(
-        "/lenders/100/credit-products", json=credit_product, headers=OCP_headers
-    )
+    response = client.post("/lenders/100/credit-products", json=credit_product, headers=OCP_headers)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    response = client.put(
-        "/credit-products/1", json=updated_credit_product, headers=OCP_headers
-    )
+    response = client.put("/credit-products/1", json=updated_credit_product, headers=OCP_headers)
     assert response.json()["lower_limit"] == updated_credit_product["lower_limit"]
     assert response.json()["upper_limit"] == updated_credit_product["upper_limit"]
     assert response.status_code == status.HTTP_200_OK
 
     # tries to update a credit product that does not exist
-    response = client.put(
-        "/credit-products/100", json=updated_credit_product, headers=OCP_headers
-    )
+    response = client.put("/credit-products/100", json=updated_credit_product, headers=OCP_headers)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
     response = client.get("/credit-products/1")
@@ -153,15 +143,11 @@ def test_create_lender_with_credit_product(client):  # noqa
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
-    response = client.post(
-        "/lenders/", json=lender_with_credit_product, headers=OCP_headers
-    )
+    response = client.post("/lenders/", json=lender_with_credit_product, headers=OCP_headers)
     assert response.status_code == status.HTTP_200_OK
 
     # fi user tries to create lender
-    response = client.post(
-        "/lenders/", json=lender_with_credit_product, headers=FI_headers
-    )
+    response = client.post("/lenders/", json=lender_with_credit_product, headers=FI_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -197,7 +183,5 @@ def test_update_lender(client):  # noqa
     response = client.put("/lenders/1", json=lender_modified, headers=FI_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    response = client.put(
-        "/lenders/1", json=lender_modified_not_valid, headers=OCP_headers
-    )
+    response = client.put("/lenders/1", json=lender_modified_not_valid, headers=OCP_headers)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

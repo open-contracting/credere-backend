@@ -34,18 +34,13 @@ def send_reminders(db_provider: Session = get_db):
     """
 
     applications_to_send_intro_reminder = get_applications_to_remind_intro(db_provider)
-    logger.info(
-        "Quantity of mails to send intro reminder "
-        + str(len(applications_to_send_intro_reminder))
-    )
+    logger.info("Quantity of mails to send intro reminder " + str(len(applications_to_send_intro_reminder)))
     if len(applications_to_send_intro_reminder) == 0:
         logger.info("No new intro reminder to be sent")
     else:
         for application in applications_to_send_intro_reminder:
             with contextmanager(db_provider)() as session:
-                with transaction_session_logger(
-                    session, "Error sending mail or updating the sent status"
-                ):
+                with transaction_session_logger(session, "Error sending mail or updating the sent status"):
                     new_message = Message.create(
                         session,
                         application=application,
@@ -63,21 +58,14 @@ def send_reminders(db_provider: Session = get_db):
                     new_message.external_message_id = messageID
                     logger.info("Mail sent and status updated")
 
-    applications_to_send_submit_reminder = get_applications_to_remind_submit(
-        db_provider
-    )
-    logger.info(
-        "Quantity of mails to send submit reminder "
-        + str(len(applications_to_send_submit_reminder))
-    )
+    applications_to_send_submit_reminder = get_applications_to_remind_submit(db_provider)
+    logger.info("Quantity of mails to send submit reminder " + str(len(applications_to_send_submit_reminder)))
     if len(applications_to_send_submit_reminder) == 0:
         logger.info("No new submit reminder to be sent")
     else:
         for application in applications_to_send_submit_reminder:
             with contextmanager(db_provider)() as session:
-                with transaction_session_logger(
-                    session, "Error sending mail or updating the sent status"
-                ):
+                with transaction_session_logger(session, "Error sending mail or updating the sent status"):
                     # Db message table update
                     new_message = Message.create(
                         session,

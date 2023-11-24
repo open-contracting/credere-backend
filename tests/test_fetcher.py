@@ -15,14 +15,10 @@ contract = common_test_functions.load_json_file("mock_data/contract.json")
 contracts = common_test_functions.load_json_file("mock_data/contracts.json")
 award = common_test_functions.load_json_file("mock_data/award.json")
 borrower = common_test_functions.load_json_file("mock_data/borrower.json")
-borrower_declined = common_test_functions.load_json_file(
-    "mock_data/borrower_declined.json"
-)
+borrower_declined = common_test_functions.load_json_file("mock_data/borrower_declined.json")
 
 email = common_test_functions.load_json_file("mock_data/email.json")
-application_result = common_test_functions.load_json_file(
-    "mock_data/application_result.json"
-)
+application_result = common_test_functions.load_json_file("mock_data/application_result.json")
 
 award_result = common_test_functions.load_json_file("mock_data/award_result.json")
 borrower_result = common_test_functions.load_json_file("mock_data/borrower_result.json")
@@ -35,9 +31,7 @@ def test_fetch_previous_borrower_awards_empty(start_background_db, caplog):  # n
             [],
             "app.background_processes.colombia_data_access.get_previous_contracts",
         ):
-            fetcher.fetch_previous_awards(
-                core.Borrower(**borrower_result), common_test_client.get_test_db
-            )
+            fetcher.fetch_previous_awards(core.Borrower(**borrower_result), common_test_client.get_test_db)
 
     assert "No previous contracts" in caplog.text
 
@@ -49,9 +43,7 @@ def test_fetch_previous_borrower_awards(start_background_db, caplog):  # noqa
             contracts,
             "app.background_processes.colombia_data_access.get_previous_contracts",
         ):
-            fetcher.fetch_previous_awards(
-                core.Borrower(**borrower_result), common_test_client.get_test_db
-            )
+            fetcher.fetch_previous_awards(core.Borrower(**borrower_result), common_test_client.get_test_db)
 
     assert "Previous contracts for" in caplog.text
 
@@ -114,6 +106,4 @@ def test_fetch_new_awards_from_date(start_background_db, mock_templated_email): 
 
             common_test_functions.compare_objects(inserted_award, award_result)
             common_test_functions.compare_objects(inserted_borrower, borrower_result)
-            common_test_functions.compare_objects(
-                inserted_application, application_result
-            )
+            common_test_functions.compare_objects(inserted_application, application_result)

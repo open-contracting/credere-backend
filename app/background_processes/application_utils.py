@@ -42,17 +42,11 @@ def create_application(
     :return: The created application.
     :rtype: core.Application
     """
-    award_borrower_identifier: str = background_utils.get_secret_hash(
-        legal_identifier + source_contract_id
-    )
+    award_borrower_identifier: str = background_utils.get_secret_hash(legal_identifier + source_contract_id)
 
-    application = Application.first_by(
-        session, "award_borrower_identifier", award_borrower_identifier
-    )
+    application = Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
     if application:
-        raise SkippedAwardError(
-            f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}"
-        )
+        raise SkippedAwardError(f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}")
 
     new_uuid: str = background_utils.generate_uuid(award_borrower_identifier)
     data = {
@@ -61,8 +55,7 @@ def create_application(
         "primary_email": email,
         "award_borrower_identifier": award_borrower_identifier,
         "uuid": new_uuid,
-        "expired_at": datetime.utcnow()
-        + timedelta(days=app_settings.application_expiration_days),
+        "expired_at": datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
     }
 
     return Application.create(session, **data)
@@ -88,26 +81,22 @@ def get_dated_applications(session):
             or_(
                 and_(
                     core.Application.status == ApplicationStatus.DECLINED,
-                    core.Application.borrower_declined_at
-                    + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    core.Application.borrower_declined_at + timedelta(days=app_settings.days_to_erase_borrower_data)
                     < datetime.now(),
                 ),
                 and_(
                     core.Application.status == ApplicationStatus.REJECTED,
-                    core.Application.lender_rejected_at
-                    + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    core.Application.lender_rejected_at + timedelta(days=app_settings.days_to_erase_borrower_data)
                     < datetime.now(),
                 ),
                 and_(
                     core.Application.status == ApplicationStatus.COMPLETED,
-                    core.Application.lender_approved_at
-                    + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    core.Application.lender_approved_at + timedelta(days=app_settings.days_to_erase_borrower_data)
                     < datetime.now(),
                 ),
                 and_(
                     core.Application.status == ApplicationStatus.LAPSED,
-                    core.Application.application_lapsed_at
-                    + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    core.Application.application_lapsed_at + timedelta(days=app_settings.days_to_erase_borrower_data)
                     < datetime.now(),
                 ),
             ),
@@ -139,20 +128,17 @@ def get_lapsed_applications(session):
             or_(
                 and_(
                     core.Application.status == ApplicationStatus.PENDING,
-                    core.Application.created_at
-                    + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    core.Application.created_at + timedelta(days=app_settings.days_to_change_to_lapsed)
                     < datetime.now(),
                 ),
                 and_(
                     core.Application.status == ApplicationStatus.ACCEPTED,
-                    core.Application.borrower_accepted_at
-                    + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    core.Application.borrower_accepted_at + timedelta(days=app_settings.days_to_change_to_lapsed)
                     < datetime.now(),
                 ),
                 and_(
                     core.Application.status == ApplicationStatus.INFORMATION_REQUESTED,
-                    core.Application.information_requested_at
-                    + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    core.Application.information_requested_at + timedelta(days=app_settings.days_to_change_to_lapsed)
                     < datetime.now(),
                 ),
             ),
@@ -188,8 +174,7 @@ def get_applications_to_remind_intro(db_provider: Session = get_db):
                     core.Application.status == ApplicationStatus.PENDING,
                     core.Application.expired_at > datetime.now(),
                     core.Application.expired_at
-                    <= datetime.now()
-                    + timedelta(days=app_settings.reminder_days_before_expiration),
+                    <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
                     ~core.Application.id.in_(subquery),
                     core.Borrower.status == core.BorrowerStatus.ACTIVE,
                 )
@@ -222,8 +207,7 @@ def get_applications_to_remind_submit(db_provider: Session = get_db):
                     core.Application.status == ApplicationStatus.ACCEPTED,
                     core.Application.expired_at > datetime.now(),
                     core.Application.expired_at
-                    <= datetime.now()
-                    + timedelta(days=app_settings.reminder_days_before_expiration),
+                    <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
                     ~core.Application.id.in_(subquery),
                 )
             )
@@ -245,11 +229,7 @@ def get_all_applications_with_status(status_list, session):
     :return: A list of applications that have the specified status.
     :rtype: list[core.Application]
     """
-    applications = (
-        session.query((core.Application))
-        .filter(core.Application.status.in_(status_list))
-        .all()
-    )
+    applications = session.query((core.Application)).filter(core.Application.status.in_(status_list)).all()
 
     return applications
 
@@ -270,10 +250,7 @@ def get_application_days_passed(application: core.Application, session: Session)
     fi_request_actions = (
         session.query(core.ApplicationAction)
         .filter(core.ApplicationAction.application_id == application.id)
-        .filter(
-            core.ApplicationAction.type
-            == core.ApplicationActionType.FI_REQUEST_INFORMATION
-        )
+        .filter(core.ApplicationAction.type == core.ApplicationActionType.FI_REQUEST_INFORMATION)
         .order_by(core.ApplicationAction.created_at)
         .all()
     )
@@ -297,10 +274,7 @@ def get_application_days_passed(application: core.Application, session: Session)
     msme_upload_actions = (
         session.query(core.ApplicationAction)
         .filter(core.ApplicationAction.application_id == application.id)
-        .filter(
-            core.ApplicationAction.type
-            == core.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED
-        )
+        .filter(core.ApplicationAction.type == core.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED)
         .order_by(core.ApplicationAction.created_at)
         .all()
     )
@@ -347,18 +321,10 @@ def send_overdue_reminders(session: Session):
     for application in applications:
         with transaction_session(session):
             days_passed = get_application_days_passed(application, session)
-            if (
-                days_passed
-                > application.lender.sla_days
-                * app_settings.progress_to_remind_started_applications
-            ):
+            if days_passed > application.lender.sla_days * app_settings.progress_to_remind_started_applications:
                 if "email" not in overdue_lenders[application.lender.id]:
-                    overdue_lenders[application.lender.id][
-                        "email"
-                    ] = application.lender.email_group
-                    overdue_lenders[application.lender.id][
-                        "name"
-                    ] = application.lender.name
+                    overdue_lenders[application.lender.id]["email"] = application.lender.email_group
+                    overdue_lenders[application.lender.id]["name"] = application.lender.name
                 overdue_lenders[application.lender.id]["count"] += 1
                 if days_passed > application.lender.sla_days:
                     current_dt = datetime.now(application.created_at.tzinfo)
@@ -379,9 +345,7 @@ def send_overdue_reminders(session: Session):
         name = lender_data.get("name")
         count = lender_data.get("count")
         email = lender_data.get("email")
-        message_id = email_utility.send_overdue_application_email_to_FI(
-            sesClient, name, email, count
-        )
+        message_id = email_utility.send_overdue_application_email_to_FI(sesClient, name, email, count)
 
         Message.create(
             session,

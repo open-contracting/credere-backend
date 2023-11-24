@@ -69,11 +69,7 @@ async def get_borrowers_contracting_process_ids(session: Session = Depends(get_d
     :return: The list of borrower identifiers.
     :rtype: List[str]
     """
-    borrowers = (
-        session.query(Borrower.borrower_identifier)
-        .order_by(desc(Borrower.created_at))
-        .all()
-    )
+    borrowers = session.query(Borrower.borrower_identifier).order_by(desc(Borrower.created_at)).all()
     if not borrowers:
         raise HTTPException(status_code=404, detail="No borrowers found")
     return [borrower[0] for borrower in borrowers]

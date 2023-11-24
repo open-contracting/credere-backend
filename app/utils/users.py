@@ -16,9 +16,7 @@ from ..schema import core
 logger = logging.getLogger(__name__)
 
 
-def create_user(
-    payload: core.User, session: Session, client: CognitoClient
-) -> core.User:
+def create_user(payload: core.User, session: Session, client: CognitoClient) -> core.User:
     """
     Creates a new user in the database and also in the Cognito User Pool.
 
@@ -74,9 +72,7 @@ def update_user(session: Session, payload: dict, user_id: int) -> core.User:
     try:
         user = session.query(core.User).filter(core.User.id == user_id).first()
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         update_dict = jsonable_encoder(payload, exclude_unset=True)
         return user.update(session, **update_dict)
@@ -88,9 +84,7 @@ def update_user(session: Session, payload: dict, user_id: int) -> core.User:
         )
 
 
-def get_all_users(
-    page: int, page_size: int, sort_field: str, sort_order: str, session: Session
-) -> UserListResponse:
+def get_all_users(page: int, page_size: int, sort_field: str, sort_order: str, session: Session) -> UserListResponse:
     """
     Retrieve all users in the system in a paginated and sorted manner.
 

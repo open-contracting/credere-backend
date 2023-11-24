@@ -78,15 +78,10 @@ def change_password(
         response = client.initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             session = response["Session"]
-            response = client.respond_to_auth_challenge(
-                user.username, session, "NEW_PASSWORD_REQUIRED", user.password
-            )
+            response = client.respond_to_auth_challenge(user.username, session, "NEW_PASSWORD_REQUIRED", user.password)
 
         client.verified_email(user.username)
-        if (
-            response.get("ChallengeName") is not None
-            and response["ChallengeName"] == "MFA_SETUP"
-        ):
+        if response.get("ChallengeName") is not None and response["ChallengeName"] == "MFA_SETUP":
             mfa_setup_response = client.mfa_setup(response["Session"])
             return ApiSchema.ChangePasswordResponse(
                 detail="Password changed with MFA setup required",
@@ -341,9 +336,7 @@ def me(
     "/users/forgot-password",
     response_model=ApiSchema.ResponseBase,
 )
-def forgot_password(
-    user: BasicUser, client: CognitoClient = Depends(get_cognito_client)
-):
+def forgot_password(user: BasicUser, client: CognitoClient = Depends(get_cognito_client)):
     """
     Initiate the process of resetting a user's password.
 
@@ -387,9 +380,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
 

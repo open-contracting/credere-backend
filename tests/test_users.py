@@ -107,9 +107,7 @@ def test_login(client):  # noqa
         "temp_password": common_test_client.tempPassword,
         "password": common_test_client.tempPassword,
     }
-    responseSetupPassword = client.put(
-        "/users/change-password", json=setupPasswordPayload
-    )
+    responseSetupPassword = client.put("/users/change-password", json=setupPasswordPayload)
     assert responseSetupPassword.status_code == status.HTTP_200_OK
 
     loginPayload = {
@@ -138,10 +136,7 @@ def test_login(client):  # noqa
     )
 
     assert responseAccessProtectedRouteWithUser.status_code == status.HTTP_200_OK
-    assert (
-        responseAccessProtectedRouteWithUser.json()["username"]
-        == setupPasswordPayload["username"]
-    )
+    assert responseAccessProtectedRouteWithUser.json()["username"] == setupPasswordPayload["username"]
 
     response = client.get(
         "/users/logout",

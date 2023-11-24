@@ -74,9 +74,7 @@ def create_new_award(
         "source_data_contracts": entry,
     }
 
-    award_response_json, award_url = _get_remote_award(
-        proceso_de_compra, proveedor_adjudicado
-    )
+    award_response_json, award_url = _get_remote_award(proceso_de_compra, proveedor_adjudicado)
 
     if not award_response_json:
         # Retry with nombre_del_proveedor="No Adjudicado", in case award data is available, but not the supplier name.
@@ -131,16 +129,9 @@ def get_new_contracts(index: int, from_date, until_date=None):
     )
 
     if from_date and until_date:
-        url = (
-            f"{base_url}"
-            f"AND ultima_actualizacion >= '{from_date}' "
-            f"AND ultima_actualizacion < '{until_date}' "
-        )
+        url = f"{base_url}" f"AND ultima_actualizacion >= '{from_date}' " f"AND ultima_actualizacion < '{until_date}' "
     else:
-        url = (
-            f"{base_url}"
-            f"AND estado_contrato = 'Borrador' AND ultima_actualizacion >= '{converted_date}'"
-        )
+        url = f"{base_url}" f"AND estado_contrato = 'Borrador' AND ultima_actualizacion >= '{converted_date}'"
 
     return background_utils.make_request_with_retry(url, headers)
 
@@ -180,9 +171,7 @@ def get_source_contract_id(entry):
     return source_contract_id
 
 
-def create_new_borrower(
-    borrower_identifier: str, documento_proveedor: str, entry: dict
-) -> dict:
+def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict) -> dict:
     """
     Create a new borrower and insert it into the database.
 
@@ -198,8 +187,7 @@ def create_new_borrower(
     """
 
     borrower_url = (
-        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}"
-        f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
+        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}" f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
     )
     borrower_response = background_utils.make_request_with_retry(borrower_url, headers)
     borrower_response_json = borrower_response.json()
@@ -246,16 +234,13 @@ def get_email(documento_proveedor, entry) -> str:
     """
 
     borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
-    borrower_response_email = background_utils.make_request_with_retry(
-        borrower_email_url, headers
-    )
+    borrower_response_email = background_utils.make_request_with_retry(borrower_email_url, headers)
     borrower_response_email_json = borrower_response_email.json()
     len_borrower_response_email_json = len(borrower_response_email_json)
 
     if len_borrower_response_email_json == 0:
         raise SkippedAwardError(
-            f"0 borrower emails from {borrower_email_url} "
-            f"(response={borrower_response_email_json})"
+            f"0 borrower emails from {borrower_email_url} " f"(response={borrower_response_email_json})"
         )
 
     remote_email = borrower_response_email_json[0]
@@ -263,8 +248,7 @@ def get_email(documento_proveedor, entry) -> str:
 
     if len_borrower_response_email_json > 1:
         email = Counter(
-            borrower_email["correo_entidad"]
-            for borrower_email in borrower_response_email_json
+            borrower_email["correo_entidad"] for borrower_email in borrower_response_email_json
         ).most_common(1)[0][0]
 
     if not background_utils.is_valid_email(email):
@@ -286,8 +270,6 @@ def get_documento_proveedor(entry) -> str:
 
     documento_proveedor = entry.get("documento_proveedor", None)
     if not documento_proveedor or documento_proveedor == "No Definido":
-        raise SkippedAwardError(
-            f"No borrower identifier in {documento_proveedor=} ({entry=})"
-        )
+        raise SkippedAwardError(f"No borrower identifier in {documento_proveedor=} ({entry=})")
 
     return documento_proveedor

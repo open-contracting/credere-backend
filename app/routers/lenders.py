@@ -80,9 +80,7 @@ async def create_credit_products(
         return utils.create_credit_product(session, credit_product, lender_id)
 
 
-@router.get(
-    "/lenders/{lender_id}", tags=["lenders"], response_model=core.LenderWithRelations
-)
+@router.get("/lenders/{lender_id}", tags=["lenders"], response_model=core.LenderWithRelations)
 async def get_lender(lender_id: int, db: Session = Depends(get_db)):
     """
     Retrieve a lender by its ID.
@@ -101,9 +99,7 @@ async def get_lender(lender_id: int, db: Session = Depends(get_db)):
     lender = db.query(core.Lender).filter(core.Lender.id == lender_id).first()
 
     if not lender:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
     return lender
 
 
@@ -195,9 +191,7 @@ async def get_credit_product(
     )
 
     if not creditProduct:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
 
     return creditProduct
 

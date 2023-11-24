@@ -7,18 +7,10 @@ from reportlab.platypus import Table, TableStyle
 
 from app.schema import core
 
-pdfmetrics.registerFont(
-    TTFont("GTEestiProDisplay", "./fonts/GTEestiProDisplay-Regular.ttf")
-)
-pdfmetrics.registerFont(
-    TTFont("GTEestiProDisplayBd", "./fonts/GTEestiProDisplay-Bold.ttf")
-)
-pdfmetrics.registerFont(
-    TTFont("GTEestiProDisplayIt", "./fonts/GTEestiProDisplay-RegularItalic.ttf")
-)
-pdfmetrics.registerFont(
-    TTFont("GTEestiProDisplayBI", "./fonts/GTEestiProDisplay-BoldItalic.ttf")
-)
+pdfmetrics.registerFont(TTFont("GTEestiProDisplay", "./fonts/GTEestiProDisplay-Regular.ttf"))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayBd", "./fonts/GTEestiProDisplay-Bold.ttf"))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayIt", "./fonts/GTEestiProDisplay-RegularItalic.ttf"))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayBI", "./fonts/GTEestiProDisplay-BoldItalic.ttf"))
 pdfmetrics.registerFontFamily(
     "GTEestiProDisplay",
     normal="GTEestiProDisplay",

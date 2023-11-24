@@ -167,9 +167,7 @@ class ApplicationActionType(Enum):
     MSME_UPLOAD_CONTRACT = "MSME_UPLOAD_CONTRACT"
     MSME_CHANGE_EMAIL = "MSME_CHANGE_EMAIL"
     MSME_CONFIRM_EMAIL = "MSME_CONFIRM_EMAIL"
-    MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED = (
-        "MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED"
-    )
+    MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED = "MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED"
     MSME_RETRY_APPLICATION = "MSME_RETRY_APPLICATION"
     DATA_VALIDATION_UPDATE = "DATA_VALIDATION_UPDATE"
     BORROWER_DOCUMENT_UPDATE = "BORROWER_DOCUMENT_UPDATE"
@@ -196,27 +194,15 @@ class BorrowerType(Enum):
 
 
 class CreditProductBase(SQLModel):
-    borrower_size: BorrowerSize = Field(
-        sa_column=Column(SAEnum(BorrowerSize, name="borrower_size")), nullable=False
-    )
-    lower_limit: Decimal = Field(
-        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
-    )
-    upper_limit: Decimal = Field(
-        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
-    )
+    borrower_size: BorrowerSize = Field(sa_column=Column(SAEnum(BorrowerSize, name="borrower_size")), nullable=False)
+    lower_limit: Decimal = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
+    upper_limit: Decimal = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
     interest_rate: str = Field(default="", nullable=False)
     additional_information: str = Field(default="", nullable=False)
-    type: CreditType = Field(
-        sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False
-    )
+    type: CreditType = Field(sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False)
     borrower_types: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    required_document_types: dict = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
-    other_fees_total_amount: Decimal = Field(
-        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
-    )
+    required_document_types: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    other_fees_total_amount: Decimal = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
     other_fees_description: str = Field(default="", nullable=False)
     more_info_url: str = Field(default="", nullable=False)
     lender_id: int = Field(foreign_key="lender.id", nullable=False, index=True)
@@ -248,9 +234,7 @@ class BorrowerDocumentBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     application_id: int = Field(foreign_key="application.id")
 
-    type: BorrowerDocumentType = Field(
-        sa_column=Column(SAEnum(BorrowerDocumentType, name="borrower_document_type"))
-    )
+    type: BorrowerDocumentType = Field(sa_column=Column(SAEnum(BorrowerDocumentType, name="borrower_document_type")))
     verified: bool = Field(default=False)
     name: str = Field(default="")
     created_at: Optional[datetime] = Field(
@@ -282,9 +266,7 @@ class BorrowerDocumentBase(SQLModel):
 
 class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
     __tablename__ = "borrower_document"
-    application: Optional["Application"] = Relationship(
-        back_populates="borrower_documents"
-    )
+    application: Optional["Application"] = Relationship(back_populates="borrower_documents")
     file: bytes
 
 
@@ -303,66 +285,32 @@ class ApplicationBase(SQLModel):
         sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
     )
 
-    disbursed_final_amount: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
-    )
-    amount_requested: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True)
-    )
+    disbursed_final_amount: Optional[Decimal] = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
+    amount_requested: Optional[Decimal] = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     repayment_years: Optional[int] = Field(nullable=True)
     repayment_months: Optional[int] = Field(nullable=True)
-    payment_start_date: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=False), nullable=True)
-    )
+    payment_start_date: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     calculator_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     borrower_credit_product_selected_at: Optional[datetime] = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     pending_documents: bool = Field(default=False)
     pending_email_confirmation: bool = Field(default=False)
-    borrower_submitted_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    borrower_accepted_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    borrower_declined_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    overdued_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    borrower_declined_preferences_data: dict = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
-    borrower_declined_data: dict = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
-    lender_started_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    secop_data_verification: dict = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
-    lender_approved_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    lender_approved_data: dict = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
-    lender_rejected_data: Optional[dict] = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
-    lender_rejected_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    borrower_uploaded_contract_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    lender_completed_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
+    borrower_submitted_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    borrower_accepted_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    borrower_declined_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    overdued_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    borrower_declined_preferences_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    borrower_declined_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    lender_started_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    secop_data_verification: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    lender_approved_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    lender_approved_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    lender_rejected_data: Optional[dict] = Field(default={}, sa_column=Column(JSON), nullable=False)
+    lender_rejected_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    borrower_uploaded_contract_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    lender_completed_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     completed_in_days: Optional[int] = Field(nullable=True)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -380,27 +328,15 @@ class ApplicationBase(SQLModel):
             onupdate=func.now(),
         )
     )
-    expired_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    archived_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    information_requested_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    application_lapsed_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    credit_product_id: Optional[int] = Field(
-        foreign_key="credit_product.id", nullable=True
-    )
+    expired_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    archived_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    information_requested_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    application_lapsed_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    credit_product_id: Optional[int] = Field(foreign_key="credit_product.id", nullable=True)
 
 
 class ApplicationPrivate(ApplicationBase):
-    confirmation_email_token: Optional[str] = Field(
-        index=True, nullable=True, default=""
-    )
+    confirmation_email_token: Optional[str] = Field(index=True, nullable=True, default="")
 
 
 class ApplicationRead(ApplicationBase):
@@ -409,16 +345,12 @@ class ApplicationRead(ApplicationBase):
 
 class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
-        back_populates="application"
-    )
+    borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(back_populates="application")
     award: "Award" = Relationship(back_populates="applications")
     borrower: "Borrower" = Relationship(back_populates="applications")
     lender: Optional["Lender"] = Relationship(back_populates="applications")
     messages: Optional[List["Message"]] = Relationship(back_populates="application")
-    actions: Optional[List["ApplicationAction"]] = Relationship(
-        back_populates="application"
-    )
+    actions: Optional[List["ApplicationAction"]] = Relationship(back_populates="application")
     credit_product: "CreditProduct" = Relationship()
 
 
@@ -454,9 +386,7 @@ class BorrowerBase(SQLModel):
             onupdate=func.now(),
         )
     )
-    declined_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
+    declined_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
 
 
 class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
@@ -465,9 +395,7 @@ class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
         sa_column=Column(SAEnum(BorrowerStatus, name="borrower_status")),
         default=BorrowerStatus.ACTIVE,
     )
-    applications: Optional[List["Application"]] = Relationship(
-        back_populates="borrower"
-    )
+    applications: Optional[List["Application"]] = Relationship(back_populates="borrower")
     awards: List["Award"] = Relationship(back_populates="borrower")
 
 
@@ -500,12 +428,8 @@ class Lender(LenderBase, ActiveRecordMixin, table=True):
             onupdate=func.now(),
         )
     )
-    deleted_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    credit_products: Optional[List["CreditProduct"]] = Relationship(
-        back_populates="lender"
-    )
+    deleted_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    credit_products: Optional[List["CreditProduct"]] = Relationship(back_populates="lender")
 
 
 class LenderCreate(LenderBase):
@@ -518,27 +442,17 @@ class AwardBase(SQLModel):
     source_contract_id: str = Field(default="", index=True)
     title: str = Field(default="")
     description: str = Field(default="")
-    award_date: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=False), nullable=True)
-    )
-    award_amount: Optional[Decimal] = Field(
-        sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False)
-    )
+    award_date: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
+    award_amount: Optional[Decimal] = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
-    contractperiod_startdate: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=False), nullable=True)
-    )
-    contractperiod_enddate: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=False), nullable=True)
-    )
+    contractperiod_startdate: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
+    contractperiod_enddate: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     payment_method: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     buyer_name: str = Field(default="")
     source_url: str = Field(default="")
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
-    source_last_updated_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=False), nullable=True)
-    )
+    source_last_updated_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     previous: bool = Field(default=False)
     procurement_method: str = Field(default="")
     contracting_process_id: str = Field(default="")
@@ -549,9 +463,7 @@ class AwardBase(SQLModel):
 class Award(AwardBase, ActiveRecordMixin, table=True):
     applications: Optional[List["Application"]] = Relationship(back_populates="award")
     borrower: Borrower = Relationship(back_populates="awards")
-    source_data_contracts: dict = Field(
-        default={}, sa_column=Column(JSON), nullable=False
-    )
+    source_data_contracts: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     source_data_awards: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
@@ -584,9 +496,7 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
 
 class Message(SQLModel, ActiveRecordMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    type: MessageType = Field(
-        sa_column=Column(SAEnum(MessageType, name="message_type"))
-    )
+    type: MessageType = Field(sa_column=Column(SAEnum(MessageType, name="message_type")))
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="messages")
     external_message_id: Optional[str] = Field(default="")
@@ -607,23 +517,17 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
             onupdate=func.now(),
         )
     )
-    lender_id: Optional[int] = Field(
-        default=None, foreign_key="lender.id", nullable=True
-    )
+    lender_id: Optional[int] = Field(default=None, foreign_key="lender.id", nullable=True)
 
 
 class UserBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    type: UserType = Field(
-        sa_column=Column(SAEnum(UserType, name="user_type")), default=UserType.FI
-    )
+    type: UserType = Field(sa_column=Column(SAEnum(UserType, name="user_type")), default=UserType.FI)
     language: str = Field(default="es", description="ISO 639-1 language code")
     email: str = Field(unique=True, nullable=False)
     name: str = Field(default="")
     external_id: str = Field(default="", index=True)
-    lender_id: Optional[int] = Field(
-        default=None, foreign_key="lender.id", nullable=True
-    )
+    lender_id: Optional[int] = Field(default=None, foreign_key="lender.id", nullable=True)
     created_at: Optional[datetime] = Field(
         sa_column=Column(
             DateTime(timezone=True),

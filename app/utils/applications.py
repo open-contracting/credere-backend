@@ -86,9 +86,7 @@ def update_data_field(application: core.Application, payload: UpdateDataField):
     :raise: KeyError if the key specified in payload does not exist in the application's secop_data_verification dictionary. # noqa
 
     """
-    payload_dict = {
-        key: value for key, value in payload.dict().items() if value is not None
-    }
+    payload_dict = {key: value for key, value in payload.dict().items() if value is not None}
     key, value = next(iter(payload_dict.items()), (None, None))
     verified_data = application.secop_data_verification.copy()
     verified_data[key] = value
@@ -158,9 +156,7 @@ def validate_documents(application):
             not_validated_documents.append(document.type.name)
 
     if not_validated_documents:
-        logger.error(
-            f"Following documents were not validated: {not_validated_documents}"
-        )
+        logger.error(f"Following documents were not validated: {not_validated_documents}")
 
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -285,9 +281,7 @@ def approve_application(application: core.Application, payload: dict):
     application.lender_approved_at = current_time
 
 
-def complete_application(
-    application: core.Application, disbursed_final_amount: Decimal
-):
+def complete_application(application: core.Application, disbursed_final_amount: Decimal):
     """
     Completes an application.
 
@@ -556,16 +550,10 @@ def get_all_fi_applications_emails(session: Session, lender_id, lang: str):
     for application in applications_query.all():
         applicants_list.append(
             {
-                get_translated_string(
-                    "National Tax ID", lang
-                ): application.borrower.legal_identifier,
-                get_translated_string(
-                    "Legal Name", lang
-                ): application.borrower.legal_name,
+                get_translated_string("National Tax ID", lang): application.borrower.legal_identifier,
+                get_translated_string("Legal Name", lang): application.borrower.legal_name,
                 get_translated_string("Email Address", lang): application.primary_email,
-                get_translated_string(
-                    "Submission Date", lang
-                ): application.borrower_submitted_at,
+                get_translated_string("Submission Date", lang): application.borrower_submitted_at,
                 get_translated_string("Stage", lang): get_translated_string(
                     application.status.name.capitalize(), lang
                 ),
@@ -703,9 +691,7 @@ def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
     )
 
     if not application:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
 
     if application.status == core.ApplicationStatus.LAPSED:
         raise HTTPException(
@@ -736,17 +722,13 @@ def get_application_by_id(id: int, session: Session) -> core.Application:
     """
     application = (
         session.query(core.Application)
-        .options(
-            joinedload(core.Application.borrower), joinedload(core.Application.award)
-        )
+        .options(joinedload(core.Application.borrower), joinedload(core.Application.award))
         .filter(core.Application.id == id)
         .first()
     )
 
     if not application:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Application not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
 
     return application
 
@@ -758,10 +740,8 @@ def get_modified_data_fields(application: core.Application, session: Session):
         .filter(
             core.ApplicationAction.application_id == application.id,
             or_(
-                core.ApplicationAction.type
-                == core.ApplicationActionType.AWARD_UPDATE.value,
-                core.ApplicationAction.type
-                == core.ApplicationActionType.BORROWER_UPDATE.value,
+                core.ApplicationAction.type == core.ApplicationActionType.AWARD_UPDATE.value,
+                core.ApplicationAction.type == core.ApplicationActionType.BORROWER_UPDATE.value,
             ),
         )
         .all()
@@ -770,16 +750,11 @@ def get_modified_data_fields(application: core.Application, session: Session):
 
     for action in application_actions:
         action_data = action.data
-        key_prefix = (
-            "award_updates"
-            if action.type == core.ApplicationActionType.AWARD_UPDATE
-            else "borrower_updates"
-        )
+        key_prefix = "award_updates" if action.type == core.ApplicationActionType.AWARD_UPDATE else "borrower_updates"
         for key, value in action_data.items():
             if (
                 key not in modified_data_fields[key_prefix]
-                or action.created_at
-                > modified_data_fields[key_prefix][key]["modified_at"]
+                or action.created_at > modified_data_fields[key_prefix][key]["modified_at"]
             ):
                 modified_data_fields[key_prefix][key] = {
                     "modified_at": action.created_at,
@@ -970,9 +945,7 @@ def update_application_primary_email(application: core.Application, email: str) 
     return confirmation_email_token
 
 
-def check_pending_email_confirmation(
-    application: core.Application, confirmation_email_token: str
-):
+def check_pending_email_confirmation(application: core.Application, confirmation_email_token: str):
     """
     Checks and processes pending email confirmation for an application.
 
@@ -1079,9 +1052,7 @@ def check_FI_user_permission(application: core.Application, user: core.User) -> 
         )
 
 
-def check_FI_user_permission_or_OCP(
-    application: core.Application, user: core.User
-) -> None:
+def check_FI_user_permission_or_OCP(application: core.Application, user: core.User) -> None:
     """
     Checks if a user has permission to interact with a given application.
 
@@ -1123,11 +1094,7 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
     :rtype: core.BorrowerDocument
     """
 
-    document = (
-        session.query(core.BorrowerDocument)
-        .filter(core.BorrowerDocument.id == document_id)
-        .first()
-    )
+    document = session.query(core.BorrowerDocument).filter(core.BorrowerDocument.id == document_id).first()
     if not document:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1201,9 +1168,7 @@ def copy_documents(application: core.Application, documents: dict, session: Sess
         application.borrower_documents.append(new_borrower_document)
 
 
-def copy_application(
-    application: core.Application, session: Session
-) -> core.Application:
+def copy_application(application: core.Application, session: Session) -> core.Application:
     """
     Creates a new application that is a copy of the provided one, with some changes.
 
@@ -1270,9 +1235,7 @@ def get_previous_lenders(award_borrower_identifier: str, session: Session) -> Li
     )
     if not lender_ids:
         return []
-    cleaned_lender_ids = [
-        lender_id for (lender_id,) in lender_ids if lender_id is not None
-    ]
+    cleaned_lender_ids = [lender_id for (lender_id,) in lender_ids if lender_id is not None]
 
     return cleaned_lender_ids
 
@@ -1305,8 +1268,7 @@ def get_previous_documents(application: core.Application, session: Session):
         session.query(core.Application.id)
         .filter(
             core.Application.status == "REJECTED",
-            core.Application.award_borrower_identifier
-            == application.award_borrower_identifier,
+            core.Application.award_borrower_identifier == application.award_borrower_identifier,
         )
         .order_by(core.Application.created_at.desc())
         .first()
@@ -1326,9 +1288,7 @@ def get_previous_documents(application: core.Application, session: Session):
     copy_documents(application, documents, session)
 
 
-def check_if_application_was_already_copied(
-    application: core.Application, session: Session
-):
+def check_if_application_was_already_copied(application: core.Application, session: Session):
     """
     Checks if a particular application has been already copied.
 
@@ -1355,8 +1315,7 @@ def check_if_application_was_already_copied(
         )
         .filter(
             core.Application.id == application.id,
-            core.ApplicationAction.type
-            == core.ApplicationActionType.COPIED_APPLICATION,
+            core.ApplicationAction.type == core.ApplicationActionType.COPIED_APPLICATION,
         )
         .options(joinedload(core.ApplicationAction.application))
         .first()
@@ -1369,9 +1328,7 @@ def check_if_application_was_already_copied(
         )
 
 
-def create_borrower_table(
-    borrower: core.Borrower, application: core.Application, lang: str
-):
+def create_borrower_table(borrower: core.Borrower, application: core.Application, lang: str):
     """
     Creates a table of borrower data.
 
@@ -1424,10 +1381,7 @@ def create_borrower_table(
 
 def get_pdf_file_name(application: core.Application, lang: str):
     name = get_translated_string("Application Details", lang).replace(" ", "_")
-    filename = (
-        f"{name}-{application.borrower.legal_identifier}"
-        + f"-{application.award.source_contract_id}.pdf"
-    )
+    filename = f"{name}-{application.borrower.legal_identifier}" + f"-{application.award.source_contract_id}.pdf"
     return filename
 
 
@@ -1539,17 +1493,13 @@ def create_application_table(application: core.Application, lang: str):
         data.append(
             [
                 get_translated_string("Contract amount", lang),
-                format_currency(
-                    application.contract_amount_submitted, application.currency
-                ),
+                format_currency(application.contract_amount_submitted, application.currency),
             ]
         )
         data.append(
             [
                 get_translated_string("Credit amount", lang),
-                format_currency(
-                    application.disbursed_final_amount, application.currency
-                ),
+                format_currency(application.disbursed_final_amount, application.currency),
             ]
         )
     return create_table(data)

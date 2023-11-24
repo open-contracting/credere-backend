@@ -60,9 +60,7 @@ class verifyTokeClass(HTTPBearer):
         try:
             public_key = self.kid_to_jwk[jwt_credentials.header["kid"]]
         except KeyError:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="JWK public key not found"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="JWK public key not found")
 
         key = jwk.construct(public_key)
         decoded_signature = base64url_decode(jwt_credentials.signature.encode())
@@ -101,14 +99,10 @@ class verifyTokeClass(HTTPBearer):
                     message=message,
                 )
             except JWTError:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid"
-                )
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid")
 
             if not self.verify_jwk_token(jwt_credentials):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid"
-                )
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid")
 
             return jwt_credentials
         else:
@@ -161,9 +155,7 @@ async def get_current_user(
     try:
         return credentials.claims["username"]
     except KeyError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Username missing"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Username missing")
 
 
 async def get_user(
@@ -182,13 +174,7 @@ async def get_user(
     :rtype: User
     """
     try:
-        user = (
-            session.query(User)
-            .filter(User.external_id == credentials.claims["username"])
-            .first()
-        )
+        user = session.query(User).filter(User.external_id == credentials.claims["username"]).first()
         return user
     except KeyError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found")

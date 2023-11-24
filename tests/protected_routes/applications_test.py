@@ -38,9 +38,7 @@ class BorrowerTestPayload(BaseModel):
     response_model=core.Application,
 )
 async def set_test_application_as_lapsed(id: int, session: Session = Depends(get_db)):
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
-    )
+    application = session.query(core.Application).filter(core.Application.id == id).first()
     application.created_at = datetime.now(application.created_at.tzinfo) - timedelta(
         days=app_settings.days_to_change_to_lapsed + 2
     )
@@ -57,12 +55,10 @@ async def set_test_application_as_lapsed(id: int, session: Session = Depends(get
     response_model=core.Application,
 )
 async def set_test_application_as_dated(id: int, session: Session = Depends(get_db)):
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
+    application = session.query(core.Application).filter(core.Application.id == id).first()
+    application.borrower_declined_at = datetime.now(application.created_at.tzinfo) - timedelta(
+        days=app_settings.days_to_erase_borrower_data + 1
     )
-    application.borrower_declined_at = datetime.now(
-        application.created_at.tzinfo
-    ) - timedelta(days=app_settings.days_to_erase_borrower_data + 1)
 
     session.commit()
     session.refresh(application)
@@ -76,9 +72,7 @@ async def set_test_application_as_dated(id: int, session: Session = Depends(get_
     response_model=core.Application,
 )
 async def set_test_application_as_started(id: int, session: Session = Depends(get_db)):
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
-    )
+    application = session.query(core.Application).filter(core.Application.id == id).first()
 
     application.lender_started_at = datetime.now(application.created_at.tzinfo)
     application.status = core.ApplicationStatus.STARTED.value
@@ -95,14 +89,12 @@ async def set_test_application_as_started(id: int, session: Session = Depends(ge
     response_model=core.Application,
 )
 async def set_test_application_as_overdue(id: int, session: Session = Depends(get_db)):
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
-    )
+    application = session.query(core.Application).filter(core.Application.id == id).first()
 
     application.status = core.ApplicationStatus.STARTED.value
-    application.lender_started_at = datetime.now(
-        application.created_at.tzinfo
-    ) - timedelta(days=application.lender.sla_days + 1)
+    application.lender_started_at = datetime.now(application.created_at.tzinfo) - timedelta(
+        days=application.lender.sla_days + 1
+    )
 
     session.commit()
     session.refresh(application)
@@ -116,14 +108,10 @@ async def set_test_application_as_overdue(id: int, session: Session = Depends(ge
     response_model=core.Application,
 )
 async def set_test_application_as_expired(id: int, session: Session = Depends(get_db)):
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
-    )
+    application = session.query(core.Application).filter(core.Application.id == id).first()
 
     application.status = core.ApplicationStatus.PENDING.value
-    application.expired_at = datetime.now(application.created_at.tzinfo) - timedelta(
-        days=+1
-    )
+    application.expired_at = datetime.now(application.created_at.tzinfo) - timedelta(days=+1)
 
     session.commit()
     session.refresh(application)
@@ -137,12 +125,8 @@ async def set_test_application_as_expired(id: int, session: Session = Depends(ge
     response_model=core.Application,
 )
 async def set_test_application_to_remind(id: int, session: Session = Depends(get_db)):
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
-    )
-    application.expired_at = datetime.now(application.created_at.tzinfo) + timedelta(
-        days=1
-    )
+    application = session.query(core.Application).filter(core.Application.id == id).first()
+    application.expired_at = datetime.now(application.created_at.tzinfo) + timedelta(days=1)
 
     session.commit()
     session.refresh(application)
@@ -155,9 +139,7 @@ async def set_test_application_to_remind(id: int, session: Session = Depends(get
     tags=["applications"],
     response_model=core.CreditProduct,
 )
-async def create_test_credit_option(
-    payload: core.CreditProduct, session: Session = Depends(get_db)
-):
+async def create_test_credit_option(payload: core.CreditProduct, session: Session = Depends(get_db)):
     session.add(payload)
     session.commit()
     session.refresh(payload)
@@ -173,9 +155,7 @@ async def create_test_credit_option(
 async def update_test_application_status(
     id: int, payload: UpdateApplicationStatus, session: Session = Depends(get_db)
 ):
-    application = (
-        session.query(core.Application).filter(core.Application.id == id).first()
-    )
+    application = session.query(core.Application).filter(core.Application.id == id).first()
     application.status = payload.status
     session.commit()
 
@@ -187,9 +167,7 @@ async def update_test_application_status(
     tags=["applications"],
     response_model=core.Application,
 )
-async def create_test_application(
-    payload: ApplicationTestPayload, session: Session = Depends(get_db)
-):
+async def create_test_application(payload: ApplicationTestPayload, session: Session = Depends(get_db)):
     test_award = {
         "entidad": "TEST ENTITY",
         "nit_entidad": "1234567890",
@@ -354,11 +332,7 @@ async def create_test_application(
     db_app.borrower = db_borrower
 
     if payload.lender_id:
-        lender = (
-            session.query(core.Lender)
-            .filter(core.Lender.id == payload.lender_id)
-            .first()
-        )
+        lender = session.query(core.Lender).filter(core.Lender.id == payload.lender_id).first()
         db_app.lender = lender
 
     session.add(db_app)
@@ -379,9 +353,7 @@ async def create_test_application(
 
 
 @router.post("/change-test-application-status", tags=["applications"])
-async def change_application_status(
-    payload: ApplicationTestPayload, session: Session = Depends(get_db)
-):
+async def change_application_status(payload: ApplicationTestPayload, session: Session = Depends(get_db)):
     application = session.query(core.Application).first()
     application.status = payload.status
     session.commit()
@@ -390,9 +362,7 @@ async def change_application_status(
 
 
 @router.post("/change-test-borrower-status", tags=["applications"])
-async def change_borrower_status(
-    payload: BorrowerTestPayload, session: Session = Depends(get_db)
-):
+async def change_borrower_status(payload: BorrowerTestPayload, session: Session = Depends(get_db)):
     borrower = session.query(core.Borrower).first()
     borrower.status = payload.status
     session.commit()

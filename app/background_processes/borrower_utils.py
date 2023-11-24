@@ -21,16 +21,12 @@ def _get_or_create_borrower(entry, session: Session) -> Borrower:
 
     documento_proveedor = data_access.get_documento_proveedor(entry)
     borrower_identifier = background_utils.get_secret_hash(documento_proveedor)
-    data = data_access.create_new_borrower(
-        borrower_identifier, documento_proveedor, entry
-    )
+    data = data_access.create_new_borrower(borrower_identifier, documento_proveedor, entry)
 
     borrower = Borrower.first_by(session, "borrower_identifier", borrower_identifier)
     if borrower:
         if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
-            raise ValueError(
-                "Skipping Award - Borrower choosed to not receive any new opportunity"
-            )
+            raise ValueError("Skipping Award - Borrower choosed to not receive any new opportunity")
         return borrower.update(session, **data)
 
     return Borrower.create(session, **data)

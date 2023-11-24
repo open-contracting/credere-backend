@@ -49,9 +49,7 @@ def remove_dated_data(db_provider: Session = get_db):
                     .filter(
                         Application.award_id == application.award_id,
                         Application.id != application.id,
-                        Application.archived_at.is_(
-                            None
-                        ),  # Check that the application is active
+                        Application.archived_at.is_(None),  # Check that the application is active
                     )
                     .all()
                 )

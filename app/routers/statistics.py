@@ -76,9 +76,7 @@ async def get_ocp_statistics_by_lender(
                 statistics_kpis = statistics_kpis.data
             # If no record for the current date, calculate the statistics
             else:
-                statistics_kpis = statistics_utils.get_general_statistics(
-                    session, initial_date, final_date, lender_id
-                )
+                statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
         else:
             # If customRange is provided, calculate the statistics based on it
             if custom_range is not None:
@@ -91,9 +89,7 @@ async def get_ocp_statistics_by_lender(
 
                 final_date = current_date.isoformat()
 
-            statistics_kpis = statistics_utils.get_general_statistics(
-                session, initial_date, final_date, lender_id
-            )
+            statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
 
     except ClientError() as e:
         logger.exception(e)
@@ -151,12 +147,8 @@ async def get_ocp_statistics_opt_in(
     )
 
 
-@router.get(
-    "/statistics-fi", tags=["statistics"], response_model=ApiSchema.StatisticResponse
-)
-async def get_fi_statistics(
-    session: Session = Depends(get_db), user: core.User = Depends(get_user)
-):
+@router.get("/statistics-fi", tags=["statistics"], response_model=ApiSchema.StatisticResponse)
+async def get_fi_statistics(session: Session = Depends(get_db), user: core.User = Depends(get_user)):
     """
     Retrieve statistics for a Financial Institution (FI).
 
@@ -189,9 +181,7 @@ async def get_fi_statistics(
         if statistics_kpis is not None:
             statistics_kpis = statistics_kpis.data
         else:
-            statistics_kpis = statistics_utils.get_general_statistics(
-                session, None, None, user.lender_id
-            )
+            statistics_kpis = statistics_utils.get_general_statistics(session, None, None, user.lender_id)
 
     except ClientError as e:
         logger.exception(e)

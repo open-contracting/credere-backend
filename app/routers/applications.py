@@ -109,9 +109,7 @@ async def reject_application(
             .all()
         )
         message_id = client.send_rejected_email_to_sme(application, options)
-        utils.create_message(
-            application, core.MessageType.REJECTED_APPLICATION, session, message_id
-        )
+        utils.create_message(application, core.MessageType.REJECTED_APPLICATION, session, message_id)
         background_tasks.add_task(update_statistics)
         return application
 
@@ -155,13 +153,9 @@ async def complete_application(
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
-        utils.check_application_status(
-            application, core.ApplicationStatus.CONTRACT_UPLOADED
-        )
+        utils.check_application_status(application, core.ApplicationStatus.CONTRACT_UPLOADED)
         utils.complete_application(application, payload.disbursed_final_amount)
-        application.completed_in_days = application_utils.get_application_days_passed(
-            application, session
-        )
+        application.completed_in_days = application_utils.get_application_days_passed(application, session)
         utils.create_application_action(
             session,
             user.id,
@@ -273,9 +267,7 @@ async def change_email(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         old_email = application.primary_email
-        confirmation_email_token = utils.update_application_primary_email(
-            application, payload.new_email
-        )
+        confirmation_email_token = utils.update_application_primary_email(application, payload.new_email)
         utils.create_application_action(
             session,
             None,
@@ -327,9 +319,7 @@ async def confirm_email(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
 
-        utils.check_pending_email_confirmation(
-            application, payload.confirmation_email_token
-        )
+        utils.check_pending_email_confirmation(application, payload.confirmation_email_token)
 
         utils.create_application_action(
             session,
@@ -368,11 +358,7 @@ async def get_borrower_document(
 
     """
     with transaction_session(session):
-        document = (
-            session.query(core.BorrowerDocument)
-            .filter(core.BorrowerDocument.id == id)
-            .first()
-        )
+        document = session.query(core.BorrowerDocument).filter(core.BorrowerDocument.id == id).first()
         utils.get_file(document, user, session)
 
         def file_generator():
@@ -417,9 +403,7 @@ async def download_application(
         award = application.award
 
         documents = (
-            session.query(core.BorrowerDocument)
-            .filter(core.BorrowerDocument.application_id == application_id)
-            .all()
+            session.query(core.BorrowerDocument).filter(core.BorrowerDocument.application_id == application_id).all()
         )
 
         previous_awards = utils.get_previous_awards(application, session)
@@ -441,9 +425,7 @@ async def download_application(
 
         if previous_awards and len(previous_awards) > 0:
             elements.append(Spacer(1, 20))
-            elements.append(
-                utils.create_pdf_title("Previous Public Sector Contracts", lang, True)
-            )
+            elements.append(utils.create_pdf_title("Previous Public Sector Contracts", lang, True))
             for award in previous_awards:
                 elements.append(utils.create_award_table(award, lang))
                 elements.append(Spacer(1, 20))
@@ -463,9 +445,7 @@ async def download_application(
             if user.is_OCP()
             else core.ApplicationActionType.FI_DOWNLOAD_APPLICATION
         )
-        utils.create_application_action(
-            session, user.id, application.id, application_action_type, {}
-        )
+        utils.create_application_action(session, user.id, application.id, application_action_type, {})
 
         headers = {
             "Content-Disposition": f'attachment; filename="{filename}"',
@@ -514,9 +494,7 @@ async def upload_document(
                 detail="Cannot upload document at this stage",
             )
 
-        document = utils.create_or_update_borrower_document(
-            filename, application, type, session, new_file
-        )
+        document = utils.create_or_update_borrower_document(filename, application, type, session, new_file)
 
         utils.create_application_action(
             session,
@@ -606,15 +584,11 @@ async def confirm_upload_contract(
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_application_status(application, core.ApplicationStatus.APPROVED)
 
-        FI_message_id, SME_message_id = client.send_upload_contract_notifications(
-            application
-        )
+        FI_message_id, SME_message_id = client.send_upload_contract_notifications(application)
 
         application.contract_amount_submitted = payload.contract_amount_submitted
         application.status = core.ApplicationStatus.CONTRACT_UPLOADED
-        application.borrower_uploaded_contract_at = datetime.now(
-            application.created_at.tzinfo
-        )
+        application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
 
         utils.create_message(
             application,
@@ -845,9 +819,7 @@ async def update_application_award(
 
     """
     with transaction_session(session):
-        application = utils.update_application_award(
-            session, application_id, payload, user
-        )
+        application = utils.update_application_award(session, application_id, payload, user)
         utils.create_application_action(
             session,
             user.id,
@@ -891,9 +863,7 @@ async def update_application_borrower(
 
     """
     with transaction_session(session):
-        application = utils.update_application_borrower(
-            session, application_id, payload, user
-        )
+        application = utils.update_application_borrower(session, application_id, payload, user)
 
         utils.create_application_action(
             session,
@@ -948,9 +918,7 @@ async def get_applications_list(
     :raise: lumache.OCPOnlyError if the current user is not authorized.
 
     """
-    return utils.get_all_active_applications(
-        page, page_size, sort_field, sort_order, session
-    )
+    return utils.get_all_active_applications(page, page_size, sort_field, sort_order, session)
 
 
 @router.get(
@@ -1027,9 +995,7 @@ async def start_application(
 
     """
     with transaction_session(session):
-        application = (
-            session.query(core.Application).filter(core.Application.id == id).first()
-        )
+        application = session.query(core.Application).filter(core.Application.id == id).first()
         utils.check_application_status(application, core.ApplicationStatus.SUBMITTED)
 
         if user.lender_id != application.lender_id:
@@ -1054,9 +1020,7 @@ async def export_applications(
     user: core.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
-    df = pd.DataFrame(
-        utils.get_all_fi_applications_emails(session, user.lender_id, lang)
-    )
+    df = pd.DataFrame(utils.get_all_fi_applications_emails(session, user.lender_id, lang))
     stream = io.StringIO()
     df.to_csv(stream, index=False)
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
@@ -1102,9 +1066,7 @@ async def get_applications(
     :rtype: ApiSchema.ApplicationListResponse
 
     """
-    return utils.get_all_FI_user_applications(
-        page, page_size, sort_field, sort_order, session, user.lender_id
-    )
+    return utils.get_all_FI_user_applications(page, page_size, sort_field, sort_order, session, user.lender_id)
 
 
 @router.get(
@@ -1221,21 +1183,15 @@ async def credit_product_options(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
 
-        previous_lenders = utils.get_previous_lenders(
-            application.award_borrower_identifier, session
-        )
+        previous_lenders = utils.get_previous_lenders(application.award_borrower_identifier, session)
         utils.check_is_application_expired(application)
         utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
 
         filter = None
         if application.borrower.type.lower() == "persona natural colombiana":
-            filter = text(
-                f"(borrower_types->>'{core.BorrowerType.NATURAL_PERSON.value}')::boolean is True"
-            )
+            filter = text(f"(borrower_types->>'{core.BorrowerType.NATURAL_PERSON.value}')::boolean is True")
         else:
-            filter = text(
-                f"(borrower_types->>'{core.BorrowerType.LEGAL_PERSON.value}')::boolean is True"
-            )
+            filter = text(f"(borrower_types->>'{core.BorrowerType.LEGAL_PERSON.value}')::boolean is True")
 
         loans_query = (
             session.query(core.CreditProduct)
@@ -1272,9 +1228,7 @@ async def credit_product_options(
         loans = loans_query.all()
         credit_lines = credit_lines_query.all()
 
-        return ApiSchema.CreditProductListResponse(
-            loans=loans, credit_lines=credit_lines
-        )
+        return ApiSchema.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
 
 
 @router.post(
@@ -1421,9 +1375,7 @@ async def confirm_credit_product(
             )
 
         creditProduct = (
-            session.query(core.CreditProduct)
-            .filter(core.CreditProduct.id == application.credit_product_id)
-            .first()
+            session.query(core.CreditProduct).filter(core.CreditProduct.id == application.credit_product_id).first()
         )
 
         if not creditProduct:
@@ -1433,18 +1385,10 @@ async def confirm_credit_product(
             )
 
         application.lender_id = creditProduct.lender_id
-        application.amount_requested = application.calculator_data.get(
-            "amount_requested", None
-        )
-        application.repayment_years = application.calculator_data.get(
-            "repayment_years", None
-        )
-        application.repayment_months = application.calculator_data.get(
-            "repayment_months", None
-        )
-        application.payment_start_date = application.calculator_data.get(
-            "payment_start_date", None
-        )
+        application.amount_requested = application.calculator_data.get("amount_requested", None)
+        application.repayment_years = application.calculator_data.get("repayment_years", None)
+        application.repayment_months = application.calculator_data.get("repayment_months", None)
+        application.payment_start_date = application.calculator_data.get("payment_start_date", None)
 
         application.pending_documents = True
         utils.get_previous_documents(application, session)
@@ -1662,9 +1606,7 @@ async def complete_information_request(
 
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_application_status(
-            application, core.ApplicationStatus.INFORMATION_REQUESTED
-        )
+        utils.check_application_status(application, core.ApplicationStatus.INFORMATION_REQUESTED)
 
         application.status = core.ApplicationStatus.STARTED
         application.pending_documents = False
@@ -1677,9 +1619,7 @@ async def complete_information_request(
             payload,
         )
 
-        message_id = client.send_upload_documents_notifications(
-            application.lender.email_group
-        )
+        message_id = client.send_upload_documents_notifications(application.lender.email_group)
 
         utils.create_message(
             application,
@@ -1825,9 +1765,7 @@ async def decline_feedback(
         borrower_declined_preferences_data = vars(payload)
         borrower_declined_preferences_data.pop("uuid")
 
-        application.borrower_declined_preferences_data = (
-            borrower_declined_preferences_data
-        )
+        application.borrower_declined_preferences_data = borrower_declined_preferences_data
         background_tasks.add_task(update_statistics)
         return ApiSchema.ApplicationResponse(
             application=application,
@@ -1907,9 +1845,7 @@ async def find_alternative_credit_option(
         new_application = utils.copy_application(application, session)
         message_id = client.send_copied_application_notifications(new_application)
 
-        utils.create_message(
-            new_application, core.MessageType.APPLICATION_COPIED, session, message_id
-        )
+        utils.create_message(new_application, core.MessageType.APPLICATION_COPIED, session, message_id)
 
         utils.create_application_action(
             session,
