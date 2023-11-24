@@ -5,6 +5,7 @@ from datetime import datetime
 
 import typer
 
+import app.utils.statistics as statistics_utils
 from app import background_processes, mail, models
 from app.aws import sesClient
 from app.background_processes import application_utils
@@ -165,7 +166,7 @@ def send_reminders():
 
 @app.command()
 def update_statistics():
-    background_processes.update_statistic.update_statistics()
+    statistics_utils.update_statistics()
 
 
 @app.command()

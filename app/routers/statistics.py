@@ -7,9 +7,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
+import app.utils.statistics as statistics_utils
 from app import serializers
 from app.auth import OCP_only, get_current_user, get_user
-from app.background_processes import statistics_utils
 from app.db import get_db
 from app.models import Statistic, StatisticCustomRange, StatisticType, User
 

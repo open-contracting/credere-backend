@@ -18,9 +18,9 @@ from app.auth import OCP_only, get_current_user, get_user
 from app.aws import CognitoClient, get_cognito_client
 from app.background_processes import application_utils
 from app.background_processes.fetcher import fetch_previous_awards
-from app.background_processes.update_statistic import update_statistics
 from app.db import get_db, transaction_session
 from app.settings import app_settings
+from app.utils.statistics import update_statistics
 
 from fastapi import Depends, Query, status  # isort:skip # noqa
 from fastapi import Form, UploadFile  # isort:skip # noqa

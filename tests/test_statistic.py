@@ -1,7 +1,7 @@
 from fastapi import status
 
 from app import models
-from app.background_processes.update_statistic import update_statistics
+from app.utils.statistics import update_statistics
 from tests.common import common_test_client
 
 from tests.common.common_test_client import start_background_db  # isort:skip # noqa
