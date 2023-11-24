@@ -9,7 +9,7 @@ from typing import Generator
 import boto3
 
 from app import mail
-from app.schema.core import Application
+from app.models import Application
 from app.settings import app_settings
 
 logger = logging.getLogger(__name__)

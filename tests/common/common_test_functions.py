@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
-from app.schema import core
+from app import models
 
 datetime_keys = ["award_date", "contractperiod_enddate", "expired_at"]
 excluded_keys = [
@@ -127,10 +127,10 @@ def compare_objects(
             continue
 
         if key == "size":
-            assert core.BorrowerSize.NOT_INFORMED == value
+            assert models.BorrowerSize.NOT_INFORMED == value
             continue
         if key == "status":
-            assert core.BorrowerStatus.ACTIVE == value or core.ApplicationStatus.PENDING == value
+            assert models.BorrowerStatus.ACTIVE == value or models.ApplicationStatus.PENDING == value
             continue
 
         assert expected_result[key] == value

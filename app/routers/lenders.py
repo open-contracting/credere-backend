@@ -5,12 +5,11 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
+from app import models
+from app.auth import OCP_only, get_current_user
+from app.db import get_db, transaction_session
 from app.schema import api as ApiSchema
 from app.schema.api import LenderListResponse
-
-from ..auth import OCP_only, get_current_user
-from ..db import get_db, transaction_session
-from ..schema import core
 
 router = APIRouter()
 
@@ -20,28 +19,28 @@ logger = logging.getLogger(__name__)
 @router.post(
     "/lenders",
     tags=["lenders"],
-    response_model=core.Lender,
+    response_model=models.Lender,
 )
 @OCP_only()
 async def create_lender(
-    lender: core.LenderCreate,
-    current_user: core.User = Depends(get_current_user),
+    lender: models.LenderCreate,
+    current_user: models.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
     """
     Create a new lender.
 
     :param lender: The lender data to be created.
-    :type lender: core.LenderCreate
+    :type lender: models.LenderCreate
 
     :param current_user: The current user authenticated.
-    :type current_user: core.User
+    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The created lender.
-    :rtype: core.Lender
+    :rtype: models.Lender
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
@@ -51,13 +50,13 @@ async def create_lender(
     with transaction_session(session):
         try:
             # Create a Lender instance without the credit_product data
-            lender = core.Lender(**payload.dict(exclude={"credit_products"}))
+            lender = models.Lender(**payload.dict(exclude={"credit_products"}))
             session.add(lender)
 
             # Create a CreditProduct instance for each credit product and add it to the lender
             if payload.credit_products:
                 for cp in payload.credit_products:
-                    credit_product = core.CreditProduct(**cp.dict(), lender=lender)
+                    credit_product = models.CreditProduct(**cp.dict(), lender=lender)
                     session.add(credit_product)
 
             session.flush()
@@ -73,44 +72,44 @@ async def create_lender(
 @router.post(
     "/lenders/{lender_id}/credit-products",
     tags=["lenders"],
-    response_model=core.CreditProduct,
+    response_model=models.CreditProduct,
 )
 @OCP_only()
 async def create_credit_products(
-    credit_product: core.CreditProduct,
+    credit_product: models.CreditProduct,
     lender_id: int,
-    current_user: core.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
     """
     Create a new credit product for a specific lender.
 
     :param credit_product: The credit product data to be created.
-    :type credit_product: core.CreditProduct
+    :type credit_product: models.CreditProduct
 
     :param lender_id: The ID of the lender for which the credit product will be created.
     :type lender_id: int
 
     :param current_user: The current user authenticated.
-    :type current_user: core.User
+    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The created credit product.
-    :rtype: core.CreditProduct
+    :rtype: models.CreditProduct
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with transaction_session(session):
-        lender = core.Lender.first_by(session, "id", lender_id)
+        lender = models.Lender.first_by(session, "id", lender_id)
         if not lender:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
 
-        return core.CreditProduct.create(session, **credit_product.dict(), lender=lender)
+        return models.CreditProduct.create(session, **credit_product.dict(), lender=lender)
 
 
-@router.get("/lenders/{lender_id}", tags=["lenders"], response_model=core.LenderWithRelations)
+@router.get("/lenders/{lender_id}", tags=["lenders"], response_model=models.LenderWithRelations)
 async def get_lender(lender_id: int, session: Session = Depends(get_db)):
     """
     Retrieve a lender by its ID.
@@ -122,11 +121,11 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)):
     :type session: Session
 
     :return: The lender with the specified ID.
-    :rtype: core.LenderWithRelations
+    :rtype: models.LenderWithRelations
 
     :raise: HTTPException with status code 404 if the lender is not found.
     """
-    lender = core.Lender.first_by(session, "id", lender_id)
+    lender = models.Lender.first_by(session, "id", lender_id)
     if not lender:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
     return lender
@@ -135,13 +134,13 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)):
 @router.put(
     "/lenders/{id}",
     tags=["lenders"],
-    response_model=core.Lender,
+    response_model=models.Lender,
 )
 @OCP_only()
 async def update_lender(
     id: int,
-    payload: core.LenderBase,
-    current_user: core.User = Depends(get_current_user),
+    payload: models.LenderBase,
+    current_user: models.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -151,22 +150,22 @@ async def update_lender(
     :type id: int
 
     :param payload: The data to update the lender with.
-    :type payload: core.LenderBase
+    :type payload: models.LenderBase
 
     :param current_user: The current user authenticated.
-    :type current_user: core.User
+    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The updated lender.
-    :rtype: core.Lender
+    :rtype: models.Lender
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with transaction_session(session):
         try:
-            lender = core.Lender.first_by(session, "id", id)
+            lender = models.Lender.first_by(session, "id", id)
             if not lender:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
 
@@ -197,7 +196,7 @@ async def get_lenders_list(
     :return: The list of all lenders.
     :rtype: ApiSchema.LenderListResponse
     """
-    lenders_query = session.query(core.Lender)
+    lenders_query = session.query(models.Lender)
 
     total_count = lenders_query.count()
 
@@ -214,7 +213,7 @@ async def get_lenders_list(
 @router.get(
     "/credit-products/{credit_product_id}",
     tags=["lenders"],
-    response_model=core.CreditProductWithLender,
+    response_model=models.CreditProductWithLender,
 )
 async def get_credit_product(
     credit_product_id: int,
@@ -230,15 +229,15 @@ async def get_credit_product(
     :type session: Session
 
     :return: The credit product with the specified ID and its associated lender information.
-    :rtype: core.CreditProductWithLender
+    :rtype: models.CreditProductWithLender
 
     :raise: HTTPException with status code 404 if the credit product is not found.
     """
     creditProduct = (
-        session.query(core.CreditProduct)
-        .join(core.Lender)
-        .options(joinedload(core.CreditProduct.lender))
-        .filter(core.CreditProduct.id == credit_product_id)
+        session.query(models.CreditProduct)
+        .join(models.Lender)
+        .options(joinedload(models.CreditProduct.lender))
+        .filter(models.CreditProduct.id == credit_product_id)
         .first()
     )
 
@@ -251,32 +250,32 @@ async def get_credit_product(
 @router.put(
     "/credit-products/{credit_product_id}",
     tags=["lenders"],
-    response_model=core.CreditProduct,
+    response_model=models.CreditProduct,
 )
 @OCP_only()
 async def update_credit_products(
-    credit_product: core.CreditProduct,
+    credit_product: models.CreditProduct,
     credit_product_id: int,
-    current_user: core.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ):
     """
     Update an existing credit product.
 
     :param credit_product: The credit product data to update.
-    :type credit_product: core.CreditProduct
+    :type credit_product: models.CreditProduct
 
     :param credit_product_id: The ID of the credit product to update.
     :type credit_product_id: int
 
     :param current_user: The current user authenticated.
-    :type current_user: core.User
+    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The updated credit product.
-    :rtype: core.CreditProduct
+    :rtype: models.CreditProduct
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
@@ -284,7 +283,7 @@ async def update_credit_products(
     payload = credit_product
 
     with transaction_session(session):
-        credit_product = core.CreditProduct.first_by(session, "id", credit_product_id)
+        credit_product = models.CreditProduct.first_by(session, "id", credit_product_id)
         if not credit_product:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
 

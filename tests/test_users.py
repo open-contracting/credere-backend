@@ -1,7 +1,7 @@
 from fastapi import status
 
 import tests.common.common_test_client as common_test_client
-from app.schema.core import UserType
+from app.models import UserType
 
 from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
 from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa

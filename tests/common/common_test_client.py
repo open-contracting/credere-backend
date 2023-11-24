@@ -11,10 +11,9 @@ from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import aws
+from app import aws, models
 from app.db import get_db
 from app.routers import applications, lenders, security, statistics, users
-from app.schema import core
 from app.settings import app_settings
 from tests.common.utils import create_enums
 from tests.protected_routes import users_test  # noqa
@@ -50,9 +49,9 @@ def get_test_db() -> Session:
 
 @pytest.fixture(scope="function")
 def start_background_db():
-    core.User.metadata.create_all(engine)
+    models.User.metadata.create_all(engine)
     yield
-    core.User.metadata.drop_all(engine)
+    models.User.metadata.drop_all(engine)
 
 
 @pytest.fixture(scope="function")
@@ -77,10 +76,10 @@ def start_application():
 
 @pytest.fixture(scope="function")
 def app() -> Generator[FastAPI, Any, None]:
-    core.User.metadata.create_all(engine)  # Create the tables.
+    models.User.metadata.create_all(engine)  # Create the tables.
     _app = start_application()
     yield _app
-    core.User.metadata.drop_all(engine)
+    models.User.metadata.drop_all(engine)
 
 
 @pytest.fixture(autouse=True)

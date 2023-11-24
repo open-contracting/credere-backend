@@ -1,7 +1,7 @@
 from fastapi import status
 
+from app import models
 from app.background_processes.update_statistic import update_statistics
-from app.schema import core
 from tests.common import common_test_client
 
 from tests.common.common_test_client import start_background_db  # isort:skip # noqa
@@ -12,7 +12,7 @@ from tests.common.common_test_client import app, client  # isort:skip # noqa
 OCP_user = {
     "email": "OCP_user@example.com",
     "name": "OCP_user@example.com",
-    "type": core.UserType.OCP.value,
+    "type": models.UserType.OCP.value,
 }
 lender = {
     "id": 1,
@@ -26,7 +26,7 @@ FI_user_with_lender = {
     "id": 2,
     "email": "FI_user_with_lender@example.com",
     "name": "Test FI with lender",
-    "type": core.UserType.FI.value,
+    "type": models.UserType.FI.value,
     "lender_id": 1,
 }
 

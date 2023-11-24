@@ -1,5 +1,5 @@
+from app import models
 from app.commands import SLA_overdue_applications
-from app.schema import core
 
 from tests.common.common_test_client import start_background_db  # isort:skip # noqa
 from tests.common.common_test_client import mock_templated_email  # isort:skip # noqa
@@ -10,13 +10,13 @@ from tests.common.common_test_client import app, client  # isort:skip # noqa
 OCP_user = {
     "email": "OCP_user@example.com",
     "name": "OCP_user@example.com",
-    "type": core.UserType.OCP.value,
+    "type": models.UserType.OCP.value,
 }
 
-application = {"status": core.ApplicationStatus.STARTED.value}
+application = {"status": models.ApplicationStatus.STARTED.value}
 
 application_with_lender_payload = {
-    "status": core.ApplicationStatus.STARTED.value,
+    "status": models.ApplicationStatus.STARTED.value,
     "lender_id": 1,
 }
 lender = {

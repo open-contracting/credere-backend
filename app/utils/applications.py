@@ -12,12 +12,12 @@ from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
+from app import models
 from app.background_processes.background_utils import generate_uuid
+from app.i18n import get_translated_string
+from app.schema import api
 from app.schema.api import ApplicationListResponse, UpdateDataField
 from app.settings import app_settings
-
-from ..i18n import get_translated_string
-from ..schema import api, core
 
 from reportlab_mods import (  # noqa: F401 #isort:skip
     borrower_size_dict,  # noqa: F401 #isort:skip
@@ -35,23 +35,23 @@ MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
 excluded_applications = [
-    core.ApplicationStatus.PENDING,
-    core.ApplicationStatus.ACCEPTED,
-    core.ApplicationStatus.DECLINED,
-    core.ApplicationStatus.LAPSED,
+    models.ApplicationStatus.PENDING,
+    models.ApplicationStatus.ACCEPTED,
+    models.ApplicationStatus.DECLINED,
+    models.ApplicationStatus.LAPSED,
 ]
 
 OCP_cannot_modify = [
-    core.ApplicationStatus.LAPSED,
-    core.ApplicationStatus.DECLINED,
-    core.ApplicationStatus.APPROVED,
-    core.ApplicationStatus.CONTRACT_UPLOADED,
-    core.ApplicationStatus.COMPLETED,
-    core.ApplicationStatus.REJECTED,
+    models.ApplicationStatus.LAPSED,
+    models.ApplicationStatus.DECLINED,
+    models.ApplicationStatus.APPROVED,
+    models.ApplicationStatus.CONTRACT_UPLOADED,
+    models.ApplicationStatus.COMPLETED,
+    models.ApplicationStatus.REJECTED,
 ]
 
 
-document_type_keys = [doc_type.name for doc_type in core.BorrowerDocumentType]
+document_type_keys = [doc_type.name for doc_type in models.BorrowerDocumentType]
 
 
 def format_currency(number, currency):
@@ -73,12 +73,12 @@ def format_date(date_str):
     return formatted_date
 
 
-def update_data_field(application: core.Application, payload: UpdateDataField):
+def update_data_field(application: models.Application, payload: UpdateDataField):
     """
     Update a specific field in the application's `secop_data_verification` attribute.
 
     :param application: The application to update.
-    :type application: core.Application
+    :type application: models.Application
 
     :param payload: The data to be updated.
     :type payload: UpdateDataField
@@ -116,7 +116,7 @@ def validate_fields(application):
     it logs an error and raises an HTTPException.
 
     :param application: The application to validate.
-    :type application: core.Application
+    :type application: models.Application
 
     :raise HTTPException: Raises an exception with status code 409 and a BORROWER_FIELD_VERIFICATION_MISSING error detail if any field is not validated. # noqa
 
@@ -145,7 +145,7 @@ def validate_documents(application):
     it logs an error and raises an HTTPException.
 
     :param application: The application whose documents are to be validated.
-    :type application: core.Application
+    :type application: models.Application
 
     :raise HTTPException: Raises an exception with status code 409 and a DOCUMENT_VERIFICATION_MISSING error detail if any document is not validated.# noqa
     """
@@ -164,7 +164,7 @@ def validate_documents(application):
         )
 
 
-def get_file(document: core.BorrowerDocument, user: core.User, session: Session):
+def get_file(document: models.BorrowerDocument, user: models.User, session: Session):
     """
     Fetches a file corresponding to a document of an application.
 
@@ -173,10 +173,10 @@ def get_file(document: core.BorrowerDocument, user: core.User, session: Session)
     and then creates an application action of type FI_DOWNLOAD_DOCUMENT.
 
     :param document: The document associated with the file to be fetched.
-    :type document: core.BorrowerDocument
+    :type document: models.BorrowerDocument
 
     :param user: The user trying to fetch the file.
-    :type user: core.User
+    :type user: models.User
 
     :param session: The database session.
     :type session: Session
@@ -197,7 +197,7 @@ def get_file(document: core.BorrowerDocument, user: core.User, session: Session)
             session,
             None,
             document.application.id,
-            core.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
+            models.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
             {"file_name": document.name},
         )
     else:
@@ -206,7 +206,7 @@ def get_file(document: core.BorrowerDocument, user: core.User, session: Session)
             session,
             None,
             document.application.id,
-            core.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
+            models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
             {"file_name": document.name},
         )
 
@@ -232,7 +232,7 @@ def get_calculator_data(payload: dict):
     return calculator_fields
 
 
-def reject_application(application: core.Application, payload: dict):
+def reject_application(application: models.Application, payload: dict):
     """
     Rejects an application.
 
@@ -241,7 +241,7 @@ def reject_application(application: core.Application, payload: dict):
     and changes the application status to REJECTED.
 
     :param application: The application to be rejected.
-    :type application: core.Application
+    :type application: models.Application
 
     :param payload: The data payload associated with the rejection.
     :type payload: dict
@@ -251,10 +251,10 @@ def reject_application(application: core.Application, payload: dict):
     application.lender_rejected_data = payload_dict
     current_time = datetime.now(application.created_at.tzinfo)
     application.lender_rejected_at = current_time
-    application.status = core.ApplicationStatus.REJECTED
+    application.status = models.ApplicationStatus.REJECTED
 
 
-def approve_application(application: core.Application, payload: dict):
+def approve_application(application: models.Application, payload: dict):
     """
     Approves an application.
 
@@ -263,7 +263,7 @@ def approve_application(application: core.Application, payload: dict):
     changes the application status to APPROVED, and updates the `lender_approved_at` timestamp.
 
     :param application: The application to be approved.
-    :type application: core.Application
+    :type application: models.Application
 
     :param payload: The data payload associated with the approval.
     :type payload: dict
@@ -276,12 +276,12 @@ def approve_application(application: core.Application, payload: dict):
 
     payload_dict = jsonable_encoder(payload, exclude_unset=True)
     application.lender_approved_data = payload_dict
-    application.status = core.ApplicationStatus.APPROVED
+    application.status = models.ApplicationStatus.APPROVED
     current_time = datetime.now(application.created_at.tzinfo)
     application.lender_approved_at = current_time
 
 
-def complete_application(application: core.Application, disbursed_final_amount: Decimal):
+def complete_application(application: models.Application, disbursed_final_amount: Decimal):
     """
     Completes an application.
 
@@ -289,14 +289,14 @@ def complete_application(application: core.Application, disbursed_final_amount: 
     to COMPLETED, and updates the `lender_completed_at` timestamp.
 
     :param application: The application to be completed.
-    :type application: core.Application
+    :type application: models.Application
 
     :param disbursed_final_amount: The final amount disbursed for the application.
     :type disbursed_final_amount: Decimal
     """
     current_time = datetime.now(application.created_at.tzinfo)
     application.disbursed_final_amount = disbursed_final_amount
-    application.status = core.ApplicationStatus.COMPLETED
+    application.status = models.ApplicationStatus.COMPLETED
     application.lender_completed_at = current_time
     application.overdued_at = None
 
@@ -305,9 +305,9 @@ def create_application_action(
     session: Session,
     user_id: Optional[int],
     application_id: int,
-    type: core.ApplicationAction,
+    type: models.ApplicationAction,
     payload: dict,
-) -> core.ApplicationAction:
+) -> models.ApplicationAction:
     """
     Creates a new application action.
 
@@ -325,15 +325,15 @@ def create_application_action(
     :type application_id: int
 
     :param type: The type of the action.
-    :type type: core.ApplicationAction
+    :type type: models.ApplicationAction
 
     :param payload: The data payload associated with the action.
     :type payload: dict
 
     :return: The new ApplicationAction.
-    :rtype: core.ApplicationAction
+    :rtype: models.ApplicationAction
     """
-    return core.ApplicationAction.create(
+    return models.ApplicationAction.create(
         session,
         type=type,
         data=jsonable_encoder(payload, exclude_unset=True),
@@ -343,8 +343,8 @@ def create_application_action(
 
 
 def update_application_borrower(
-    session: Session, application_id: int, payload: dict, user: core.User
-) -> core.Application:
+    session: Session, application_id: int, payload: dict, user: models.User
+) -> models.Application:
     """
     Updates the borrower of an application.
 
@@ -364,10 +364,10 @@ def update_application_borrower(
     :type payload: dict
 
     :param user: The user trying to update the borrower.
-    :type user: core.User
+    :type user: models.User
 
     :return: The updated Application.
-    :rtype: core.Application
+    :rtype: models.Application
 
     :raise HTTPException: Raises an exception with status code 404 and a "Application or borrower not found" error detail if the application or borrower does not exist.# noqa
 
@@ -376,9 +376,9 @@ def update_application_borrower(
     :raise HTTPException: Raises an exception if the application status is in the OCP_cannot_modify list (implied by the call to check_application_not_status). # noqa
     """
     application = (
-        session.query(core.Application)
-        .filter(core.Application.id == application_id)
-        .options(defaultload(core.Application.borrower))
+        session.query(models.Application)
+        .filter(models.Application.id == application_id)
+        .options(defaultload(models.Application.borrower))
         .first()
     )
     if not application or not application.borrower:
@@ -412,8 +412,8 @@ def update_application_borrower(
 
 
 def update_application_award(
-    session: Session, application_id: int, payload: dict, user: core.User
-) -> core.Application:
+    session: Session, application_id: int, payload: dict, user: models.User
+) -> models.Application:
     """
     Updates the award of an application.
 
@@ -432,10 +432,10 @@ def update_application_award(
     :type payload: dict
 
     :param user: The user trying to update the award.
-    :type user: core.User
+    :type user: models.User
 
     :return: The updated Application.
-    :rtype: core.Application
+    :rtype: models.Application
 
     :raise HTTPException: Raises an exception with status code 404 and a "Application or award not found"error detail if the application or award does not exist. # noqa
 
@@ -445,9 +445,9 @@ def update_application_award(
     """  # noqa
 
     application = (
-        session.query(core.Application)
-        .filter(core.Application.id == application_id)
-        .options(defaultload(core.Application.award))
+        session.query(models.Application)
+        .filter(models.Application.id == application_id)
+        .options(defaultload(models.Application.award))
         .first()
     )
     if not application or not application.award:
@@ -506,16 +506,16 @@ def get_all_active_applications(
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
     applications_query = (
-        session.query(core.Application)
-        .join(core.Award)
-        .join(core.Borrower)
+        session.query(models.Application)
+        .join(models.Award)
+        .join(models.Borrower)
         .options(
-            joinedload(core.Application.award),
-            joinedload(core.Application.borrower),
+            joinedload(models.Application.award),
+            joinedload(models.Application.borrower),
         )
         .filter(
-            core.Application.status.notin_(excluded_applications),
-            core.Application.archived_at.is_(None),
+            models.Application.status.notin_(excluded_applications),
+            models.Application.archived_at.is_(None),
         )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
@@ -534,16 +534,16 @@ def get_all_active_applications(
 
 def get_all_fi_applications_emails(session: Session, lender_id, lang: str):
     applications_query = (
-        session.query(core.Application)
-        .join(core.Borrower)
+        session.query(models.Application)
+        .join(models.Borrower)
         .options(
-            joinedload(core.Application.borrower),
+            joinedload(models.Application.borrower),
         )
         .filter(
-            core.Application.status.notin_(excluded_applications),
-            core.Application.archived_at.is_(None),
-            core.Application.lender_id == lender_id,
-            core.Application.lender_id.is_not(None),
+            models.Application.status.notin_(excluded_applications),
+            models.Application.archived_at.is_(None),
+            models.Application.lender_id == lender_id,
+            models.Application.lender_id.is_not(None),
         )
     )
     applicants_list = []
@@ -603,18 +603,18 @@ def get_all_FI_user_applications(
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
     applications_query = (
-        session.query(core.Application)
-        .join(core.Award)
-        .join(core.Borrower)
+        session.query(models.Application)
+        .join(models.Award)
+        .join(models.Borrower)
         .options(
-            joinedload(core.Application.award),
-            joinedload(core.Application.borrower),
+            joinedload(models.Application.award),
+            joinedload(models.Application.borrower),
         )
         .filter(
-            core.Application.status.notin_(excluded_applications),
-            core.Application.archived_at.is_(None),
-            core.Application.lender_id == lender_id,
-            core.Application.lender_id.is_not(None),
+            models.Application.status.notin_(excluded_applications),
+            models.Application.archived_at.is_(None),
+            models.Application.lender_id == lender_id,
+            models.Application.lender_id.is_not(None),
         )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
@@ -661,7 +661,7 @@ def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
     return new_file, filename
 
 
-def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
+def get_application_by_uuid(uuid: str, session: Session) -> models.Application:
     """
     Retrieve an application by its UUID from the database.
 
@@ -675,25 +675,25 @@ def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
     :type session: Session
 
     :return: The application that matches the UUID.
-    :rtype: core.Application
+    :rtype: models.Application
 
     :raise HTTPException: If no application matches the UUID or if the application's status is LAPSED.
     """
     application = (
-        session.query(core.Application)
+        session.query(models.Application)
         .options(
-            defaultload(core.Application.borrower),
-            defaultload(core.Application.award),
-            defaultload(core.Application.borrower_documents),
+            defaultload(models.Application.borrower),
+            defaultload(models.Application.award),
+            defaultload(models.Application.borrower_documents),
         )
-        .filter(core.Application.uuid == uuid)
+        .filter(models.Application.uuid == uuid)
         .first()
     )
 
     if not application:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
 
-    if application.status == core.ApplicationStatus.LAPSED:
+    if application.status == models.ApplicationStatus.LAPSED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=api.ERROR_CODES.APPLICATION_LAPSED.value,
@@ -702,7 +702,7 @@ def get_application_by_uuid(uuid: str, session: Session) -> core.Application:
     return application
 
 
-def get_application_by_id(id: int, session: Session) -> core.Application:
+def get_application_by_id(id: int, session: Session) -> models.Application:
     """
     Retrieve an application by its ID from the database.
 
@@ -716,14 +716,14 @@ def get_application_by_id(id: int, session: Session) -> core.Application:
     :type session: Session
 
     :return: The application that matches the ID.
-    :rtype: core.Application
+    :rtype: models.Application
 
     :raise HTTPException: If no application matches the ID.
     """
     application = (
-        session.query(core.Application)
-        .options(joinedload(core.Application.borrower), joinedload(core.Application.award))
-        .filter(core.Application.id == id)
+        session.query(models.Application)
+        .options(joinedload(models.Application.borrower), joinedload(models.Application.award))
+        .filter(models.Application.id == id)
         .first()
     )
 
@@ -733,15 +733,15 @@ def get_application_by_id(id: int, session: Session) -> core.Application:
     return application
 
 
-def get_modified_data_fields(application: core.Application, session: Session):
+def get_modified_data_fields(application: models.Application, session: Session):
     application_actions = (
-        session.query(core.ApplicationAction)
-        .join(core.Application)
+        session.query(models.ApplicationAction)
+        .join(models.Application)
         .filter(
-            core.ApplicationAction.application_id == application.id,
+            models.ApplicationAction.application_id == application.id,
             or_(
-                core.ApplicationAction.type == core.ApplicationActionType.AWARD_UPDATE.value,
-                core.ApplicationAction.type == core.ApplicationActionType.BORROWER_UPDATE.value,
+                models.ApplicationAction.type == models.ApplicationActionType.AWARD_UPDATE.value,
+                models.ApplicationAction.type == models.ApplicationActionType.BORROWER_UPDATE.value,
             ),
         )
         .all()
@@ -750,7 +750,9 @@ def get_modified_data_fields(application: core.Application, session: Session):
 
     for action in application_actions:
         action_data = action.data
-        key_prefix = "award_updates" if action.type == core.ApplicationActionType.AWARD_UPDATE else "borrower_updates"
+        key_prefix = (
+            "award_updates" if action.type == models.ApplicationActionType.AWARD_UPDATE else "borrower_updates"
+        )
         for key, value in action_data.items():
             if (
                 key not in modified_data_fields[key_prefix]
@@ -762,7 +764,7 @@ def get_modified_data_fields(application: core.Application, session: Session):
                     "user_type": action.user.type,
                 }
 
-    return core.ApplicationWithRelations(
+    return models.ApplicationWithRelations(
         **application.dict(),
         award=application.award,
         borrower=application.borrower,
@@ -773,7 +775,7 @@ def get_modified_data_fields(application: core.Application, session: Session):
     )
 
 
-def check_is_application_expired(application: core.Application):
+def check_is_application_expired(application: models.Application):
     expired_at = application.expired_at
 
     if not expired_at:
@@ -789,8 +791,8 @@ def check_is_application_expired(application: core.Application):
 
 
 def check_application_status(
-    application: core.Application,
-    applicationStatus: core.ApplicationStatus,
+    application: models.Application,
+    applicationStatus: models.ApplicationStatus,
     detail: str = None,
 ):
     """
@@ -800,7 +802,7 @@ def check_application_status(
     if the application has expired.
 
     :param application: The application to check.
-    :type application: core.Application
+    :type application: models.Application
 
     :raise HTTPException: If the application has expired.
     """
@@ -815,8 +817,8 @@ def check_application_status(
 
 
 def check_application_in_status(
-    application: core.Application,
-    applicationStatus: List[core.ApplicationStatus],
+    application: models.Application,
+    applicationStatus: List[models.ApplicationStatus],
     detail: str = None,
 ):
     """
@@ -826,10 +828,10 @@ def check_application_in_status(
     If the status is not in the list, it raises an HTTPException.
 
     :param application: The application to check.
-    :type application: core.Application
+    :type application: models.Application
 
     :param applicationStatus: A list of allowed application statuses.
-    :type applicationStatus: List[core.ApplicationStatus]
+    :type applicationStatus: List[models.ApplicationStatus]
 
     :param detail: A custom error message to provide in case the status is not in the list.
                 If not provided, a default error message is used.
@@ -849,8 +851,8 @@ def check_application_in_status(
 
 
 def check_application_not_status(
-    application: core.Application,
-    applicationStatus: List[core.ApplicationStatus],
+    application: models.Application,
+    applicationStatus: List[models.ApplicationStatus],
     detail: str = None,
 ):
     """
@@ -860,10 +862,10 @@ def check_application_not_status(
     If the status is in the list, it raises an HTTPException.
 
     :param application: The application to check.
-    :type application: core.Application
+    :type application: models.Application
 
     :param applicationStatus: A list of disallowed application statuses.
-    :type applicationStatus: List[core.ApplicationStatus]
+    :type applicationStatus: List[models.ApplicationStatus]
 
     :param detail: A custom error message to provide in case the status is in the list.
                 If not provided, a default error message is used.
@@ -883,8 +885,8 @@ def check_application_not_status(
 
 
 def create_message(
-    application: core.Application,
-    message: core.MessageType,
+    application: models.Application,
+    message: models.MessageType,
     session: Session,
     external_message_id: str,
 ) -> None:
@@ -896,10 +898,10 @@ def create_message(
     is set to the current date and time.
 
     :param application: The application with which the message is associated.
-    :type application: core.Application
+    :type application: models.Application
 
     :param message: The type of the message.
-    :type message: core.MessageType
+    :type message: models.MessageType
 
     :param session: The database session.
     :type session: Session
@@ -907,7 +909,7 @@ def create_message(
     :param external_message_id: The id of the message in the external system.
     :type external_message_id: str
     """
-    core.Message.create(
+    models.Message.create(
         session,
         application=application,
         type=message,
@@ -915,7 +917,7 @@ def create_message(
     )
 
 
-def update_application_primary_email(application: core.Application, email: str) -> str:
+def update_application_primary_email(application: models.Application, email: str) -> str:
     """
     Updates the primary email of an application.
 
@@ -925,7 +927,7 @@ def update_application_primary_email(application: core.Application, email: str) 
     to True and returns the generated confirmation email token.
 
     :param application: The application for which the email is to be updated.
-    :type application: core.Application
+    :type application: models.Application
 
     :param email: The new email.
     :type email: str
@@ -945,7 +947,7 @@ def update_application_primary_email(application: core.Application, email: str) 
     return confirmation_email_token
 
 
-def check_pending_email_confirmation(application: core.Application, confirmation_email_token: str):
+def check_pending_email_confirmation(application: models.Application, confirmation_email_token: str):
     """
     Checks and processes pending email confirmation for an application.
 
@@ -956,7 +958,7 @@ def check_pending_email_confirmation(application: core.Application, confirmation
     pending email confirmation status is set to False, and the application's confirmation email token is reset.
 
     :param application: The application for which the email confirmation is to be checked and processed.
-    :type application: core.Application
+    :type application: models.Application
 
     :param confirmation_email_token: The confirmation email token provided for checking.
     :type confirmation_email_token: str
@@ -981,12 +983,12 @@ def check_pending_email_confirmation(application: core.Application, confirmation
 
 def create_or_update_borrower_document(
     filename: str,
-    application: core.Application,
-    type: core.BorrowerDocumentType,
+    application: models.Application,
+    type: models.BorrowerDocumentType,
     session: Session,
     file: UploadFile = File(...),
     verified: Optional[bool] = False,
-) -> core.BorrowerDocument:
+) -> models.BorrowerDocument:
     """
     Creates a new borrower document or updates an existing one.
 
@@ -998,10 +1000,10 @@ def create_or_update_borrower_document(
     :type filename: str
 
     :param application: The application associated with the document.
-    :type application: core.Application
+    :type application: models.Application
 
     :param type: The type of the document.
-    :type type: core.BorrowerDocumentType
+    :type type: models.BorrowerDocumentType
 
     :param session: The database session.
     :type session: Session
@@ -1013,14 +1015,14 @@ def create_or_update_borrower_document(
     :type verified: Optional[bool]
 
     :return: The newly created or updated BorrowerDocument.
-    :rtype: core.BorrowerDocument
+    :rtype: models.BorrowerDocument
     """
 
     existing_document = (
-        session.query(core.BorrowerDocument)
+        session.query(models.BorrowerDocument)
         .filter(
-            core.BorrowerDocument.application_id == application.id,
-            core.BorrowerDocument.type == type,
+            models.BorrowerDocument.application_id == application.id,
+            models.BorrowerDocument.type == type,
         )
         .first()
     )
@@ -1041,10 +1043,10 @@ def create_or_update_borrower_document(
             "name": filename,
             "verified": verified,
         }
-        return core.BorrowerDocument.create(session, **new_document)
+        return models.BorrowerDocument.create(session, **new_document)
 
 
-def check_FI_user_permission(application: core.Application, user: core.User) -> None:
+def check_FI_user_permission(application: models.Application, user: models.User) -> None:
     if application.lender_id != user.lender_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -1052,7 +1054,7 @@ def check_FI_user_permission(application: core.Application, user: core.User) -> 
         )
 
 
-def check_FI_user_permission_or_OCP(application: core.Application, user: core.User) -> None:
+def check_FI_user_permission_or_OCP(application: models.Application, user: models.User) -> None:
     """
     Checks if a user has permission to interact with a given application.
 
@@ -1060,10 +1062,10 @@ def check_FI_user_permission_or_OCP(application: core.Application, user: core.Us
     If they do not match, it raises an HTTPException with a 401 status code (Unauthorized).
 
     :param application: The application to check.
-    :type application: core.Application
+    :type application: models.Application
 
     :param user: The user to check.
-    :type user: core.User
+    :type user: models.User
 
     :raises HTTPException: If the lender_id of the application and user do not match.
     """
@@ -1075,7 +1077,7 @@ def check_FI_user_permission_or_OCP(application: core.Application, user: core.Us
         )
 
 
-def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocument:
+def get_document_by_id(document_id: int, session: Session) -> models.BorrowerDocument:
     """
     Retrieves a borrower document from the database using its id.
 
@@ -1091,10 +1093,10 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
     :raises HTTPException: If no document with the provided id is found.
 
     :return: The retrieved document.
-    :rtype: core.BorrowerDocument
+    :rtype: models.BorrowerDocument
     """
 
-    document = core.BorrowerDocument.first_by(session, "id", document_id)
+    document = models.BorrowerDocument.first_by(session, "id", document_id)
     if not document:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1104,9 +1106,9 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
 
 
 def get_previous_awards(
-    application: core.Application,
+    application: models.Application,
     session: Session,
-) -> List[core.Award]:
+) -> List[models.Award]:
     """
     Retrieves a list of previous awards for a given application's borrower.
 
@@ -1114,29 +1116,29 @@ def get_previous_awards(
     associated with the borrower of the provided application.
 
     :param application: The application to retrieve previous awards for.
-    :type application: core.Application
+    :type application: models.Application
 
     :param session: The database session to use.
     :type session: Session
 
     :return: A list of previous awards associated with the borrower.
-    :rtype: List[core.Award]
+    :rtype: List[models.Award]
     """
 
     previous_contracts = (
-        session.query(core.Award)
+        session.query(models.Award)
         .filter(
-            core.Award.previous == true(),
-            core.Award.borrower_id == application.borrower_id,
+            models.Award.previous == true(),
+            models.Award.borrower_id == application.borrower_id,
         )
-        .order_by(core.Award.contractperiod_startdate.desc())
+        .order_by(models.Award.contractperiod_startdate.desc())
         .all()
     )
 
     return previous_contracts
 
 
-def copy_documents(application: core.Application, documents: dict, session: Session):
+def copy_documents(application: models.Application, documents: dict, session: Session):
     """
     Copies provided documents into the database for a given application.
 
@@ -1145,7 +1147,7 @@ def copy_documents(application: core.Application, documents: dict, session: Sess
     application's borrower_documents attribute.
 
     :param application: The application to copy documents for.
-    :type application: core.Application
+    :type application: models.Application
 
     :param documents: A dictionary of documents to be copied.
     :type documents: dict
@@ -1164,11 +1166,11 @@ def copy_documents(application: core.Application, documents: dict, session: Sess
             "file": document.file,
             "verified": False,
         }
-        new_borrower_document = core.BorrowerDocument.create(session, **data)
+        new_borrower_document = models.BorrowerDocument.create(session, **data)
         application.borrower_documents.append(new_borrower_document)
 
 
-def copy_application(application: core.Application, session: Session) -> core.Application:
+def copy_application(application: models.Application, session: Session) -> models.Application:
     """
     Creates a new application that is a copy of the provided one, with some changes.
 
@@ -1177,7 +1179,7 @@ def copy_application(application: core.Application, session: Session) -> core.Ap
     setting the status to ACCEPTED.
 
     :param application: The application to copy.
-    :type application: core.Application
+    :type application: models.Application
 
     :param session: The database session to use.
     :type session: Session
@@ -1185,7 +1187,7 @@ def copy_application(application: core.Application, session: Session) -> core.Ap
     :raises HTTPException: If there's an error during the copy process.
 
     :return: The newly created copy of the application.
-    :rtype: core.Application
+    :rtype: models.Application
     """
 
     try:
@@ -1193,13 +1195,13 @@ def copy_application(application: core.Application, session: Session) -> core.Ap
             "award_id": application.award_id,
             "uuid": generate_uuid(application.uuid),
             "primary_email": application.primary_email,
-            "status": core.ApplicationStatus.ACCEPTED,
+            "status": models.ApplicationStatus.ACCEPTED,
             "award_borrower_identifier": application.award_borrower_identifier,
             "borrower_id": application.borrower.id,
             "calculator_data": application.calculator_data,
             "borrower_accepted_at": datetime.now(application.created_at.tzinfo),
         }
-        return core.Application.create(session, **data)
+        return models.Application.create(session, **data)
 
     except Exception as e:
         raise HTTPException(
@@ -1227,9 +1229,9 @@ def get_previous_lenders(award_borrower_identifier: str, session: Session) -> Li
     """
 
     lender_ids = (
-        session.query(core.Application.lender_id)
-        .filter(core.Application.award_borrower_identifier == award_borrower_identifier)
-        .filter(core.Application.status == "REJECTED")
+        session.query(models.Application.lender_id)
+        .filter(models.Application.award_borrower_identifier == award_borrower_identifier)
+        .filter(models.Application.status == "REJECTED")
         .distinct()
         .all()
     )
@@ -1240,7 +1242,7 @@ def get_previous_lenders(award_borrower_identifier: str, session: Session) -> Li
     return cleaned_lender_ids
 
 
-def get_previous_documents(application: core.Application, session: Session):
+def get_previous_documents(application: models.Application, session: Session):
     """
     Retrieves and copies the borrower documents from the most recent rejected application
     that shares the same award borrower identifier as the given application. The documents
@@ -1255,7 +1257,7 @@ def get_previous_documents(application: core.Application, session: Session):
     application.
 
     :param application: The application for which to copy the previous documents.
-    :type application: core.Application
+    :type application: models.Application
 
     :param session: The database session to use.
     :type session: Session
@@ -1265,22 +1267,22 @@ def get_previous_documents(application: core.Application, session: Session):
     document_types_list = [key for key, value in document_types.items() if value]
 
     lastest_application_id = (
-        session.query(core.Application.id)
+        session.query(models.Application.id)
         .filter(
-            core.Application.status == "REJECTED",
-            core.Application.award_borrower_identifier == application.award_borrower_identifier,
+            models.Application.status == "REJECTED",
+            models.Application.award_borrower_identifier == application.award_borrower_identifier,
         )
-        .order_by(core.Application.created_at.desc())
+        .order_by(models.Application.created_at.desc())
         .first()
     )
     if not lastest_application_id:
         return
 
     documents = (
-        session.query(core.BorrowerDocument)
+        session.query(models.BorrowerDocument)
         .filter(
-            core.BorrowerDocument.application_id == lastest_application_id[0],
-            core.BorrowerDocument.type.in_(document_types_list),
+            models.BorrowerDocument.application_id == lastest_application_id[0],
+            models.BorrowerDocument.type.in_(document_types_list),
         )
         .all()
     )
@@ -1288,7 +1290,7 @@ def get_previous_documents(application: core.Application, session: Session):
     copy_documents(application, documents, session)
 
 
-def check_if_application_was_already_copied(application: core.Application, session: Session):
+def check_if_application_was_already_copied(application: models.Application, session: Session):
     """
     Checks if a particular application has been already copied.
 
@@ -1298,7 +1300,7 @@ def check_if_application_was_already_copied(application: core.Application, sessi
     (CONFLICT) and a detail message indicating that the application has already been copied.
 
     :param application: The application to check.
-    :type application: core.Application
+    :type application: models.Application
 
     :param session: The database session to use.
     :type session: Session
@@ -1308,16 +1310,16 @@ def check_if_application_was_already_copied(application: core.Application, sessi
     """
 
     app_action = (
-        session.query(core.ApplicationAction)
+        session.query(models.ApplicationAction)
         .join(
-            core.Application,
-            core.Application.id == core.ApplicationAction.application_id,
+            models.Application,
+            models.Application.id == models.ApplicationAction.application_id,
         )
         .filter(
-            core.Application.id == application.id,
-            core.ApplicationAction.type == core.ApplicationActionType.COPIED_APPLICATION,
+            models.Application.id == application.id,
+            models.ApplicationAction.type == models.ApplicationActionType.COPIED_APPLICATION,
         )
-        .options(joinedload(core.ApplicationAction.application))
+        .options(joinedload(models.ApplicationAction.application))
         .first()
     )
 
@@ -1328,7 +1330,7 @@ def check_if_application_was_already_copied(application: core.Application, sessi
         )
 
 
-def create_borrower_table(borrower: core.Borrower, application: core.Application, lang: str):
+def create_borrower_table(borrower: models.Borrower, application: models.Application, lang: str):
     """
     Creates a table of borrower data.
 
@@ -1379,7 +1381,7 @@ def create_borrower_table(borrower: core.Borrower, application: core.Application
     return create_table(data)
 
 
-def get_pdf_file_name(application: core.Application, lang: str):
+def get_pdf_file_name(application: models.Application, lang: str):
     name = get_translated_string("Application Details", lang).replace(" ", "_")
     filename = f"{name}-{application.borrower.legal_identifier}" + f"-{application.award.source_contract_id}.pdf"
     return filename
@@ -1426,7 +1428,7 @@ def create_table_cell(text: str, lang: str):
     return Paragraph(get_translated_string(text, lang), styleN)
 
 
-def create_application_table(application: core.Application, lang: str):
+def create_application_table(application: models.Application, lang: str):
     """
     Creates a table of application information.
 
@@ -1455,7 +1457,7 @@ def create_application_table(application: core.Application, lang: str):
         ],
     ]
 
-    if application.credit_product.type == core.CreditType.LOAN:
+    if application.credit_product.type == models.CreditType.LOAN:
         data.append(
             [
                 get_translated_string("Type", lang),
@@ -1489,7 +1491,7 @@ def create_application_table(application: core.Application, lang: str):
             ],
         )
 
-    if application.status == core.ApplicationStatus.COMPLETED:
+    if application.status == models.ApplicationStatus.COMPLETED:
         data.append(
             [
                 get_translated_string("Contract amount", lang),
@@ -1505,7 +1507,7 @@ def create_application_table(application: core.Application, lang: str):
     return create_table(data)
 
 
-def create_documents_table(documents: List[core.BorrowerDocument], lang: str):
+def create_documents_table(documents: List[models.BorrowerDocument], lang: str):
     """
     Creates a table of MSME information and documents.
 
@@ -1536,15 +1538,15 @@ def create_documents_table(documents: List[core.BorrowerDocument], lang: str):
     return create_table(data)
 
 
-def create_award_table(award: core.Award, lang: str):
+def create_award_table(award: models.Award, lang: str):
     """
     Creates a table of Open Contracting award data.
 
     :param award: The award data.
-    :type award: core.Award
+    :type award: models.Award
 
     :param previous_awards: Previous award amount.
-    :type previous_awards:  List[core.Award]
+    :type previous_awards:  List[models.Award]
 
     :param lang: The lang requested.
     :type lang: str

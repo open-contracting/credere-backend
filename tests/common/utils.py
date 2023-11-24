@@ -1,31 +1,31 @@
 from sqlalchemy import Enum
 
-from app.schema import core
+from app import models
 
 FI_user = {
     "email": "FI_user@noreply.open-contracting.org",
     "name": "Test FI",
-    "type": core.UserType.FI.value,
+    "type": models.UserType.FI.value,
 }
 
 FI_user_with_lender = {
     "email": "FI_user_with_lender@noreply.open-contracting.org",
     "name": "Test FI with lender",
-    "type": core.UserType.FI.value,
+    "type": models.UserType.FI.value,
     "lender_id": 1,
 }
 
 OCP_user = {
     "email": "OCP_user@noreply.open-contracting.org",
     "name": "OCP_user@example.com",
-    "type": core.UserType.OCP.value,
+    "type": models.UserType.OCP.value,
 }
 
-application_status_values = tuple(key.value for key in core.ApplicationStatus)
-borrower_size_values = tuple(key.value for key in core.BorrowerSize)
-credit_type_values = tuple(key.value for key in core.CreditType)
-user_type_values = tuple(key.value for key in core.UserType)
-borrower_document_type_values = tuple(key.value for key in core.BorrowerDocumentType)
+application_status_values = tuple(key.value for key in models.ApplicationStatus)
+borrower_size_values = tuple(key.value for key in models.BorrowerSize)
+credit_type_values = tuple(key.value for key in models.CreditType)
+user_type_values = tuple(key.value for key in models.UserType)
+borrower_document_type_values = tuple(key.value for key in models.BorrowerDocumentType)
 
 
 def create_enums(engine):

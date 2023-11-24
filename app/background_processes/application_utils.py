@@ -4,22 +4,20 @@ from datetime import datetime, timedelta
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app import models
+from app.background_processes import background_utils
 from app.db import get_db
 from app.exceptions import SkippedAwardError
-from app.schema import core
-from app.schema.core import Application
 from app.settings import app_settings
-
-from . import background_utils
 
 DAYS_UNTIL_EXPIRED = 7
 
-ApplicationStatus = core.ApplicationStatus
+ApplicationStatus = models.ApplicationStatus
 
 
 def create_application(
     award_id, borrower_id, email, legal_identifier, source_contract_id, session: Session
-) -> core.Application:
+) -> models.Application:
     """
     Create a new application and insert it into the database.
 
@@ -37,11 +35,11 @@ def create_application(
     :type session: Session
 
     :return: The created application.
-    :rtype: core.Application
+    :rtype: models.Application
     """
     award_borrower_identifier: str = background_utils.get_secret_hash(legal_identifier + source_contract_id)
 
-    application = Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
+    application = models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
     if application:
         raise SkippedAwardError(f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}")
 
@@ -55,7 +53,7 @@ def create_application(
         "expired_at": datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
     }
 
-    return Application.create(session, **data)
+    return models.Application.create(session, **data)
 
 
 def get_dated_applications(session):
@@ -66,38 +64,38 @@ def get_dated_applications(session):
     :type session: Session
 
     :return: A list of applications that meet the date-based criteria.
-    :rtype: list[core.Application]
+    :rtype: list[models.Application]
     """
     applications_to_remove_data = (
-        session.query(core.Application)
+        session.query(models.Application)
         .options(
-            joinedload(core.Application.borrower),
-            joinedload(core.Application.borrower_documents),
+            joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
         )
         .filter(
             or_(
                 and_(
-                    core.Application.status == ApplicationStatus.DECLINED,
-                    core.Application.borrower_declined_at + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    models.Application.status == ApplicationStatus.DECLINED,
+                    models.Application.borrower_declined_at + timedelta(days=app_settings.days_to_erase_borrower_data)
                     < datetime.now(),
                 ),
                 and_(
-                    core.Application.status == ApplicationStatus.REJECTED,
-                    core.Application.lender_rejected_at + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    models.Application.status == ApplicationStatus.REJECTED,
+                    models.Application.lender_rejected_at + timedelta(days=app_settings.days_to_erase_borrower_data)
                     < datetime.now(),
                 ),
                 and_(
-                    core.Application.status == ApplicationStatus.COMPLETED,
-                    core.Application.lender_approved_at + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    models.Application.status == ApplicationStatus.COMPLETED,
+                    models.Application.lender_approved_at + timedelta(days=app_settings.days_to_erase_borrower_data)
                     < datetime.now(),
                 ),
                 and_(
-                    core.Application.status == ApplicationStatus.LAPSED,
-                    core.Application.application_lapsed_at + timedelta(days=app_settings.days_to_erase_borrower_data)
+                    models.Application.status == ApplicationStatus.LAPSED,
+                    models.Application.application_lapsed_at + timedelta(days=app_settings.days_to_erase_borrower_data)
                     < datetime.now(),
                 ),
             ),
-            core.Application.archived_at.is_(None),
+            models.Application.archived_at.is_(None),
         )
         .all()
     )
@@ -113,33 +111,33 @@ def get_lapsed_applications(session):
     :type session: Session
 
     :return: A list of applications that meet the lapsed status criteria.
-    :rtype: list[core.Application]
+    :rtype: list[models.Application]
     """
     applications_to_set_to_lapsed = (
-        session.query(core.Application)
+        session.query(models.Application)
         .options(
-            joinedload(core.Application.borrower),
-            joinedload(core.Application.borrower_documents),
+            joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
         )
         .filter(
             or_(
                 and_(
-                    core.Application.status == ApplicationStatus.PENDING,
-                    core.Application.created_at + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    models.Application.status == ApplicationStatus.PENDING,
+                    models.Application.created_at + timedelta(days=app_settings.days_to_change_to_lapsed)
                     < datetime.now(),
                 ),
                 and_(
-                    core.Application.status == ApplicationStatus.ACCEPTED,
-                    core.Application.borrower_accepted_at + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    models.Application.status == ApplicationStatus.ACCEPTED,
+                    models.Application.borrower_accepted_at + timedelta(days=app_settings.days_to_change_to_lapsed)
                     < datetime.now(),
                 ),
                 and_(
-                    core.Application.status == ApplicationStatus.INFORMATION_REQUESTED,
-                    core.Application.information_requested_at + timedelta(days=app_settings.days_to_change_to_lapsed)
+                    models.Application.status == ApplicationStatus.INFORMATION_REQUESTED,
+                    models.Application.information_requested_at + timedelta(days=app_settings.days_to_change_to_lapsed)
                     < datetime.now(),
                 ),
             ),
-            core.Application.archived_at.is_(None),
+            models.Application.archived_at.is_(None),
         )
         .all()
     )
@@ -152,28 +150,28 @@ def get_applications_to_remind_intro(db_provider: Session = get_db):
     Get applications that need a reminder for the introduction.
 
     :return: A list of applications that need an introduction reminder.
-    :rtype: list[core.Application]
+    :rtype: list[models.Application]
     """
     with contextmanager(db_provider)() as session:
-        subquery = select(core.Message.application_id).where(
-            core.Message.type == core.MessageType.BORROWER_PENDING_APPLICATION_REMINDER
+        subquery = select(models.Message.application_id).where(
+            models.Message.type == models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER
         )
         users = (
-            session.query(core.Application)
-            .join(core.Borrower, core.Application.borrower_id == core.Borrower.id)
-            .join(core.Award, core.Application.award_id == core.Award.id)
+            session.query(models.Application)
+            .join(models.Borrower, models.Application.borrower_id == models.Borrower.id)
+            .join(models.Award, models.Application.award_id == models.Award.id)
             .options(
-                joinedload(core.Application.borrower),
-                joinedload(core.Application.award),
+                joinedload(models.Application.borrower),
+                joinedload(models.Application.award),
             )
             .filter(
                 and_(
-                    core.Application.status == ApplicationStatus.PENDING,
-                    core.Application.expired_at > datetime.now(),
-                    core.Application.expired_at
+                    models.Application.status == ApplicationStatus.PENDING,
+                    models.Application.expired_at > datetime.now(),
+                    models.Application.expired_at
                     <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
-                    ~core.Application.id.in_(subquery),
-                    core.Borrower.status == core.BorrowerStatus.ACTIVE,
+                    ~models.Application.id.in_(subquery),
+                    models.Borrower.status == models.BorrowerStatus.ACTIVE,
                 )
             )
             .all()
@@ -187,25 +185,25 @@ def get_applications_to_remind_submit(db_provider: Session = get_db):
     Get applications that need a reminder to submit.
 
     :return: A list of applications that need a submit reminder.
-    :rtype: list[core.Application]
+    :rtype: list[models.Application]
     """
     with contextmanager(db_provider)() as session:
-        subquery = select(core.Message.application_id).where(
-            core.Message.type == core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
+        subquery = select(models.Message.application_id).where(
+            models.Message.type == models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER
         )
         users = (
-            session.query(core.Application)
+            session.query(models.Application)
             .options(
-                joinedload(core.Application.borrower),
-                joinedload(core.Application.award),
+                joinedload(models.Application.borrower),
+                joinedload(models.Application.award),
             )
             .filter(
                 and_(
-                    core.Application.status == ApplicationStatus.ACCEPTED,
-                    core.Application.expired_at > datetime.now(),
-                    core.Application.expired_at
+                    models.Application.status == ApplicationStatus.ACCEPTED,
+                    models.Application.expired_at > datetime.now(),
+                    models.Application.expired_at
                     <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
-                    ~core.Application.id.in_(subquery),
+                    ~models.Application.id.in_(subquery),
                 )
             )
             .all()
@@ -219,24 +217,24 @@ def get_all_applications_with_status(status_list, session):
     Get all applications that have one of the specified status.
 
     :param status_list: The list of status to filter applications.
-    :type status_list: list[core.ApplicationStatus]
+    :type status_list: list[models.ApplicationStatus]
     :param session: The database session.
     :type session: Session
 
     :return: A list of applications that have the specified status.
-    :rtype: list[core.Application]
+    :rtype: list[models.Application]
     """
-    applications = session.query((core.Application)).filter(core.Application.status.in_(status_list)).all()
+    applications = session.query((models.Application)).filter(models.Application.status.in_(status_list)).all()
 
     return applications
 
 
-def get_application_days_passed(application: core.Application, session: Session):
+def get_application_days_passed(application: models.Application, session: Session):
     """
     Calculate the number of days passed between different application actions.
 
     :param application: The application to calculate the days passed for.
-    :type application: core.Application
+    :type application: models.Application
     :param session: The database session.
     :type session: Session
 
@@ -245,10 +243,10 @@ def get_application_days_passed(application: core.Application, session: Session)
     """
     paired_actions = []
     fi_request_actions = (
-        session.query(core.ApplicationAction)
-        .filter(core.ApplicationAction.application_id == application.id)
-        .filter(core.ApplicationAction.type == core.ApplicationActionType.FI_REQUEST_INFORMATION)
-        .order_by(core.ApplicationAction.created_at)
+        session.query(models.ApplicationAction)
+        .filter(models.ApplicationAction.application_id == application.id)
+        .filter(models.ApplicationAction.type == models.ApplicationActionType.FI_REQUEST_INFORMATION)
+        .order_by(models.ApplicationAction.created_at)
         .all()
     )
     if fi_request_actions:
@@ -269,10 +267,12 @@ def get_application_days_passed(application: core.Application, session: Session)
         )
 
     msme_upload_actions = (
-        session.query(core.ApplicationAction)
-        .filter(core.ApplicationAction.application_id == application.id)
-        .filter(core.ApplicationAction.type == core.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED)
-        .order_by(core.ApplicationAction.created_at)
+        session.query(models.ApplicationAction)
+        .filter(models.ApplicationAction.application_id == application.id)
+        .filter(
+            models.ApplicationAction.type == models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED
+        )
+        .order_by(models.ApplicationAction.created_at)
         .all()
     )
 

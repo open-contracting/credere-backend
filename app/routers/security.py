@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from ..auth import get_current_user, verifyTokeClass
+from app.auth import get_current_user, verifyTokeClass
 
 authorizedCredentials = verifyTokeClass()
 

@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.settings import app_settings
 
-from .routers import applications, lenders, users  # isort:skip
-from .routers import statistics  # isort:skip
+from app.routers import applications, lenders, users  # isort:skip
+from app.routers import statistics  # isort:skip
 
 
 app = FastAPI()

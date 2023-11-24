@@ -11,9 +11,6 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.sql import func
 from sqlmodel import Field, Relationship, SQLModel
 
-# Otherwise, alembic "Detected removed table 'statistic'".
-import app.schema.statistic  # noqa: F401
-
 
 def _get_missing_data_keys(input_dict):
     """
@@ -191,6 +188,16 @@ class CreditType(Enum):
 class BorrowerType(Enum):
     NATURAL_PERSON = "NATURAL_PERSON"
     LEGAL_PERSON = "LEGAL_PERSON"
+
+
+class StatisticType(Enum):
+    MSME_OPT_IN_STATISTICS = "MSME_OPT_IN_STATISTICS"
+    APPLICATION_KPIS = "APPLICATION_KPIS"
+
+
+class StatisticCustomRange(Enum):
+    LAST_WEEK = "LAST_WEEK"
+    LAST_MONTH = "LAST_MONTH"
 
 
 class CreditProductBase(SQLModel):
@@ -617,3 +624,13 @@ class StatisticData(BaseModel):
 
     def to_dict(self):
         return {"name": self.name, "value": self.value}
+
+
+class Statistic(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    type: StatisticType = Field(sa_column=Column(SAEnum(StatisticType, name="statistic_type")))
+    data: dict = Field(default={}, sa_column=Column(JSON))
+    created_at: Optional[datetime] = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+    )
+    lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)

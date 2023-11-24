@@ -3,21 +3,18 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
-from app import mail
+from app import mail, models
 from app.aws import sesClient
+from app.background_processes import background_utils
+from app.background_processes import colombia_data_access as data_access
+from app.background_processes.application_utils import create_application
 from app.db import get_db, transaction_session_logger
 from app.exceptions import SkippedAwardError
-from app.schema import core
-from app.schema.core import Award, Borrower, BorrowerStatus, Message
-
-from . import background_utils
-from . import colombia_data_access as data_access
-from .application_utils import create_application
 
 logger = logging.getLogger(__name__)
 
 
-def _get_or_create_borrower(entry, session: Session) -> Borrower:
+def _get_or_create_borrower(entry, session: Session) -> models.Borrower:
     """
     Get an existing borrower or create a new borrower based on the entry data.
 
@@ -27,23 +24,23 @@ def _get_or_create_borrower(entry, session: Session) -> Borrower:
     :type session: Session
 
     :return: The existing or newly created borrower.
-    :rtype: Borrower
+    :rtype: models.Borrower
     """
 
     documento_proveedor = data_access.get_documento_proveedor(entry)
     borrower_identifier = background_utils.get_secret_hash(documento_proveedor)
     data = data_access.create_new_borrower(borrower_identifier, documento_proveedor, entry)
 
-    borrower = Borrower.first_by(session, "borrower_identifier", borrower_identifier)
+    borrower = models.Borrower.first_by(session, "borrower_identifier", borrower_identifier)
     if borrower:
-        if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
+        if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
             raise ValueError("Skipping Award - Borrower choosed to not receive any new opportunity")
         return borrower.update(session, **data)
 
-    return Borrower.create(session, **data)
+    return models.Borrower.create(session, **data)
 
 
-def _create_award(entry, session: Session, borrower_id=None, previous=False) -> Award:
+def _create_award(entry, session: Session, borrower_id=None, previous=False) -> models.Award:
     """
     Create a new award and insert it into the database.
 
@@ -57,16 +54,16 @@ def _create_award(entry, session: Session, borrower_id=None, previous=False) -> 
     :type previous: bool, optional
 
     :return: The inserted award.
-    :rtype: Award
+    :rtype: models.Award
     """
     source_contract_id = data_access.get_source_contract_id(entry)
 
-    if Award.first_by(session, "source_contract_id", source_contract_id):
+    if models.Award.first_by(session, "source_contract_id", source_contract_id):
         raise SkippedAwardError(f"[{previous=}] Award already exists with {source_contract_id=} ({entry=})")
 
     data = data_access.create_new_award(source_contract_id, entry, borrower_id, previous)
 
-    return Award.create(session, **data)
+    return models.Award.create(session, **data)
 
 
 def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Session, until_date: str = None):
@@ -102,10 +99,10 @@ def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Sessio
                         session,
                     )
 
-                    message = Message.create(
+                    message = models.Message.create(
                         session,
                         application=application,
-                        type=core.MessageType.BORROWER_INVITACION,
+                        type=models.MessageType.BORROWER_INVITACION,
                     )
 
                     messageId = mail.send_invitation_email(
@@ -123,13 +120,13 @@ def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Sessio
     logger.info("Total fetched contracts: %d", total)
 
 
-def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):
+def fetch_previous_awards(borrower: models.Borrower, db_provider: Session = get_db):
     """
     Fetch previous awards for a borrower that accepted an application. This wont generate an application,
     it will just insert the awards in our database
 
     :param borrower: The borrower for whom to fetch and process previous awards.
-    :type borrower: Borrower
+    :type borrower: models.Borrower
     """
     contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()

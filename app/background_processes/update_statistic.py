@@ -5,11 +5,9 @@ from datetime import datetime
 from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session
 
+from app.background_processes import statistics_utils
 from app.db import get_db, transaction_session_logger
-from app.schema import core
-from app.schema.statistic import Statistic, StatisticType
-
-from . import statistics_utils
+from app.models import Lender, Statistic, StatisticType
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +98,7 @@ def update_statistics(db_provider: Session = get_db):
                 session.add(statistic_opt_data)
 
             # Get general Kpis for every lender
-            lender_ids = [id[0] for id in session.query(core.Lender.id).all()]
+            lender_ids = [id[0] for id in session.query(Lender.id).all()]
             for lender_id in lender_ids:
                 # Get statistics for each lender
                 statistic_kpis = statistics_utils.get_general_statistics(session, None, None, lender_id)

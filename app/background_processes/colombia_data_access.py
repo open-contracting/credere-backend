@@ -1,10 +1,9 @@
 from collections import Counter
 from datetime import datetime, timedelta
 
+from app.background_processes import background_utils
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
-
-from . import background_utils
 
 URLS = {
     "CONTRACTS": "https://www.datos.gov.co/resource/jbjy-vk9h.json",

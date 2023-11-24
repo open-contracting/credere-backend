@@ -7,15 +7,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user, get_user
+from app.auth import OCP_only, get_current_user, get_user
+from app.background_processes import statistics_utils
+from app.db import get_db
+from app.models import Statistic, StatisticCustomRange, StatisticType, User
 from app.schema import api as ApiSchema
-
-from ..auth import OCP_only
-from ..background_processes import statistics_utils
-from ..db import get_db
-from ..schema import core
-from ..schema.core import User
-from ..schema.statistic import Statistic, StatisticCustomRange, StatisticType
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +144,7 @@ async def get_ocp_statistics_opt_in(
 
 
 @router.get("/statistics-fi", tags=["statistics"], response_model=ApiSchema.StatisticResponse)
-async def get_fi_statistics(session: Session = Depends(get_db), user: core.User = Depends(get_user)):
+async def get_fi_statistics(session: Session = Depends(get_db), user: User = Depends(get_user)):
     """
     Retrieve statistics for a Financial Institution (FI).
 
@@ -159,7 +155,7 @@ async def get_fi_statistics(session: Session = Depends(get_db), user: core.User 
     :param session: The database session dependency (automatically injected).
     :type session: Session
     :param user: The current user (automatically injected).
-    :type user: core.User
+    :type user: User
 
     :return: Response containing the statistics for the Financial Institution.
     :rtype: ApiSchema.StatisticResponse

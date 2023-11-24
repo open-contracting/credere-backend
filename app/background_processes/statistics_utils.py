@@ -2,9 +2,9 @@ import logging
 
 from sqlalchemy import Integer, and_, distinct, func, or_, text
 
-from app.schema.core import Application, ApplicationStatus  # noqa: F401 # isort:skip
-from app.schema.core import Borrower, CreditProduct  # noqa: F401 # isort:skip
-from app.schema.core import CreditType, StatisticData, Lender  # noqa: F401 # isort:skip
+from app.models import Application, ApplicationStatus  # noqa: F401 # isort:skip
+from app.models import Borrower, CreditProduct  # noqa: F401 # isort:skip
+from app.models import CreditType, StatisticData, Lender  # noqa: F401 # isort:skip
 
 logger = logging.getLogger(__name__)
 

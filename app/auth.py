@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.schema.core import User
+from app.models import User
 from app.settings import app_settings
 
 JWK = Dict[str, str]

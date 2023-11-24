@@ -1,6 +1,6 @@
 from fastapi import status
 
-from app.schema.core import BorrowerSize, CreditType
+from app.models import BorrowerSize, CreditType
 from tests.common.utils import FI_user, OCP_user
 
 from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa

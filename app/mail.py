@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from urllib.parse import quote
 
-from app.schema.core import Application
+from app.models import Application
 from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
@@ -319,7 +319,7 @@ def send_upload_contract_notification_to_FI(ses, application):
     :param ses: SES client instance used to send emails.
     :type ses: botocore.client.SES
     :param application: The application associated with the contract.
-    :type application: core.Application
+    :type application: Application
     """
 
     images_base_url = get_images_base_url()
@@ -347,7 +347,7 @@ def send_upload_contract_confirmation(ses, application):
     :param ses: SES client instance used to send emails.
     :type ses: botocore.client.SES
     :param application: The application associated with the contract.
-    :type application: core.Application
+    :type application: Application
     """
 
     html_data = {

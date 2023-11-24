@@ -225,7 +225,7 @@ Another option is to use
 alembic revision --autogenerate -m "migration name"
 ```
 
-This will attempt to auto-detect the changes made to schema.core.py and complete the upgrade and downgrade automatically.
+This will attempt to auto-detect the changes made to models.py and complete the upgrade and downgrade automatically.
 This feature needs to be re-checked by the developer to ensure all changes were included. For more details on what is auto-detected, you can read the following link
 
 https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect

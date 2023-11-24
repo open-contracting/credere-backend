@@ -5,12 +5,10 @@ from datetime import datetime
 
 import typer
 
-from app import background_processes, mail
+from app import background_processes, mail, models
 from app.aws import sesClient
 from app.background_processes import application_utils
 from app.db import get_db, transaction_session, transaction_session_logger
-from app.schema import core
-from app.schema.core import Application, ApplicationStatus, Award, Message
 from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
@@ -31,7 +29,7 @@ def fetch_awards():
     you can also pass an email_invitation as parameter if you want to invite a particular borrower
     """
     with contextmanager(get_db)() as session:
-        last_updated_award_date = Award.last_updated(session)
+        last_updated_award_date = models.Award.last_updated(session)
     background_processes.fetcher.fetch_new_awards_from_date(last_updated_award_date, get_db)
 
 
@@ -69,11 +67,11 @@ def remove_dated_application_data():
 
                 # Check if there are any other active applications that use the same award
                 active_applications_with_same_award = (
-                    session.query(Application)
+                    session.query(models.Application)
                     .filter(
-                        Application.award_id == application.award_id,
-                        Application.id != application.id,
-                        Application.archived_at.is_(None),  # Check that the application is active
+                        models.Application.award_id == application.award_id,
+                        models.Application.id != application.id,
+                        models.Application.archived_at.is_(None),  # Check that the application is active
                     )
                     .all()
                 )
@@ -98,7 +96,7 @@ def update_applications_to_lapsed():
         lapsed_applications = application_utils.get_lapsed_applications(session)
         for application in lapsed_applications:
             with transaction_session_logger(session, "Error setting to lapsed"):
-                application.status = ApplicationStatus.LAPSED
+                application.status = models.ApplicationStatus.LAPSED
                 application.application_lapsed_at = datetime.utcnow()
 
 
@@ -123,10 +121,10 @@ def send_reminders():
         for application in applications_to_send_intro_reminder:
             with contextmanager(get_db)() as session:
                 with transaction_session_logger(session, "Error sending mail or updating the sent status"):
-                    new_message = Message.create(
+                    new_message = models.Message.create(
                         session,
                         application=application,
-                        type=core.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
+                        type=models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
                     )
                     uuid = application.uuid
                     email = application.primary_email
@@ -147,10 +145,10 @@ def send_reminders():
             with contextmanager(get_db)() as session:
                 with transaction_session_logger(session, "Error sending mail or updating the sent status"):
                     # Db message table update
-                    new_message = Message.create(
+                    new_message = models.Message.create(
                         session,
                         application=application,
-                        type=core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
+                        type=models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
                     )
                     uuid = application.uuid
                     email = application.primary_email
@@ -178,8 +176,8 @@ def SLA_overdue_applications():
     with contextmanager(get_db)() as session:
         applications = application_utils.get_all_applications_with_status(
             [
-                core.ApplicationStatus.CONTRACT_UPLOADED,
-                core.ApplicationStatus.STARTED,
+                models.ApplicationStatus.CONTRACT_UPLOADED,
+                models.ApplicationStatus.STARTED,
             ],
             session,
         )
@@ -200,10 +198,10 @@ def SLA_overdue_applications():
                             application.lender.name,
                         )
 
-                        Message.create(
+                        models.Message.create(
                             session,
                             application=application,
-                            type=core.MessageType.OVERDUE_APPLICATION,
+                            type=models.MessageType.OVERDUE_APPLICATION,
                             external_message_id=message_id,
                         )
 
@@ -213,10 +211,10 @@ def SLA_overdue_applications():
             email = lender_data.get("email")
             message_id = mail.send_overdue_application_email_to_FI(sesClient, name, email, count)
 
-            Message.create(
+            models.Message.create(
                 session,
                 application=application,
-                type=core.MessageType.OVERDUE_APPLICATION,
+                type=models.MessageType.OVERDUE_APPLICATION,
                 external_message_id=message_id,
             )
 

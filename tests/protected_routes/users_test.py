@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db
-from app.schema.core import User
+from app.models import User
 
 tempPassword = "1234567890Abc!!"
 new_password = "!!!1234567890Abc!!"

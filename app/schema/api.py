@@ -5,8 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
-from app.schema import core
-from app.schema.core import User
+from app import models
 
 
 class ERROR_CODES(Enum):
@@ -23,15 +22,15 @@ class BasePagination(BaseModel):
 
 
 class ApplicationListResponse(BasePagination):
-    items: List[core.ApplicationWithRelations]
+    items: List[models.ApplicationWithRelations]
 
 
 class LenderListResponse(BasePagination):
-    items: List[core.Lender]
+    items: List[models.Lender]
 
 
 class UserListResponse(BasePagination):
-    items: List[core.UserWithLender]
+    items: List[models.UserWithLender]
 
 
 class AwardUpdate(BaseModel):
@@ -70,7 +69,7 @@ class BorrowerUpdate(BaseModel):
     legal_identifier: Optional[str]
     type: Optional[str]
     sector: Optional[str]
-    size: Optional[core.BorrowerSize]
+    size: Optional[models.BorrowerSize]
 
 
 class UpdateDataField(BaseModel):
@@ -92,12 +91,12 @@ class ApplicationUpdate(BaseModel):
 
 
 class ApplicationResponse(BaseModel):
-    application: core.ApplicationRead
-    borrower: core.Borrower
-    award: core.Award
-    lender: Optional[core.Lender] = None
-    documents: List[core.BorrowerDocumentBase] = []
-    creditProduct: Optional[core.CreditProduct] = None
+    application: models.ApplicationRead
+    borrower: models.Borrower
+    award: models.Award
+    lender: Optional[models.Lender] = None
+    documents: List[models.BorrowerDocumentBase] = []
+    creditProduct: Optional[models.CreditProduct] = None
 
 
 class LenderRejectedApplication(BaseModel):
@@ -125,7 +124,7 @@ class VerifyBorrowerDocument(BaseModel):
 
 
 class ApplicationCreditOptions(ApplicationBase):
-    borrower_size: core.BorrowerSize
+    borrower_size: models.BorrowerSize
     amount_requested: Decimal
 
 
@@ -138,8 +137,8 @@ class ApplicationSelectCreditProduct(ApplicationCreditOptions):
 
 
 class CreditProductListResponse(BaseModel):
-    loans: List[core.CreditProductWithLender]
-    credit_lines: List[core.CreditProductWithLender]
+    loans: List[models.CreditProductWithLender]
+    credit_lines: List[models.CreditProductWithLender]
 
 
 class UploadContractConfirmation(ApplicationBase):
@@ -175,7 +174,7 @@ class ChangePasswordResponse(ResponseBase):
 
 
 class UserResponse(BaseModel):
-    user: User
+    user: models.User
 
 
 class LoginResponse(UserResponse):

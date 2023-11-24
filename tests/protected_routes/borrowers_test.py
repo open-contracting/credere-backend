@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.schema.core import Borrower
+from app.models import Borrower
 
 router = APIRouter()
 
