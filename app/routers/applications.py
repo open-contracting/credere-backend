@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Spacer
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from sqlalchemy import and_, text
 from sqlalchemy.orm import Session, joinedload
 
@@ -18,9 +18,11 @@ from app import models, parsers, serializers
 from app.auth import OCP_only, get_current_user, get_user
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
+from app.i18n import get_translated_string
 from app.settings import app_settings
-from app.utils import background
+from app.utils import background, tables
 from app.utils.statistics import update_statistics
+from reportlab_mods import styleSubTitle, styleTitle
 
 logger = logging.getLogger(__name__)
 
@@ -407,26 +409,27 @@ async def download_application(
 
         elements = []
 
-        elements.append(utils.create_pdf_title("Application Details", lang))
+        elements.append(Paragraph(get_translated_string("Application Details", lang), styleTitle))
 
-        elements.append(utils.create_application_table(application, lang))
+        elements.append(tables.create_application_table(application, lang))
         elements.append(Spacer(1, 20))
-        elements.append(utils.create_borrower_table(borrower, application, lang))
+        elements.append(tables.create_borrower_table(borrower, application, lang))
         elements.append(Spacer(1, 20))
-        elements.append(utils.create_documents_table(documents, lang))
+        elements.append(tables.create_documents_table(documents, lang))
         elements.append(Spacer(1, 20))
-        elements.append(utils.create_award_table(award, lang))
+        elements.append(tables.create_award_table(award, lang))
 
         if previous_awards and len(previous_awards) > 0:
             elements.append(Spacer(1, 20))
-            elements.append(utils.create_pdf_title("Previous Public Sector Contracts", lang, True))
+            elements.append(Paragraph(get_translated_string("Previous Public Sector Contracts", lang), styleSubTitle))
             for award in previous_awards:
-                elements.append(utils.create_award_table(award, lang))
+                elements.append(tables.create_award_table(award, lang))
                 elements.append(Spacer(1, 20))
 
         doc.build(elements)
 
-        filename = utils.get_pdf_file_name(application, lang)
+        name = get_translated_string("Application Details", lang).replace(" ", "_")
+        filename = f"{name}-{application.borrower.legal_identifier}" + f"-{application.award.source_contract_id}.pdf"
 
         in_memory_zip = io.BytesIO()
         with zipfile.ZipFile(in_memory_zip, "w") as zip_file:
