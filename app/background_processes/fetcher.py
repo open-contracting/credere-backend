@@ -3,9 +3,8 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
-from app import mail, models
+from app import mail, models, util
 from app.aws import sesClient
-from app.background_processes import background_utils
 from app.background_processes import colombia_data_access as data_access
 from app.background_processes.application_utils import create_application
 from app.db import get_db, transaction_session_logger
@@ -28,7 +27,7 @@ def _get_or_create_borrower(entry, session: Session) -> models.Borrower:
     """
 
     documento_proveedor = data_access.get_documento_proveedor(entry)
-    borrower_identifier = background_utils.get_secret_hash(documento_proveedor)
+    borrower_identifier = util.get_secret_hash(documento_proveedor)
     data = data_access.create_new_borrower(borrower_identifier, documento_proveedor, entry)
 
     borrower = models.Borrower.first_by(session, "borrower_identifier", borrower_identifier)

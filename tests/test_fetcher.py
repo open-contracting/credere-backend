@@ -83,7 +83,7 @@ def test_fetch_new_awards_from_date(start_background_db, mock_templated_email): 
         "app.background_processes.colombia_data_access.get_new_contracts",
     ), common_test_functions.mock_function_response(
         "test_hash_12345678",
-        "app.background_processes.background_utils.get_secret_hash",
+        "app.util.get_secret_hash",
     ), common_test_functions.mock_whole_process(
         200,
         award,

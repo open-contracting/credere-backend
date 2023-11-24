@@ -3,8 +3,7 @@ from unittest.mock import patch
 
 from fastapi import status
 
-from app import models
-from app.background_processes.background_utils import generate_uuid
+from app import models, util
 
 from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
 from tests.common.common_test_client import mock_templated_email  # isort:skip # noqa
@@ -247,7 +246,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     )
     assert response.status_code == status.HTTP_200_OK
 
-    confirmation_email_token = generate_uuid(new_email)
+    confirmation_email_token = util.generate_uuid(new_email)
 
     response = client.post(
         "/applications/confirm-change-email",

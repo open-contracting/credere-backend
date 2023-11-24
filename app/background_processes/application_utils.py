@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, joinedload
 
-from app import models
+from app import models, util
 from app.background_processes import background_utils
 from app.db import get_db
 from app.exceptions import SkippedAwardError
@@ -43,7 +43,7 @@ def create_application(
     if application:
         raise SkippedAwardError(f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}")
 
-    new_uuid: str = background_utils.generate_uuid(award_borrower_identifier)
+    new_uuid: str = util.generate_uuid(award_borrower_identifier)
     data = {
         "award_id": award_id,
         "borrower_id": borrower_id,

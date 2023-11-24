@@ -13,8 +13,7 @@ from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
-from app import models, parsers, serializers
-from app.background_processes.background_utils import generate_uuid
+from app import models, parsers, serializers, util
 from app.i18n import get_translated_string
 from app.settings import app_settings
 
@@ -946,7 +945,7 @@ def update_application_primary_email(application: models.Application, email: str
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="New email is not valid",
         )
-    confirmation_email_token = generate_uuid(email)
+    confirmation_email_token = util.generate_uuid(email)
     application.confirmation_email_token = f"{email}---{confirmation_email_token}"
     application.pending_email_confirmation = True
 
@@ -1199,7 +1198,7 @@ def copy_application(application: models.Application, session: Session) -> model
     try:
         data = {
             "award_id": application.award_id,
-            "uuid": generate_uuid(application.uuid),
+            "uuid": util.generate_uuid(application.uuid),
             "primary_email": application.primary_email,
             "status": models.ApplicationStatus.ACCEPTED,
             "award_borrower_identifier": application.award_borrower_identifier,
