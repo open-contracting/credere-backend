@@ -3,6 +3,7 @@ import logging
 import re
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from typing import Dict, List, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
@@ -12,11 +13,10 @@ from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
-from app import models
+from app import models, serializers
 from app.background_processes.background_utils import generate_uuid
 from app.i18n import get_translated_string
-from app.schema import api
-from app.schema.api import ApplicationListResponse, UpdateDataField
+from app.schema.api import UpdateDataField
 from app.settings import app_settings
 
 from reportlab_mods import (  # noqa: F401 #isort:skip
@@ -52,6 +52,13 @@ OCP_cannot_modify = [
 
 
 document_type_keys = [doc_type.name for doc_type in models.BorrowerDocumentType]
+
+
+class ERROR_CODES(Enum):
+    BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
+    DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
+    APPLICATION_LAPSED = "APPLICATION_LAPSED"
+    APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
 def format_currency(number, currency):
@@ -133,7 +140,7 @@ def validate_fields(application):
         logger.error(f"Following fields were not validated: {not_validated_fields}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=api.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
+            detail=ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
         )
 
 
@@ -160,7 +167,7 @@ def validate_documents(application):
 
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=api.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
+            detail=ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
         )
 
 
@@ -476,7 +483,7 @@ def update_application_award(
 
 def get_all_active_applications(
     page: int, page_size: int, sort_field: str, sort_order: str, session: Session
-) -> ApplicationListResponse:
+) -> serializers.ApplicationListResponse:
     """
     Retrieves all active applications.
 
@@ -500,7 +507,7 @@ def get_all_active_applications(
     :type session: Session
 
     :return: The list of active applications along with pagination information.
-    :rtype: ApplicationListResponse
+    :rtype: serializers.ApplicationListResponse
     """
 
     sort_direction = desc if sort_order.lower() == "desc" else asc
@@ -524,7 +531,7 @@ def get_all_active_applications(
 
     applications = applications_query.offset(page * page_size).limit(page_size).all()
 
-    return ApplicationListResponse(
+    return serializers.ApplicationListResponse(
         items=applications,
         count=total_count,
         page=page,
@@ -569,7 +576,7 @@ def get_all_FI_user_applications(
     sort_order: str,
     session: Session,
     lender_id,
-) -> ApplicationListResponse:
+) -> serializers.ApplicationListResponse:
     """
     Retrieves all applications associated with a specific Financial Institution (FI) user.
 
@@ -597,7 +604,7 @@ def get_all_FI_user_applications(
     :type lender_id: int
 
     :return: The list of applications associated with the specified FI user along with pagination information.
-    :rtype: ApplicationListResponse
+    :rtype: serializers.ApplicationListResponse
     """
 
     sort_direction = desc if sort_order.lower() == "desc" else asc
@@ -622,7 +629,7 @@ def get_all_FI_user_applications(
 
     applications = applications_query.offset(page * page_size).limit(page_size).all()
 
-    return ApplicationListResponse(
+    return serializers.ApplicationListResponse(
         items=applications,
         count=total_count,
         page=page,
@@ -696,7 +703,7 @@ def get_application_by_uuid(uuid: str, session: Session) -> models.Application:
     if application.status == models.ApplicationStatus.LAPSED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=api.ERROR_CODES.APPLICATION_LAPSED.value,
+            detail=ERROR_CODES.APPLICATION_LAPSED.value,
         )
 
     return application
@@ -1326,7 +1333,7 @@ def check_if_application_was_already_copied(application: models.Application, ses
     if app_action:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=api.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
+            detail=ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
         )
 
 

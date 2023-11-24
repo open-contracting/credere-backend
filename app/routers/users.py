@@ -8,12 +8,10 @@ from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import models
+from app import models, serializers
 from app.auth import OCP_only, get_current_user
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
-from app.schema import api as ApiSchema
-from app.schema.api import UserListResponse
 
 from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
 from fastapi import HTTPException, Query, Response, status  # isort:skip # noqa
@@ -67,7 +65,7 @@ async def create_user(
 
 @router.put(
     "/users/change-password",
-    response_model=Union[ApiSchema.ChangePasswordResponse, ApiSchema.ResponseBase],
+    response_model=Union[serializers.ChangePasswordResponse, serializers.ResponseBase],
 )
 def change_password(
     user: models.BasicUser,
@@ -88,7 +86,7 @@ def change_password(
     :type client: CognitoClient
 
     :return: The change password response or an error response.
-    :rtype: Union[ApiSchema.ChangePasswordResponse, ApiSchema.ResponseBase]
+    :rtype: Union[serializers.ChangePasswordResponse, serializers.ResponseBase]
     """
     try:
         response = client.initiate_auth(user.username, user.temp_password)
@@ -99,14 +97,14 @@ def change_password(
         client.verified_email(user.username)
         if response.get("ChallengeName") is not None and response["ChallengeName"] == "MFA_SETUP":
             mfa_setup_response = client.mfa_setup(response["Session"])
-            return ApiSchema.ChangePasswordResponse(
+            return serializers.ChangePasswordResponse(
                 detail="Password changed with MFA setup required",
                 secret_code=mfa_setup_response["secret_code"],
                 session=mfa_setup_response["session"],
                 username=user.username,
             )
 
-        return ApiSchema.ResponseBase(detail="Password changed")
+        return serializers.ResponseBase(detail="Password changed")
     except ClientError as e:
         logger.exception(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
@@ -122,7 +120,7 @@ def change_password(
             )
 
 
-@router.put("/users/setup-mfa", response_model=ApiSchema.ResponseBase)
+@router.put("/users/setup-mfa", response_model=serializers.ResponseBase)
 def setup_mfa(
     user: models.SetupMFA,
     response: Response,
@@ -142,12 +140,12 @@ def setup_mfa(
     :type client: CognitoClient
 
     :return: The response indicating successful MFA setup or an error response.
-    :rtype: ApiSchema.ResponseBase
+    :rtype: serializers.ResponseBase
     """
     try:
         client.verify_software_token(user.secret, user.session, user.temp_password)
 
-        return ApiSchema.ResponseBase(detail="MFA configured successfully")
+        return serializers.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
         logger.exception(e)
 
@@ -166,7 +164,7 @@ def setup_mfa(
 
 @router.post(
     "/users/login",
-    response_model=ApiSchema.LoginResponse,
+    response_model=serializers.LoginResponse,
 )
 def login(
     user: models.BasicUser,
@@ -192,13 +190,13 @@ def login(
     :type session: Session
 
     :return: The response containing the user information and tokens if the login is successful.
-    :rtype: ApiSchema.LoginResponse
+    :rtype: serializers.LoginResponse
     """
     try:
         response = client.initiate_auth(user.username, user.password)
         user = models.User.first_by(session, "email", user.username)
 
-        return ApiSchema.LoginResponse(
+        return serializers.LoginResponse(
             user=user,
             access_token=response["AuthenticationResult"]["AccessToken"],
             refresh_token=response["AuthenticationResult"]["RefreshToken"],
@@ -221,7 +219,7 @@ def login(
 
 @router.post(
     "/users/login-mfa",
-    response_model=ApiSchema.LoginResponse,
+    response_model=serializers.LoginResponse,
 )
 def login_mfa(
     user: models.BasicUser,
@@ -244,7 +242,7 @@ def login_mfa(
     :type session: Session
 
     :return: The response containing the user information and tokens if the login is successful.
-    :rtype: ApiSchema.LoginResponse
+    :rtype: serializers.LoginResponse
     """
     try:
         response = client.initiate_auth(user.username, user.password)
@@ -267,7 +265,7 @@ def login_mfa(
                     detail="User not found",
                 )
 
-            return ApiSchema.LoginResponse(
+            return serializers.LoginResponse(
                 user=user,
                 access_token=mfa_login_response["access_token"],
                 refresh_token=mfa_login_response["refresh_token"],
@@ -290,7 +288,7 @@ def login_mfa(
 
 @router.get(
     "/users/logout",
-    response_model=ApiSchema.ResponseBase,
+    response_model=serializers.ResponseBase,
 )
 def logout(
     authorization: str = Header(None),
@@ -310,7 +308,7 @@ def logout(
     :type client: CognitoClient
 
     :return: The response indicating successful logout.
-    :rtype: ApiSchema.ResponseBase
+    :rtype: serializers.ResponseBase
     """
     try:
         access_token = authorization.split(" ")[1]
@@ -318,12 +316,12 @@ def logout(
     except ClientError as e:
         logger.exception(e)
 
-    return ApiSchema.ResponseBase(detail="User logged out successfully")
+    return serializers.ResponseBase(detail="User logged out successfully")
 
 
 @router.get(
     "/users/me",
-    response_model=ApiSchema.UserResponse,
+    response_model=serializers.UserResponse,
 )
 def me(
     usernameFromToken: str = Depends(get_current_user),
@@ -342,15 +340,15 @@ def me(
     :type session: Session
 
     :return: The response containing the details of the authenticated user.
-    :rtype: ApiSchema.UserResponse
+    :rtype: serializers.UserResponse
     """
     user = models.User.first_by(session, "external_id", usernameFromToken)
-    return ApiSchema.UserResponse(user=user)
+    return serializers.UserResponse(user=user)
 
 
 @router.post(
     "/users/forgot-password",
-    response_model=ApiSchema.ResponseBase,
+    response_model=serializers.ResponseBase,
 )
 def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(get_cognito_client)):
     """
@@ -365,7 +363,7 @@ def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(get_
     :type client: CognitoClient
 
     :return: The response indicating that an email with a reset link was sent to the user.
-    :rtype: ApiSchema.ResponseBase
+    :rtype: serializers.ResponseBase
     """
     detail = "An email with a reset link was sent to end user"
     try:
@@ -374,7 +372,7 @@ def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(get_
         logger.exception("Error resetting password")
 
     # always return 200 to avoid user enumeration
-    return ApiSchema.ResponseBase(detail=detail)
+    return serializers.ResponseBase(detail=detail)
 
 
 @router.get("/users/{user_id}", tags=["users"], response_model=models.User)
@@ -399,7 +397,7 @@ async def get_user(user_id: int, session: Session = Depends(get_db)):
     return user
 
 
-@router.get("/users", tags=["users"], response_model=ApiSchema.UserListResponse)
+@router.get("/users", tags=["users"], response_model=serializers.UserListResponse)
 @OCP_only()
 async def get_all_users(
     page: int = Query(0, ge=0),
@@ -428,7 +426,7 @@ async def get_all_users(
     :type session: Session
 
     :return: The paginated and sorted list of users.
-    :rtype: ApiSchema.UserListResponse
+    :rtype: serializers.UserListResponse
     """
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
@@ -445,7 +443,7 @@ async def get_all_users(
 
     users = list_query.offset(page * page_size).limit(page_size).all()
 
-    return UserListResponse(
+    return serializers.UserListResponse(
         items=users,
         count=total_count,
         page=page,

@@ -5,11 +5,9 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import models
+from app import models, serializers
 from app.auth import OCP_only, get_current_user
 from app.db import get_db, transaction_session
-from app.schema import api as ApiSchema
-from app.schema.api import LenderListResponse
 
 router = APIRouter()
 
@@ -182,7 +180,7 @@ async def update_lender(
 @router.get(
     "/lenders",
     tags=["lenders"],
-    response_model=ApiSchema.LenderListResponse,
+    response_model=serializers.LenderListResponse,
 )
 async def get_lenders_list(
     session: Session = Depends(get_db),
@@ -194,7 +192,7 @@ async def get_lenders_list(
     :type session: Session
 
     :return: The list of all lenders.
-    :rtype: ApiSchema.LenderListResponse
+    :rtype: serializers.LenderListResponse
     """
     lenders_query = session.query(models.Lender)
 
@@ -202,7 +200,7 @@ async def get_lenders_list(
 
     lenders = lenders_query.all()
 
-    return LenderListResponse(
+    return serializers.LenderListResponse(
         items=lenders,
         count=total_count,
         page=0,

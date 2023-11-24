@@ -13,7 +13,7 @@ from sqlalchemy import and_, text
 from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
-from app import models
+from app import models, serializers
 from app.auth import OCP_only, get_current_user, get_user
 from app.aws import CognitoClient, get_cognito_client
 from app.background_processes import application_utils
@@ -553,7 +553,7 @@ async def upload_contract(
 @router.post(
     "/applications/confirm-upload-contract",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def confirm_upload_contract(
     payload: ApiSchema.UploadContractConfirmation,
@@ -577,7 +577,7 @@ async def confirm_upload_contract(
     :type client: CognitoClient
 
     :return: The application response containing the updated application and related entities.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     """
     with transaction_session(session):
@@ -614,7 +614,7 @@ async def confirm_upload_contract(
             },
         )
 
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -880,7 +880,7 @@ async def update_application_borrower(
 @router.get(
     "/applications/admin-list",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationListResponse,
+    response_model=serializers.ApplicationListResponse,
 )
 @OCP_only()
 async def get_applications_list(
@@ -913,7 +913,7 @@ async def get_applications_list(
     :type session: Session
 
     :return: The paginated list of applications.
-    :rtype: ApiSchema.ApplicationListResponse
+    :rtype: serializers.ApplicationListResponse
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
 
@@ -1031,7 +1031,7 @@ async def export_applications(
 @router.get(
     "/applications",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationListResponse,
+    response_model=serializers.ApplicationListResponse,
 )
 async def get_applications(
     page: int = Query(0, ge=0),
@@ -1063,7 +1063,7 @@ async def get_applications(
     :type session: Session
 
     :return: The paginated list of applications for the specific user.
-    :rtype: ApiSchema.ApplicationListResponse
+    :rtype: serializers.ApplicationListResponse
 
     """
     return utils.get_all_FI_user_applications(page, page_size, sort_field, sort_order, session, user.lender_id)
@@ -1072,7 +1072,7 @@ async def get_applications(
 @router.get(
     "/applications/uuid/{uuid}",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     """
@@ -1085,7 +1085,7 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     :type session: Session
 
     :return: The application with the specified UUID and its associated entities.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 404 if the application is expired.
 
@@ -1093,7 +1093,7 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     application = utils.get_application_by_uuid(uuid, session)
     utils.check_is_application_expired(application)
 
-    return ApiSchema.ApplicationResponse(
+    return serializers.ApplicationResponse(
         application=application,
         borrower=application.borrower,
         award=application.award,
@@ -1106,7 +1106,7 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
 @router.post(
     "/applications/access-scheme",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def access_scheme(
     payload: ApiSchema.ApplicationBase,
@@ -1131,7 +1131,7 @@ async def access_scheme(
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
 
@@ -1149,7 +1149,7 @@ async def access_scheme(
         background_tasks.add_task(fetch_previous_awards, application.borrower)
         background_tasks.add_task(update_statistics)
 
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1159,7 +1159,7 @@ async def access_scheme(
 @router.post(
     "/applications/credit-product-options",
     tags=["applications"],
-    response_model=ApiSchema.CreditProductListResponse,
+    response_model=serializers.CreditProductListResponse,
 )
 async def credit_product_options(
     payload: ApiSchema.ApplicationCreditOptions,
@@ -1175,7 +1175,7 @@ async def credit_product_options(
     :type session: Session
 
     :return: The credit product list response containing the available loans and credit lines.
-    :rtype: ApiSchema.CreditProductListResponse
+    :rtype: serializers.CreditProductListResponse
 
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the previous lenders are not found. # noqa
 
@@ -1228,13 +1228,13 @@ async def credit_product_options(
         loans = loans_query.all()
         credit_lines = credit_lines_query.all()
 
-        return ApiSchema.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
+        return serializers.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
 
 
 @router.post(
     "/applications/select-credit-product",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def select_credit_product(
     payload: ApiSchema.ApplicationSelectCreditProduct,
@@ -1250,7 +1250,7 @@ async def select_credit_product(
     :type session: Session
 
     :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the calculator data is invalid. # noqa: E501
 
@@ -1277,7 +1277,7 @@ async def select_credit_product(
             models.ApplicationActionType.APPLICATION_CALCULATOR_DATA_UPDATE,
             payload,
         )
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1290,7 +1290,7 @@ async def select_credit_product(
 @router.post(
     "/applications/rollback-select-credit-product",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def rollback_select_credit_product(
     payload: ApiSchema.ApplicationBase,
@@ -1306,7 +1306,7 @@ async def rollback_select_credit_product(
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the credit product is not selected or if the lender is already assigned. # noqa: E501
 
@@ -1330,7 +1330,7 @@ async def rollback_select_credit_product(
 
         application.credit_product_id = None
         application.borrower_credit_product_selected_at = None
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1340,7 +1340,7 @@ async def rollback_select_credit_product(
 @router.post(
     "/applications/confirm-credit-product",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def confirm_credit_product(
     payload: ApiSchema.ApplicationBase,
@@ -1358,7 +1358,7 @@ async def confirm_credit_product(
 
     :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
 
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the credit product is not selected or not found.
 
@@ -1397,7 +1397,7 @@ async def confirm_credit_product(
             {},
         )
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1410,7 +1410,7 @@ async def confirm_credit_product(
 @router.post(
     "/applications/submit",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def update_apps_send_notifications(
     payload: ApiSchema.ApplicationBase,
@@ -1434,7 +1434,7 @@ async def update_apps_send_notifications(
     :type client: CognitoClient
 
     :return: The updated application with borrower, award and lender details.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raises HTTPException: If credit product or lender is not selected, or if there's an error in submitting the application. # noqa: E501
     """
@@ -1473,7 +1473,7 @@ async def update_apps_send_notifications(
                 message_id,
             )
             background_tasks.add_task(update_statistics)
-            return ApiSchema.ApplicationResponse(
+            return serializers.ApplicationResponse(
                 application=application,
                 borrower=application.borrower,
                 award=application.award,
@@ -1573,7 +1573,7 @@ async def email_sme(
 @router.post(
     "/applications/complete-information-request",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def complete_information_request(
     payload: ApiSchema.ApplicationBase,
@@ -1597,7 +1597,7 @@ async def complete_information_request(
     :type session: Session
 
     :return: The updated application with borrower, award, lender, and documents details.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     """
 
@@ -1625,7 +1625,7 @@ async def complete_information_request(
             message_id,
         )
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1637,7 +1637,7 @@ async def complete_information_request(
 @router.post(
     "/applications/decline",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def decline(
     payload: ApiSchema.ApplicationDeclinePayload,
@@ -1655,7 +1655,7 @@ async def decline(
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the PENDING status.
 
@@ -1677,7 +1677,7 @@ async def decline(
             application.borrower.status = models.BorrowerStatus.DECLINE_OPPORTUNITIES
             application.borrower.declined_at = current_time
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1687,7 +1687,7 @@ async def decline(
 @router.post(
     "/applications/rollback-decline",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def rollback_decline(
     payload: ApiSchema.ApplicationBase,
@@ -1704,7 +1704,7 @@ async def rollback_decline(
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
 
@@ -1722,7 +1722,7 @@ async def rollback_decline(
             application.borrower.status = models.BorrowerStatus.ACTIVE
             application.borrower.declined_at = None
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1732,7 +1732,7 @@ async def rollback_decline(
 @router.post(
     "/applications/decline-feedback",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def decline_feedback(
     payload: ApiSchema.ApplicationDeclineFeedbackPayload,
@@ -1749,7 +1749,7 @@ async def decline_feedback(
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
 
@@ -1764,7 +1764,7 @@ async def decline_feedback(
 
         application.borrower_declined_preferences_data = borrower_declined_preferences_data
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1809,7 +1809,7 @@ async def previous_contracts(
 @router.post(
     "/applications/find-alternative-credit-option",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def find_alternative_credit_option(
     payload: ApiSchema.ApplicationBase,
@@ -1829,7 +1829,7 @@ async def find_alternative_credit_option(
     :type client: CognitoClient
 
     :return: The newly created application as an alternative credit option.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application has already been copied.
     :raise: HTTPException with status code 400 if the application is not in the rejected status.
@@ -1859,7 +1859,7 @@ async def find_alternative_credit_option(
             payload,
         )
 
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=new_application,
             borrower=new_application.borrower,
             award=new_application.award,

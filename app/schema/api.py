@@ -1,36 +1,10 @@
 from datetime import datetime
 from decimal import Decimal
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
 from app import models
-
-
-class ERROR_CODES(Enum):
-    BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
-    DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
-    APPLICATION_LAPSED = "APPLICATION_LAPSED"
-    APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
-
-
-class BasePagination(BaseModel):
-    count: int
-    page: int
-    page_size: int
-
-
-class ApplicationListResponse(BasePagination):
-    items: List[models.ApplicationWithRelations]
-
-
-class LenderListResponse(BasePagination):
-    items: List[models.Lender]
-
-
-class UserListResponse(BasePagination):
-    items: List[models.UserWithLender]
 
 
 class AwardUpdate(BaseModel):
@@ -90,15 +64,6 @@ class ApplicationUpdate(BaseModel):
     completed_in_days: Optional[int]
 
 
-class ApplicationResponse(BaseModel):
-    application: models.ApplicationRead
-    borrower: models.Borrower
-    award: models.Award
-    lender: Optional[models.Lender] = None
-    documents: List[models.BorrowerDocumentBase] = []
-    creditProduct: Optional[models.CreditProduct] = None
-
-
 class LenderRejectedApplication(BaseModel):
     compliance_checks_failed: bool
     poor_credit_history: bool
@@ -136,11 +101,6 @@ class ApplicationSelectCreditProduct(ApplicationCreditOptions):
     payment_start_date: Optional[datetime]
 
 
-class CreditProductListResponse(BaseModel):
-    loans: List[models.CreditProductWithLender]
-    credit_lines: List[models.CreditProductWithLender]
-
-
 class UploadContractConfirmation(ApplicationBase):
     contract_amount_submitted: Optional[Decimal]
 
@@ -161,30 +121,3 @@ class ApplicationDeclineFeedbackPayload(ApplicationBase):
     dont_want_access_credit: bool
     other: bool
     other_comments: str
-
-
-class ResponseBase(BaseModel):
-    detail: str
-
-
-class ChangePasswordResponse(ResponseBase):
-    secret_code: str
-    session: str
-    username: str
-
-
-class UserResponse(BaseModel):
-    user: models.User
-
-
-class LoginResponse(UserResponse):
-    access_token: str
-    refresh_token: str
-
-
-class StatisticResponse(BaseModel):
-    statistics_kpis: Dict[Any, Any]
-
-
-class StatisticOptInResponse(BaseModel):
-    opt_in_stat: Dict[Any, Any]

@@ -7,11 +7,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
+from app import serializers
 from app.auth import OCP_only, get_current_user, get_user
 from app.background_processes import statistics_utils
 from app.db import get_db
 from app.models import Statistic, StatisticCustomRange, StatisticType, User
-from app.schema import api as ApiSchema
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ router = APIRouter()
 @router.get(
     "/statistics-ocp",
     tags=["statistics"],
-    response_model=ApiSchema.StatisticResponse,
+    response_model=serializers.StatisticResponse,
 )
 @OCP_only()
 async def get_ocp_statistics_by_lender(
@@ -53,7 +53,7 @@ async def get_ocp_statistics_by_lender(
     :type session: Session
 
     :return: Response containing the OCP statistics.
-    :rtype: ApiSchema.StatisticResponse
+    :rtype: serializers.StatisticResponse
     """
     try:
         if initial_date is None and final_date is None and custom_range is None:
@@ -90,7 +90,7 @@ async def get_ocp_statistics_by_lender(
     except ClientError() as e:
         logger.exception(e)
 
-    return ApiSchema.StatisticResponse(
+    return serializers.StatisticResponse(
         statistics_kpis=statistics_kpis,
     )
 
@@ -98,7 +98,7 @@ async def get_ocp_statistics_by_lender(
 @router.get(
     "/statistics-ocp/opt-in",
     tags=["statistics"],
-    response_model=ApiSchema.StatisticOptInResponse,
+    response_model=serializers.StatisticOptInResponse,
 )
 @OCP_only()
 async def get_ocp_statistics_opt_in(
@@ -138,12 +138,12 @@ async def get_ocp_statistics_opt_in(
 
     except ClientError as e:
         logger.exception(e)
-    return ApiSchema.StatisticOptInResponse(
+    return serializers.StatisticOptInResponse(
         opt_in_stat=opt_in_stats,
     )
 
 
-@router.get("/statistics-fi", tags=["statistics"], response_model=ApiSchema.StatisticResponse)
+@router.get("/statistics-fi", tags=["statistics"], response_model=serializers.StatisticResponse)
 async def get_fi_statistics(session: Session = Depends(get_db), user: User = Depends(get_user)):
     """
     Retrieve statistics for a Financial Institution (FI).
@@ -158,7 +158,7 @@ async def get_fi_statistics(session: Session = Depends(get_db), user: User = Dep
     :type user: User
 
     :return: Response containing the statistics for the Financial Institution.
-    :rtype: ApiSchema.StatisticResponse
+    :rtype: serializers.StatisticResponse
     """
     try:
         current_date = datetime.now().date()
@@ -182,6 +182,6 @@ async def get_fi_statistics(session: Session = Depends(get_db), user: User = Dep
     except ClientError as e:
         logger.exception(e)
 
-    return ApiSchema.StatisticResponse(
+    return serializers.StatisticResponse(
         statistics_kpis=statistics_kpis,
     )
