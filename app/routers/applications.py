@@ -7,6 +7,7 @@ from typing import List
 import pandas as pd
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, UploadFile, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
@@ -81,12 +82,12 @@ async def reject_application(
                 detail=message,
             )
         utils.reject_application(application, payload)
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application.id,
-            models.ApplicationActionType.REJECTED_APPLICATION,
-            payload,
+            type=models.ApplicationActionType.REJECTED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
         )
         options = (
             session.query(models.CreditProduct)
@@ -103,7 +104,12 @@ async def reject_application(
             .all()
         )
         message_id = client.send_rejected_email_to_sme(application, options)
-        utils.create_message(application, models.MessageType.REJECTED_APPLICATION, session, message_id)
+        models.Message.create(
+            session,
+            application=application,
+            type=models.MessageType.REJECTED_APPLICATION,
+            external_message_id=message_id,
+        )
         background_tasks.add_task(update_statistics)
         return application
 
@@ -150,21 +156,20 @@ async def complete_application(
         utils.check_application_status(application, models.ApplicationStatus.CONTRACT_UPLOADED)
         utils.complete_application(application, payload.disbursed_final_amount)
         application.completed_in_days = background.get_application_days_passed(application, session)
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application.id,
-            models.ApplicationActionType.FI_COMPLETE_APPLICATION,
-            {
-                "disbursed_final_amount": payload.disbursed_final_amount,
-            },
+            type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
+            # payload.disbursed_final_amount is a Decimal.
+            data=jsonable_encoder({"disbursed_final_amount": payload.disbursed_final_amount}),
+            application_id=application.id,
+            user_id=user.id,
         )
         message_id = client.send_application_credit_disbursed(application)
-        utils.create_message(
-            application,
-            models.MessageType.CREDIT_DISBURSED,
+        models.Message.create(
             session,
-            message_id,
+            application=application,
+            type=models.MessageType.CREDIT_DISBURSED,
+            external_message_id=message_id,
         )
         background_tasks.add_task(update_statistics)
         return application
@@ -213,20 +218,20 @@ async def approve_application(
         utils.check_FI_user_permission(application, user)
         utils.check_application_status(application, models.ApplicationStatus.STARTED)
         utils.approve_application(application, payload)
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application.id,
-            models.ApplicationActionType.APPROVED_APPLICATION,
-            payload,
+            type=models.ApplicationActionType.APPROVED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
         )
 
         message_id = client.send_application_approved_to_sme(application)
-        utils.create_message(
-            application,
-            models.MessageType.APPROVED_APPLICATION,
+        models.Message.create(
             session,
-            message_id,
+            application=application,
+            type=models.MessageType.APPROVED_APPLICATION,
+            external_message_id=message_id,
         )
         background_tasks.add_task(update_statistics)
         return application
@@ -262,12 +267,11 @@ async def change_email(
         application = utils.get_application_by_uuid(payload.uuid, session)
         old_email = application.primary_email
         confirmation_email_token = utils.update_application_primary_email(application, payload.new_email)
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.MSME_CHANGE_EMAIL,
-            payload,
+            type=models.ApplicationActionType.MSME_CHANGE_EMAIL,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
 
         external_message_id = client.send_new_email_confirmation_to_sme(
@@ -278,11 +282,11 @@ async def change_email(
             application.uuid,
         )
 
-        utils.create_message(
-            application,
-            models.MessageType.EMAIL_CHANGE_CONFIRMATION,
+        models.Message.create(
             session,
-            external_message_id,
+            application=application,
+            type=models.MessageType.EMAIL_CHANGE_CONFIRMATION,
+            external_message_id=external_message_id,
         )
 
         return payload
@@ -315,12 +319,11 @@ async def confirm_email(
 
         utils.check_pending_email_confirmation(application, payload.confirmation_email_token)
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.MSME_CONFIRM_EMAIL,
-            payload,
+            type=models.ApplicationActionType.MSME_CONFIRM_EMAIL,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
 
         return parsers.ChangeEmail(new_email=application.primary_email, uuid=application.uuid)
@@ -442,7 +445,12 @@ async def download_application(
             if user.is_OCP()
             else models.ApplicationActionType.FI_DOWNLOAD_APPLICATION
         )
-        utils.create_application_action(session, user.id, application.id, application_action_type, {})
+        models.ApplicationAction.create(
+            session,
+            type=application_action_type,
+            application_id=application.id,
+            user_id=user.id,
+        )
 
         headers = {
             "Content-Disposition": f'attachment; filename="{filename}"',
@@ -493,12 +501,11 @@ async def upload_document(
 
         document = utils.create_or_update_borrower_document(filename, application, type, session, new_file)
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
-            {"file_name": filename},
+            type=models.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
+            data={"file_name": filename},
+            application_id=application.id,
         )
 
         return document
@@ -587,28 +594,26 @@ async def confirm_upload_contract(
         application.status = models.ApplicationStatus.CONTRACT_UPLOADED
         application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
 
-        utils.create_message(
-            application,
-            models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
+        models.Message.create(
             session,
-            FI_message_id,
+            application=application,
+            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
+            external_message_id=FI_message_id,
         )
 
-        utils.create_message(
-            application,
-            models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
+        models.Message.create(
             session,
-            SME_message_id,
+            application=application,
+            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
+            external_message_id=SME_message_id,
         )
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.MSME_UPLOAD_CONTRACT,
-            {
-                "contract_amount_submitted": payload.contract_amount_submitted,
-            },
+            type=models.ApplicationActionType.MSME_UPLOAD_CONTRACT,
+            # payload.contract_amount_submitted is a Decimal.
+            data=jsonable_encoder({"contract_amount_submitted": payload.contract_amount_submitted}),
+            application_id=application.id,
         )
 
         return serializers.ApplicationResponse(
@@ -666,12 +671,11 @@ async def upload_compliance(
             True,
         )
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.FI_UPLOAD_COMPLIANCE,
-            {"file_name": filename},
+            type=models.ApplicationActionType.FI_UPLOAD_COMPLIANCE,
+            data={"file_name": filename},
+            application_id=application.id,
         )
 
         return document
@@ -720,12 +724,12 @@ async def verify_data_field(
         utils.check_FI_user_permission(application, user)
         utils.update_data_field(application, payload)
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application.id,
-            models.ApplicationActionType.DATA_VALIDATION_UPDATE,
-            payload,
+            type=models.ApplicationActionType.DATA_VALIDATION_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
         )
 
         return application
@@ -774,12 +778,12 @@ async def verify_document(
 
         document.verified = payload.verified
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            user.id,
-            document.application.id,
-            models.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
-            payload,
+            type=models.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=document.application.id,
+            user_id=user.id,
         )
 
         return document.application
@@ -817,12 +821,12 @@ async def update_application_award(
     """
     with transaction_session(session):
         application = utils.update_application_award(session, application_id, payload, user)
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application_id,
-            models.ApplicationActionType.AWARD_UPDATE,
-            payload,
+            type=models.ApplicationActionType.AWARD_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application_id,
+            user_id=user.id,
         )
 
         application = utils.get_modified_data_fields(application, session)
@@ -862,12 +866,12 @@ async def update_application_borrower(
     with transaction_session(session):
         application = utils.update_application_borrower(session, application_id, payload, user)
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application_id,
-            models.ApplicationActionType.BORROWER_UPDATE,
-            payload,
+            type=models.ApplicationActionType.BORROWER_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application_id,
+            user_id=user.id,
         )
 
         application = utils.get_modified_data_fields(application, session)
@@ -1267,12 +1271,11 @@ async def select_credit_product(
         application.borrower.size = payload.borrower_size
         application.borrower.sector = payload.sector
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.APPLICATION_CALCULATOR_DATA_UPDATE,
-            payload,
+            type=models.ApplicationActionType.APPLICATION_CALCULATOR_DATA_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
         return serializers.ApplicationResponse(
             application=application,
@@ -1386,12 +1389,10 @@ async def confirm_credit_product(
 
         application.pending_documents = True
         utils.get_previous_documents(application, session)
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
-            {},
+            type=models.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
+            application_id=application.id,
         )
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
@@ -1463,11 +1464,11 @@ async def update_apps_send_notifications(
                 lender_email_group=application.lender.email_group,
             )
             message_id = client.send_application_submission_completed(application)
-            utils.create_message(
-                application,
-                models.MessageType.SUBMITION_COMPLETE,
+            models.Message.create(
                 session,
-                message_id,
+                application=application,
+                type=models.MessageType.SUBMITION_COMPLETE,
+                external_message_id=message_id,
             )
             background_tasks.add_task(update_statistics)
             return serializers.ApplicationResponse(
@@ -1540,12 +1541,12 @@ async def email_sme(
                 application.primary_email,
             )
 
-            utils.create_application_action(
+            models.ApplicationAction.create(
                 session,
-                user.id,
-                application.id,
-                models.ApplicationActionType.FI_REQUEST_INFORMATION,
-                payload,
+                type=models.ApplicationActionType.FI_REQUEST_INFORMATION,
+                data=jsonable_encoder(payload, exclude_unset=True),
+                application_id=application.id,
+                user_id=user.id,
             )
 
             new_message = models.Message(
@@ -1605,21 +1606,20 @@ async def complete_information_request(
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
-            payload,
+            type=models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
 
         message_id = client.send_upload_documents_notifications(application.lender.email_group)
 
-        utils.create_message(
-            application,
-            models.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+        models.Message.create(
             session,
-            message_id,
+            application=application,
+            type=models.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            external_message_id=message_id,
         )
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
@@ -1839,21 +1839,24 @@ async def find_alternative_credit_option(
         new_application = utils.copy_application(application, session)
         message_id = client.send_copied_application_notifications(new_application)
 
-        utils.create_message(new_application, models.MessageType.APPLICATION_COPIED, session, message_id)
-
-        utils.create_application_action(
+        models.Message.create(
             session,
-            None,
-            application.id,
-            models.ApplicationActionType.COPIED_APPLICATION,
-            payload,
+            application=new_application,
+            type=models.MessageType.APPLICATION_COPIED,
+            external_message_id=message_id,
         )
-        utils.create_application_action(
+
+        models.ApplicationAction.create(
             session,
-            None,
-            new_application.id,
-            models.ApplicationActionType.APPLICATION_COPIED_FROM,
-            payload,
+            type=models.ApplicationActionType.COPIED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+        )
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.APPLICATION_COPIED_FROM,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=new_application.id,
         )
 
         return serializers.ApplicationResponse(

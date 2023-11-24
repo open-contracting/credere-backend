@@ -157,21 +157,19 @@ def get_file(document: models.BorrowerDocument, user: models.User, session: Sess
         )
 
     if user.is_OCP():
-        create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            document.application.id,
-            models.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
-            {"file_name": document.name},
+            type=models.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
+            data={"file_name": document.name},
+            application_id=document.application.id,
         )
     else:
         check_FI_user_permission(document.application, user)
-        create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            document.application.id,
-            models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
-            {"file_name": document.name},
+            type=models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
+            data={"file_name": document.name},
+            application_id=document.application.id,
         )
 
 
@@ -263,47 +261,6 @@ def complete_application(application: models.Application, disbursed_final_amount
     application.status = models.ApplicationStatus.COMPLETED
     application.lender_completed_at = current_time
     application.overdued_at = None
-
-
-def create_application_action(
-    session: Session,
-    user_id: Optional[int],
-    application_id: int,
-    type: models.ApplicationAction,
-    payload: dict,
-) -> models.ApplicationAction:
-    """
-    Creates a new application action.
-
-    This function encodes a payload into JSON, removes unset fields, and uses these fields along with the provided
-    type, user_id, and application_id to create a new ApplicationAction. The new action is added to the session
-    and then returned.
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user_id: The ID of the user associated with the action. Can be None.
-    :type user_id: Optional[int]
-
-    :param application_id: The ID of the application associated with the action.
-    :type application_id: int
-
-    :param type: The type of the action.
-    :type type: models.ApplicationAction
-
-    :param payload: The data payload associated with the action.
-    :type payload: dict
-
-    :return: The new ApplicationAction.
-    :rtype: models.ApplicationAction
-    """
-    return models.ApplicationAction.create(
-        session,
-        type=type,
-        data=jsonable_encoder(payload, exclude_unset=True),
-        application_id=application_id,
-        user_id=user_id,
-    )
 
 
 def update_application_borrower(
@@ -846,39 +803,6 @@ def check_application_not_status(
             status_code=status.HTTP_409_CONFLICT,
             detail=message,
         )
-
-
-def create_message(
-    application: models.Application,
-    message: models.MessageType,
-    session: Session,
-    external_message_id: str,
-) -> None:
-    """
-    Create a new message associated with an application.
-
-    This function creates a new Message object with the given application, message type, and
-    external message id, and adds it to the database session. The message's created_at timestamp
-    is set to the current date and time.
-
-    :param application: The application with which the message is associated.
-    :type application: models.Application
-
-    :param message: The type of the message.
-    :type message: models.MessageType
-
-    :param session: The database session.
-    :type session: Session
-
-    :param external_message_id: The id of the message in the external system.
-    :type external_message_id: str
-    """
-    models.Message.create(
-        session,
-        application=application,
-        type=message,
-        external_message_id=external_message_id,
-    )
 
 
 def update_application_primary_email(application: models.Application, email: str) -> str:
