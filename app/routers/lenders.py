@@ -6,8 +6,7 @@ from app.schema import api as ApiSchema
 
 from ..db.session import get_db, transaction_session
 from ..schema import core
-from ..utils.permissions import OCP_only
-from ..utils.verify_token import get_current_user
+from ..utils.verify_token import OCP_only, get_current_user
 
 router = APIRouter()
 

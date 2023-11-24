@@ -16,7 +16,7 @@ from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
 from ..schema import core
 from ..schema.core import BasicUser, SetupMFA, User, UserWithLender
-from ..utils.permissions import OCP_only
+from ..utils.verify_token import OCP_only
 
 from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
 from fastapi import HTTPException, Query, Response, status  # isort:skip # noqa

@@ -23,8 +23,7 @@ from app.schema.api import ChangeEmail
 from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
 from ..schema import core
-from ..utils.permissions import OCP_only
-from ..utils.verify_token import get_current_user, get_user
+from ..utils.verify_token import OCP_only, get_current_user, get_user
 
 from fastapi import Depends, Query, status  # isort:skip # noqa
 from fastapi import Form, UploadFile  # isort:skip # noqa

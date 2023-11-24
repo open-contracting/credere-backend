@@ -15,7 +15,7 @@ from ..db.session import get_db
 from ..schema import core
 from ..schema.core import User
 from ..schema.statistic import Statistic, StatisticCustomRange, StatisticType
-from ..utils.permissions import OCP_only
+from ..utils.verify_token import OCP_only
 
 logger = logging.getLogger(__name__)
 
