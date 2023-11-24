@@ -5,16 +5,68 @@ from sqlalchemy.orm import Session
 
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db, transaction_session_logger
+from app.exceptions import SkippedAwardError
 from app.schema import core
-from app.schema.core import Award, Borrower, Message
+from app.schema.core import Award, Borrower, BorrowerStatus, Message
 from app.utils import email_utility
 
+from . import background_utils
 from . import colombia_data_access as data_access
 from .application_utils import create_application
-from .awards_utils import _create_award
-from .borrower_utils import _get_or_create_borrower
 
 logger = logging.getLogger(__name__)
+
+
+def _get_or_create_borrower(entry, session: Session) -> Borrower:
+    """
+    Get an existing borrower or create a new borrower based on the entry data.
+
+    :param entry: The dictionary containing the borrower data.
+    :type entry: dict
+    :param session: The database session.
+    :type session: Session
+
+    :return: The existing or newly created borrower.
+    :rtype: Borrower
+    """
+
+    documento_proveedor = data_access.get_documento_proveedor(entry)
+    borrower_identifier = background_utils.get_secret_hash(documento_proveedor)
+    data = data_access.create_new_borrower(borrower_identifier, documento_proveedor, entry)
+
+    borrower = Borrower.first_by(session, "borrower_identifier", borrower_identifier)
+    if borrower:
+        if borrower.status == BorrowerStatus.DECLINE_OPPORTUNITIES:
+            raise ValueError("Skipping Award - Borrower choosed to not receive any new opportunity")
+        return borrower.update(session, **data)
+
+    return Borrower.create(session, **data)
+
+
+def _create_award(entry, session: Session, borrower_id=None, previous=False) -> Award:
+    """
+    Create a new award and insert it into the database.
+
+    :param entry: The dictionary containing the award data.
+    :type entry: dict
+    :param session: The database session.
+    :type session: Session
+    :param borrower_id: The ID of the borrower associated with the award. (default: None)
+    :type borrower_id: int, optional
+    :param previous: Whether the award is a previous award or not. (default: False)
+    :type previous: bool, optional
+
+    :return: The inserted award.
+    :rtype: Award
+    """
+    source_contract_id = data_access.get_source_contract_id(entry)
+
+    if Award.first_by(session, "source_contract_id", source_contract_id):
+        raise SkippedAwardError(f"[{previous=}] Award already exists with {source_contract_id=} ({entry=})")
+
+    data = data_access.create_new_award(source_contract_id, entry, borrower_id, previous)
+
+    return Award.create(session, **data)
 
 
 def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Session, until_date: str = None):
@@ -69,26 +121,6 @@ def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Sessio
         contracts_response = data_access.get_new_contracts(index, last_updated_award_date, until_date)
         contracts_response_json = contracts_response.json()
     logger.info("Total fetched contracts: %d", total)
-
-
-def fetch_new_awards(db_provider: Session = get_db):
-    """
-    Fetch new awards, checks if they exist in our database. If not it checks award's borrower and check if they exist.
-    if either award and borrower doesn't exist or if borrower exist but the award doesn't it will create an application
-    in status pending
-
-    An email invitation will be sent to the proper borrower email obtained from endpoint data
-    (In this case SECOP Colombia) for each application created
-
-    you can also pass an email_invitation as parameter if you want to invite a particular borrower
-    """
-    with contextmanager(db_provider)() as session:
-        last_updated_award_date = Award.last_updated(session)
-    fetch_new_awards_from_date(last_updated_award_date, db_provider)
-
-
-def fetch_contracts_from_date(from_date: str, until_date: str, db_provider: Session = get_db):
-    fetch_new_awards_from_date(from_date, db_provider, until_date)
 
 
 def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):

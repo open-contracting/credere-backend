@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 
 from app.background_processes import fetcher
+from app.commands import fetch_awards
 from app.schema import core
 from tests.common import common_test_client, common_test_functions
 
@@ -53,9 +54,7 @@ def test_fetch_empty_contracts(start_background_db, caplog):  # noqa
         with common_test_functions.mock_response(
             200, [], "app.background_processes.colombia_data_access.get_new_contracts"
         ):
-            fetcher.fetch_new_awards(
-                common_test_client.get_test_db,
-            )
+            fetch_awards()
 
     assert "No new contracts" in caplog.text
 
@@ -74,9 +73,7 @@ def test_fetch_new_awards_borrower_declined(client, mock_templated_email):  # no
         email,
         "app.background_processes.background_utils.make_request_with_retry",
     ):
-        fetcher.fetch_new_awards(
-            common_test_client.get_test_db,
-        )
+        fetch_awards()
 
 
 def test_fetch_new_awards_from_date(start_background_db, mock_templated_email):  # noqa
@@ -94,9 +91,7 @@ def test_fetch_new_awards_from_date(start_background_db, mock_templated_email): 
         email,
         "app.background_processes.background_utils.make_request_with_retry",
     ):
-        fetcher.fetch_new_awards(
-            common_test_client.get_test_db,
-        )
+        fetch_awards()
 
         with contextmanager(common_test_client.get_test_db)() as session:
             inserted_award = session.query(core.Award).first()

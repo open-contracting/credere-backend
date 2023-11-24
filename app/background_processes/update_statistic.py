@@ -13,11 +13,6 @@ from . import statistics_utils
 
 logger = logging.getLogger(__name__)
 
-# any
-get_statistics_kpis = statistics_utils.get_general_statistics
-# OCP
-get_msme_opt_in = statistics_utils.get_msme_opt_in_stats
-
 
 def update_statistics(db_provider: Session = get_db):
     """
@@ -48,7 +43,7 @@ def update_statistics(db_provider: Session = get_db):
     with contextmanager(db_provider)() as session:
         with transaction_session_logger(session, "Error saving statistics"):
             # Get general Kpis
-            statistic_kpis = get_statistics_kpis(session, None, None, None)
+            statistic_kpis = statistics_utils.get_general_statistics(session, None, None, None)
             # Try to get the existing row
             statistic_kpi_data = (
                 session.query(Statistic)
@@ -72,7 +67,7 @@ def update_statistics(db_provider: Session = get_db):
                 session.add(statistic_kpi_data)
 
             # Get Opt in statistics
-            statistics_msme_opt_in = get_msme_opt_in(session)
+            statistics_msme_opt_in = statistics_utils.get_msme_opt_in_stats(session)
             statistics_msme_opt_in["sector_statistics"] = [
                 data.dict() for data in statistics_msme_opt_in["sector_statistics"]
             ]
@@ -108,7 +103,7 @@ def update_statistics(db_provider: Session = get_db):
             lender_ids = [id[0] for id in session.query(core.Lender.id).all()]
             for lender_id in lender_ids:
                 # Get statistics for each lender
-                statistic_kpis = get_statistics_kpis(session, None, None, lender_id)
+                statistic_kpis = statistics_utils.get_general_statistics(session, None, None, lender_id)
 
                 # Try to get the existing row
                 statistic_kpi_data = (

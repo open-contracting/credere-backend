@@ -1,4 +1,3 @@
-from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
@@ -6,12 +5,10 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.settings import app_settings
-from app.core.user_dependencies import sesClient
-from app.db.session import get_db, transaction_session
+from app.db.session import get_db
 from app.exceptions import SkippedAwardError
 from app.schema import core
-from app.schema.core import Application, Message
-from app.utils import email_utility
+from app.schema.core import Application
 
 from . import background_utils
 
@@ -298,60 +295,3 @@ def get_application_days_passed(application: core.Application, session: Session)
         days_passed += (fi_request_action - msme_upload_action).days
     days_passed = round(days_passed)
     return days_passed
-
-
-def send_overdue_reminders(session: Session):
-    """
-    Send reminders for applications that are overdue.
-
-    :param session: The database session.
-    :type session: Session
-
-    :return: None
-    :rtype: None
-    """
-    applications = get_all_applications_with_status(
-        [
-            core.ApplicationStatus.CONTRACT_UPLOADED,
-            core.ApplicationStatus.STARTED,
-        ],
-        session,
-    )
-    overdue_lenders = defaultdict(lambda: {"count": 0})
-    for application in applications:
-        with transaction_session(session):
-            days_passed = get_application_days_passed(application, session)
-            if days_passed > application.lender.sla_days * app_settings.progress_to_remind_started_applications:
-                if "email" not in overdue_lenders[application.lender.id]:
-                    overdue_lenders[application.lender.id]["email"] = application.lender.email_group
-                    overdue_lenders[application.lender.id]["name"] = application.lender.name
-                overdue_lenders[application.lender.id]["count"] += 1
-                if days_passed > application.lender.sla_days:
-                    current_dt = datetime.now(application.created_at.tzinfo)
-                    application.overdued_at = current_dt
-                    message_id = email_utility.send_overdue_application_email_to_OCP(
-                        sesClient,
-                        application.lender.name,
-                    )
-
-                    Message.create(
-                        session,
-                        application=application,
-                        type=core.MessageType.OVERDUE_APPLICATION,
-                        external_message_id=message_id,
-                    )
-
-    for id, lender_data in overdue_lenders.items():
-        name = lender_data.get("name")
-        count = lender_data.get("count")
-        email = lender_data.get("email")
-        message_id = email_utility.send_overdue_application_email_to_FI(sesClient, name, email, count)
-
-        Message.create(
-            session,
-            application=application,
-            type=core.MessageType.OVERDUE_APPLICATION,
-            external_message_id=message_id,
-        )
-
-    session.commit()
