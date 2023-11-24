@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -6,10 +6,12 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from sqlalchemy import DECIMAL, Column, DateTime
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy import desc
+from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.sql import func
 from sqlmodel import Field, Relationship, SQLModel
+
+from app.settings import app_settings
 
 
 def _get_missing_data_keys(input_dict):
@@ -360,6 +362,89 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     actions: Optional[List["ApplicationAction"]] = Relationship(back_populates="application")
     credit_product: "CreditProduct" = Relationship()
 
+    @classmethod
+    def unarchived(cls, session):
+        return session.query(cls).filter(cls.archived_at.is_(None))
+
+    @classmethod
+    def expiring_soon(cls, session):
+        return session.query(cls).filter(
+            and_(
+                cls.expired_at > datetime.now(),
+                cls.expired_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
+            )
+        )
+
+    @classmethod
+    def pending_introduction_reminder(cls, session):
+        return (
+            cls.expiring_soon(session)
+            .filter(
+                and_(
+                    cls.status == ApplicationStatus.PENDING,
+                    ~cls.id.in_(Message.application_by_type(MessageType.BORROWER_PENDING_APPLICATION_REMINDER)),
+                    Borrower.status == BorrowerStatus.ACTIVE,
+                )
+            )
+            .join(Borrower, cls.borrower_id == Borrower.id)
+            .join(Award, cls.award_id == Award.id)
+        )
+
+    @classmethod
+    def pending_submission_reminder(cls, session):
+        return cls.expiring_soon(session).filter(
+            and_(
+                cls.status == ApplicationStatus.ACCEPTED,
+                ~cls.id.in_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
+            )
+        )
+
+    @classmethod
+    def lapsed(cls, session):
+        delta = timedelta(days=app_settings.days_to_change_to_lapsed)
+
+        return cls.unarchived(session).filter(
+            or_(
+                and_(
+                    cls.status == ApplicationStatus.PENDING,
+                    cls.created_at + delta < datetime.now(),
+                ),
+                and_(
+                    cls.status == ApplicationStatus.ACCEPTED,
+                    cls.borrower_accepted_at + delta < datetime.now(),
+                ),
+                and_(
+                    cls.status == ApplicationStatus.INFORMATION_REQUESTED,
+                    cls.information_requested_at + delta < datetime.now(),
+                ),
+            ),
+        )
+
+    @classmethod
+    def archivable(cls, session):
+        delta = timedelta(days=app_settings.days_to_erase_borrower_data)
+
+        return cls.unarchived(session).filter(
+            or_(
+                and_(
+                    cls.status == ApplicationStatus.DECLINED,
+                    cls.borrower_declined_at + delta < datetime.now(),
+                ),
+                and_(
+                    cls.status == ApplicationStatus.REJECTED,
+                    cls.lender_rejected_at + delta < datetime.now(),
+                ),
+                and_(
+                    cls.status == ApplicationStatus.COMPLETED,
+                    cls.lender_approved_at + delta < datetime.now(),
+                ),
+                and_(
+                    cls.status == ApplicationStatus.LAPSED,
+                    cls.application_lapsed_at + delta < datetime.now(),
+                ),
+            ),
+        )
+
 
 class BorrowerBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -525,6 +610,10 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
         )
     )
     lender_id: Optional[int] = Field(default=None, foreign_key="lender.id", nullable=True)
+
+    @classmethod
+    def application_by_type(cls, message_type):
+        return select(cls.application_id).filter(cls.type == message_type)
 
 
 class UserBase(SQLModel):

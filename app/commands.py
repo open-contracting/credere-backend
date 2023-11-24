@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import typer
+from sqlalchemy.orm import joinedload
 
 import app.utils.statistics as statistics_utils
 from app import mail, models
@@ -56,8 +57,10 @@ def remove_dated_application_data():
     """
 
     with contextmanager(get_db)() as session:
-        dated_applications = background.get_dated_applications(session)
-        for application in dated_applications:
+        for application in models.Application.archivable(session).options(
+            joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
+        ):
             with transaction_session_logger(session, "Error deleting the data"):
                 application.award.previous = True
                 application.primary_email = ""
@@ -94,8 +97,10 @@ def update_applications_to_lapsed():
     to "LAPSED" and sets the application_lapsed_at timestamp to the current UTC time.
     """
     with contextmanager(get_db)() as session:
-        lapsed_applications = background.get_lapsed_applications(session)
-        for application in lapsed_applications:
+        for application in models.Application.lapsed(session).options(
+            joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
+        ):
             with transaction_session_logger(session, "Error setting to lapsed"):
                 application.status = models.ApplicationStatus.LAPSED
                 application.application_lapsed_at = datetime.utcnow()
@@ -114,9 +119,19 @@ def send_reminders():
     BORROWER_PENDING_SUBMIT_REMINDER) to the database and updates the external_message_id after
     the email has been sent successfully.
     """
-    applications_to_send_intro_reminder = background.get_applications_to_remind_intro(get_db)
-    logger.info("Quantity of mails to send intro reminder " + str(len(applications_to_send_intro_reminder)))
-    if len(applications_to_send_intro_reminder) == 0:
+    with contextmanager(get_db)() as session:
+        applications_to_send_intro_reminder = (
+            models.Application.pending_introduction_reminder(session)
+            .options(
+                joinedload(models.Application.borrower),
+                joinedload(models.Application.award),
+            )
+            .all()
+        )
+
+    length = len(applications_to_send_intro_reminder)
+    logger.info("Quantity of mails to send intro reminder %s", length)
+    if not length:
         logger.info("No new intro reminder to be sent")
     else:
         for application in applications_to_send_intro_reminder:
@@ -137,9 +152,19 @@ def send_reminders():
                     new_message.external_message_id = messageID
                     logger.info("Mail sent and status updated")
 
-    applications_to_send_submit_reminder = background.get_applications_to_remind_submit(get_db)
-    logger.info("Quantity of mails to send submit reminder " + str(len(applications_to_send_submit_reminder)))
-    if len(applications_to_send_submit_reminder) == 0:
+    with contextmanager(get_db)() as session:
+        applications_to_send_submit_reminder = (
+            models.Application.pending_submission_reminder(session)
+            .options(
+                joinedload(models.Application.borrower),
+                joinedload(models.Application.award),
+            )
+            .all()
+        )
+
+    length = len(applications_to_send_submit_reminder)
+    logger.info("Quantity of mails to send submit reminder %s", length)
+    if not length:
         logger.info("No new submit reminder to be sent")
     else:
         for application in applications_to_send_submit_reminder:
@@ -175,15 +200,12 @@ def SLA_overdue_applications():
     Send SLA (Service Level Agreement) overdue reminders to borrowers.
     """
     with contextmanager(get_db)() as session:
-        applications = background.get_all_applications_with_status(
-            [
-                models.ApplicationStatus.CONTRACT_UPLOADED,
-                models.ApplicationStatus.STARTED,
-            ],
-            session,
-        )
         overdue_lenders = defaultdict(lambda: {"count": 0})
-        for application in applications:
+        for application in session.query(models.Application).filter(
+            models.Application.status.in_(
+                [models.ApplicationStatus.CONTRACT_UPLOADED, models.ApplicationStatus.STARTED]
+            )
+        ):
             with transaction_session(session):
                 days_passed = background.get_application_days_passed(application, session)
                 if days_passed > application.lender.sla_days * app_settings.progress_to_remind_started_applications:
