@@ -32,13 +32,7 @@ Repository structure
    ├── parsers.py           # Pydantic models to parse query string arguments
    ├── routers              # FastAPI routers
    │   ├── __init__.py
-   │   ├── applications.py
-   │   ├── awards.py
-   │   ├── borrowers.py
-   │   ├── lenders.py
-   │   ├── security.py
-   │   ├── statistics.py
-   │   └── users.py
+   │   └── {...}.py
    ├── serializers.py       # Pydantic models to serialize API responses
    ├── settings.py          # Environment settings and Sentry configuration
    ├── sources              # Data sources for contracts, awards, and borrowers

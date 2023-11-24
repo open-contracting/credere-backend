@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app import aws, models
 from app.db import get_db
-from app.routers import applications, lenders, security, statistics, users
+from app.routers import applications, borrower_documents, downloads, emails, lenders, security, statistics, users
 from app.settings import app_settings
 from tests.common.utils import create_enums
 from tests.protected_routes import users_test  # noqa
@@ -67,6 +67,9 @@ def start_application():
     app.include_router(lenders.router)
     app.include_router(security.router)
     app.include_router(applications.router)
+    app.include_router(borrower_documents.router)
+    app.include_router(downloads.router)
+    app.include_router(emails.router)
     app.include_router(users_test.router)
     app.include_router(applications_test.router)
     app.include_router(borrowers_test.router)
