@@ -1,14 +1,20 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-import app.utils.lenders as utils
 from app.schema import api as ApiSchema
+from app.schema.api import LenderListResponse
 
 from ..auth import OCP_only, get_current_user
 from ..db.session import get_db, transaction_session
 from ..schema import core
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -39,8 +45,29 @@ async def create_lender(
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
+    # Rename query parameter.
+    payload = lender
+
     with transaction_session(session):
-        return utils.create_lender(session, lender)
+        try:
+            # Create a Lender instance without the credit_product data
+            lender = core.Lender(**payload.dict(exclude={"credit_products"}))
+            session.add(lender)
+
+            # Create a CreditProduct instance for each credit product and add it to the lender
+            if payload.credit_products:
+                for cp in payload.credit_products:
+                    credit_product = core.CreditProduct(**cp.dict(), lender=lender)
+                    session.add(credit_product)
+
+            session.flush()
+            return lender
+        except IntegrityError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Lender already exists",
+            )
 
 
 @router.post(
@@ -76,7 +103,11 @@ async def create_credit_products(
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with transaction_session(session):
-        return utils.create_credit_product(session, credit_product, lender_id)
+        lender = core.Lender.first_by(session, "id", lender_id)
+        if not lender:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
+
+        return core.CreditProduct.create(session, **credit_product.dict(), lender=lender)
 
 
 @router.get("/lenders/{lender_id}", tags=["lenders"], response_model=core.LenderWithRelations)
@@ -134,7 +165,19 @@ async def update_lender(
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with transaction_session(session):
-        return utils.update_lender(session, payload, id)
+        try:
+            lender = core.Lender.first_by(session, "id", id)
+            if not lender:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
+
+            update_dict = jsonable_encoder(payload, exclude_unset=True)
+            return lender.update(session, **update_dict)
+        except IntegrityError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Lender already exists",
+            )
 
 
 @router.get(
@@ -154,7 +197,18 @@ async def get_lenders_list(
     :return: The list of all lenders.
     :rtype: ApiSchema.LenderListResponse
     """
-    return utils.get_all_lenders(session)
+    lenders_query = session.query(core.Lender)
+
+    total_count = lenders_query.count()
+
+    lenders = lenders_query.all()
+
+    return LenderListResponse(
+        items=lenders,
+        count=total_count,
+        page=0,
+        page_size=total_count,
+    )
 
 
 @router.get(
@@ -226,5 +280,13 @@ async def update_credit_products(
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
+    # Rename the query parameter.
+    payload = credit_product
+
     with transaction_session(session):
-        return utils.update_credit_product(session, credit_product, credit_product_id)
+        credit_product = core.CreditProduct.first_by(session, "id", credit_product_id)
+        if not credit_product:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
+
+        update_dict = jsonable_encoder(payload, exclude_unset=True)
+        return credit_product.update(session, **update_dict)
