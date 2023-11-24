@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Union
 
 from botocore.exceptions import ClientError
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import IntegrityError
@@ -12,9 +13,6 @@ from app import models, serializers
 from app.auth import OCP_only, get_current_user
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
-
-from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
-from fastapi import HTTPException, Query, Response, status  # isort:skip # noqa
 
 logger = logging.getLogger(__name__)
 

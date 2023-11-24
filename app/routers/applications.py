@@ -6,6 +6,7 @@ from typing import List
 
 import pandas as pd
 from botocore.exceptions import ClientError
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Spacer
@@ -20,10 +21,6 @@ from app.db import get_db, transaction_session
 from app.settings import app_settings
 from app.utils import background
 from app.utils.statistics import update_statistics
-
-from fastapi import Depends, Query, status  # isort:skip # noqa
-from fastapi import Form, UploadFile  # isort:skip # noqa
-from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # noqa
 
 logger = logging.getLogger(__name__)
 

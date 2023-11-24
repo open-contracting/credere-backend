@@ -16,16 +16,15 @@ from sqlalchemy.sql.expression import true
 from app import models, parsers, serializers, util
 from app.i18n import get_translated_string
 from app.settings import app_settings
-
-from reportlab_mods import (  # noqa: F401 #isort:skip
-    borrower_size_dict,  # noqa: F401 #isort:skip
-    create_table,  # noqa: F401 #isort:skip
-    document_type_dict,  # noqa: F401 #isort:skip
-    sector_dict,  # noqa: F401 #isort:skip
-    styleN,  # noqa: F401 #isort:skip
-    styleSubTitle,  # noqa: F401 #isort:skip
-    styleTitle,  # noqa: F401 #isort:skip
-)  # noqa: F401 #isort:skip
+from reportlab_mods import (
+    borrower_size_dict,
+    create_table,
+    document_type_dict,
+    sector_dict,
+    styleN,
+    styleSubTitle,
+    styleTitle,
+)
 
 logger = logging.getLogger(__name__)
 

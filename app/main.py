@@ -1,11 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routers import applications, lenders, statistics, users
 from app.settings import app_settings
-
-from app.routers import applications, lenders, users  # isort:skip
-from app.routers import statistics  # isort:skip
-
 
 app = FastAPI()
 
