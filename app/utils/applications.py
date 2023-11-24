@@ -1,4 +1,5 @@
 import logging
+import os.path
 import re
 from datetime import datetime
 from decimal import Decimal
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+allowed_extensions = {".png", ".pdf", ".jpeg", ".jpg"}
 
 excluded_applications = [
     models.ApplicationStatus.PENDING,
@@ -67,20 +69,6 @@ def update_data_field(application: models.Application, payload: parsers.UpdateDa
     verified_data = application.secop_data_verification.copy()
     verified_data[key] = value
     application.secop_data_verification = verified_data.copy()
-
-
-def allowed_file(filename):
-    """
-    Checks if a file has an allowed extension.
-
-    :param filename: The name of the file to check.
-    :type filename: str
-
-    :return: True if the file has an allowed extension, False otherwise.
-    :rtype: bool
-    """
-    allowed_extensions = {"png", "pdf", "jpeg", "jpg"}
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_extensions
 
 
 def validate_fields(application):
@@ -623,7 +611,7 @@ def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
     :raise HTTPException: If the file format is not allowed or if the file size is too large.
     """
     filename = file.filename
-    if not allowed_file(file.filename):
+    if os.path.splitext(filename)[1].lower() not in allowed_extensions:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Format not allowed. It must be a PNG, JPEG, or PDF file",

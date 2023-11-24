@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app import models
+from app.models import BorrowerSize
 
 
 class AwardUpdate(BaseModel):
@@ -43,7 +43,7 @@ class BorrowerUpdate(BaseModel):
     legal_identifier: Optional[str]
     type: Optional[str]
     sector: Optional[str]
-    size: Optional[models.BorrowerSize]
+    size: Optional[BorrowerSize]
 
 
 class UpdateDataField(BaseModel):
@@ -89,7 +89,7 @@ class VerifyBorrowerDocument(BaseModel):
 
 
 class ApplicationCreditOptions(ApplicationBase):
-    borrower_size: models.BorrowerSize
+    borrower_size: BorrowerSize
     amount_requested: Decimal
 
 
