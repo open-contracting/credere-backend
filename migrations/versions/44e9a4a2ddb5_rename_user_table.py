@@ -16,12 +16,8 @@ depends_on = None
 
 def upgrade() -> None:
     op.rename_table("user", "credere_user")
-    op.drop_constraint(
-        "application_action_user_id_fkey", "application_action", type_="foreignkey"
-    )
-    op.create_foreign_key(
-        None, "application_action", "credere_user", ["user_id"], ["id"]
-    )
+    op.drop_constraint("application_action_user_id_fkey", "application_action", type_="foreignkey")
+    op.create_foreign_key(None, "application_action", "credere_user", ["user_id"], ["id"])
     # ### end Alembic commands ###
 
 

@@ -18,9 +18,7 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         "application",
-        sa.Column(
-            "disbursed_final_amount", sa.DECIMAL(precision=16, scale=2), nullable=True
-        ),
+        sa.Column("disbursed_final_amount", sa.DECIMAL(precision=16, scale=2), nullable=True),
     )
     with op.get_context().autocommit_block():
         op.execute(
