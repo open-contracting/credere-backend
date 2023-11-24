@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import mail, models, util
 from app.aws import sesClient
-from app.background_processes import colombia_data_access as data_access
 from app.db import get_db, transaction_session_logger
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
+from app.sources import colombia as data_access
 
 logger = logging.getLogger(__name__)
 

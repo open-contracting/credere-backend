@@ -1,7 +1,7 @@
 from collections import Counter
 from datetime import datetime, timedelta
 
-from app.background_processes import background_utils
+from app import sources
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 
@@ -20,7 +20,7 @@ def _get_remote_award(proceso_de_compra, proveedor_adjudicado):
         f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
         f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
     )
-    award_response = background_utils.make_request_with_retry(award_url, headers)
+    award_response = sources.make_request_with_retry(award_url, headers)
     award_response_json = award_response.json()
     return award_response_json, award_url
 
@@ -132,7 +132,7 @@ def get_new_contracts(index: int, from_date, until_date=None):
     else:
         url = f"{base_url}" f"AND estado_contrato = 'Borrador' AND ultima_actualizacion >= '{converted_date}'"
 
-    return background_utils.make_request_with_retry(url, headers)
+    return sources.make_request_with_retry(url, headers)
 
 
 def get_previous_contracts(documento_proveedor):
@@ -148,7 +148,7 @@ def get_previous_contracts(documento_proveedor):
 
     url = f"{URLS['CONTRACTS']}?$where=documento_proveedor = '{documento_proveedor}' AND fecha_de_firma IS NOT NULL"
 
-    return background_utils.make_request_with_retry(url, headers)
+    return sources.make_request_with_retry(url, headers)
 
 
 def get_source_contract_id(entry):
@@ -188,7 +188,7 @@ def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entr
     borrower_url = (
         f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}" f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
     )
-    borrower_response = background_utils.make_request_with_retry(borrower_url, headers)
+    borrower_response = sources.make_request_with_retry(borrower_url, headers)
     borrower_response_json = borrower_response.json()
     len_borrower_response_json = len(borrower_response_json)
 
@@ -233,7 +233,7 @@ def get_email(documento_proveedor, entry) -> str:
     """
 
     borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
-    borrower_response_email = background_utils.make_request_with_retry(borrower_email_url, headers)
+    borrower_response_email = sources.make_request_with_retry(borrower_email_url, headers)
     borrower_response_email_json = borrower_response_email.json()
     len_borrower_response_email_json = len(borrower_response_email_json)
 
@@ -250,7 +250,7 @@ def get_email(documento_proveedor, entry) -> str:
             borrower_email["correo_entidad"] for borrower_email in borrower_response_email_json
         ).most_common(1)[0][0]
 
-    if not background_utils.is_valid_email(email):
+    if not sources.is_valid_email(email):
         raise SkippedAwardError(f"Invalid borrower email ({email=} {entry=})")
 
     return email
