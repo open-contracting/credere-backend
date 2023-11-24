@@ -10,81 +10,14 @@ from app.core.user_dependencies import sesClient
 from app.db.session import get_db, transaction_session
 from app.exceptions import SkippedAwardError
 from app.schema import core
+from app.schema.core import Application, Message
 from app.utils import email_utility
 
 from . import background_utils
 
-ApplicationStatus = core.ApplicationStatus
-
-
 DAYS_UNTIL_EXPIRED = 7
 
 ApplicationStatus = core.ApplicationStatus
-
-
-def insert_application(application: core.Application, session: Session):
-    """
-    Insert a new application into the database.
-
-    :param application: The application data to be inserted.
-    :type application: core.Application
-    :param session: The database session.
-    :type session: Session
-
-    :return: The inserted application.
-    :rtype: core.Application
-    """
-    obj_db = core.Application(**application)
-    obj_db.created_at = datetime.utcnow()
-
-    session.add(obj_db)
-    session.flush()
-
-    return obj_db
-
-
-def insert_message(application: core.Application, session: Session):
-    """
-    Insert a new message associated with an application into the database.
-
-    :param application: The application to associate the message with.
-    :type application: core.Application
-    :param session: The database session.
-    :type session: Session
-
-    :return: The inserted message.
-    :rtype: core.Message
-    """
-    obj_db = core.Message(
-        application=application, type=core.MessageType.BORROWER_INVITACION
-    )
-    obj_db.created_at = datetime.utcnow()
-
-    session.add(obj_db)
-    session.flush()
-
-    return obj_db
-
-
-def get_existing_application(award_borrower_identifier: str, session: Session):
-    """
-    Get an existing application based on the award borrower identifier.
-
-    :param award_borrower_identifier: The unique identifier for the award and borrower combination.
-    :type award_borrower_identifier: str
-    :param session: The database session.
-    :type session: Session
-
-    :return: The existing application if found, otherwise None.
-    :rtype: core.Application or None
-    """
-    application = (
-        session.query(core.Application)
-        .filter(core.Application.award_borrower_identifier == award_borrower_identifier)
-        .first()
-    )
-
-    return application
 
 
 def create_application(
@@ -113,15 +46,16 @@ def create_application(
         legal_identifier + source_contract_id
     )
 
-    # if application already exists
-    application = get_existing_application(award_borrower_identifier, session)
+    application = Application.first_by(
+        session, "award_borrower_identifier", award_borrower_identifier
+    )
     if application:
         raise SkippedAwardError(
             f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}"
         )
 
     new_uuid: str = background_utils.generate_uuid(award_borrower_identifier)
-    application = {
+    data = {
         "award_id": award_id,
         "borrower_id": borrower_id,
         "primary_email": email,
@@ -131,9 +65,7 @@ def create_application(
         + timedelta(days=app_settings.application_expiration_days),
     }
 
-    application = insert_application(application, session)
-
-    return application
+    return Application.create(session, **data)
 
 
 def get_dated_applications(session):
@@ -301,38 +233,6 @@ def get_applications_to_remind_submit(db_provider: Session = get_db):
     return users or []
 
 
-def create_message(
-    application: core.Application,
-    message: core.MessageType,
-    session: Session,
-    external_message_id: str,
-) -> None:
-    """
-    Create and insert a new message associated with an application.
-
-    :param application: The application to associate the message with.
-    :type application: core.Application
-    :param message: The type of message to be created.
-    :type message: core.MessageType
-    :param session: The database session.
-    :type session: Session
-    :param external_message_id: The external message ID.
-    :type external_message_id: str
-
-    :return: None
-    :rtype: None
-    """
-    obj_db = core.Message(
-        application=application,
-        type=message,
-        external_message_id=external_message_id,
-    )
-    obj_db.created_at = datetime.utcnow()
-
-    session.add(obj_db)
-    session.flush()
-
-
 def get_all_applications_with_status(status_list, session):
     """
     Get all applications that have one of the specified status.
@@ -468,11 +368,11 @@ def send_overdue_reminders(session: Session):
                         application.lender.name,
                     )
 
-                    create_message(
-                        application,
-                        core.MessageType.OVERDUE_APPLICATION,
+                    Message.create(
                         session,
-                        message_id,
+                        application=application,
+                        type=core.MessageType.OVERDUE_APPLICATION,
+                        external_message_id=message_id,
                     )
 
     for id, lender_data in overdue_lenders.items():
@@ -483,11 +383,11 @@ def send_overdue_reminders(session: Session):
             sesClient, name, email, count
         )
 
-        create_message(
-            application,
-            core.MessageType.OVERDUE_APPLICATION,
+        Message.create(
             session,
-            message_id,
+            application=application,
+            type=core.MessageType.OVERDUE_APPLICATION,
+            external_message_id=message_id,
         )
-        session.flush()
+
     session.commit()

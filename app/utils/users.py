@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from fastapi import HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -11,7 +12,6 @@ from app.db.session import transaction_session
 from app.schema.api import UserListResponse
 
 from ..schema import core
-from .general_utils import update_models
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +78,8 @@ def update_user(session: Session, payload: dict, user_id: int) -> core.User:
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
-        update_models(payload, user)
-        session.add(user)
-        session.flush()
-
-        return user
+        update_dict = jsonable_encoder(payload, exclude_unset=True)
+        return user.update(session, **update_dict)
     except IntegrityError as e:
         logger.exception(e)
         raise HTTPException(

@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db, transaction_session_logger
+from app.schema import core
+from app.schema.core import Message
 from app.utils import email_utility
 
 from . import application_utils
-from .message_utils import save_message_type
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +46,10 @@ def send_reminders(db_provider: Session = get_db):
                 with transaction_session_logger(
                     session, "Error sending mail or updating the sent status"
                 ):
-                    new_message = save_message_type(
-                        application.id, session, "BORROWER_PENDING_APPLICATION_REMINDER"
+                    new_message = Message.create(
+                        session,
+                        application=application,
+                        type=core.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
                     )
                     uuid = application.uuid
                     email = application.primary_email
@@ -76,8 +79,10 @@ def send_reminders(db_provider: Session = get_db):
                     session, "Error sending mail or updating the sent status"
                 ):
                     # Db message table update
-                    new_message = save_message_type(
-                        application.id, session, "BORROWER_PENDING_SUBMIT_REMINDER"
+                    new_message = Message.create(
+                        session,
+                        application=application,
+                        type=core.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
                     )
                     uuid = application.uuid
                     email = application.primary_email

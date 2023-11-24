@@ -1,13 +1,13 @@
 import logging
 
 from fastapi import HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.schema.api import LenderListResponse
 
 from ..schema import core
-from .general_utils import update_models
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,6 @@ def create_lender(session: Session, payload: dict) -> core.Lender:
                 session.add(credit_product)
 
         session.flush()
-
         return lender
     except IntegrityError as e:
         logger.exception(e)
@@ -84,11 +83,7 @@ def create_credit_product(
             status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"
         )
 
-    credit_product = core.CreditProduct(**payload.dict(), lender=lender)
-    session.add(credit_product)
-    session.flush()
-
-    return credit_product
+    return core.CreditProduct.create(session, **payload.dict(), lender=lender)
 
 
 def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lender:
@@ -117,11 +112,8 @@ def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lende
                 status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found"
             )
 
-        update_models(payload, lender)
-        session.add(lender)
-        session.flush()
-
-        return lender
+        update_dict = jsonable_encoder(payload, exclude_unset=True)
+        return lender.update(session, **update_dict)
     except IntegrityError as e:
         logger.exception(e)
         raise HTTPException(
@@ -160,8 +152,5 @@ def update_credit_product(
             status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found"
         )
 
-    update_models(payload, credit_product)
-    session.add(credit_product)
-    session.flush()
-
-    return credit_product
+    update_dict = jsonable_encoder(payload, exclude_unset=True)
+    return credit_product.update(session, **update_dict)

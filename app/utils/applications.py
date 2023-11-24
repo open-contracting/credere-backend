@@ -17,7 +17,6 @@ from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
 
 from ..schema import api, core
-from .general_utils import update_models, update_models_with_validation
 from .translation import get_translated_string
 
 from reportlab_mods import (  # noqa: F401 #isort:skip
@@ -340,18 +339,13 @@ def create_application_action(
     :return: The new ApplicationAction.
     :rtype: core.ApplicationAction
     """
-    update_dict = jsonable_encoder(payload, exclude_unset=True)
-
-    new_action = core.ApplicationAction(
+    return core.ApplicationAction.create(
+        session,
         type=type,
-        data=update_dict,
+        data=jsonable_encoder(payload, exclude_unset=True),
         application_id=application_id,
         user_id=user_id,
     )
-    session.add(new_action)
-    session.flush()
-
-    return new_action
 
 
 def update_application_borrower(
@@ -410,10 +404,15 @@ def update_application_borrower(
             detail="This application is not owned by this lender",
         )
 
-    update_models_with_validation(payload, application.borrower)
-
-    session.add(application)
-    session.flush()
+    # Update the borrower, but return the application.
+    update_dict = jsonable_encoder(payload, exclude_unset=True)
+    for field, value in update_dict.items():
+        if not application.borrower.missing_data[field]:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="This column cannot be updated",
+            )
+    application.borrower.update(session, **update_dict)
 
     return application
 
@@ -474,10 +473,9 @@ def update_application_award(
             detail="This application is not owned by this lender",
         )
 
-    update_models(payload, application.award)
-
-    session.add(application)
-    session.flush()
+    # Update the award, but return the application.
+    update_dict = jsonable_encoder(payload, exclude_unset=True)
+    application.award.update(session, **update_dict)
 
     return application
 
@@ -934,16 +932,12 @@ def create_message(
     :param external_message_id: The id of the message in the external system.
     :type external_message_id: str
     """
-
-    obj_db = core.Message(
+    core.Message.create(
+        session,
         application=application,
         type=message,
         external_message_id=external_message_id,
     )
-    obj_db.created_at = datetime.utcnow()
-
-    session.add(obj_db)
-    session.flush()
 
 
 def update_application_primary_email(application: core.Application, email: str) -> str:
@@ -1059,13 +1053,13 @@ def create_or_update_borrower_document(
     )
 
     if existing_document:
-        # Update the existing document with the new file
-        existing_document.file = file
-        existing_document.name = filename
-        existing_document.verified = verified
-        existing_document.submitted_at = datetime.utcnow()
-        session.flush()
-        return existing_document
+        return existing_document.update(
+            session,
+            file=file,
+            name=filename,
+            verified=verified,
+            submitted_at=datetime.utcnow(),
+        )
     else:
         new_document = {
             "application_id": application.id,
@@ -1074,11 +1068,7 @@ def create_or_update_borrower_document(
             "name": filename,
             "verified": verified,
         }
-
-        db_obj = core.BorrowerDocument(**new_document)
-        session.add(db_obj)
-        session.flush()
-        return db_obj
+        return core.BorrowerDocument.create(session, **new_document)
 
 
 def check_FI_user_permission(application: core.Application, user: core.User) -> None:
@@ -1207,9 +1197,7 @@ def copy_documents(application: core.Application, documents: dict, session: Sess
             "file": document.file,
             "verified": False,
         }
-        new_borrower_document = core.BorrowerDocument(**data)
-        session.add(new_borrower_document)
-        session.flush()
+        new_borrower_document = core.BorrowerDocument.create(session, **data)
         application.borrower_documents.append(new_borrower_document)
 
 
@@ -1246,10 +1234,7 @@ def copy_application(
             "calculator_data": application.calculator_data,
             "borrower_accepted_at": datetime.now(application.created_at.tzinfo),
         }
-        new_application = core.Application(**data)
-        session.add(new_application)
-        session.flush()
-        return new_application
+        return core.Application.create(session, **data)
 
     except Exception as e:
         raise HTTPException(

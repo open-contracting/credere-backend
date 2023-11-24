@@ -6,12 +6,90 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from sqlalchemy import DECIMAL, Column, DateTime
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy import desc
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.sql import func
 from sqlmodel import Field, Relationship, SQLModel
 
 # Otherwise, alembic "Detected removed table 'statistic'".
 import app.schema.statistic  # noqa: F401
+
+
+def _get_missing_data_keys(input_dict):
+    """
+    Get a dictionary indicating whether each key in the input dictionary has missing data (empty or None).
+
+    :param input_dict: The input dictionary to check for missing data.
+    :type input_dict: dict
+
+    :return: A dictionary with the same keys as the input dictionary, where the values are True if the corresponding
+             value in the input dictionary is empty or None, and False otherwise.
+    :rtype: dict
+    """
+
+    result_dict = {}
+    for key, value in input_dict.items():
+        if value == "" or value is None:
+            result_dict[key] = True
+        else:
+            result_dict[key] = False
+
+    return result_dict
+
+
+# https://github.com/tiangolo/sqlmodel/issues/254
+class ActiveRecordMixin:
+    __config__ = None
+
+    @classmethod
+    def first_by(cls, session, field: str, value: Any):
+        """
+        Get an existing instance based on a field's value.
+
+        :param session: The database session.
+        :param value: The field.
+        :param field: The field's value.
+
+        :return: The existing instance if found, otherwise None.
+        """
+        return session.query(cls).filter(getattr(cls, field) == value).first()
+
+    @classmethod
+    def create(cls, session, **data):
+        """
+        Insert a new instance into the database.
+
+        :param session: The database session.
+        :param data: The initial instance data.
+
+        :return: The inserted instance.
+        """
+        obj = cls(**data)
+        obj.created_at = datetime.utcnow()
+        if hasattr(obj, "missing_data"):
+            obj.missing_data = _get_missing_data_keys(data)
+
+        session.add(obj)
+        session.flush()
+        return obj
+
+    def update(self, session, **data):
+        """
+        Update an existing instance in the database.
+
+        :param session: The database session.
+        :param data: The updated instance data.
+
+        :return: The updated instance.
+        """
+        for key, value in data.items():
+            setattr(self, key, value)
+        if hasattr(self, "missing_data"):
+            self.missing_data = _get_missing_data_keys(self.dict())
+
+        session.add(self)
+        session.flush()
+        return self
 
 
 class BorrowerDocumentType(Enum):
@@ -144,7 +222,7 @@ class CreditProductBase(SQLModel):
     lender_id: int = Field(foreign_key="lender.id", nullable=False, index=True)
 
 
-class CreditProduct(CreditProductBase, table=True):
+class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
     __tablename__ = "credit_product"
     id: Optional[int] = Field(default=None, primary_key=True)
     lender: "Lender" = Relationship(back_populates="credit_products")
@@ -202,7 +280,7 @@ class BorrowerDocumentBase(SQLModel):
     )
 
 
-class BorrowerDocument(BorrowerDocumentBase, table=True):
+class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
     __tablename__ = "borrower_document"
     application: Optional["Application"] = Relationship(
         back_populates="borrower_documents"
@@ -329,7 +407,7 @@ class ApplicationRead(ApplicationBase):
     id: int
 
 
-class Application(ApplicationPrivate, table=True):
+class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     borrower_documents: Optional[List["BorrowerDocument"]] = Relationship(
         back_populates="application"
@@ -381,7 +459,7 @@ class BorrowerBase(SQLModel):
     )
 
 
-class Borrower(BorrowerBase, table=True):
+class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
     source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
     status: BorrowerStatus = Field(
         sa_column=Column(SAEnum(BorrowerStatus, name="borrower_status")),
@@ -401,7 +479,7 @@ class LenderBase(SQLModel):
     logo_filename: str = Field(default="")
 
 
-class Lender(LenderBase, table=True):
+class Lender(LenderBase, ActiveRecordMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     applications: Optional[List["Application"]] = Relationship(back_populates="lender")
     users: Optional[List["User"]] = Relationship(back_populates="lender")
@@ -468,7 +546,7 @@ class AwardBase(SQLModel):
     missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
 
 
-class Award(AwardBase, table=True):
+class Award(AwardBase, ActiveRecordMixin, table=True):
     applications: Optional[List["Application"]] = Relationship(back_populates="award")
     borrower: Borrower = Relationship(back_populates="awards")
     source_data_contracts: dict = Field(
@@ -492,8 +570,19 @@ class Award(AwardBase, table=True):
         )
     )
 
+    @classmethod
+    def last_updated(cls, session) -> Optional[datetime]:
+        """
+        Get the date of the last updated award.
 
-class Message(SQLModel, table=True):
+        :return: The last updated award date.
+        """
+        obj = session.query(cls).order_by(desc(cls.source_last_updated_at)).first()
+        if obj:
+            return obj.source_last_updated_at
+
+
+class Message(SQLModel, ActiveRecordMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     type: MessageType = Field(
         sa_column=Column(SAEnum(MessageType, name="message_type"))
@@ -553,13 +642,13 @@ class UserWithLender(UserBase):
     lender: Optional["LenderBase"] = None
 
 
-class User(UserBase, table=True):
+class User(UserBase, ActiveRecordMixin, table=True):
     __tablename__ = "credere_user"
     application_actions: List["ApplicationAction"] = Relationship(back_populates="user")
     lender: Optional["Lender"] = Relationship(back_populates="users")
 
 
-class ApplicationAction(SQLModel, table=True):
+class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     __tablename__ = "application_action"
     id: Optional[int] = Field(default=None, primary_key=True)
     type: ApplicationActionType = Field(

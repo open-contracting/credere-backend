@@ -89,25 +89,3 @@ def make_request_with_retry(url, headers):
         return None
     finally:
         client.close()
-
-
-def get_missing_data_keys(input_dict):
-    """
-    Get a dictionary indicating whether each key in the input dictionary has missing data (empty or None).
-
-    :param input_dict: The input dictionary to check for missing data.
-    :type input_dict: dict
-
-    :return: A dictionary with the same keys as the input dictionary, where the values are True if the corresponding
-             value in the input dictionary is empty or None, and False otherwise.
-    :rtype: dict
-    """
-
-    result_dict = {}
-    for key, value in input_dict.items():
-        if value == "" or value is None:
-            result_dict[key] = True
-        else:
-            result_dict[key] = False
-
-    return result_dict

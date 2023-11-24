@@ -5,13 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.core.user_dependencies import sesClient
 from app.db.session import get_db, transaction_session_logger
-from app.schema.core import Borrower
+from app.schema import core
+from app.schema.core import Award, Borrower, Message
 from app.utils import email_utility
 
-from . import awards_utils
 from . import colombia_data_access as data_access
-from .application_utils import create_application, insert_message
-from .borrower_utils import get_or_create_borrower
+from .application_utils import create_application
+from .awards_utils import _create_award
+from .borrower_utils import _get_or_create_borrower
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +43,8 @@ def fetch_new_awards_from_date(
                 with transaction_session_logger(
                     session, "Error creating the application"
                 ):
-                    award = awards_utils.create_award(entry, session)
-                    borrower = get_or_create_borrower(entry, session)
+                    award = _create_award(entry, session)
+                    borrower = _get_or_create_borrower(entry, session)
                     award.borrower_id = borrower.id
 
                     application = create_application(
@@ -55,7 +56,11 @@ def fetch_new_awards_from_date(
                         session,
                     )
 
-                    message = insert_message(application, session)
+                    message = Message.create(
+                        session,
+                        application=application,
+                        type=core.MessageType.BORROWER_INVITACION,
+                    )
 
                     messageId = email_utility.send_invitation_email(
                         sesClient,
@@ -85,7 +90,8 @@ def fetch_new_awards(db_provider: Session = get_db):
 
     you can also pass an email_invitation as parameter if you want to invite a particular borrower
     """
-    last_updated_award_date = awards_utils.get_last_updated_award_date()
+    with contextmanager(db_provider)() as session:
+        last_updated_award_date = Award.last_updated(session)
     fetch_new_awards_from_date(last_updated_award_date, db_provider)
 
 
@@ -120,4 +126,4 @@ def fetch_previous_awards(borrower: Borrower, db_provider: Session = get_db):
                 "Error creating the previous award for %s",
                 borrower.legal_identifier,
             ):
-                awards_utils.create_award(entry, session, borrower.id, True)
+                _create_award(entry, session, borrower.id, True)
