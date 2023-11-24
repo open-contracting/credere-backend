@@ -1,15 +1,20 @@
 import logging
+from datetime import datetime
 from typing import Union
 
 from botocore.exceptions import ClientError
-from sqlalchemy.orm import Session
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy import asc, desc, text
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, joinedload
 
-import app.utils.users as utils
 from app.schema import api as ApiSchema
+from app.schema.api import UserListResponse
 from app.utils.verify_token import get_current_user
 
 from ..core.user_dependencies import CognitoClient, get_cognito_client
 from ..db.session import get_db, transaction_session
+from ..schema import core
 from ..schema.core import BasicUser, SetupMFA, User, UserWithLender
 from ..utils.permissions import OCP_only
 
@@ -46,7 +51,21 @@ async def create_user(
     :return: The created user.
     :rtype: User
     """
-    return utils.create_user(payload, session, client)
+    with transaction_session(session):
+        try:
+            user = core.User(**payload.dict())
+            user.created_at = datetime.now()
+            session.add(user)
+            cognitoResponse = client.admin_create_user(payload.email, payload.name)
+            user.external_id = cognitoResponse["User"]["Username"]
+
+            return user
+        except (client.exceptions().UsernameExistsException, IntegrityError) as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Username already exists",
+            )
 
 
 @router.put(
@@ -414,7 +433,27 @@ async def get_all_users(
     :return: The paginated and sorted list of users.
     :rtype: ApiSchema.UserListResponse
     """
-    return utils.get_all_users(page, page_size, sort_field, sort_order, session)
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    list_query = (
+        session.query(core.User)
+        .outerjoin(core.Lender)
+        .options(
+            joinedload(core.User.lender),
+        )
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"), core.User.id)
+    )
+
+    total_count = list_query.count()
+
+    users = list_query.offset(page * page_size).limit(page_size).all()
+
+    return UserListResponse(
+        items=users,
+        count=total_count,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.put(
@@ -446,5 +485,20 @@ async def update_user(
     :return: The updated user information.
     :rtype: UserWithLender
     """
+    # Rename the query parameter.
+    payload = user
+
     with transaction_session(session):
-        return utils.update_user(session, user, id)
+        try:
+            user = core.User.first_by(session, "id", id)
+            if not user:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+            update_dict = jsonable_encoder(payload, exclude_unset=True)
+            return user.update(session, **update_dict)
+        except IntegrityError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="User already exists",
+            )
