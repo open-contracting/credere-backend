@@ -12,33 +12,33 @@ router = APIRouter()
 
 
 @router.get("/borrowers/{borrower_id}", tags=["borrowers"], response_model=Borrower)
-async def get_borrowers(borrower_id: int, db: Session = Depends(get_db)):
+async def get_borrowers(borrower_id: int, session: Session = Depends(get_db)):
     """
     Retrieve a borrower by ID.
 
     :param borrower_id: The ID of the borrower to retrieve.
     :type borrower_id: int
-    :param db: The database session.
-    :type db: Session
+    :param session: The database session.
+    :type session: Session
 
     :return: The retrieved borrower.
     :rtype: Borrower
     """
-    borrower = db.query(Borrower).filter(Borrower.id == borrower_id).first()
+    borrower = Borrower.first_by(session, "id", borrower_id)
     if not borrower:
         raise HTTPException(status_code=404, detail="Borrower not found")
     return borrower
 
 
 @router.post("/borrowers/", tags=["borrowers"], response_model=Borrower)
-async def create_borrowers(borrower: Borrower, db: Session = Depends(get_db)):
+async def create_borrowers(borrower: Borrower, session: Session = Depends(get_db)):
     """
     Create a new borrower.
 
     :param borrower: The borrower data to create.
     :type borrower: Borrower
-    :param db: The database session.
-    :type db: Session
+    :param session: The database session.
+    :type session: Session
 
     :return: The created borrower.
     :rtype: Borrower
@@ -47,9 +47,9 @@ async def create_borrowers(borrower: Borrower, db: Session = Depends(get_db)):
     borrower.updated_at = datetime.now()
     borrower.declined_at = datetime.now()
     obj_db = Borrower(**borrower.dict())
-    db.add(obj_db)
-    db.commit()
-    db.refresh(obj_db)
+    session.add(obj_db)
+    session.commit()
+    session.refresh(obj_db)
 
     return obj_db
 

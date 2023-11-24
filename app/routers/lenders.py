@@ -81,23 +81,22 @@ async def create_credit_products(
 
 
 @router.get("/lenders/{lender_id}", tags=["lenders"], response_model=core.LenderWithRelations)
-async def get_lender(lender_id: int, db: Session = Depends(get_db)):
+async def get_lender(lender_id: int, session: Session = Depends(get_db)):
     """
     Retrieve a lender by its ID.
 
     :param lender_id: The ID of the lender to retrieve.
     :type lender_id: int
 
-    :param db: The database session.
-    :type db: Session
+    :param session: The database session.
+    :type session: Session
 
     :return: The lender with the specified ID.
     :rtype: core.LenderWithRelations
 
     :raise: HTTPException with status code 404 if the lender is not found.
     """
-    lender = db.query(core.Lender).filter(core.Lender.id == lender_id).first()
-
+    lender = core.Lender.first_by(session, "id", lender_id)
     if not lender:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
     return lender

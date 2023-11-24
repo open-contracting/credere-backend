@@ -358,7 +358,7 @@ async def get_borrower_document(
 
     """
     with transaction_session(session):
-        document = session.query(core.BorrowerDocument).filter(core.BorrowerDocument.id == id).first()
+        document = core.BorrowerDocument.first_by(session, "id", id)
         utils.get_file(document, user, session)
 
         def file_generator():
@@ -995,7 +995,7 @@ async def start_application(
 
     """
     with transaction_session(session):
-        application = session.query(core.Application).filter(core.Application.id == id).first()
+        application = core.Application.first_by(session, "id", id)
         utils.check_application_status(application, core.ApplicationStatus.SUBMITTED)
 
         if user.lender_id != application.lender_id:
@@ -1374,10 +1374,7 @@ async def confirm_credit_product(
                 detail="Credit product not selected",
             )
 
-        creditProduct = (
-            session.query(core.CreditProduct).filter(core.CreditProduct.id == application.credit_product_id).first()
-        )
-
+        creditProduct = core.CreditProduct.first_by(session, "id", application.credit_product_id)
         if not creditProduct:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

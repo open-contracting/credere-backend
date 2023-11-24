@@ -70,7 +70,7 @@ def update_user(session: Session, payload: dict, user_id: int) -> core.User:
     :raises HTTPException: If the user is not found or the username already exists.
     """
     try:
-        user = session.query(core.User).filter(core.User.id == user_id).first()
+        user = core.User.first_by(session, "id", user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 

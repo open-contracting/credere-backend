@@ -75,7 +75,7 @@ def create_credit_product(session: Session, payload: dict, lender_id) -> core.Cr
 
     :raises HTTPException: If the lender already exists in the database.
     """
-    lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
+    lender = core.Lender.first_by(session, "id", lender_id)
     if not lender:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
 
@@ -102,7 +102,7 @@ def update_lender(session: Session, payload: dict, lender_id: int) -> core.Lende
                            or if a lender with the same details already exists.
     """
     try:
-        lender = session.query(core.Lender).filter(core.Lender.id == lender_id).first()
+        lender = core.Lender.first_by(session, "id", lender_id)
         if not lender:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
 
@@ -134,7 +134,7 @@ def update_credit_product(session: Session, payload: dict, credit_product_id: in
 
     :raises HTTPException: If the credit product with the given ID doesn't exist.
     """
-    credit_product = session.query(core.CreditProduct).filter(core.CreditProduct.id == credit_product_id).first()
+    credit_product = core.CreditProduct.first_by(session, "id", credit_product_id)
     if not credit_product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
 

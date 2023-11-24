@@ -156,7 +156,7 @@ def login(
     user: BasicUser,
     response: Response,
     client: CognitoClient = Depends(get_cognito_client),
-    db: Session = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     """
     Authenticate the user and generate access and refresh tokens.
@@ -172,15 +172,15 @@ def login(
     :type response: Response
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
-    :param db: The database session dependency (automatically injected).
-    :type db: Session
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
 
     :return: The response containing the user information and tokens if the login is successful.
     :rtype: ApiSchema.LoginResponse
     """
     try:
         response = client.initiate_auth(user.username, user.password)
-        user = db.query(User).filter(User.email == user.username).first()
+        user = User.first_by(session, "email", user.username)
 
         return ApiSchema.LoginResponse(
             user=user,
@@ -210,7 +210,7 @@ def login(
 def login_mfa(
     user: BasicUser,
     client: CognitoClient = Depends(get_cognito_client),
-    db: Session = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     """
     Authenticate the user with Multi-Factor Authentication (MFA) and generate access and refresh tokens.
@@ -224,8 +224,8 @@ def login_mfa(
     :type user: BasicUser
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
-    :param db: The database session dependency (automatically injected).
-    :type db: Session
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
 
     :return: The response containing the user information and tokens if the login is successful.
     :rtype: ApiSchema.LoginResponse
@@ -243,7 +243,7 @@ def login_mfa(
                 mfa_code=user.temp_password,
             )
 
-            user = db.query(User).filter(User.email == user.username).first()
+            user = User.first_by(session, "email", user.username)
 
             if not user:
                 raise HTTPException(
@@ -311,7 +311,7 @@ def logout(
 )
 def me(
     usernameFromToken: str = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    session: Session = Depends(get_db),
 ):
     """
     Get the details of the currently authenticated user.
@@ -322,13 +322,13 @@ def me(
 
     :param usernameFromToken: The username extracted from the JWT token.
     :type usernameFromToken: str
-    :param db: The database session dependency (automatically injected).
-    :type db: Session
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
 
     :return: The response containing the details of the authenticated user.
     :rtype: ApiSchema.UserResponse
     """
-    user = db.query(User).filter(User.external_id == usernameFromToken).first()
+    user = User.first_by(session, "external_id", usernameFromToken)
     return ApiSchema.UserResponse(user=user)
 
 
@@ -362,7 +362,7 @@ def forgot_password(user: BasicUser, client: CognitoClient = Depends(get_cognito
 
 
 @router.get("/users/{user_id}", tags=["users"], response_model=User)
-async def get_user(user_id: int, db: Session = Depends(get_db)):
+async def get_user(user_id: int, session: Session = Depends(get_db)):
     """
     Retrieve information about a user.
 
@@ -370,15 +370,14 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
 
     :param user_id: The ID of the user.
     :type user_id: int
-    :param db: The database session dependency (automatically injected).
-    :type db: Session
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
 
     :return: The user information.
     :rtype: User
     :raises HTTPException 404: If the user is not found.
     """
-    user = db.query(User).filter(User.id == user_id).first()
-
+    user = User.first_by(session, "id", user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user

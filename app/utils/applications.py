@@ -1094,7 +1094,7 @@ def get_document_by_id(document_id: int, session: Session) -> core.BorrowerDocum
     :rtype: core.BorrowerDocument
     """
 
-    document = session.query(core.BorrowerDocument).filter(core.BorrowerDocument.id == document_id).first()
+    document = core.BorrowerDocument.first_by(session, "id", document_id)
     if not document:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

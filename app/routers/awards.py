@@ -23,7 +23,7 @@ async def get_award(award_id: int, session: Session = Depends(get_db)):
     :rtype: Award
 
     :raise: HTTPException with status code 404 if the award is not found."""
-    award = session.query(Award).filter(Award.id == award_id).first()
+    award = Award.first_by(session, "id", award_id)
     if not award:
         raise HTTPException(status_code=404, detail="Award not found")
     return award

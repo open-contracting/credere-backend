@@ -31,7 +31,7 @@ def OCP_only(setUser=False):
             session = kwargs.get("session")
 
             # Retrieve the user from the session using external_id
-            user = session.query(User).filter(User.external_id == current_user).first()
+            user = User.first_by(session, "external_id", current_user)
 
             # Check if the user has the required permission
             if user and user.is_OCP():

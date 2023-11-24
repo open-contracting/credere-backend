@@ -174,7 +174,6 @@ async def get_user(
     :rtype: User
     """
     try:
-        user = session.query(User).filter(User.external_id == credentials.claims["username"]).first()
-        return user
+        return User.first_by(session, "external_id", credentials.claims["username"])
     except KeyError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found")
