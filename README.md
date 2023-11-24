@@ -105,7 +105,7 @@ app/                                      # Main application module
 │ │ ├── verify_token.py                   # Utility for JWT token verification
 │ │ ├── general_utils.py                  # General utility functions for the app
 │ │ ├── applications.py                   # Utility functions specific to applications
-│ │ ├── email_utility.py                  # Utility for email handling
+│ │ ├── mail.py                  # Utility for email handling
 │ │ ├── users.py                          # Utility functions specific to users
 │ │ └── lenders.py                        # Utility functions specific to lenders
 │ ├── db/                                 # Handles SQLAlchemy database operations

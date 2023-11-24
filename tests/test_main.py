@@ -2,8 +2,8 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.settings import app_settings
 from app.main import app
+from app.settings import app_settings
 
 
 def test_info_endpoint():

@@ -12,7 +12,7 @@ from app.schema import api as ApiSchema
 
 from ..auth import OCP_only
 from ..background_processes import statistics_utils
-from ..db.session import get_db
+from ..db import get_db
 from ..schema import core
 from ..schema.core import User
 from ..schema.statistic import Statistic, StatisticCustomRange, StatisticType

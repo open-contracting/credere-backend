@@ -4,12 +4,12 @@ import os
 from pathlib import Path
 from urllib.parse import quote
 
-from app.core.settings import app_settings
 from app.schema.core import Application
+from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
-BASE_TEMPLATES_PATH = os.path.join(Path(__file__).absolute().parent.parent.parent, "email_templates")
+BASE_TEMPLATES_PATH = os.path.join(Path(__file__).absolute().parent.parent, "email_templates")
 
 # Templates files names and email subject
 TEMPLATE_FILES = {

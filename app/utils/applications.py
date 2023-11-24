@@ -13,11 +13,11 @@ from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
 from app.background_processes.background_utils import generate_uuid
-from app.core.settings import app_settings
 from app.schema.api import ApplicationListResponse, UpdateDataField
+from app.settings import app_settings
 
+from ..i18n import get_translated_string
 from ..schema import api, core
-from .translation import get_translated_string
 
 from reportlab_mods import (  # noqa: F401 #isort:skip
     borrower_size_dict,  # noqa: F401 #isort:skip

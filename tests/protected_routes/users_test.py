@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.core.user_dependencies import CognitoClient, get_cognito_client
-from app.db.session import get_db
+from app.aws import CognitoClient, get_cognito_client
+from app.db import get_db
 from app.schema.core import User
 
 tempPassword = "1234567890Abc!!"

@@ -1,4 +1,4 @@
-from app.core.settings import app_settings
+from app.settings import app_settings
 
 if app_settings.transifex_token and app_settings.transifex_secret:
     from transifex.native import init, tx

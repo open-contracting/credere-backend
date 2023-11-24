@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from ..db.session import get_db
+from ..db import get_db
 from ..schema.core import Award
 
 router = APIRouter()

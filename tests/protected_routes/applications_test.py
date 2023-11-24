@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
-from app.core.settings import app_settings
-from app.db.session import get_db
+from app.db import get_db
 from app.schema import core
+from app.settings import app_settings
 
 router = APIRouter()
 

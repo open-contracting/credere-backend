@@ -1,8 +1,8 @@
 from collections import Counter
 from datetime import datetime, timedelta
 
-from app.core.settings import app_settings
 from app.exceptions import SkippedAwardError
+from app.settings import app_settings
 
 from . import background_utils
 

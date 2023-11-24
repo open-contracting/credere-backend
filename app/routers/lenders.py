@@ -9,7 +9,7 @@ from app.schema import api as ApiSchema
 from app.schema.api import LenderListResponse
 
 from ..auth import OCP_only, get_current_user
-from ..db.session import get_db, transaction_session
+from ..db import get_db, transaction_session
 from ..schema import core
 
 router = APIRouter()

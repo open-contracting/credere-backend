@@ -16,13 +16,13 @@ import app.utils.applications as utils
 from app.background_processes import application_utils
 from app.background_processes.fetcher import fetch_previous_awards
 from app.background_processes.update_statistic import update_statistics
-from app.core.settings import app_settings
 from app.schema import api as ApiSchema
 from app.schema.api import ChangeEmail
+from app.settings import app_settings
 
 from ..auth import OCP_only, get_current_user, get_user
-from ..core.user_dependencies import CognitoClient, get_cognito_client
-from ..db.session import get_db, transaction_session
+from ..aws import CognitoClient, get_cognito_client
+from ..db import get_db, transaction_session
 from ..schema import core
 
 from fastapi import Depends, Query, status  # isort:skip # noqa

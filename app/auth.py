@@ -9,10 +9,9 @@ from jose.utils import base64url_decode
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.core.settings import app_settings
+from app.db import get_db
 from app.schema.core import User
-
-from ..db.session import get_db
+from app.settings import app_settings
 
 JWK = Dict[str, str]
 

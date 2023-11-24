@@ -3,12 +3,12 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
-from app.core.user_dependencies import sesClient
-from app.db.session import get_db, transaction_session_logger
+from app import mail
+from app.aws import sesClient
+from app.db import get_db, transaction_session_logger
 from app.exceptions import SkippedAwardError
 from app.schema import core
 from app.schema.core import Award, Borrower, BorrowerStatus, Message
-from app.utils import email_utility
 
 from . import background_utils
 from . import colombia_data_access as data_access
@@ -108,7 +108,7 @@ def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Sessio
                         type=core.MessageType.BORROWER_INVITACION,
                     )
 
-                    messageId = email_utility.send_invitation_email(
+                    messageId = mail.send_invitation_email(
                         sesClient,
                         application.uuid,
                         borrower.email,

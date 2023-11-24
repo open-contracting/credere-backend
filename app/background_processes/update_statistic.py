@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db, transaction_session_logger
+from app.db import get_db, transaction_session_logger
 from app.schema import core
 from app.schema.statistic import Statistic, StatisticType
 

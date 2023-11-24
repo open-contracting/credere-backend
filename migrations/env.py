@@ -1,7 +1,7 @@
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.core.settings import app_settings
+from app.settings import app_settings
 from app.schema.core import *  # necessarily to import something from file where your models are stored # noqa
 
 # this is the Alembic Config object, which provides

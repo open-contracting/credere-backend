@@ -8,9 +8,9 @@ from typing import Generator
 
 import boto3
 
-from app.core.settings import app_settings
+from app import mail
 from app.schema.core import Application
-from app.utils import email_utility
+from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ class CognitoClient:
             UserAttributes=[{"Name": "email", "Value": username}],
         )
 
-        email_utility.send_mail_to_new_user(self.ses, name, username, temp_password)
+        mail.send_mail_to_new_user(self.ses, name, username, temp_password)
 
         return responseCreateUser
 
@@ -327,7 +327,7 @@ class CognitoClient:
             Password=temp_password,
             Permanent=False,
         )
-        email_utility.send_mail_to_reset_password(self.ses, username, temp_password)
+        mail.send_mail_to_reset_password(self.ses, username, temp_password)
 
         return responseSetPassword
 
@@ -351,8 +351,8 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the emails.
         """
-        email_utility.send_notification_new_app_to_fi(self.ses, lender_email_group)
-        email_utility.send_notification_new_app_to_ocp(self.ses, ocp_email_group, lender_name)
+        mail.send_notification_new_app_to_fi(self.ses, lender_email_group)
+        mail.send_notification_new_app_to_ocp(self.ses, ocp_email_group, lender_name)
 
     def send_request_to_sme(self, uuid, lender_name, email_message, sme_email):
         """
@@ -370,7 +370,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = email_utility.send_mail_request_to_sme(self.ses, uuid, lender_name, email_message, sme_email)
+        message_id = mail.send_mail_request_to_sme(self.ses, uuid, lender_name, email_message, sme_email)
         return message_id
 
     def send_rejected_email_to_sme(self, application, options):
@@ -388,9 +388,9 @@ class CognitoClient:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
         if options:
-            message_id = email_utility.send_rejected_application_email(self.ses, application)
+            message_id = mail.send_rejected_application_email(self.ses, application)
             return message_id
-        message_id = email_utility.send_rejected_application_email_without_alternatives(self.ses, application)
+        message_id = mail.send_rejected_application_email_without_alternatives(self.ses, application)
         return message_id
 
     def send_application_approved_to_sme(self, application: Application):
@@ -406,7 +406,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = email_utility.send_application_approved_email(self.ses, application)
+        message_id = mail.send_application_approved_email(self.ses, application)
         return message_id
 
     def send_application_submission_completed(self, application: Application):
@@ -422,7 +422,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = email_utility.send_application_submission_completed(self.ses, application)
+        message_id = mail.send_application_submission_completed(self.ses, application)
         return message_id
 
     def send_application_credit_disbursed(self, application: Application):
@@ -438,7 +438,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = email_utility.send_application_credit_disbursed(self.ses, application)
+        message_id = mail.send_application_credit_disbursed(self.ses, application)
         return message_id
 
     def send_new_email_confirmation_to_sme(
@@ -465,7 +465,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        return email_utility.send_new_email_confirmation(
+        return mail.send_new_email_confirmation(
             self.ses,
             borrower_name,
             new_email,
@@ -487,11 +487,11 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the notifications.
         """
-        FI_message_id = email_utility.send_upload_contract_notification_to_FI(
+        FI_message_id = mail.send_upload_contract_notification_to_FI(
             self.ses,
             application,
         )
-        SME_message_id = email_utility.send_upload_contract_confirmation(
+        SME_message_id = mail.send_upload_contract_confirmation(
             self.ses,
             application,
         )
@@ -511,7 +511,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the notification.
         """
-        message_id = email_utility.send_upload_documents_notifications_to_FI(
+        message_id = mail.send_upload_documents_notifications_to_FI(
             self.ses,
             email,
         )
@@ -530,7 +530,7 @@ class CognitoClient:
         Raises:
             boto3.exceptions: Any exceptions that occur when sending the notification.
         """
-        return email_utility.send_copied_application_notification_to_sme(
+        return mail.send_copied_application_notification_to_sme(
             self.ses,
             application,
         )

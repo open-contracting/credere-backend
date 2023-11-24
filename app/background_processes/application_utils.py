@@ -4,11 +4,11 @@ from datetime import datetime, timedelta
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.core.settings import app_settings
-from app.db.session import get_db
+from app.db import get_db
 from app.exceptions import SkippedAwardError
 from app.schema import core
 from app.schema.core import Application
+from app.settings import app_settings
 
 from . import background_utils
 

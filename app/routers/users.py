@@ -13,8 +13,8 @@ from app.schema import api as ApiSchema
 from app.schema.api import UserListResponse
 
 from ..auth import OCP_only
-from ..core.user_dependencies import CognitoClient, get_cognito_client
-from ..db.session import get_db, transaction_session
+from ..aws import CognitoClient, get_cognito_client
+from ..db import get_db, transaction_session
 from ..schema import core
 from ..schema.core import BasicUser, SetupMFA, User, UserWithLender
 

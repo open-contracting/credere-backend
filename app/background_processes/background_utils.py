@@ -7,7 +7,7 @@ import uuid
 
 import httpx
 
-from app.core.settings import app_settings
+from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 

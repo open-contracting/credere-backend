@@ -6,8 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
-from app.core.settings import app_settings
 from app.exceptions import SkippedAwardError
+from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 

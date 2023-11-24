@@ -31,7 +31,7 @@ The ones stored in AWS starts with the "aws_" file name prefix.
 
 Currently, there are only two, aws_main.html and aws_main_es.html. 
 These templates contain the base html code for all the emails, including the email header, styles and footer.
-These templates also contains the {CONTENT} parameter, which will be replaced by `email_utility.py` with the actual
+These templates also contains the {CONTENT} parameter, which will be replaced by `mail.py` with the actual
 email's content, depending on the type of email to be sent.
 
 #### Creating the template for the first time
@@ -61,7 +61,7 @@ Where the JSON file must look like:
 
 Where:
 - TemplateName: must be credere-main-en for the English template and credere-main-es for the Spanish one.
-- SubjectPart: must be {SUBJECT} as the subject is set by `email_utility.py` depeding on the email type
+- SubjectPart: must be {SUBJECT} as the subject is set by `mail.py` depeding on the email type
 - HtmlPart: must be the minified version of aws_main.html or aws_main_es.html
 
 #### Updating an existing template
@@ -82,7 +82,7 @@ All the other templates are only subsections of the email with the specific mess
 to be sent as part of that email.
 To update an existing CONTENT template you should edit it directly and then deploy the changes to the server.
 To create and use a new template you should create the HTML file, and then include the new template file name
-and subjects in English and Spanish in `email_utility.TEMPLATE_FILES`.
+and subjects in English and Spanish in `mail.TEMPLATE_FILES`.
 
 ## Parameters in templates
 

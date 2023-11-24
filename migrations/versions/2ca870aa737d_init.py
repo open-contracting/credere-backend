@@ -11,7 +11,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 from sqlmodel import create_engine
 
-from app.core.settings import app_settings
+from app.settings import app_settings
 
 # revision identifiers, used by Alembic.
 revision = "2ca870aa737d"

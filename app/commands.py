@@ -5,14 +5,13 @@ from datetime import datetime
 
 import typer
 
-from app import background_processes
+from app import background_processes, mail
+from app.aws import sesClient
 from app.background_processes import application_utils
-from app.core.settings import app_settings
-from app.core.user_dependencies import sesClient
-from app.db.session import get_db, transaction_session, transaction_session_logger
+from app.db import get_db, transaction_session, transaction_session_logger
 from app.schema import core
 from app.schema.core import Application, ApplicationStatus, Award, Message
-from app.utils import email_utility
+from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -135,9 +134,7 @@ def send_reminders():
                     buyer_name = application.award.buyer_name
                     title = application.award.title
 
-                    messageID = email_utility.send_mail_intro_reminder(
-                        sesClient, uuid, email, borrower_name, buyer_name, title
-                    )
+                    messageID = mail.send_mail_intro_reminder(sesClient, uuid, email, borrower_name, buyer_name, title)
                     new_message.external_message_id = messageID
                     logger.info("Mail sent and status updated")
 
@@ -161,7 +158,7 @@ def send_reminders():
                     buyer_name = application.award.buyer_name
                     title = application.award.title
 
-                    messageID = email_utility.send_mail_submit_reminder(
+                    messageID = mail.send_mail_submit_reminder(
                         sesClient, uuid, email, borrower_name, buyer_name, title
                     )
                     new_message.external_message_id = messageID
@@ -198,7 +195,7 @@ def SLA_overdue_applications():
                     if days_passed > application.lender.sla_days:
                         current_dt = datetime.now(application.created_at.tzinfo)
                         application.overdued_at = current_dt
-                        message_id = email_utility.send_overdue_application_email_to_OCP(
+                        message_id = mail.send_overdue_application_email_to_OCP(
                             sesClient,
                             application.lender.name,
                         )
@@ -214,7 +211,7 @@ def SLA_overdue_applications():
             name = lender_data.get("name")
             count = lender_data.get("count")
             email = lender_data.get("email")
-            message_id = email_utility.send_overdue_application_email_to_FI(sesClient, name, email, count)
+            message_id = mail.send_overdue_application_email_to_FI(sesClient, name, email, count)
 
             Message.create(
                 session,
