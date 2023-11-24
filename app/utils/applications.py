@@ -13,10 +13,9 @@ from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 from sqlalchemy.sql.expression import true
 
-from app import models, serializers
+from app import models, parsers, serializers
 from app.background_processes.background_utils import generate_uuid
 from app.i18n import get_translated_string
-from app.schema.api import UpdateDataField
 from app.settings import app_settings
 
 from reportlab_mods import (  # noqa: F401 #isort:skip
@@ -80,7 +79,7 @@ def format_date(date_str):
     return formatted_date
 
 
-def update_data_field(application: models.Application, payload: UpdateDataField):
+def update_data_field(application: models.Application, payload: parsers.UpdateDataField):
     """
     Update a specific field in the application's `secop_data_verification` attribute.
 
@@ -88,7 +87,7 @@ def update_data_field(application: models.Application, payload: UpdateDataField)
     :type application: models.Application
 
     :param payload: The data to be updated.
-    :type payload: UpdateDataField
+    :type payload: parsers.UpdateDataField
 
     :raise: KeyError if the key specified in payload does not exist in the application's secop_data_verification dictionary. # noqa
 
@@ -131,7 +130,7 @@ def validate_fields(application):
     not_validated_fields = []
     app_secop_dict = application.secop_data_verification.copy()
 
-    fields = list(UpdateDataField().dict().keys())
+    fields = list(parsers.UpdateDataField().dict().keys())
 
     for key in fields:
         if key not in app_secop_dict or not app_secop_dict[key]:

@@ -13,15 +13,13 @@ from sqlalchemy import and_, text
 from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
-from app import models, serializers
+from app import models, parsers, serializers
 from app.auth import OCP_only, get_current_user, get_user
 from app.aws import CognitoClient, get_cognito_client
 from app.background_processes import application_utils
 from app.background_processes.fetcher import fetch_previous_awards
 from app.background_processes.update_statistic import update_statistics
 from app.db import get_db, transaction_session
-from app.schema import api as ApiSchema
-from app.schema.api import ChangeEmail
 from app.settings import app_settings
 
 from fastapi import Depends, Query, status  # isort:skip # noqa
@@ -40,7 +38,7 @@ router = APIRouter()
 )
 async def reject_application(
     id: int,
-    payload: ApiSchema.LenderRejectedApplication,
+    payload: parsers.LenderRejectedApplication,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
@@ -54,7 +52,7 @@ async def reject_application(
     :type id: int
 
     :param payload: The rejected application data.
-    :type payload: ApiSchema.LenderRejectedApplication
+    :type payload: parsers.LenderRejectedApplication
 
     :param session: The database session.
     :type session: Session
@@ -119,7 +117,7 @@ async def reject_application(
 )
 async def complete_application(
     id: int,
-    payload: ApiSchema.LenderReviewContract,
+    payload: parsers.LenderReviewContract,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     user: models.User = Depends(get_user),
@@ -133,7 +131,7 @@ async def complete_application(
     :type id: int
 
     :param payload: The completed application data.
-    :type payload: ApiSchema.LenderReviewContract
+    :type payload: parsers.LenderReviewContract
 
     :param session: The database session.
     :type session: Session
@@ -181,7 +179,7 @@ async def complete_application(
 )
 async def approve_application(
     id: int,
-    payload: ApiSchema.LenderApprovedData,
+    payload: parsers.LenderApprovedData,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
@@ -197,7 +195,7 @@ async def approve_application(
     :type id: int
 
     :param payload: The approved application data.
-    :type payload: ApiSchema.LenderApprovedData
+    :type payload: parsers.LenderApprovedData
 
     :param session: The database session.
     :type session: Session
@@ -239,10 +237,10 @@ async def approve_application(
 @router.post(
     "/applications/change-email",
     tags=["applications"],
-    response_model=ChangeEmail,
+    response_model=parsers.ChangeEmail,
 )
 async def change_email(
-    payload: ChangeEmail,
+    payload: parsers.ChangeEmail,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
@@ -250,7 +248,7 @@ async def change_email(
     Change the email address for an application.
 
     :param payload: The data for changing the email address.
-    :type payload: ChangeEmail
+    :type payload: parsers.ChangeEmail
 
     :param session: The database session.
     :type session: Session
@@ -259,7 +257,7 @@ async def change_email(
     :type client: CognitoClient
 
     :return: The data for changing the email address.
-    :rtype: ChangeEmail
+    :rtype: parsers.ChangeEmail
 
     """
     with transaction_session(session):
@@ -295,23 +293,23 @@ async def change_email(
 @router.post(
     "/applications/confirm-change-email",
     tags=["applications"],
-    response_model=ChangeEmail,
+    response_model=parsers.ChangeEmail,
 )
 async def confirm_email(
-    payload: ApiSchema.ConfirmNewEmail,
+    payload: parsers.ConfirmNewEmail,
     session: Session = Depends(get_db),
 ):
     """
     Confirm the email address change for an application.
 
     :param payload: The data for confirming the email address change.
-    :type payload: ApiSchema.ConfirmNewEmail
+    :type payload: parsers.ConfirmNewEmail
 
     :param session: The database session.
     :type session: Session
 
     :return: The data for confirming the email address change.
-    :rtype: ChangeEmail
+    :rtype: parsers.ChangeEmail
 
     """
     with transaction_session(session):
@@ -327,7 +325,7 @@ async def confirm_email(
             payload,
         )
 
-        return ChangeEmail(new_email=application.primary_email, uuid=application.uuid)
+        return parsers.ChangeEmail(new_email=application.primary_email, uuid=application.uuid)
 
 
 @router.get(
@@ -556,7 +554,7 @@ async def upload_contract(
     response_model=serializers.ApplicationResponse,
 )
 async def confirm_upload_contract(
-    payload: ApiSchema.UploadContractConfirmation,
+    payload: parsers.UploadContractConfirmation,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
@@ -568,7 +566,7 @@ async def confirm_upload_contract(
     Sends an email to SME notifying the current stage of their application.
 
     :param payload: The confirmation data for the uploaded contract.
-    :type payload: ApiSchema.UploadContractConfirmation
+    :type payload: parsers.UploadContractConfirmation
 
     :param session: The database session.
     :type session: Session
@@ -687,7 +685,7 @@ async def upload_compliance(
 )
 async def verify_data_field(
     id: int,
-    payload: ApiSchema.UpdateDataField,
+    payload: parsers.UpdateDataField,
     session: Session = Depends(get_db),
     user: models.User = Depends(get_user),
 ):
@@ -698,7 +696,7 @@ async def verify_data_field(
     :type id: int
 
     :param payload: The data field update payload.
-    :type payload: ApiSchema.UpdateDataField
+    :type payload: parsers.UpdateDataField
 
     :param session: The database session.
     :type session: Session
@@ -741,7 +739,7 @@ async def verify_data_field(
 )
 async def verify_document(
     document_id: int,
-    payload: ApiSchema.VerifyBorrowerDocument,
+    payload: parsers.VerifyBorrowerDocument,
     session: Session = Depends(get_db),
     user: models.User = Depends(get_user),
 ):
@@ -752,7 +750,7 @@ async def verify_document(
     :type document_id: int
 
     :param payload: The document verification payload.
-    :type payload: ApiSchema.VerifyBorrowerDocument
+    :type payload: parsers.VerifyBorrowerDocument
 
     :param session: The database session.
     :type session: Session
@@ -795,7 +793,7 @@ async def verify_document(
 )
 async def update_application_award(
     application_id: int,
-    payload: ApiSchema.AwardUpdate,
+    payload: parsers.AwardUpdate,
     user: models.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
@@ -806,7 +804,7 @@ async def update_application_award(
     :type application_id: int
 
     :param payload: The award update payload.
-    :type payload: ApiSchema.AwardUpdate
+    :type payload: parsers.AwardUpdate
 
     :param user: The current user.
     :type user: models.User
@@ -839,7 +837,7 @@ async def update_application_award(
 )
 async def update_application_borrower(
     application_id: int,
-    payload: ApiSchema.BorrowerUpdate,
+    payload: parsers.BorrowerUpdate,
     user: models.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
@@ -850,7 +848,7 @@ async def update_application_borrower(
     :type application_id: int
 
     :param payload: The borrower update payload.
-    :type payload: ApiSchema.BorrowerUpdate
+    :type payload: parsers.BorrowerUpdate
 
     :param user: The current user.
     :type user: models.User
@@ -1109,7 +1107,7 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     response_model=serializers.ApplicationResponse,
 )
 async def access_scheme(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1122,7 +1120,7 @@ async def access_scheme(
 
 
     :param payload: The application data.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param background_tasks: The background tasks to be executed.
     :type background_tasks: BackgroundTasks
@@ -1162,14 +1160,14 @@ async def access_scheme(
     response_model=serializers.CreditProductListResponse,
 )
 async def credit_product_options(
-    payload: ApiSchema.ApplicationCreditOptions,
+    payload: parsers.ApplicationCreditOptions,
     session: Session = Depends(get_db),
 ):
     """
     Get the available credit product options for an application.
 
     :param payload: The application credit options.
-    :type payload: ApiSchema.ApplicationCreditOptions
+    :type payload: parsers.ApplicationCreditOptions
 
     :param session: The database session.
     :type session: Session
@@ -1237,14 +1235,14 @@ async def credit_product_options(
     response_model=serializers.ApplicationResponse,
 )
 async def select_credit_product(
-    payload: ApiSchema.ApplicationSelectCreditProduct,
+    payload: parsers.ApplicationSelectCreditProduct,
     session: Session = Depends(get_db),
 ):
     """
     Select a credit product for an application.
 
     :param payload: The application credit product selection payload.
-    :type payload: ApiSchema.ApplicationSelectCreditProduct
+    :type payload: parsers.ApplicationSelectCreditProduct
 
     :param session: The database session.
     :type session: Session
@@ -1293,14 +1291,14 @@ async def select_credit_product(
     response_model=serializers.ApplicationResponse,
 )
 async def rollback_select_credit_product(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
 ):
     """
     Rollback the selection of a credit product for an application.
 
     :param payload: The application data.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
@@ -1343,7 +1341,7 @@ async def rollback_select_credit_product(
     response_model=serializers.ApplicationResponse,
 )
 async def confirm_credit_product(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1351,7 +1349,7 @@ async def confirm_credit_product(
     Confirm the selected credit product for an application.
 
     :param payload: The application data.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
@@ -1413,7 +1411,7 @@ async def confirm_credit_product(
     response_model=serializers.ApplicationResponse,
 )
 async def update_apps_send_notifications(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
@@ -1425,7 +1423,7 @@ async def update_apps_send_notifications(
     This operation also ensures that the credit product and lender are selected before updating the status.
 
     :param payload: The application data to update.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
@@ -1494,7 +1492,7 @@ async def update_apps_send_notifications(
 )
 async def email_sme(
     id: int,
-    payload: ApiSchema.ApplicationEmailSme,
+    payload: parsers.ApplicationEmailSme,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
@@ -1509,7 +1507,7 @@ async def email_sme(
     :type id: int
 
     :param payload: The payload containing the message to send to SME.
-    :type payload: ApiSchema.ApplicationEmailSme
+    :type payload: parsers.ApplicationEmailSme
 
     :param session: The database session.
     :type session: Session
@@ -1576,7 +1574,7 @@ async def email_sme(
     response_model=serializers.ApplicationResponse,
 )
 async def complete_information_request(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     client: CognitoClient = Depends(get_cognito_client),
     session: Session = Depends(get_db),
@@ -1588,7 +1586,7 @@ async def complete_information_request(
     This operation also sends a notification about the uploaded documents to the FI.
 
     :param payload: The application data to update.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param client: The Cognito client.
     :type client: CognitoClient
@@ -1640,7 +1638,7 @@ async def complete_information_request(
     response_model=serializers.ApplicationResponse,
 )
 async def decline(
-    payload: ApiSchema.ApplicationDeclinePayload,
+    payload: parsers.ApplicationDeclinePayload,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1649,7 +1647,7 @@ async def decline(
     Changes application status from "PENDING" to "DECLINED".
 
     :param payload: The application decline payload.
-    :type payload: ApiSchema.ApplicationDeclinePayload
+    :type payload: parsers.ApplicationDeclinePayload
 
     :param session: The database session.
     :type session: Session
@@ -1690,7 +1688,7 @@ async def decline(
     response_model=serializers.ApplicationResponse,
 )
 async def rollback_decline(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1698,7 +1696,7 @@ async def rollback_decline(
     Rollback the decline of an application.
 
     :param payload: The application base payload.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
@@ -1735,7 +1733,7 @@ async def rollback_decline(
     response_model=serializers.ApplicationResponse,
 )
 async def decline_feedback(
-    payload: ApiSchema.ApplicationDeclineFeedbackPayload,
+    payload: parsers.ApplicationDeclineFeedbackPayload,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1743,7 +1741,7 @@ async def decline_feedback(
     Provide feedback for a declined application.
 
     :param payload: The application decline feedback payload.
-    :type payload: ApiSchema.ApplicationDeclineFeedbackPayload
+    :type payload: parsers.ApplicationDeclineFeedbackPayload
 
     :param session: The database session.
     :type session: Session
@@ -1812,7 +1810,7 @@ async def previous_contracts(
     response_model=serializers.ApplicationResponse,
 )
 async def find_alternative_credit_option(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(get_cognito_client),
 ):
@@ -1820,7 +1818,7 @@ async def find_alternative_credit_option(
     Find an alternative credit option for a rejected application by copying it.
 
     :param payload: The payload containing the UUID of the rejected application.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session

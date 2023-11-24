@@ -117,7 +117,7 @@ async def get_ocp_statistics_opt_in(
     :type session: Session
 
     :return: Response containing the OCP statistics for MSME opt-in.
-    :rtype: ApiSchema.StatisticOCPResponse
+    :rtype: serializers.StatisticOptInResponse
     """
     try:
         current_date = datetime.now().date()
