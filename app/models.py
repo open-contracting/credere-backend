@@ -9,6 +9,7 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import true
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.settings import app_settings
@@ -438,6 +439,39 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             ),
         )
 
+    @property
+    def tz(self):
+        return self.created_at.tzinfo
+
+    def previous_awards(self, session) -> List["Award"]:
+        """
+        :return: The previous awards for the application's borrower, in reverse time order by contract start date.
+        """
+        return (
+            session.query(Award)
+            .filter(
+                Award.previous == true(),
+                Award.borrower_id == self.borrower_id,
+            )
+            .order_by(Award.contractperiod_startdate.desc())
+            .all()
+        )
+
+    def rejecter_lenders(self, session):
+        """
+        :return: The IDs of lenders who rejected applications from the application's borrower for the same award.
+        """
+        return (
+            session.query(Application.lender_id)
+            .filter(
+                self.__class__.award_borrower_identifier == self.award_borrower_identifier,
+                self.__class__.status == ApplicationStatus.REJECTED,
+                self.__class__.lender_id.isnot(None),
+            )
+            .distinct()
+            .all()
+        )
+
     def days_waiting_for_lender(self, session) -> int:
         """
         :return: The number of days while waiting for the lender to perform an action.
@@ -451,7 +485,6 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             .filter(ApplicationAction.application_id == self.id)
             .order_by(ApplicationAction.created_at)
         )
-        tz = self.created_at.tzinfo
 
         lender_requests = base_query.filter(
             ApplicationAction.type == ApplicationActionType.FI_REQUEST_INFORMATION
@@ -462,7 +495,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             end_time = lender_requests.pop(0).created_at
         else:
             # Days between the lender starting and now.
-            end_time = datetime.now(tz)
+            end_time = datetime.now(self.tz)
         days += (end_time - self.lender_started_at).days
 
         for borrower_response in base_query.filter(
@@ -473,7 +506,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 end_time = lender_requests.pop(0).created_at
             else:
                 # Days between the last request and now.
-                end_time = datetime.now(tz)
+                end_time = datetime.now(self.tz)
             days += (end_time - borrower_response.created_at).days
 
             if not lender_requests:
@@ -481,6 +514,17 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 break
 
         return round(days)
+
+    def stage_as_rejected(self, lender_rejected_data: dict):
+        self.status = ApplicationStatus.REJECTED
+        self.lender_rejected_at = datetime.now(self.tz)
+        self.lender_rejected_data = lender_rejected_data
+
+    def stage_as_completed(self, disbursed_final_amount: Decimal):
+        self.status = ApplicationStatus.COMPLETED
+        self.lender_completed_at = datetime.now(self.tz)
+        self.disbursed_final_amount = disbursed_final_amount
+        self.overdued_at = None
 
 
 class BorrowerBase(SQLModel):
@@ -650,6 +694,9 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
 
     @classmethod
     def application_by_type(cls, message_type):
+        """
+        :return: The IDs of applications that sent messages of the provided type.
+        """
         return select(cls.application_id).filter(cls.type == message_type)
 
 

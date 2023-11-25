@@ -95,7 +95,7 @@ async def download_application(
             .all()
         )
 
-        previous_awards = utils.get_previous_awards(application, session)
+        previous_awards = application.previous_awards(session)
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)

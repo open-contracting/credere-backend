@@ -2,7 +2,6 @@ import logging
 import os.path
 import re
 from datetime import datetime
-from decimal import Decimal
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -11,7 +10,6 @@ from fastapi.encoders import jsonable_encoder
 from reportlab.platypus import Paragraph
 from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session, defaultload, joinedload
-from sqlalchemy.sql.expression import true
 
 from app import models, parsers, serializers, util
 from app.i18n import get_translated_string
@@ -194,28 +192,6 @@ def get_calculator_data(payload: dict):
     return calculator_fields
 
 
-def reject_application(application: models.Application, payload: dict):
-    """
-    Rejects an application.
-
-    This function encodes a payload into JSON, removes unset fields, sets these fields as the
-    `lender_rejected_data` in the application, updates the `lender_rejected_at` timestamp,
-    and changes the application status to REJECTED.
-
-    :param application: The application to be rejected.
-    :type application: models.Application
-
-    :param payload: The data payload associated with the rejection.
-    :type payload: dict
-    """
-    payload_dict = jsonable_encoder(payload, exclude_unset=True)
-
-    application.lender_rejected_data = payload_dict
-    current_time = datetime.now(application.created_at.tzinfo)
-    application.lender_rejected_at = current_time
-    application.status = models.ApplicationStatus.REJECTED
-
-
 def approve_application(application: models.Application, payload: dict):
     """
     Approves an application.
@@ -241,26 +217,6 @@ def approve_application(application: models.Application, payload: dict):
     application.status = models.ApplicationStatus.APPROVED
     current_time = datetime.now(application.created_at.tzinfo)
     application.lender_approved_at = current_time
-
-
-def complete_application(application: models.Application, disbursed_final_amount: Decimal):
-    """
-    Completes an application.
-
-    This function sets the `disbursed_final_amount` in the application, changes the application status
-    to COMPLETED, and updates the `lender_completed_at` timestamp.
-
-    :param application: The application to be completed.
-    :type application: models.Application
-
-    :param disbursed_final_amount: The final amount disbursed for the application.
-    :type disbursed_final_amount: Decimal
-    """
-    current_time = datetime.now(application.created_at.tzinfo)
-    application.disbursed_final_amount = disbursed_final_amount
-    application.status = models.ApplicationStatus.COMPLETED
-    application.lender_completed_at = current_time
-    application.overdued_at = None
 
 
 def update_application_borrower(
@@ -993,39 +949,6 @@ def get_document_by_id(document_id: int, session: Session) -> models.BorrowerDoc
     return document
 
 
-def get_previous_awards(
-    application: models.Application,
-    session: Session,
-) -> List[models.Award]:
-    """
-    Retrieves a list of previous awards for a given application's borrower.
-
-    This function queries the database for any awards that are marked as previous and
-    associated with the borrower of the provided application.
-
-    :param application: The application to retrieve previous awards for.
-    :type application: models.Application
-
-    :param session: The database session to use.
-    :type session: Session
-
-    :return: A list of previous awards associated with the borrower.
-    :rtype: List[models.Award]
-    """
-
-    previous_contracts = (
-        session.query(models.Award)
-        .filter(
-            models.Award.previous == true(),
-            models.Award.borrower_id == application.borrower_id,
-        )
-        .order_by(models.Award.contractperiod_startdate.desc())
-        .all()
-    )
-
-    return previous_contracts
-
-
 def copy_documents(application: models.Application, documents: dict, session: Session):
     """
     Copies provided documents into the database for a given application.
@@ -1096,38 +1019,6 @@ def copy_application(application: models.Application, session: Session) -> model
             status_code=status.HTTP_409_CONFLICT,
             detail=f"There was a problem copying the application.{e}",
         )
-
-
-def get_previous_lenders(award_borrower_identifier: str, session: Session) -> List[int]:
-    """
-    Retrieves a list of unique lender IDs who have previously rejected the application with the given award borrower identifier.
-
-    This function queries the database to find applications with the provided award borrower
-    identifier that have a status of REJECTED, and returns a list of distinct lender IDs for
-    these applications. If there are no such lender IDs, an empty list is returned.
-
-    :param award_borrower_identifier: The award borrower identifier for which to find previous lenders.
-    :type award_borrower_identifier: str
-
-    :param session: The database session to use.
-    :type session: Session
-
-    :return: A list of distinct lender IDs for applications with the provided award borrower identifier that have a status of REJECTED. If there are no such lender IDs, an empty list is returned. # noqa
-    :rtype: List[int]
-    """
-
-    lender_ids = (
-        session.query(models.Application.lender_id)
-        .filter(models.Application.award_borrower_identifier == award_borrower_identifier)
-        .filter(models.Application.status == "REJECTED")
-        .distinct()
-        .all()
-    )
-    if not lender_ids:
-        return []
-    cleaned_lender_ids = [lender_id for (lender_id,) in lender_ids if lender_id is not None]
-
-    return cleaned_lender_ids
 
 
 def get_previous_documents(application: models.Application, session: Session):

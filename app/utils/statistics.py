@@ -384,7 +384,10 @@ def get_msme_opt_in_stats(session):
     sectors_count_query = (
         session.query(Borrower.sector, func.count(distinct(Application.id)).label("count"))
         .join(Application, Borrower.id == Application.borrower_id)
-        .filter(Application.borrower_accepted_at.isnot(None), Borrower.sector != "")
+        .filter(
+            Application.borrower_accepted_at.isnot(None),
+            Borrower.sector != "",
+        )
         .group_by(Borrower.sector)
         .all()
     )

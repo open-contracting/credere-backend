@@ -73,7 +73,10 @@ async def reject_application(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=message,
             )
-        utils.reject_application(application, payload)
+
+        payload_dict = jsonable_encoder(payload, exclude_unset=True)
+        application.stage_as_rejected(payload_dict)
+        # This next call performs the `session.flush()`.
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.REJECTED_APPLICATION,
@@ -144,8 +147,10 @@ async def complete_application(
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
         utils.check_application_status(application, models.ApplicationStatus.CONTRACT_UPLOADED)
-        utils.complete_application(application, payload.disbursed_final_amount)
+
+        application.stage_as_completed(payload.disbursed_final_amount)
         application.completed_in_days = application.days_waiting_for_lender(session)
+        # This next call performs the `session.flush()`.
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
@@ -154,6 +159,7 @@ async def complete_application(
             application_id=application.id,
             user_id=user.id,
         )
+
         message_id = client.send_application_credit_disbursed(application)
         models.Message.create(
             session,
@@ -784,7 +790,7 @@ async def credit_product_options(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
 
-        previous_lenders = utils.get_previous_lenders(application.award_borrower_identifier, session)
+        rejecter_lenders = application.rejecter_lenders(session)
         utils.check_is_application_expired(application)
         utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
 
@@ -803,7 +809,7 @@ async def credit_product_options(
                 models.CreditProduct.borrower_size == payload.borrower_size,
                 models.CreditProduct.lower_limit <= payload.amount_requested,
                 models.CreditProduct.upper_limit >= payload.amount_requested,
-                models.Lender.id.notin_(previous_lenders),
+                models.Lender.id.notin_(rejecter_lenders),
                 filter,
             )
         )
@@ -817,7 +823,7 @@ async def credit_product_options(
                 models.CreditProduct.borrower_size == payload.borrower_size,
                 models.CreditProduct.lower_limit <= payload.amount_requested,
                 models.CreditProduct.upper_limit >= payload.amount_requested,
-                models.Lender.id.notin_(previous_lenders),
+                models.Lender.id.notin_(rejecter_lenders),
                 filter,
             )
         )
@@ -1396,7 +1402,7 @@ async def previous_contracts(
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission_or_OCP(application, user)
 
-        return utils.get_previous_awards(application, session)
+        return application.previous_awards(session)
 
 
 @router.post(
