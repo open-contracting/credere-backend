@@ -147,7 +147,7 @@ async def complete_application(
         utils.check_FI_user_permission(application, user)
         utils.check_application_status(application, models.ApplicationStatus.CONTRACT_UPLOADED)
         utils.complete_application(application, payload.disbursed_final_amount)
-        application.completed_in_days = background.get_application_days_passed(application, session)
+        application.completed_in_days = application.days_waiting_for_lender(session)
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,

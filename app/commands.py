@@ -207,7 +207,7 @@ def SLA_overdue_applications():
             )
         ):
             with transaction_session(session):
-                days_passed = background.get_application_days_passed(application, session)
+                days_passed = application.days_waiting_for_lender(session)
                 if days_passed > application.lender.sla_days * app_settings.progress_to_remind_started_applications:
                     if "email" not in overdue_lenders[application.lender.id]:
                         overdue_lenders[application.lender.id]["email"] = application.lender.email_group

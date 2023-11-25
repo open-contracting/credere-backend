@@ -444,6 +444,50 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             ),
         )
 
+    def days_waiting_for_lender(self, session) -> int:
+        """
+        :return: The number of days while waiting for the lender to perform an action.
+        """
+        days = 0
+
+        # Sadly, `self.actions.order_by(ApplicationAction.created_at)` raises
+        # "'InstrumentedList' object has no attribute 'order_by'".
+        base_query = (
+            session.query(ApplicationAction)
+            .filter(ApplicationAction.application_id == self.id)
+            .order_by(ApplicationAction.created_at)
+        )
+        tz = self.created_at.tzinfo
+
+        lender_requests = base_query.filter(
+            ApplicationAction.type == ApplicationActionType.FI_REQUEST_INFORMATION
+        ).all()
+
+        if lender_requests:
+            # Days between the lender starting and making a first request.
+            end_time = lender_requests.pop(0).created_at
+        else:
+            # Days between the lender starting and now.
+            end_time = datetime.now(tz)
+        days += (end_time - self.lender_started_at).days
+
+        for borrower_response in base_query.filter(
+            ApplicationAction.type == ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED
+        ):
+            if lender_requests:
+                # Days between the next request and the next response.
+                end_time = lender_requests.pop(0).created_at
+            else:
+                # Days between the last request and now.
+                end_time = datetime.now(tz)
+            days += (end_time - borrower_response.created_at).days
+
+            if not lender_requests:
+                # There should be at most one unanswered request, but break just in case.
+                break
+
+        return round(days)
+
 
 class BorrowerBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -719,6 +763,10 @@ class Statistic(SQLModel, table=True):
     type: StatisticType = Field(sa_column=Column(SAEnum(StatisticType, name="statistic_type")))
     data: dict = Field(default={}, sa_column=Column(JSON))
     created_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            onupdate=func.now(),
+        )
     )
     lender_id: Optional[int] = Field(foreign_key="lender.id", nullable=True)
