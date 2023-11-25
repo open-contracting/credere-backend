@@ -64,7 +64,6 @@ class ActiveRecordMixin:
         :return: The inserted instance.
         """
         obj = cls(**data)
-        obj.created_at = datetime.utcnow()
         if hasattr(obj, "missing_data"):
             obj.missing_data = _get_missing_data_keys(data)
 
