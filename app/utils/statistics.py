@@ -2,7 +2,7 @@ import logging
 from contextlib import contextmanager
 from datetime import datetime
 
-from sqlalchemy import Date, Integer, cast, distinct, func, or_, text
+from sqlalchemy import Date, Integer, cast, distinct, func, text
 from sqlalchemy.orm import Session
 
 from app.db import get_db, transaction_session_logger
@@ -200,60 +200,39 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     :rtype: dict
     """
 
-    # received--------
-    applications_received_query = _get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
-        Application.borrower_submitted_at.isnot(None),
-    )
+    base_query = _get_base_query(session.query(Application), start_date, end_date, lender_id)
 
+    # received
+    applications_received_query = base_query.filter(Application.borrower_submitted_at.isnot(None))
     applications_received_count = applications_received_query.count()
 
-    # approved-------
-    applications_approved_query = _get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
-        or_(
-            Application.status == ApplicationStatus.APPROVED,
-            Application.status == ApplicationStatus.CONTRACT_UPLOADED,
-            Application.status == ApplicationStatus.COMPLETED,
-        ),
+    # approved
+    applications_approved_query = base_query.filter(
+        Application.status.in_(
+            [ApplicationStatus.APPROVED, ApplicationStatus.CONTRACT_UPLOADED, ApplicationStatus.COMPLETED]
+        )
     )
-
     applications_approved_count = applications_approved_query.count()
 
-    # rejected--------
-    applications_rejected_query = _get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
-        Application.status == ApplicationStatus.REJECTED,
-    )
-
+    # rejected
+    applications_rejected_query = base_query.filter(Application.status == ApplicationStatus.REJECTED)
     applications_rejected_count = applications_rejected_query.count()
 
-    # waiting---------
-    applications_waiting_query = _get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
-        Application.status == ApplicationStatus.INFORMATION_REQUESTED,
-    )
-
+    # waiting
+    applications_waiting_query = base_query.filter(Application.status == ApplicationStatus.INFORMATION_REQUESTED)
     applications_waiting_count = applications_waiting_query.count()
 
-    # in progress---------
-    applications_in_progress_query = _get_base_query(
-        session.query(Application), start_date, end_date, lender_id
-    ).filter(
-        or_(
-            Application.status == ApplicationStatus.STARTED,
-            Application.status == ApplicationStatus.INFORMATION_REQUESTED,
-        ),
+    # in progress
+    applications_in_progress_query = base_query.filter(
+        Application.status.in_([ApplicationStatus.STARTED, ApplicationStatus.INFORMATION_REQUESTED])
     )
-
     applications_in_progress_count = applications_in_progress_query.count()
 
-    # credit disbursed---------
-    applications_with_credit_disbursed = _get_base_query(
-        session.query(Application), start_date, end_date, lender_id
-    ).filter(
-        Application.status == ApplicationStatus.COMPLETED,
-    )
-
+    # credit disbursed
+    applications_with_credit_disbursed = base_query.filter(Application.status == ApplicationStatus.COMPLETED)
     applications_with_credit_disbursed_count = applications_with_credit_disbursed.count()
 
-    # credit disbursed %---------
+    # credit disbursed %
     if applications_approved_count == 0 or applications_with_credit_disbursed_count == 0:
         proportion_of_disbursed = 0
     else:
@@ -292,10 +271,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     average_repayment_period = average_repayment_period_query.scalar() or 0
 
     # Overdue Application
-    applications_overdue_query = _get_base_query(session.query(Application), start_date, end_date, lender_id).filter(
-        Application.overdued_at.isnot(None),
-    )
-
+    applications_overdue_query = base_query.filter(Application.overdued_at.isnot(None))
     applications_overdue_count = applications_overdue_query.count()
 
     # average time to process application
@@ -311,11 +287,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     average_processing_time_result = average_processing_time_query.scalar()
     average_processing_time = int(average_processing_time_result) if average_processing_time_result is not None else 0
     #  get_proportion_of_submited_out_of_opt_in
-    application_accepted_query = (
-        _get_base_query(session.query(Application), start_date, end_date, lender_id)
-        .filter(Application.borrower_submitted_at.isnot(None))
-        .count()
-    )
+    application_accepted_query = base_query.filter(Application.borrower_submitted_at.isnot(None)).count()
 
     if lender_id is not None:
         application_divisor = session.query(Application).filter(Application.borrower_submitted_at.isnot(None)).count()
