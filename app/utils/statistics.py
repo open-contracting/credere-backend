@@ -2,7 +2,7 @@ import logging
 from contextlib import contextmanager
 from datetime import datetime
 
-from sqlalchemy import Date, Integer, and_, cast, distinct, func, or_, text
+from sqlalchemy import Date, Integer, cast, distinct, func, or_, text
 from sqlalchemy.orm import Session
 
 from app.db import get_db, transaction_session_logger
@@ -161,10 +161,8 @@ def _get_base_query(sessionBase, start_date, end_date, lender_id):
     base_query = None
     if start_date is not None and end_date is not None:
         base_query = sessionBase.filter(
-            and_(
-                Application.created_at >= start_date,
-                Application.created_at <= end_date,
-            )
+            Application.created_at >= start_date,
+            Application.created_at <= end_date,
         )
     elif start_date is not None:
         base_query = sessionBase.filter(Application.created_at >= start_date)
@@ -286,10 +284,8 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
         )
         .join(CreditProduct, Application.credit_product_id == CreditProduct.id)
         .filter(
-            and_(
-                Application.borrower_submitted_at.isnot(None),
-                CreditProduct.type == CreditType.LOAN,
-            )
+            Application.borrower_submitted_at.isnot(None),
+            CreditProduct.type == CreditType.LOAN,
         )
     )
 
@@ -369,11 +365,7 @@ def get_msme_opt_in_stats(session):
     logger.info("calculating msme opt in stas for lender ")
 
     # opt in--------
-    opt_in_query = session.query(Application).filter(
-        and_(
-            Application.borrower_accepted_at.isnot(None),
-        )
-    )
+    opt_in_query = session.query(Application).filter(Application.borrower_accepted_at.isnot(None))
     opt_in_query_count = opt_in_query.count()
 
     # opt in %--------
@@ -392,7 +384,7 @@ def get_msme_opt_in_stats(session):
     sectors_count_query = (
         session.query(Borrower.sector, func.count(distinct(Application.id)).label("count"))
         .join(Application, Borrower.id == Application.borrower_id)
-        .filter(and_(Application.borrower_accepted_at.isnot(None), Borrower.sector != ""))
+        .filter(Application.borrower_accepted_at.isnot(None), Borrower.sector != "")
         .group_by(Borrower.sector)
         .all()
     )

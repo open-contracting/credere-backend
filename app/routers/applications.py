@@ -5,7 +5,7 @@ from typing import List
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import and_, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
@@ -86,12 +86,10 @@ async def reject_application(
             .join(models.Lender)
             .options(joinedload(models.CreditProduct.lender))
             .filter(
-                and_(
-                    models.CreditProduct.borrower_size == application.borrower.size,
-                    models.CreditProduct.lender_id != application.lender_id,
-                    models.CreditProduct.lower_limit <= application.amount_requested,
-                    models.CreditProduct.upper_limit >= application.amount_requested,
-                )
+                models.CreditProduct.borrower_size == application.borrower.size,
+                models.CreditProduct.lender_id != application.lender_id,
+                models.CreditProduct.lower_limit <= application.amount_requested,
+                models.CreditProduct.upper_limit >= application.amount_requested,
             )
             .all()
         )
@@ -801,14 +799,12 @@ async def credit_product_options(
             .join(models.Lender)
             .options(joinedload(models.CreditProduct.lender))
             .filter(
-                and_(
-                    models.CreditProduct.type == models.CreditType.LOAN,
-                    models.CreditProduct.borrower_size == payload.borrower_size,
-                    models.CreditProduct.lower_limit <= payload.amount_requested,
-                    models.CreditProduct.upper_limit >= payload.amount_requested,
-                    ~models.Lender.id.in_(previous_lenders),
-                    filter,
-                )
+                models.CreditProduct.type == models.CreditType.LOAN,
+                models.CreditProduct.borrower_size == payload.borrower_size,
+                models.CreditProduct.lower_limit <= payload.amount_requested,
+                models.CreditProduct.upper_limit >= payload.amount_requested,
+                models.Lender.id.notin_(previous_lenders),
+                filter,
             )
         )
 
@@ -817,14 +813,12 @@ async def credit_product_options(
             .join(models.Lender)
             .options(joinedload(models.CreditProduct.lender))
             .filter(
-                and_(
-                    models.CreditProduct.type == models.CreditType.CREDIT_LINE,
-                    models.CreditProduct.borrower_size == payload.borrower_size,
-                    models.CreditProduct.lower_limit <= payload.amount_requested,
-                    models.CreditProduct.upper_limit >= payload.amount_requested,
-                    ~models.Lender.id.in_(previous_lenders),
-                    filter,
-                )
+                models.CreditProduct.type == models.CreditType.CREDIT_LINE,
+                models.CreditProduct.borrower_size == payload.borrower_size,
+                models.CreditProduct.lower_limit <= payload.amount_requested,
+                models.CreditProduct.upper_limit >= payload.amount_requested,
+                models.Lender.id.notin_(previous_lenders),
+                filter,
             )
         )
 

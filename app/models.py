@@ -368,10 +368,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def expiring_soon(cls, session):
         return session.query(cls).filter(
-            and_(
-                cls.expired_at > datetime.now(),
-                cls.expired_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
-            )
+            cls.expired_at > datetime.now(),
+            cls.expired_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
         )
 
     @classmethod
@@ -379,11 +377,9 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         return (
             cls.expiring_soon(session)
             .filter(
-                and_(
-                    cls.status == ApplicationStatus.PENDING,
-                    ~cls.id.in_(Message.application_by_type(MessageType.BORROWER_PENDING_APPLICATION_REMINDER)),
-                    Borrower.status == BorrowerStatus.ACTIVE,
-                )
+                cls.status == ApplicationStatus.PENDING,
+                cls.id.notin_(Message.application_by_type(MessageType.BORROWER_PENDING_APPLICATION_REMINDER)),
+                Borrower.status == BorrowerStatus.ACTIVE,
             )
             .join(Borrower, cls.borrower_id == Borrower.id)
             .join(Award, cls.award_id == Award.id)
@@ -392,10 +388,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_submission_reminder(cls, session):
         return cls.expiring_soon(session).filter(
-            and_(
-                cls.status == ApplicationStatus.ACCEPTED,
-                ~cls.id.in_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
-            )
+            cls.status == ApplicationStatus.ACCEPTED,
+            cls.id.notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
         )
 
     @classmethod

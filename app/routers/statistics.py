@@ -4,7 +4,7 @@ from typing import Optional
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends
-from sqlalchemy import and_, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import app.utils.statistics as statistics_utils
@@ -124,10 +124,8 @@ async def get_ocp_statistics_opt_in(
         opt_in_stats = (
             session.query(Statistic)
             .filter(
-                and_(
-                    Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
-                    func.date(Statistic.created_at) == current_date,
-                )
+                Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
+                func.date(Statistic.created_at) == current_date,
             )
             .first()
         )
@@ -166,11 +164,9 @@ async def get_fi_statistics(session: Session = Depends(get_db), user: User = Dep
         statistics_kpis = (
             session.query(Statistic)
             .filter(
-                and_(
-                    Statistic.type == StatisticType.APPLICATION_KPIS,
-                    Statistic.lender_id == user.lender_id,
-                    func.date(Statistic.created_at) == current_date,
-                )
+                Statistic.type == StatisticType.APPLICATION_KPIS,
+                Statistic.lender_id == user.lender_id,
+                func.date(Statistic.created_at) == current_date,
             )
             .first()
         )
