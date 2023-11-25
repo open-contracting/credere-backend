@@ -1151,14 +1151,15 @@ async def email_sme(
                 user_id=user.id,
             )
 
-            new_message = models.Message(
+            models.Message.create(
+                session,
                 application_id=application.id,
                 body=payload.message,
                 lender_id=application.lender.id,
                 type=models.MessageType.FI_MESSAGE,
                 external_message_id=message_id,
             )
-            session.add(new_message)
+
             session.commit()
             background_tasks.add_task(update_statistics)
             return application

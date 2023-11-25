@@ -42,6 +42,19 @@ class ActiveRecordMixin:
     __config__ = None
 
     @classmethod
+    def filter_by(cls, session, field: str, value: Any):
+        """
+        Filter a model based on a field's value.
+
+        :param session: The database session.
+        :param value: The field.
+        :param field: The field's value.
+
+        :return: The query.
+        """
+        return session.query(cls).filter(getattr(cls, field) == value)
+
+    @classmethod
     def first_by(cls, session, field: str, value: Any):
         """
         Get an existing instance based on a field's value.
@@ -52,7 +65,7 @@ class ActiveRecordMixin:
 
         :return: The existing instance if found, otherwise None.
         """
-        return session.query(cls).filter(getattr(cls, field) == value).first()
+        return cls.filter_by(session, field, value).first()
 
     @classmethod
     def create(cls, session, **data):
@@ -104,6 +117,7 @@ class BorrowerDocumentType(Enum):
     THREE_LAST_BANK_STATEMENT = "THREE_LAST_BANK_STATEMENT"
 
 
+# https://github.com/open-contracting/credere-backend/issues/39
 class ApplicationStatus(Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"
@@ -415,6 +429,26 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
+    def submitted(cls, session):
+        return cls.unarchived(session).filter(
+            cls.status.notin_(
+                [
+                    ApplicationStatus.PENDING,
+                    ApplicationStatus.ACCEPTED,
+                    ApplicationStatus.DECLINED,
+                    ApplicationStatus.LAPSED,
+                ]
+            )
+        )
+
+    @classmethod
+    def submitted_to_lender(cls, session, lender_id: int):
+        return cls.submitted(session).filter(
+            Application.lender_id == lender_id,
+            Application.lender_id.is_not(None),
+        )
+
+    @classmethod
     def archivable(cls, session):
         delta = timedelta(days=app_settings.days_to_erase_borrower_data)
 
@@ -480,10 +514,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
         # Sadly, `self.actions.order_by(ApplicationAction.created_at)` raises
         # "'InstrumentedList' object has no attribute 'order_by'".
-        base_query = (
-            session.query(ApplicationAction)
-            .filter(ApplicationAction.application_id == self.id)
-            .order_by(ApplicationAction.created_at)
+        base_query = ApplicationAction.filter_by(session, "application_id", self.id).order_by(
+            ApplicationAction.created_at
         )
 
         lender_requests = base_query.filter(

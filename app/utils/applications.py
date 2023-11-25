@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 from fastapi import File, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from reportlab.platypus import Paragraph
-from sqlalchemy import asc, desc, or_, text
+from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 
 from app import models, parsers, serializers, util
@@ -21,13 +21,6 @@ logger = logging.getLogger(__name__)
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 allowed_extensions = {".png", ".pdf", ".jpeg", ".jpg"}
-
-excluded_applications = [
-    models.ApplicationStatus.PENDING,
-    models.ApplicationStatus.ACCEPTED,
-    models.ApplicationStatus.DECLINED,
-    models.ApplicationStatus.LAPSED,
-]
 
 OCP_cannot_modify = [
     models.ApplicationStatus.LAPSED,
@@ -253,8 +246,7 @@ def update_application_borrower(
     :raise HTTPException: Raises an exception if the application status is in the OCP_cannot_modify list (implied by the call to check_application_not_status). # noqa
     """
     application = (
-        session.query(models.Application)
-        .filter(models.Application.id == application_id)
+        models.Application.filter_by(session, "id", application_id)
         .options(defaultload(models.Application.borrower))
         .first()
     )
@@ -322,8 +314,7 @@ def update_application_award(
     """  # noqa
 
     application = (
-        session.query(models.Application)
-        .filter(models.Application.id == application_id)
+        models.Application.filter_by(session, "id", application_id)
         .options(defaultload(models.Application.award))
         .first()
     )
@@ -357,7 +348,7 @@ def get_all_active_applications(
     """
     Retrieves all active applications.
 
-    This function queries for all applications that are not in the 'excluded_applications' list and have not been archived. # noqa
+    This function queries for all submitted applications,
     The results are sorted according to the provided sort_field and sort_order. Pagination is implemented with the
     page and page_size parameters. The resulting list of applications is wrapped into an ApplicationListResponse.
 
@@ -383,16 +374,12 @@ def get_all_active_applications(
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
     applications_query = (
-        session.query(models.Application)
+        models.Application.submitted(session)
         .join(models.Award)
         .join(models.Borrower)
         .options(
             joinedload(models.Application.award),
             joinedload(models.Application.borrower),
-        )
-        .filter(
-            models.Application.status.notin_(excluded_applications),
-            models.Application.archived_at.is_(None),
         )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
@@ -411,16 +398,10 @@ def get_all_active_applications(
 
 def get_all_fi_applications_emails(session: Session, lender_id, lang: str):
     applications_query = (
-        session.query(models.Application)
+        models.Application.submitted_to_lender(session, lender_id)
         .join(models.Borrower)
         .options(
             joinedload(models.Application.borrower),
-        )
-        .filter(
-            models.Application.status.notin_(excluded_applications),
-            models.Application.archived_at.is_(None),
-            models.Application.lender_id == lender_id,
-            models.Application.lender_id.is_not(None),
         )
     )
     applicants_list = []
@@ -450,7 +431,7 @@ def get_all_FI_user_applications(
     """
     Retrieves all applications associated with a specific Financial Institution (FI) user.
 
-    This function queries for all applications that are not in the 'excluded_applications' list, have not been archived,# noqa
+    This function queries for all submitted applications,
     and are associated with the provided lender_id. The results are sorted according to the provided sort_field and
     sort_order. Pagination is implemented with the page and page_size parameters. The resulting list of applications
     is wrapped into an ApplicationListResponse.
@@ -480,18 +461,12 @@ def get_all_FI_user_applications(
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
     applications_query = (
-        session.query(models.Application)
+        models.Application.submitted_to_lender(session, lender_id)
         .join(models.Award)
         .join(models.Borrower)
         .options(
             joinedload(models.Application.award),
             joinedload(models.Application.borrower),
-        )
-        .filter(
-            models.Application.status.notin_(excluded_applications),
-            models.Application.archived_at.is_(None),
-            models.Application.lender_id == lender_id,
-            models.Application.lender_id.is_not(None),
         )
         .order_by(text(f"{sort_field} {sort_direction.__name__}"))
     )
@@ -557,13 +532,12 @@ def get_application_by_uuid(uuid: str, session: Session) -> models.Application:
     :raise HTTPException: If no application matches the UUID or if the application's status is LAPSED.
     """
     application = (
-        session.query(models.Application)
+        models.Application.filter_by(session, "uuid", uuid)
         .options(
             defaultload(models.Application.borrower),
             defaultload(models.Application.award),
             defaultload(models.Application.borrower_documents),
         )
-        .filter(models.Application.uuid == uuid)
         .first()
     )
 
@@ -598,9 +572,8 @@ def get_application_by_id(id: int, session: Session) -> models.Application:
     :raise HTTPException: If no application matches the ID.
     """
     application = (
-        session.query(models.Application)
+        models.Application.filter_by(session, "id", id)
         .options(joinedload(models.Application.borrower), joinedload(models.Application.award))
-        .filter(models.Application.id == id)
         .first()
     )
 
@@ -616,9 +589,8 @@ def get_modified_data_fields(application: models.Application, session: Session):
         .join(models.Application)
         .filter(
             models.ApplicationAction.application_id == application.id,
-            or_(
-                models.ApplicationAction.type == models.ApplicationActionType.AWARD_UPDATE.value,
-                models.ApplicationAction.type == models.ApplicationActionType.BORROWER_UPDATE.value,
+            models.ApplicationAction.type.in_(
+                [models.ApplicationActionType.AWARD_UPDATE.value, models.ApplicationActionType.BORROWER_UPDATE.value]
             ),
         )
         .all()
@@ -1048,7 +1020,7 @@ def get_previous_documents(application: models.Application, session: Session):
     lastest_application_id = (
         session.query(models.Application.id)
         .filter(
-            models.Application.status == "REJECTED",
+            models.Application.status == models.ApplicationStatus.REJECTED,
             models.Application.award_borrower_identifier == application.award_borrower_identifier,
         )
         .order_by(models.Application.created_at.desc())

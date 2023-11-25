@@ -71,11 +71,10 @@ def remove_dated_application_data():
 
                 # Check if there are any other active applications that use the same award
                 active_applications_with_same_award = (
-                    session.query(models.Application)
+                    models.Application.unarchived(session)
                     .filter(
                         models.Application.award_id == application.award_id,
                         models.Application.id != application.id,
-                        models.Application.archived_at.is_(None),  # Check that the application is active
                     )
                     .all()
                 )

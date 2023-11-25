@@ -232,10 +232,9 @@ async def get_credit_product(
     :raise: HTTPException with status code 404 if the credit product is not found.
     """
     creditProduct = (
-        session.query(models.CreditProduct)
+        models.CreditProduct.filter_by(session, "id", credit_product_id)
         .join(models.Lender)
         .options(joinedload(models.CreditProduct.lender))
-        .filter(models.CreditProduct.id == credit_product_id)
         .first()
     )
 

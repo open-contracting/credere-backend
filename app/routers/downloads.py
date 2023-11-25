@@ -88,12 +88,7 @@ async def download_application(
 
         borrower = application.borrower
         award = application.award
-
-        documents = (
-            session.query(models.BorrowerDocument)
-            .filter(models.BorrowerDocument.application_id == application_id)
-            .all()
-        )
+        documents = list(application.borrower_documents)
 
         previous_awards = application.previous_awards(session)
 
