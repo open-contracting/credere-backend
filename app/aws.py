@@ -4,7 +4,6 @@ import hmac
 import logging
 import random
 import string
-from typing import Generator
 
 import boto3
 
@@ -555,7 +554,3 @@ cognito_client = CognitoClient(
     sesClient,
     generate_password_fn,
 )
-
-
-def get_cognito_client() -> Generator:  # new
-    yield cognito_client

@@ -2,10 +2,18 @@ import base64
 import hashlib
 import hmac
 import uuid
+from enum import Enum
 
 from fastapi import HTTPException, status
 
 from app.settings import app_settings
+
+
+class ERROR_CODES(Enum):
+    BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
+    DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
+    APPLICATION_LAPSED = "APPLICATION_LAPSED"
+    APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
 def get_object_or_404(session, model, field, value):

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from app.auth import get_current_user, verifyTokeClass
+from app import dependencies
+from app.auth import verifyTokeClass
 
 authorizedCredentials = verifyTokeClass()
 
@@ -25,7 +26,7 @@ def example_of_secure_endpoint():
     dependencies=[Depends(authorizedCredentials)],
 )
 def example_of_secure_endpoint_with_username(
-    usernameFromToken: str = Depends(get_current_user),
+    usernameFromToken: str = Depends(dependencies.get_current_user),
 ):
     """
     Example of a secure endpoint that requires authorized credentials and extracts the username from the token.

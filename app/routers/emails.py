@@ -5,8 +5,8 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
-from app import models, parsers, util
-from app.aws import CognitoClient, get_cognito_client
+from app import dependencies, models, parsers, util
+from app.aws import CognitoClient
 from app.db import get_db, transaction_session
 
 router = APIRouter()
@@ -22,7 +22,7 @@ valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 async def change_email(
     payload: parsers.ChangeEmail,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Change the email address for an application.

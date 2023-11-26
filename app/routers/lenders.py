@@ -6,7 +6,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
-from app.auth import get_current_user
 from app.db import get_db, transaction_session
 from app.util import get_object_or_404
 
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 @dependencies.OCP_only()
 async def create_lender(
     lender: models.LenderCreate,
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -77,7 +76,7 @@ async def create_lender(
 async def create_credit_products(
     credit_product: models.CreditProduct,
     lender_id: int,
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -134,7 +133,7 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)):
 async def update_lender(
     id: int,
     payload: models.LenderBase,
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -246,7 +245,7 @@ async def get_credit_product(
 async def update_credit_products(
     credit_product: models.CreditProduct,
     credit_product_id: int,
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """

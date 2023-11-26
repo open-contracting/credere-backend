@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 import app.utils.statistics as statistics_utils
 from app import dependencies, serializers
-from app.auth import get_current_user, get_user
 from app.db import get_db
 from app.models import Statistic, StatisticCustomRange, StatisticType, User
 
@@ -29,7 +28,7 @@ async def get_ocp_statistics_by_lender(
     final_date: Optional[str] = None,
     lender_id: Optional[int] = None,
     custom_range: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -102,7 +101,7 @@ async def get_ocp_statistics_by_lender(
 )
 @dependencies.OCP_only()
 async def get_ocp_statistics_opt_in(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -142,7 +141,7 @@ async def get_ocp_statistics_opt_in(
 
 
 @router.get("/statistics-fi", tags=["statistics"], response_model=serializers.StatisticResponse)
-async def get_fi_statistics(session: Session = Depends(get_db), user: User = Depends(get_user)):
+async def get_fi_statistics(session: Session = Depends(get_db), user: User = Depends(dependencies.get_user)):
     """
     Retrieve statistics for a Financial Institution (FI).
 

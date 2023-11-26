@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
-from app import models
-from app.auth import get_user
+from app import dependencies, models
 from app.db import get_db, transaction_session
 
 router = APIRouter()
@@ -112,7 +111,7 @@ async def upload_compliance(
     id: int,
     file: UploadFile,
     session: Session = Depends(get_db),
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Upload a compliance document for an application.

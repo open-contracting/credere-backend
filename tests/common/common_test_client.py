@@ -11,7 +11,7 @@ from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import aws, models
+from app import aws, dependencies, models
 from app.db import get_db
 from app.routers import applications, borrower_documents, downloads, emails, lenders, security, statistics, users
 from app.settings import app_settings
@@ -156,7 +156,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
             session.close()
 
     # Override the clients dependencies with the mock implementations
-    app.dependency_overrides[aws.get_cognito_client] = _get_test_cognito_client
+    app.dependency_overrides[dependencies.get_cognito_client] = _get_test_cognito_client
     app.dependency_overrides[get_db] = _get_test_db
 
     with TestClient(app) as client:

@@ -10,8 +10,7 @@ from sqlalchemy.orm import Session, defaultload, joinedload
 
 import app.utils.applications as utils
 from app import dependencies, models, parsers, serializers, util
-from app.auth import get_current_user, get_user
-from app.aws import CognitoClient, get_cognito_client
+from app.aws import CognitoClient
 from app.db import get_db, transaction_session
 from app.settings import app_settings
 from app.utils import background
@@ -32,8 +31,8 @@ async def reject_application(
     payload: parsers.LenderRejectedApplication,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-    user: models.User = Depends(get_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Reject an application:
@@ -117,8 +116,8 @@ async def complete_application(
     payload: parsers.LenderReviewContract,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    user: models.User = Depends(get_user),
-    client: CognitoClient = Depends(get_cognito_client),
+    user: models.User = Depends(dependencies.get_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Complete an application:
@@ -181,8 +180,8 @@ async def approve_application(
     payload: parsers.LenderApprovedData,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-    user: models.User = Depends(get_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Approve an application:
@@ -226,7 +225,7 @@ async def approve_application(
             logger.error(f"Following fields were not validated: {not_validated_fields}")
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=utils.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
+                detail=util.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
             )
 
         # Check all documents are verified.
@@ -238,7 +237,7 @@ async def approve_application(
             logger.error(f"Following documents were not validated: {not_validated_documents}")
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=utils.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
+                detail=util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
             )
 
         # Approve the application.
@@ -275,7 +274,7 @@ async def approve_application(
 async def confirm_upload_contract(
     payload: parsers.UploadContractConfirmation,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Confirm the upload of a contract document for an application.
@@ -348,7 +347,7 @@ async def verify_data_field(
     id: int,
     payload: parsers.UpdateDataField,
     session: Session = Depends(get_db),
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Verify and update a data field in an application.
@@ -408,7 +407,7 @@ async def verify_document(
     document_id: int,
     payload: parsers.VerifyBorrowerDocument,
     session: Session = Depends(get_db),
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Verify a borrower document in an application.
@@ -461,7 +460,7 @@ async def verify_document(
 async def update_application_award(
     application_id: int,
     payload: parsers.AwardUpdate,
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -530,7 +529,7 @@ async def update_application_award(
 async def update_application_borrower(
     application_id: int,
     payload: parsers.BorrowerUpdate,
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -608,7 +607,7 @@ async def get_applications_list(
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -669,7 +668,7 @@ async def get_applications_list(
 )
 async def get_application(
     id: int,
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -713,7 +712,7 @@ async def get_application(
 async def start_application(
     id: int,
     background_tasks: BackgroundTasks,
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -761,7 +760,7 @@ async def get_applications(
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -1194,7 +1193,7 @@ async def update_apps_send_notifications(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Changes application status from "'ACCEPTED" to "SUBMITTED".
@@ -1275,8 +1274,8 @@ async def email_sme(
     payload: parsers.ApplicationEmailSme,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-    user: models.User = Depends(get_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Send an email to SME and update the application status:
@@ -1357,7 +1356,7 @@ async def email_sme(
 async def complete_information_request(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
 ):
     """
@@ -1556,7 +1555,7 @@ async def decline_feedback(
 )
 async def previous_contracts(
     id: int,
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -1592,7 +1591,7 @@ async def previous_contracts(
 async def find_alternative_credit_option(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Find an alternative credit option for a rejected application by copying it.
@@ -1633,7 +1632,7 @@ async def find_alternative_credit_option(
         if app_action:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=utils.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
+                detail=util.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
             )
 
         utils.check_application_status(application, models.ApplicationStatus.REJECTED)

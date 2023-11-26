@@ -1,14 +1,13 @@
 import logging
 import os.path
 from datetime import datetime
-from enum import Enum
 from typing import Dict, List, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
 from reportlab.platypus import Paragraph
 from sqlalchemy.orm import Session, defaultload, joinedload
 
-from app import models
+from app import models, util
 from app.i18n import get_translated_string
 from app.settings import app_settings
 from reportlab_mods import styleN
@@ -29,13 +28,6 @@ OCP_cannot_modify = [
 
 
 document_type_keys = [doc_type.name for doc_type in models.BorrowerDocumentType]
-
-
-class ERROR_CODES(Enum):
-    BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
-    DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
-    APPLICATION_LAPSED = "APPLICATION_LAPSED"
-    APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
 def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
@@ -102,7 +94,7 @@ def get_application_by_uuid(uuid: str, session: Session) -> models.Application:
     if application.status == models.ApplicationStatus.LAPSED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=ERROR_CODES.APPLICATION_LAPSED.value,
+            detail=util.ERROR_CODES.APPLICATION_LAPSED.value,
         )
 
     return application

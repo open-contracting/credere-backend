@@ -10,8 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
-from app.auth import get_current_user
-from app.aws import CognitoClient, get_cognito_client
+from app.aws import CognitoClient
 from app.db import get_db, transaction_session
 from app.util import get_object_or_404
 
@@ -25,8 +24,8 @@ router = APIRouter()
 async def create_user(
     payload: models.User,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-    current_user: models.User = Depends(get_current_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    current_user: models.User = Depends(dependencies.get_current_user),
 ):
     """
     Create a new user.
@@ -69,7 +68,7 @@ async def create_user(
 def change_password(
     user: models.BasicUser,
     response: Response,
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Change user password.
@@ -123,7 +122,7 @@ def change_password(
 def setup_mfa(
     user: models.SetupMFA,
     response: Response,
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Set up multi-factor authentication (MFA) for the user.
@@ -168,7 +167,7 @@ def setup_mfa(
 def login(
     user: models.BasicUser,
     response: Response,
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
 ):
     """
@@ -222,7 +221,7 @@ def login(
 )
 def login_mfa(
     user: models.BasicUser,
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
 ):
     """
@@ -291,7 +290,7 @@ def login_mfa(
 )
 def logout(
     authorization: str = Header(None),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Logout the user by invalidating the access token.
@@ -323,7 +322,7 @@ def logout(
     response_model=serializers.UserResponse,
 )
 def me(
-    usernameFromToken: str = Depends(get_current_user),
+    usernameFromToken: str = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -349,7 +348,7 @@ def me(
     "/users/forgot-password",
     response_model=serializers.ResponseBase,
 )
-def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(get_cognito_client)):
+def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(dependencies.get_cognito_client)):
     """
     Initiate the process of resetting a user's password.
 
@@ -400,7 +399,7 @@ async def get_all_users(
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -456,7 +455,7 @@ async def get_all_users(
 async def update_user(
     id: int,
     user: models.User,
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """

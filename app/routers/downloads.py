@@ -9,8 +9,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
-from app import models, util
-from app.auth import get_user
+from app import dependencies, models, util
 from app.db import get_db, transaction_session
 from app.i18n import get_translated_string
 from app.utils import tables
@@ -26,7 +25,7 @@ router = APIRouter()
 async def get_borrower_document(
     id: int,
     session: Session = Depends(get_db),
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Retrieve a borrower document by its ID and stream the file content as a response.
@@ -81,7 +80,7 @@ async def download_application(
     application_id: int,
     lang: str,
     session: Session = Depends(get_db),
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Retrieve all documents related to an application and stream them as a zip file.
@@ -167,7 +166,7 @@ async def download_application(
 )
 async def export_applications(
     lang: str,
-    user: models.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     applications_query = (
