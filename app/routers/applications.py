@@ -5,16 +5,15 @@ from typing import List
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import text
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import asc, desc, text
+from sqlalchemy.orm import Session, defaultload, joinedload
 
 import app.utils.applications as utils
-from app import models, parsers, serializers
+from app import models, parsers, serializers, util
 from app.auth import OCP_only, get_current_user, get_user
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
 from app.settings import app_settings
-from app.util import get_object_or_404
 from app.utils import background
 from app.utils.statistics import update_statistics
 
@@ -214,7 +213,41 @@ async def approve_application(
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
         utils.check_application_status(application, models.ApplicationStatus.STARTED)
-        utils.approve_application(application, payload)
+
+        # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
+        # the application's `secop_data_verification`.
+        not_validated_fields = []
+        app_secop_dict = application.secop_data_verification.copy()
+        fields = list(parsers.UpdateDataField().dict().keys())
+        for key in fields:
+            if key not in app_secop_dict or not app_secop_dict[key]:
+                not_validated_fields.append(key)
+        if not_validated_fields:
+            logger.error(f"Following fields were not validated: {not_validated_fields}")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=utils.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
+            )
+
+        # Check all documents are verified.
+        not_validated_documents = []
+        for document in application.borrower_documents:
+            if not document.verified:
+                not_validated_documents.append(document.type.name)
+        if not_validated_documents:
+            logger.error(f"Following documents were not validated: {not_validated_documents}")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=utils.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
+            )
+
+        # Approve the application.
+        payload_dict = jsonable_encoder(payload, exclude_unset=True)
+        application.lender_approved_data = payload_dict
+        application.status = models.ApplicationStatus.APPROVED
+        current_time = datetime.now(application.created_at.tzinfo)
+        application.lender_approved_at = current_time
+
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPROVED_APPLICATION,
@@ -347,7 +380,13 @@ async def verify_data_field(
         )
 
         utils.check_FI_user_permission(application, user)
-        utils.update_data_field(application, payload)
+
+        # Update a specific field in the application's `secop_data_verification` attribute.
+        payload_dict = {key: value for key, value in payload.dict().items() if value is not None}
+        key, value = next(iter(payload_dict.items()), (None, None))
+        verified_data = application.secop_data_verification.copy()
+        verified_data[key] = value
+        application.secop_data_verification = verified_data.copy()
 
         models.ApplicationAction.create(
             session,
@@ -391,7 +430,7 @@ async def verify_document(
 
     """
     with transaction_session(session):
-        document = get_object_or_404(session, models.BorrowerDocument, "id", document_id)
+        document = util.get_object_or_404(session, models.BorrowerDocument, "id", document_id)
         utils.check_FI_user_permission(document.application, user)
         utils.check_application_in_status(
             document.application,
@@ -445,7 +484,32 @@ async def update_application_award(
 
     """
     with transaction_session(session):
-        application = utils.update_application_award(session, application_id, payload, user)
+        application = (
+            models.Application.filter_by(session, "id", application_id)
+            .options(defaultload(models.Application.award))
+            .first()
+        )
+        if not application or not application.award:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application or award not found",
+            )
+
+        utils.check_application_not_status(
+            application,
+            utils.OCP_cannot_modify,
+        )
+
+        if not user.is_OCP() and application.lender_id != user.lender_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This application is not owned by this lender",
+            )
+
+        # Update the award.
+        update_dict = jsonable_encoder(payload, exclude_unset=True)
+        application.award.update(session, **update_dict)
+
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.AWARD_UPDATE,
@@ -489,7 +553,37 @@ async def update_application_borrower(
 
     """
     with transaction_session(session):
-        application = utils.update_application_borrower(session, application_id, payload, user)
+        application = (
+            models.Application.filter_by(session, "id", application_id)
+            .options(defaultload(models.Application.borrower))
+            .first()
+        )
+        if not application or not application.borrower:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application or borrower not found",
+            )
+
+        utils.check_application_not_status(
+            application,
+            utils.OCP_cannot_modify,
+        )
+
+        if not user.is_OCP() and application.lender_id != user.lender_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This application is not owned by this lender",
+            )
+
+        # Update the borrower.
+        update_dict = jsonable_encoder(payload, exclude_unset=True)
+        for field, value in update_dict.items():
+            if not application.borrower.missing_data[field]:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="This column cannot be updated",
+                )
+        application.borrower.update(session, **update_dict)
 
         models.ApplicationAction.create(
             session,
@@ -518,7 +612,7 @@ async def get_applications_list(
     session: Session = Depends(get_db),
 ):
     """
-    Get a paginated list of applications for administrative purposes.
+    Get a paginated list of submitted applications for administrative purposes.
 
     :param page: The page number of the application list (default: 0).
     :type page: int
@@ -542,9 +636,30 @@ async def get_applications_list(
     :rtype: serializers.ApplicationListResponse
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
-
     """
-    return utils.get_all_active_applications(page, page_size, sort_field, sort_order, session)
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    applications_query = (
+        models.Application.submitted(session)
+        .join(models.Award)
+        .join(models.Borrower)
+        .options(
+            joinedload(models.Application.award),
+            joinedload(models.Application.borrower),
+        )
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+    )
+
+    total_count = applications_query.count()
+
+    applications = applications_query.offset(page * page_size).limit(page_size).all()
+
+    return serializers.ApplicationListResponse(
+        items=applications,
+        count=total_count,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get(
@@ -650,7 +765,7 @@ async def get_applications(
     session: Session = Depends(get_db),
 ):
     """
-    Get a paginated list of applications for a specific user.
+    Get a paginated list of submitted applications for a specific FI user.
 
     :param page: The page number of the application list (default: 0).
     :type page: int
@@ -674,7 +789,28 @@ async def get_applications(
     :rtype: serializers.ApplicationListResponse
 
     """
-    return utils.get_all_FI_user_applications(page, page_size, sort_field, sort_order, session, user.lender_id)
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    applications_query = (
+        models.Application.submitted_to_lender(session, user.lender_id)
+        .join(models.Award)
+        .join(models.Borrower)
+        .options(
+            joinedload(models.Application.award),
+            joinedload(models.Application.borrower),
+        )
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+    )
+    total_count = applications_query.count()
+
+    applications = applications_query.offset(page * page_size).limit(page_size).all()
+
+    return serializers.ApplicationListResponse(
+        items=applications,
+        count=total_count,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get(
@@ -864,7 +1000,11 @@ async def select_credit_product(
         utils.check_is_application_expired(application)
         utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
 
-        calculator_data = utils.get_calculator_data(payload)
+        # Extract the necessary fields for a calculator from a payload.
+        calculator_data = jsonable_encoder(payload, exclude_unset=True)
+        calculator_data.pop("uuid")
+        calculator_data.pop("credit_product_id")
+        calculator_data.pop("sector")
 
         application.calculator_data = calculator_data
         application.credit_product_id = payload.credit_product_id
@@ -991,7 +1131,44 @@ async def confirm_credit_product(
         application.payment_start_date = application.calculator_data.get("payment_start_date", None)
 
         application.pending_documents = True
-        utils.get_previous_documents(application, session)
+
+        # Retrieve and copy the borrower documents from the most recent rejected application
+        # that shares the same award borrower identifier as the application. The documents
+        # to be copied are only those whose types are required by the credit product of the
+        # application.
+        document_types = application.credit_product.required_document_types
+        document_types_list = [key for key, value in document_types.items() if value]
+        lastest_application_id = (
+            session.query(models.Application.id)
+            .filter(
+                models.Application.status == models.ApplicationStatus.REJECTED,
+                models.Application.award_borrower_identifier == application.award_borrower_identifier,
+            )
+            .order_by(models.Application.created_at.desc())
+            .first()
+        )
+        if lastest_application_id:
+            documents = (
+                session.query(models.BorrowerDocument)
+                .filter(
+                    models.BorrowerDocument.application_id == lastest_application_id[0],
+                    models.BorrowerDocument.type.in_(document_types_list),
+                )
+                .all()
+            )
+
+            # Copy the documents into the database for the provided application.
+            for document in documents:
+                data = {
+                    "application_id": application.id,
+                    "type": document.type,
+                    "name": document.name,
+                    "file": document.file,
+                    "verified": False,
+                }
+                new_borrower_document = models.BorrowerDocument.create(session, **data)
+                application.borrower_documents.append(new_borrower_document)
+
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
@@ -1438,9 +1615,48 @@ async def find_alternative_credit_option(
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_if_application_was_already_copied(application, session)
+
+        # Check if the application has already been copied.
+        app_action = (
+            session.query(models.ApplicationAction)
+            .join(
+                models.Application,
+                models.Application.id == models.ApplicationAction.application_id,
+            )
+            .filter(
+                models.Application.id == application.id,
+                models.ApplicationAction.type == models.ApplicationActionType.COPIED_APPLICATION,
+            )
+            .options(joinedload(models.ApplicationAction.application))
+            .first()
+        )
+        if app_action:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=utils.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
+            )
+
         utils.check_application_status(application, models.ApplicationStatus.REJECTED)
-        new_application = utils.copy_application(application, session)
+
+        # Copy the application, changing the uuid, status, and borrower_accepted_at.
+        try:
+            data = {
+                "award_id": application.award_id,
+                "uuid": util.generate_uuid(application.uuid),
+                "primary_email": application.primary_email,
+                "status": models.ApplicationStatus.ACCEPTED,
+                "award_borrower_identifier": application.award_borrower_identifier,
+                "borrower_id": application.borrower.id,
+                "calculator_data": application.calculator_data,
+                "borrower_accepted_at": datetime.now(application.created_at.tzinfo),
+            }
+            new_application = models.Application.create(session, **data)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"There was a problem copying the application.{e}",
+            )
+
         message_id = client.send_copied_application_notifications(new_application)
 
         models.Message.create(

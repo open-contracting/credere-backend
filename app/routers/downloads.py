@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
-from app import models
+from app import models, util
 from app.auth import get_user
 from app.db import get_db, transaction_session
 from app.i18n import get_translated_string
@@ -45,8 +45,23 @@ async def get_borrower_document(
 
     """
     with transaction_session(session):
-        document = models.BorrowerDocument.first_by(session, "id", id)
-        utils.get_file(document, user, session)
+        document = util.get_object_or_404(session, models.BorrowerDocument, "id", id)
+
+        if user.is_OCP():
+            models.ApplicationAction.create(
+                session,
+                type=models.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
+                data={"file_name": document.name},
+                application_id=document.application.id,
+            )
+        else:
+            utils.check_FI_user_permission(document.application, user)
+            models.ApplicationAction.create(
+                session,
+                type=models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
+                data={"file_name": document.name},
+                application_id=document.application.id,
+            )
 
         def file_generator():
             yield document.file
@@ -155,7 +170,28 @@ async def export_applications(
     user: models.User = Depends(get_user),
     session: Session = Depends(get_db),
 ):
-    df = pd.DataFrame(utils.get_all_fi_applications_emails(session, user.lender_id, lang))
+    applications_query = (
+        models.Application.submitted_to_lender(session, user.lender_id)
+        .join(models.Borrower)
+        .options(
+            joinedload(models.Application.borrower),
+        )
+    )
+    applicants_list = []
+    for application in applications_query.all():
+        applicants_list.append(
+            {
+                get_translated_string("National Tax ID", lang): application.borrower.legal_identifier,
+                get_translated_string("Legal Name", lang): application.borrower.legal_name,
+                get_translated_string("Email Address", lang): application.primary_email,
+                get_translated_string("Submission Date", lang): application.borrower_submitted_at,
+                get_translated_string("Stage", lang): get_translated_string(
+                    application.status.name.capitalize(), lang
+                ),
+            }
+        )
+
+    df = pd.DataFrame(applicants_list)
     stream = io.StringIO()
     df.to_csv(stream, index=False)
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")

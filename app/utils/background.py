@@ -18,7 +18,7 @@ DAYS_UNTIL_EXPIRED = 7
 ApplicationStatus = models.ApplicationStatus
 
 
-def create_application(
+def _create_application(
     award_id, borrower_id, email, legal_identifier, source_contract_id, session: Session
 ) -> models.Application:
     """
@@ -135,7 +135,7 @@ def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Sessio
                     borrower = _get_or_create_borrower(entry, session)
                     award.borrower_id = borrower.id
 
-                    application = create_application(
+                    application = _create_application(
                         award.id,
                         borrower.id,
                         borrower.email,

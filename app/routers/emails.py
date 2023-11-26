@@ -1,13 +1,17 @@
-from fastapi import APIRouter, Depends
+import re
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 import app.utils.applications as utils
-from app import models, parsers
+from app import models, parsers, util
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
 
 router = APIRouter()
+
+valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
 
 @router.post(
@@ -39,7 +43,18 @@ async def change_email(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         old_email = application.primary_email
-        confirmation_email_token = utils.update_application_primary_email(application, payload.new_email)
+
+        # Update the primary email of an application.
+        email = payload.new_email
+        if not re.match(valid_email, email):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="New email is not valid",
+            )
+        confirmation_email_token = util.generate_uuid(email)
+        application.confirmation_email_token = f"{email}---{confirmation_email_token}"
+        application.pending_email_confirmation = True
+
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.MSME_CHANGE_EMAIL,
