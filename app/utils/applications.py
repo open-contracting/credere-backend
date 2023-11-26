@@ -640,7 +640,6 @@ def check_is_application_expired(application: models.Application):
 def check_application_status(
     application: models.Application,
     applicationStatus: models.ApplicationStatus,
-    detail: str = None,
 ):
     """
     Check whether the application has expired.
@@ -654,19 +653,15 @@ def check_application_status(
     :raise HTTPException: If the application has expired.
     """
     if application.status != applicationStatus:
-        message = "Application status is not {}".format(applicationStatus.name)
-        if detail:
-            message = detail
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=message,
+            detail="Application status is not {}".format(applicationStatus.name),
         )
 
 
 def check_application_in_status(
     application: models.Application,
     applicationStatus: List[models.ApplicationStatus],
-    detail: str = None,
 ):
     """
     Check if the application's status is among a provided list of statuses.
@@ -688,19 +683,15 @@ def check_application_in_status(
     """
 
     if application.status not in applicationStatus:
-        message = "Application status should not be {}".format(application.status.name)
-        if detail:
-            message = detail
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=message,
+            detail="Application status should not be {}".format(application.status.name),
         )
 
 
 def check_application_not_status(
     application: models.Application,
     applicationStatus: List[models.ApplicationStatus],
-    detail: str = None,
 ):
     """
     Check if the application's status is not among a provided list of statuses.
@@ -722,12 +713,9 @@ def check_application_not_status(
     """
 
     if application.status in applicationStatus:
-        message = "Application status is {}".format(application.status.name)
-        if detail:
-            message = detail
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=message,
+            detail="Application status is {}".format(application.status.name),
         )
 
 
