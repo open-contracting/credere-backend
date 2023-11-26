@@ -5,8 +5,8 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import models, serializers
-from app.auth import OCP_only, get_current_user
+from app import dependencies, models, serializers
+from app.auth import get_current_user
 from app.db import get_db, transaction_session
 from app.util import get_object_or_404
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     tags=["lenders"],
     response_model=models.Lender,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def create_lender(
     lender: models.LenderCreate,
     current_user: models.User = Depends(get_current_user),
@@ -73,7 +73,7 @@ async def create_lender(
     tags=["lenders"],
     response_model=models.CreditProduct,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def create_credit_products(
     credit_product: models.CreditProduct,
     lender_id: int,
@@ -130,7 +130,7 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)):
     tags=["lenders"],
     response_model=models.Lender,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def update_lender(
     id: int,
     payload: models.LenderBase,
@@ -242,7 +242,7 @@ async def get_credit_product(
     tags=["lenders"],
     response_model=models.CreditProduct,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def update_credit_products(
     credit_product: models.CreditProduct,
     credit_product_id: int,

@@ -9,8 +9,8 @@ from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import models, serializers
-from app.auth import OCP_only, get_current_user
+from app import dependencies, models, serializers
+from app.auth import get_current_user
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
 from app.util import get_object_or_404
@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.post("/users", tags=["users"], response_model=models.User)
-@OCP_only()
+@dependencies.OCP_only()
 async def create_user(
     payload: models.User,
     session: Session = Depends(get_db),
@@ -394,7 +394,7 @@ async def get_user(user_id: int, session: Session = Depends(get_db)):
 
 
 @router.get("/users", tags=["users"], response_model=serializers.UserListResponse)
-@OCP_only()
+@dependencies.OCP_only()
 async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
@@ -452,7 +452,7 @@ async def get_all_users(
     tags=["users"],
     response_model=models.UserWithLender,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def update_user(
     id: int,
     user: models.User,

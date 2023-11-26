@@ -9,8 +9,8 @@ from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, defaultload, joinedload
 
 import app.utils.applications as utils
-from app import models, parsers, serializers, util
-from app.auth import OCP_only, get_current_user, get_user
+from app import dependencies, models, parsers, serializers, util
+from app.auth import get_current_user, get_user
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
 from app.settings import app_settings
@@ -602,7 +602,7 @@ async def update_application_borrower(
     tags=["applications"],
     response_model=serializers.ApplicationListResponse,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def get_applications_list(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),

@@ -8,8 +8,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import app.utils.statistics as statistics_utils
-from app import serializers
-from app.auth import OCP_only, get_current_user, get_user
+from app import dependencies, serializers
+from app.auth import get_current_user, get_user
 from app.db import get_db
 from app.models import Statistic, StatisticCustomRange, StatisticType, User
 
@@ -23,7 +23,7 @@ router = APIRouter()
     tags=["statistics"],
     response_model=serializers.StatisticResponse,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def get_ocp_statistics_by_lender(
     initial_date: Optional[str] = None,
     final_date: Optional[str] = None,
@@ -100,7 +100,7 @@ async def get_ocp_statistics_by_lender(
     tags=["statistics"],
     response_model=serializers.StatisticOptInResponse,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def get_ocp_statistics_opt_in(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
