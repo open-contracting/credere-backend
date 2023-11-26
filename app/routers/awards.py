@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Award
+from app.util import get_object_or_404
 
 router = APIRouter()
 
@@ -23,10 +24,7 @@ async def get_award(award_id: int, session: Session = Depends(get_db)):
     :rtype: Award
 
     :raise: HTTPException with status code 404 if the award is not found."""
-    award = Award.first_by(session, "id", award_id)
-    if not award:
-        raise HTTPException(status_code=404, detail="Award not found")
-    return award
+    return get_object_or_404(session, Award, "id", award_id)
 
 
 @router.get("/awards/get-last-award/", tags=["awards"], response_model=Award)
@@ -44,7 +42,7 @@ async def get_last_award(session: Session = Depends(get_db)):
     """
     award = session.query(Award).order_by(desc(Award.created_at)).first()
     if not award:
-        raise HTTPException(status_code=404, detail="Award not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Award not found")
     return award
 
 

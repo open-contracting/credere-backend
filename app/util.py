@@ -3,7 +3,16 @@ import hashlib
 import hmac
 import uuid
 
+from fastapi import HTTPException, status
+
 from app.settings import app_settings
+
+
+def get_object_or_404(session, model, field, value):
+    obj = model.first_by(session, field, value)
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{model.__name__} not found")
+    return obj
 
 
 def generate_uuid(string: str) -> str:

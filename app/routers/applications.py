@@ -14,6 +14,7 @@ from app.auth import OCP_only, get_current_user, get_user
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
 from app.settings import app_settings
+from app.util import get_object_or_404
 from app.utils import background
 from app.utils.statistics import update_statistics
 
@@ -390,7 +391,7 @@ async def verify_document(
 
     """
     with transaction_session(session):
-        document = utils.get_document_by_id(document_id, session)
+        document = get_object_or_404(session, models.BorrowerDocument, "id", document_id)
         utils.check_FI_user_permission(document.application, user)
         utils.check_application_in_status(
             document.application,

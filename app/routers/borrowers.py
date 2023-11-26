@@ -1,12 +1,13 @@
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Borrower
+from app.util import get_object_or_404
 
 router = APIRouter()
 
@@ -24,10 +25,7 @@ async def get_borrowers(borrower_id: int, session: Session = Depends(get_db)):
     :return: The retrieved borrower.
     :rtype: Borrower
     """
-    borrower = Borrower.first_by(session, "id", borrower_id)
-    if not borrower:
-        raise HTTPException(status_code=404, detail="Borrower not found")
-    return borrower
+    return get_object_or_404(session, Borrower, "id", borrower_id)
 
 
 @router.post("/borrowers/", tags=["borrowers"], response_model=Borrower)
@@ -71,5 +69,5 @@ async def get_borrowers_contracting_process_ids(session: Session = Depends(get_d
     """
     borrowers = session.query(Borrower.borrower_identifier).order_by(desc(Borrower.created_at)).all()
     if not borrowers:
-        raise HTTPException(status_code=404, detail="No borrowers found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No borrowers found")
     return [borrower[0] for borrower in borrowers]

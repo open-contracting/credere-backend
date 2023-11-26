@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import models, serializers
 from app.auth import OCP_only, get_current_user
 from app.db import get_db, transaction_session
+from app.util import get_object_or_404
 
 router = APIRouter()
 
@@ -100,9 +101,7 @@ async def create_credit_products(
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with transaction_session(session):
-        lender = models.Lender.first_by(session, "id", lender_id)
-        if not lender:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
+        lender = get_object_or_404(session, models.Lender, "id", lender_id)
 
         return models.CreditProduct.create(session, **credit_product.dict(), lender=lender)
 
@@ -123,10 +122,7 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)):
 
     :raise: HTTPException with status code 404 if the lender is not found.
     """
-    lender = models.Lender.first_by(session, "id", lender_id)
-    if not lender:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
-    return lender
+    return get_object_or_404(session, models.Lender, "id", lender_id)
 
 
 @router.put(
@@ -163,9 +159,7 @@ async def update_lender(
     """
     with transaction_session(session):
         try:
-            lender = models.Lender.first_by(session, "id", id)
-            if not lender:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lender not found")
+            lender = get_object_or_404(session, models.Lender, "id", id)
 
             update_dict = jsonable_encoder(payload, exclude_unset=True)
             return lender.update(session, **update_dict)
@@ -237,7 +231,6 @@ async def get_credit_product(
         .options(joinedload(models.CreditProduct.lender))
         .first()
     )
-
     if not creditProduct:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
 
@@ -280,9 +273,7 @@ async def update_credit_products(
     payload = credit_product
 
     with transaction_session(session):
-        credit_product = models.CreditProduct.first_by(session, "id", credit_product_id)
-        if not credit_product:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
+        credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
 
         update_dict = jsonable_encoder(payload, exclude_unset=True)
         return credit_product.update(session, **update_dict)

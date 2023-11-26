@@ -540,7 +540,6 @@ def get_application_by_uuid(uuid: str, session: Session) -> models.Application:
         )
         .first()
     )
-
     if not application:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
 
@@ -576,7 +575,6 @@ def get_application_by_id(id: int, session: Session) -> models.Application:
         .options(joinedload(models.Application.borrower), joinedload(models.Application.award))
         .first()
     )
-
     if not application:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
 
@@ -891,34 +889,6 @@ def check_FI_user_permission_or_OCP(application: models.Application, user: model
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is not authorized",
         )
-
-
-def get_document_by_id(document_id: int, session: Session) -> models.BorrowerDocument:
-    """
-    Retrieves a borrower document from the database using its id.
-
-    This function queries the database to find a document with the provided id.
-    If no document is found, it raises an HTTPException with a 404 status code (Not Found).
-
-    :param document_id: The id of the document to retrieve.
-    :type document_id: int
-
-    :param session: The database session to use.
-    :type session: Session
-
-    :raises HTTPException: If no document with the provided id is found.
-
-    :return: The retrieved document.
-    :rtype: models.BorrowerDocument
-    """
-
-    document = models.BorrowerDocument.first_by(session, "id", document_id)
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Document not found",
-        )
-    return document
 
 
 def copy_documents(application: models.Application, documents: dict, session: Session):

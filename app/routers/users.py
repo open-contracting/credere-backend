@@ -13,6 +13,7 @@ from app import models, serializers
 from app.auth import OCP_only, get_current_user
 from app.aws import CognitoClient, get_cognito_client
 from app.db import get_db, transaction_session
+from app.util import get_object_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -389,10 +390,7 @@ async def get_user(user_id: int, session: Session = Depends(get_db)):
     :rtype: models.User
     :raises HTTPException 404: If the user is not found.
     """
-    user = models.User.first_by(session, "id", user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return user
+    return get_object_or_404(session, models.User, "id", user_id)
 
 
 @router.get("/users", tags=["users"], response_model=serializers.UserListResponse)
@@ -483,9 +481,7 @@ async def update_user(
 
     with transaction_session(session):
         try:
-            user = models.User.first_by(session, "id", id)
-            if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            user = get_object_or_404(session, models.User, "id", id)
 
             update_dict = jsonable_encoder(payload, exclude_unset=True)
             return user.update(session, **update_dict)
