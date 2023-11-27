@@ -19,10 +19,9 @@ logger = logging.getLogger(__name__)
     tags=["lenders"],
     response_model=models.Lender,
 )
-@dependencies.OCP_only()
 async def create_lender(
     lender: models.LenderCreate,
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -30,9 +29,6 @@ async def create_lender(
 
     :param lender: The lender data to be created.
     :type lender: models.LenderCreate
-
-    :param current_user: The current user authenticated.
-    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session
@@ -72,11 +68,10 @@ async def create_lender(
     tags=["lenders"],
     response_model=models.CreditProduct,
 )
-@dependencies.OCP_only()
 async def create_credit_products(
     credit_product: models.CreditProduct,
     lender_id: int,
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -87,9 +82,6 @@ async def create_credit_products(
 
     :param lender_id: The ID of the lender for which the credit product will be created.
     :type lender_id: int
-
-    :param current_user: The current user authenticated.
-    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session
@@ -129,11 +121,10 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)):
     tags=["lenders"],
     response_model=models.Lender,
 )
-@dependencies.OCP_only()
 async def update_lender(
     id: int,
     payload: models.LenderBase,
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -144,9 +135,6 @@ async def update_lender(
 
     :param payload: The data to update the lender with.
     :type payload: models.LenderBase
-
-    :param current_user: The current user authenticated.
-    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session
@@ -241,11 +229,10 @@ async def get_credit_product(
     tags=["lenders"],
     response_model=models.CreditProduct,
 )
-@dependencies.OCP_only()
 async def update_credit_products(
     credit_product: models.CreditProduct,
     credit_product_id: int,
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -256,9 +243,6 @@ async def update_credit_products(
 
     :param credit_product_id: The ID of the credit product to update.
     :type credit_product_id: int
-
-    :param current_user: The current user authenticated.
-    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session

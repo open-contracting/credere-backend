@@ -20,12 +20,11 @@ router = APIRouter()
 
 
 @router.post("/users", tags=["users"], response_model=models.User)
-@dependencies.OCP_only()
 async def create_user(
     payload: models.User,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
 ):
     """
     Create a new user.
@@ -38,8 +37,6 @@ async def create_user(
     :type session: Session
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
-    :param current_user: The current user (automatically injected).
-    :type current_user: models.User
 
     :return: The created user.
     :rtype: models.User
@@ -393,13 +390,12 @@ async def get_user(user_id: int, session: Session = Depends(get_db)):
 
 
 @router.get("/users", tags=["users"], response_model=serializers.UserListResponse)
-@dependencies.OCP_only()
 async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -415,8 +411,6 @@ async def get_all_users(
     :type sort_field: str
     :param sort_order: The sort order. Must be either "asc" or "desc". Defaults to "asc".
     :type sort_order: str
-    :param current_user: The current user (automatically injected).
-    :type current_user: models.User
     :param session: The database session dependency (automatically injected).
     :type session: Session
 
@@ -451,11 +445,10 @@ async def get_all_users(
     tags=["users"],
     response_model=models.UserWithLender,
 )
-@dependencies.OCP_only()
 async def update_user(
     id: int,
     user: models.User,
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -467,8 +460,6 @@ async def update_user(
     :type id: int
     :param user: The updated user information.
     :type user: models.User
-    :param current_user: The current user (automatically injected).
-    :type current_user: models.User
     :param session: The database session dependency (automatically injected).
     :type session: Session
 

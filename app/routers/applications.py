@@ -479,13 +479,12 @@ async def update_application_borrower(
     tags=["applications"],
     response_model=serializers.ApplicationListResponse,
 )
-@dependencies.OCP_only()
 async def get_applications_list(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -502,9 +501,6 @@ async def get_applications_list(
 
     :param sort_order: The sort order of the applications ("asc" or "desc", default: "asc").
     :type sort_order: str
-
-    :param current_user: The current user authenticated.
-    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session

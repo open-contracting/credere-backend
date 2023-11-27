@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from functools import wraps
 from typing import Generator
 
 from fastapi import Depends, Form, HTTPException, Request, status
@@ -47,7 +46,7 @@ async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depen
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Username missing")
 
 
-async def get_user(username: str = Depends(get_current_user), session: Session = Depends(get_db)) -> str:
+async def get_user(username: str = Depends(get_current_user), session: Session = Depends(get_db)) -> models.User:
     """
     Retrieves the user from the database using the username extracted from the provided JWT credentials.
 
@@ -62,46 +61,13 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
     return models.User.first_by(session, "external_id", username)
 
 
-def OCP_only():
-    """
-    A decorator to check if the user is an OCP user.
-    Raises HTTPException if the user is not authenticated or not an OCP user.
-
-    :param setUser: If True, the user is passed as a keyword argument to the decorated function.
-    :type setUser: bool, optional
-
-    :return: The decorator function.
-    :rtype: function
-
-    :raises HTTPException: If the user is not authenticated or not an OCP user.
-    """
-
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            current_user = kwargs.get("current_user")
-            if not current_user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid credentials",
-                )
-            session = kwargs.get("session")
-
-            # Retrieve the user from the session using external_id
-            user = models.User.first_by(session, "external_id", current_user)
-
-            # Check if the user has the required permission
-            if user and user.is_OCP():
-                return await func(*args, **kwargs)
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Insufficient permissions",
-                )
-
-        return wrapper
-
-    return decorator
+async def get_admin_user(user=Depends(get_user)) -> models.User:
+    if not user.is_OCP():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Insufficient permissions",
+        )
+    return user
 
 
 def raise_if_unauthorized(

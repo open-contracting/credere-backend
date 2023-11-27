@@ -22,13 +22,12 @@ router = APIRouter()
     tags=["statistics"],
     response_model=serializers.StatisticResponse,
 )
-@dependencies.OCP_only()
 async def get_ocp_statistics_by_lender(
     initial_date: Optional[str] = None,
     final_date: Optional[str] = None,
     lender_id: Optional[int] = None,
     custom_range: Optional[str] = None,
-    current_user: User = Depends(dependencies.get_current_user),
+    admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -46,8 +45,6 @@ async def get_ocp_statistics_by_lender(
     :type final_date: str, optional
     :param lender_id: The lender ID to filter the statistics for a specific lender (optional).
     :type lender_id: int, optional
-    :param current_user: The current user with the OCP role (automatically injected).
-    :type current_user: User
     :param session: The database session dependency (automatically injected).
     :type session: Session
 
@@ -99,9 +96,8 @@ async def get_ocp_statistics_by_lender(
     tags=["statistics"],
     response_model=serializers.StatisticOptInResponse,
 )
-@dependencies.OCP_only()
 async def get_ocp_statistics_opt_in(
-    current_user: User = Depends(dependencies.get_current_user),
+    admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -110,8 +106,6 @@ async def get_ocp_statistics_opt_in(
     This secure endpoint is accessible only to users with the OCP role. It retrieves
     statistics related to MSME opt-in and the count of FIs chosen by MSMEs in the Online Credit Platform (OCP).
 
-    :param current_user: The current user with the OCP role (automatically injected).
-    :type current_user: User
     :param session: The database session dependency (automatically injected).
     :type session: Session
 
