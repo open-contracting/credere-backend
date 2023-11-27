@@ -94,9 +94,9 @@ def _create_award(
 
 
 def fetch_new_awards_from_date(
-    last_updated_award_date: str,
+    last_updated_award_date: datetime,
     db_provider: Callable[[], Generator[Session, None, None]],
-    until_date: str | None = None,
+    until_date: datetime | None = None,
 ):
     """
     Fetch new awards from the given date and process them.
