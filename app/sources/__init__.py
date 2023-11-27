@@ -21,7 +21,7 @@ def is_valid_email(email: str) -> bool:
     return False
 
 
-def make_request_with_retry(url: str, headers: dict) -> httpx.Response | None:
+def make_request_with_retry(url: str, headers: dict) -> httpx.Response:
     """
     Make an HTTP request with retry functionality.
 
@@ -37,8 +37,5 @@ def make_request_with_retry(url: str, headers: dict) -> httpx.Response | None:
         response = client.get(url)
         response.raise_for_status()
         return response
-    except (httpx.TimeoutException, httpx.HTTPStatusError) as error:
-        logger.exception(f"Request failed: {error}")
-        return None
     finally:
         client.close()

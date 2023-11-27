@@ -107,7 +107,7 @@ def create_new_award(
     return new_award
 
 
-def get_new_contracts(index: int, from_date, until_date=None):
+def get_new_contracts(index: int, from_date: datetime, until_date: datetime | None = None) -> httpx.Response:
     offset = index * app_settings.secop_pagination_limit
     delta = timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
     date_format = "%Y-%m-%dT%H:%M:%S.000"
@@ -131,7 +131,7 @@ def get_new_contracts(index: int, from_date, until_date=None):
     return sources.make_request_with_retry(url, headers)
 
 
-def get_previous_contracts(documento_proveedor: str) -> httpx.Response | None:
+def get_previous_contracts(documento_proveedor: str) -> httpx.Response:
     """
     Get previous contracts data for the given document provider from the source API.
 
