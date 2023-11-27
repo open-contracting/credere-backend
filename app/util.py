@@ -5,6 +5,7 @@ import os.path
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -96,7 +97,7 @@ def get_modified_data_fields(application: models.Application, session: Session):
         )
         .all()
     )
-    modified_data_fields = {"award_updates": {}, "borrower_updates": {}}
+    modified_data_fields: dict[str, Any] = {"award_updates": {}, "borrower_updates": {}}
 
     for action in application_actions:
         action_data = action.data

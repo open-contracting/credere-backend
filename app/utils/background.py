@@ -92,7 +92,7 @@ def _create_award(
     return models.Award.create(session, **data)
 
 
-def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Session, until_date: str = None):
+def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Session, until_date: str | None = None):
     """
     Fetch new awards from the given date and process them.
 

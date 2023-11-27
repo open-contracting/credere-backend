@@ -30,7 +30,7 @@ def _get_remote_award(proceso_de_compra, proveedor_adjudicado):
 def create_new_award(
     source_contract_id: str,
     entry: dict,
-    borrower_id: int = None,
+    borrower_id: int | None = None,
     previous: bool = False,
 ) -> dict:
     """
