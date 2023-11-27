@@ -104,8 +104,22 @@ async def confirm_email(
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
+        if not application.pending_email_confirmation:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Application is not pending an email confirmation",
+            )
 
-        utils.check_pending_email_confirmation(application, payload.confirmation_email_token)
+        new_email, token = application.confirmation_email_token.split("---")[:2]
+        if token != payload.confirmation_email_token:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Not authorized to modify this application",
+            )
+
+        application.primary_email = new_email
+        application.pending_email_confirmation = False
+        application.confirmation_email_token = ""
 
         models.ApplicationAction.create(
             session,

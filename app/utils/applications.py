@@ -267,40 +267,6 @@ def check_application_not_status(
         )
 
 
-def check_pending_email_confirmation(application: models.Application, confirmation_email_token: str):
-    """
-    Checks and processes pending email confirmation for an application.
-
-    This function checks if the application is pending an email confirmation. If not, it raises an HTTP exception.
-    It then splits the application's confirmation email token to get the new email and token.
-    If the token doesn't match the provided confirmation email token, an HTTP exception is raised.
-    If the tokens match, the application's primary email is updated with the new email, the application's
-    pending email confirmation status is set to False, and the application's confirmation email token is reset.
-
-    :param application: The application for which the email confirmation is to be checked and processed.
-    :type application: models.Application
-
-    :param confirmation_email_token: The confirmation email token provided for checking.
-    :type confirmation_email_token: str
-    """
-
-    if not application.pending_email_confirmation:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Application is not pending an email confirmation",
-        )
-    new_email = application.confirmation_email_token.split("---")[0]
-    token = application.confirmation_email_token.split("---")[1]
-    if token != confirmation_email_token:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Not authorized to modify this application",
-        )
-    application.primary_email = new_email
-    application.pending_email_confirmation = False
-    application.confirmation_email_token = ""
-
-
 def create_or_update_borrower_document(
     filename: str,
     application: models.Application,
