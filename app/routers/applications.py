@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, joinedload
@@ -750,6 +750,55 @@ async def email_sme(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error",
             )
+
+
+@router.post(
+    "/applications/{id}/upload-compliance",
+    tags=["applications"],
+    response_model=models.BorrowerDocumentBase,
+)
+async def upload_compliance(
+    file: UploadFile,
+    session: Session = Depends(get_db),
+    user: models.User = Depends(dependencies.get_user),
+    application: models.Application = Depends(dependencies.get_authorized_application(roles=(models.UserType.FI,))),
+):
+    """
+    Upload a compliance document for an application.
+
+    :param file: The uploaded file.
+    :type file: UploadFile
+
+    :param session: The database session.
+    :type session: Session
+
+    :param user: The current user.
+    :type user: models.User
+
+    :return: The created or updated borrower document representing the compliance report.
+    :rtype: models.BorrowerDocumentBase
+
+    """
+    with transaction_session(session):
+        new_file, filename = util.validate_file(file)
+
+        document = util.create_or_update_borrower_document(
+            filename,
+            application,
+            models.BorrowerDocumentType.COMPLIANCE_REPORT,
+            session,
+            new_file,
+            True,
+        )
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.FI_UPLOAD_COMPLIANCE,
+            data={"file_name": filename},
+            application_id=application.id,
+        )
+
+        return document
 
 
 @router.get(

@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
@@ -616,6 +616,53 @@ async def update_apps_send_notifications(
 
 
 @router.post(
+    "/applications/upload-document",
+    tags=["applications"],
+    response_model=models.BorrowerDocumentBase,
+)
+async def upload_document(
+    file: UploadFile,
+    type: str = Form(...),
+    session: Session = Depends(get_db),
+    application: models.Application = Depends(dependencies.get_application_by_form),
+):
+    """
+    Upload a document for an application.
+
+    :param file: The uploaded file.
+    :type file: UploadFile
+
+    :param type: The type of the document.
+    :type type: str
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The created or updated borrower document.
+    :rtype: models.BorrowerDocumentBase
+
+    """
+    with transaction_session(session):
+        new_file, filename = util.validate_file(file)
+        if not application.pending_documents:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot upload document at this stage",
+            )
+
+        document = util.create_or_update_borrower_document(filename, application, type, session, new_file)
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
+            data={"file_name": filename},
+            application_id=application.id,
+        )
+
+        return document
+
+
+@router.post(
     "/applications/complete-information-request",
     tags=["applications"],
     response_model=serializers.ApplicationResponse,
@@ -676,6 +723,45 @@ async def complete_information_request(
             lender=application.lender,
             documents=application.borrower_documents,
         )
+
+
+@router.post(
+    "/applications/upload-contract",
+    tags=["applications"],
+    response_model=models.BorrowerDocumentBase,
+)
+async def upload_contract(
+    file: UploadFile,
+    session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_form(statuses=(models.ApplicationStatus.APPROVED,))
+    ),
+):
+    """
+    Upload a contract document for an application.
+
+    :param file: The uploaded file.
+    :type file: UploadFile
+
+    :param session: The database session.
+    :type session: Session
+
+    :return: The created or updated borrower document representing the contract.
+    :rtype: models.BorrowerDocumentBase
+
+    """
+    with transaction_session(session):
+        new_file, filename = util.validate_file(file)
+
+        document = util.create_or_update_borrower_document(
+            filename,
+            application,
+            models.BorrowerDocumentType.SIGNED_CONTRACT,
+            session,
+            new_file,
+        )
+
+        return document
 
 
 @router.post(
