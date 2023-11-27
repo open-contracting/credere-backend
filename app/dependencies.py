@@ -68,9 +68,9 @@ def raise_if_unauthorized(
     application: models.Application,
     user: models.User | None = None,
     *,
-    roles: tuple[models.UserType] = (),
-    scopes: tuple[ApplicationScope] = (),
-    statuses: tuple[models.ApplicationStatus] = (),
+    roles: tuple[models.UserType, ...] = (),
+    scopes: tuple[ApplicationScope, ...] = (),
+    statuses: tuple[models.ApplicationStatus, ...] = (),
 ):
     if roles:
         for role in roles:
@@ -112,7 +112,7 @@ def get_publication_as_user(id: int, session: Session = Depends(get_db)) -> mode
 
 
 def get_scoped_publication_as_user(
-    *, roles: tuple[models.UserType] = (), statuses: tuple[models.ApplicationStatus] = ()
+    *, roles: tuple[models.UserType, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
 ):
     def inner(
         application: models.Application = Depends(get_publication_as_user), user: models.User = Depends(get_user)
@@ -152,7 +152,7 @@ def _get_publication_as_guest_via_uuid(session: Session, uuid: str) -> models.Ap
 
 
 def _get_scoped_publication_as_guest_inner(
-    depends, scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
+    depends, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
 ):
     def inner(application: models.Application = Depends(depends)) -> models.Application:
         raise_if_unauthorized(application, scopes=scopes, statuses=statuses)
@@ -176,18 +176,18 @@ def get_publication_as_guest_via_form(uuid: str = Form(...), session: Session = 
 
 
 def get_scoped_publication_as_guest_via_payload(
-    *, scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
+    *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
 ):
     return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_payload, scopes, statuses)
 
 
 def get_scoped_publication_as_guest_via_uuid(
-    *, scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
+    *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
 ):
     return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_uuid, scopes, statuses)
 
 
 def get_scoped_publication_as_guest_via_form(
-    *, scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
+    *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
 ):
     return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_form, scopes, statuses)
