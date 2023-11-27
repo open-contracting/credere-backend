@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 
-from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -43,40 +42,36 @@ async def get_ocp_statistics_by_lender(
     :param lender_id: The lender ID to filter the statistics for a specific lender (optional).
     :return: Response containing the OCP statistics.
     """
-    try:
-        if initial_date is None and final_date is None and custom_range is None:
-            # If no dates provided, query the database
-            current_date = datetime.now().date()
-            statistics_kpis = (
-                session.query(Statistic)
-                .filter(
-                    Statistic.type == StatisticType.APPLICATION_KPIS,
-                    Statistic.lender_id == lender_id,
-                    func.date(Statistic.created_at) == current_date,
-                )
-                .first()
+    if initial_date is None and final_date is None and custom_range is None:
+        # If no dates provided, query the database
+        current_date = datetime.now().date()
+        statistics_kpis = (
+            session.query(Statistic)
+            .filter(
+                Statistic.type == StatisticType.APPLICATION_KPIS,
+                Statistic.lender_id == lender_id,
+                func.date(Statistic.created_at) == current_date,
             )
-            if statistics_kpis is not None:
-                statistics_kpis = statistics_kpis.data
-            # If no record for the current date, calculate the statistics
-            else:
-                statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
+            .first()
+        )
+        if statistics_kpis is not None:
+            statistics_kpis = statistics_kpis.data
+        # If no record for the current date, calculate the statistics
         else:
-            # If customRange is provided, calculate the statistics based on it
-            if custom_range is not None:
-                custom_range = custom_range.upper()
-                current_date = datetime.now().date()
-                if custom_range == StatisticCustomRange.LAST_WEEK.value:
-                    initial_date = (current_date - timedelta(days=7)).isoformat()
-                elif custom_range == StatisticCustomRange.LAST_MONTH.value:
-                    initial_date = (current_date - timedelta(days=30)).isoformat()
-
-                final_date = current_date.isoformat()
-
             statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
+    else:
+        # If customRange is provided, calculate the statistics based on it
+        if custom_range is not None:
+            custom_range = custom_range.upper()
+            current_date = datetime.now().date()
+            if custom_range == StatisticCustomRange.LAST_WEEK.value:
+                initial_date = (current_date - timedelta(days=7)).isoformat()
+            elif custom_range == StatisticCustomRange.LAST_MONTH.value:
+                initial_date = (current_date - timedelta(days=30)).isoformat()
 
-    except ClientError as e:
-        logger.exception(e)
+            final_date = current_date.isoformat()
+
+        statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
 
     return serializers.StatisticResponse(
         statistics_kpis=statistics_kpis,
@@ -98,26 +93,22 @@ async def get_ocp_statistics_opt_in(
     This secure endpoint is accessible only to users with the OCP role. It retrieves
     statistics related to MSME opt-in and the count of FIs chosen by MSMEs in the Online Credit Platform (OCP).
 
-
     :return: Response containing the OCP statistics for MSME opt-in.
     """
-    try:
-        current_date = datetime.now().date()
-        opt_in_stats = (
-            session.query(Statistic)
-            .filter(
-                Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
-                func.date(Statistic.created_at) == current_date,
-            )
-            .first()
+    current_date = datetime.now().date()
+    opt_in_stats = (
+        session.query(Statistic)
+        .filter(
+            Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
+            func.date(Statistic.created_at) == current_date,
         )
-        if opt_in_stats is not None:
-            opt_in_stats = opt_in_stats.data
-        else:
-            opt_in_stats = statistics_utils.get_msme_opt_in_stats(session)
+        .first()
+    )
+    if opt_in_stats is not None:
+        opt_in_stats = opt_in_stats.data
+    else:
+        opt_in_stats = statistics_utils.get_msme_opt_in_stats(session)
 
-    except ClientError as e:
-        logger.exception(e)
     return serializers.StatisticOptInResponse(
         opt_in_stat=opt_in_stats,
     )
@@ -134,25 +125,21 @@ async def get_fi_statistics(session: Session = Depends(get_db), user: User = Dep
 
     :return: Response containing the statistics for the Financial Institution.
     """
-    try:
-        current_date = datetime.now().date()
+    current_date = datetime.now().date()
 
-        statistics_kpis = (
-            session.query(Statistic)
-            .filter(
-                Statistic.type == StatisticType.APPLICATION_KPIS,
-                Statistic.lender_id == user.lender_id,
-                func.date(Statistic.created_at) == current_date,
-            )
-            .first()
+    statistics_kpis = (
+        session.query(Statistic)
+        .filter(
+            Statistic.type == StatisticType.APPLICATION_KPIS,
+            Statistic.lender_id == user.lender_id,
+            func.date(Statistic.created_at) == current_date,
         )
-        if statistics_kpis is not None:
-            statistics_kpis = statistics_kpis.data
-        else:
-            statistics_kpis = statistics_utils.get_general_statistics(session, None, None, user.lender_id)
-
-    except ClientError as e:
-        logger.exception(e)
+        .first()
+    )
+    if statistics_kpis is not None:
+        statistics_kpis = statistics_kpis.data
+    else:
+        statistics_kpis = statistics_utils.get_general_statistics(session, None, None, user.lender_id)
 
     return serializers.StatisticResponse(
         statistics_kpis=statistics_kpis,
