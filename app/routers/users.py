@@ -18,13 +18,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/users", tags=["users"], response_model=models.User)
+@router.post("/users", tags=["users"])
 async def create_user(
     payload: models.User,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     admin: models.User = Depends(dependencies.get_admin_user),
-):
+) -> models.User:
     """
     Create a new user.
 
@@ -52,12 +52,11 @@ async def create_user(
 
 @router.put(
     "/users/change-password",
-    response_model=serializers.ChangePasswordResponse | serializers.ResponseBase,
 )
 def change_password(
     user: models.BasicUser,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
-):
+) -> serializers.ChangePasswordResponse | serializers.ResponseBase:
     """
     Change user password.
 
@@ -100,11 +99,11 @@ def change_password(
             )
 
 
-@router.put("/users/setup-mfa", response_model=serializers.ResponseBase)
+@router.put("/users/setup-mfa")
 def setup_mfa(
     user: models.SetupMFA,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
-):
+) -> serializers.ResponseBase:
     """
     Set up multi-factor authentication (MFA) for the user.
 
@@ -137,13 +136,12 @@ def setup_mfa(
 
 @router.post(
     "/users/login",
-    response_model=serializers.LoginResponse,
 )
 def login(
     user: models.BasicUser,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
-):
+) -> serializers.LoginResponse:
     """
     Authenticate the user and generate access and refresh tokens.
 
@@ -183,13 +181,12 @@ def login(
 
 @router.post(
     "/users/login-mfa",
-    response_model=serializers.LoginResponse,
 )
 def login_mfa(
     user: models.BasicUser,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
-):
+) -> serializers.LoginResponse:
     """
     Authenticate the user with Multi-Factor Authentication (MFA) and generate access and refresh tokens.
 
@@ -245,12 +242,11 @@ def login_mfa(
 
 @router.get(
     "/users/logout",
-    response_model=serializers.ResponseBase,
 )
 def logout(
     authorization: str = Header(None),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
-):
+) -> serializers.ResponseBase:
     """
     Logout the user by invalidating the access token.
 
@@ -273,12 +269,11 @@ def logout(
 
 @router.get(
     "/users/me",
-    response_model=serializers.UserResponse,
 )
 def me(
     usernameFromToken: str = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
-):
+) -> serializers.UserResponse:
     """
     Get the details of the currently authenticated user.
 
@@ -295,9 +290,10 @@ def me(
 
 @router.post(
     "/users/forgot-password",
-    response_model=serializers.ResponseBase,
 )
-def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(dependencies.get_cognito_client)):
+def forgot_password(
+    user: models.BasicUser, client: CognitoClient = Depends(dependencies.get_cognito_client)
+) -> serializers.ResponseBase:
     """
     Initiate the process of resetting a user's password.
 
@@ -317,8 +313,8 @@ def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(depe
     return serializers.ResponseBase(detail=detail)
 
 
-@router.get("/users/{user_id}", tags=["users"], response_model=models.User)
-async def get_user(user_id: int, session: Session = Depends(get_db)):
+@router.get("/users/{user_id}", tags=["users"])
+async def get_user(user_id: int, session: Session = Depends(get_db)) -> models.User:
     """
     Retrieve information about a user.
 
@@ -331,7 +327,7 @@ async def get_user(user_id: int, session: Session = Depends(get_db)):
     return get_object_or_404(session, models.User, "id", user_id)
 
 
-@router.get("/users", tags=["users"], response_model=serializers.UserListResponse)
+@router.get("/users", tags=["users"])
 async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
@@ -339,7 +335,7 @@ async def get_all_users(
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> serializers.UserListResponse:
     """
     Retrieve a list of users.
 

@@ -396,7 +396,6 @@ async def update_application_borrower(
 @router.get(
     "/applications/admin-list",
     tags=["applications"],
-    response_model=serializers.ApplicationListResponse,
 )
 async def get_applications_list(
     page: int = Query(0, ge=0),
@@ -405,7 +404,7 @@ async def get_applications_list(
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> serializers.ApplicationListResponse:
     """
     Get a paginated list of submitted applications for administrative purposes.
 
@@ -497,7 +496,6 @@ async def start_application(
 @router.get(
     "/applications",
     tags=["applications"],
-    response_model=serializers.ApplicationListResponse,
 )
 async def get_applications(
     page: int = Query(0, ge=0),
@@ -506,7 +504,7 @@ async def get_applications(
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
-):
+) -> serializers.ApplicationListResponse:
     """
     Get a paginated list of submitted applications for a specific FI user.
 
@@ -653,7 +651,6 @@ async def upload_compliance(
 @router.get(
     "/applications/{id}/previous-awards",
     tags=["applications"],
-    response_model=list[models.Award],
 )
 async def previous_contracts(
     user: models.User = Depends(dependencies.get_user),
@@ -661,7 +658,7 @@ async def previous_contracts(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(roles=(models.UserType.OCP, models.UserType.FI))
     ),
-):
+) -> list[models.Award]:
     """
     Get the previous awards associated with an application.
 

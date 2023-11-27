@@ -18,7 +18,6 @@ router = APIRouter()
 @router.get(
     "/statistics-ocp",
     tags=["statistics"],
-    response_model=serializers.StatisticResponse,
 )
 async def get_ocp_statistics_by_lender(
     initial_date: str | None = None,
@@ -27,7 +26,7 @@ async def get_ocp_statistics_by_lender(
     custom_range: str | None = None,
     admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> serializers.StatisticResponse:
     """
     Retrieve OCP statistics by lender.
 
@@ -81,12 +80,11 @@ async def get_ocp_statistics_by_lender(
 @router.get(
     "/statistics-ocp/opt-in",
     tags=["statistics"],
-    response_model=serializers.StatisticOptInResponse,
 )
 async def get_ocp_statistics_opt_in(
     admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> serializers.StatisticOptInResponse:
     """
     Retrieve OCP statistics for MSME opt-in.
 
@@ -114,8 +112,10 @@ async def get_ocp_statistics_opt_in(
     )
 
 
-@router.get("/statistics-fi", tags=["statistics"], response_model=serializers.StatisticResponse)
-async def get_fi_statistics(session: Session = Depends(get_db), user: User = Depends(dependencies.get_user)):
+@router.get("/statistics-fi", tags=["statistics"])
+async def get_fi_statistics(
+    session: Session = Depends(get_db), user: User = Depends(dependencies.get_user)
+) -> serializers.StatisticResponse:
     """
     Retrieve statistics for a Financial Institution (FI).
 

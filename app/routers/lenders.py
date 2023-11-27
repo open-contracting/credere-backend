@@ -17,13 +17,12 @@ logger = logging.getLogger(__name__)
 @router.post(
     "/lenders",
     tags=["lenders"],
-    response_model=models.Lender,
 )
 async def create_lender(
     lender: models.LenderCreate,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> models.Lender:
     """
     Create a new lender.
 
@@ -59,14 +58,13 @@ async def create_lender(
 @router.post(
     "/lenders/{lender_id}/credit-products",
     tags=["lenders"],
-    response_model=models.CreditProduct,
 )
 async def create_credit_products(
     credit_product: models.CreditProduct,
     lender_id: int,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> models.CreditProduct:
     """
     Create a new credit product for a specific lender.
 
@@ -96,14 +94,13 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)):
 @router.put(
     "/lenders/{id}",
     tags=["lenders"],
-    response_model=models.Lender,
 )
 async def update_lender(
     id: int,
     payload: models.LenderBase,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> models.Lender:
     """
     Update an existing lender.
 
@@ -129,11 +126,10 @@ async def update_lender(
 @router.get(
     "/lenders",
     tags=["lenders"],
-    response_model=serializers.LenderListResponse,
 )
 async def get_lenders_list(
     session: Session = Depends(get_db),
-):
+) -> serializers.LenderListResponse:
     """
     Get the list of all lenders.
 
@@ -184,14 +180,13 @@ async def get_credit_product(
 @router.put(
     "/credit-products/{credit_product_id}",
     tags=["lenders"],
-    response_model=models.CreditProduct,
 )
 async def update_credit_products(
     credit_product: models.CreditProduct,
     credit_product_id: int,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> models.CreditProduct:
     """
     Update an existing credit product.
 
