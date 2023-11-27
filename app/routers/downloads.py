@@ -44,6 +44,7 @@ async def get_borrower_document(
     """
     with transaction_session(session):
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", id)
+        dependencies.raise_if_unauthorized(document.application, user, roles=(models.UserType.OCP, models.UserType.FI))
 
         if user.is_OCP():
             models.ApplicationAction.create(
@@ -53,7 +54,6 @@ async def get_borrower_document(
                 application_id=document.application.id,
             )
         else:
-            dependencies.raise_if_application_not_to_lender(document.application, user)
             models.ApplicationAction.create(
                 session,
                 type=models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
@@ -79,7 +79,7 @@ async def download_application(
     lang: str,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(dependencies.get_application),
+    application: models.Application = Depends(dependencies.get_publication_as_user),
 ):
     """
     Retrieve all documents related to an application and stream them as a zip file.

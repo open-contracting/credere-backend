@@ -29,7 +29,9 @@ async def reject_application(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(dependencies.get_authorized_application(roles=(models.UserType.FI,))),
+    application: models.Application = Depends(
+        dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
+    ),
 ):
     """
     Reject an application:
@@ -110,7 +112,7 @@ async def complete_application(
     user: models.User = Depends(dependencies.get_user),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(
+        dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.FI,),
             statuses=(models.ApplicationStatus.CONTRACT_UPLOADED,),
         )
@@ -172,7 +174,7 @@ async def approve_application(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(
+        dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.FI,),
             statuses=(models.ApplicationStatus.STARTED,),
         )
@@ -264,7 +266,7 @@ async def verify_data_field(
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(
+        dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.FI,),
             statuses=(
                 models.ApplicationStatus.STARTED,
@@ -340,9 +342,11 @@ async def verify_document(
     """
     with transaction_session(session):
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", document_id)
-        dependencies.raise_if_application_not_to_lender(document.application, user)
-        dependencies.raise_if_application_status_mismatch(
-            document.application, (models.ApplicationStatus.STARTED, models.ApplicationStatus.INFORMATION_REQUESTED)
+        dependencies.raise_if_unauthorized(
+            document.application,
+            user,
+            roles=(models.UserType.FI,),
+            statuses=(models.ApplicationStatus.STARTED, models.ApplicationStatus.INFORMATION_REQUESTED),
         )
 
         document.verified = payload.verified
@@ -369,7 +373,7 @@ async def update_application_award(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(
+        dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.OCP, models.UserType.FI),
             statuses=dependencies.OCP_CAN_MODIFY,
         )
@@ -422,7 +426,7 @@ async def update_application_borrower(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(
+        dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.OCP, models.UserType.FI),
             statuses=dependencies.OCP_CAN_MODIFY,
         )
@@ -544,7 +548,7 @@ async def get_application(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(roles=(models.UserType.OCP, models.UserType.FI))
+        dependencies.get_scoped_publication_as_user(roles=(models.UserType.OCP, models.UserType.FI))
     ),
 ):
     """
@@ -576,7 +580,7 @@ async def start_application(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(
+        dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.FI,),
             statuses=(models.ApplicationStatus.SUBMITTED,),
         )
@@ -682,7 +686,7 @@ async def email_sme(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(
+        dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.FI,), statuses=(models.ApplicationStatus.STARTED,)
         )
     ),
@@ -761,7 +765,9 @@ async def upload_compliance(
     file: UploadFile,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(dependencies.get_authorized_application(roles=(models.UserType.FI,))),
+    application: models.Application = Depends(
+        dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
+    ),
 ):
     """
     Upload a compliance document for an application.
@@ -810,7 +816,7 @@ async def previous_contracts(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_authorized_application(roles=(models.UserType.OCP, models.UserType.FI))
+        dependencies.get_scoped_publication_as_user(roles=(models.UserType.OCP, models.UserType.FI))
     ),
 ):
     """

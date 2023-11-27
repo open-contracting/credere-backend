@@ -27,7 +27,7 @@ router = APIRouter()
 async def application_by_uuid(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_uuid(scopes=(dependencies.ApplicationScope.UNEXPIRED,))
+        dependencies.get_scoped_publication_as_guest_via_uuid(scopes=(dependencies.ApplicationScope.UNEXPIRED,))
     ),
 ):
     """
@@ -62,7 +62,7 @@ async def decline(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(
+        dependencies.get_scoped_publication_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
         )
     ),
@@ -113,7 +113,7 @@ async def rollback_decline(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(
+        dependencies.get_scoped_publication_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
         )
     ),
@@ -159,7 +159,7 @@ async def decline_feedback(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(
+        dependencies.get_scoped_publication_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
         )
     ),
@@ -202,7 +202,7 @@ async def access_scheme(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(
+        dependencies.get_scoped_publication_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
         )
     ),
@@ -255,7 +255,7 @@ async def credit_product_options(
     payload: parsers.ApplicationCreditOptions,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(
+        dependencies.get_scoped_publication_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
@@ -327,7 +327,7 @@ async def select_credit_product(
     payload: parsers.ApplicationSelectCreditProduct,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(
+        dependencies.get_scoped_publication_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
@@ -387,7 +387,7 @@ async def rollback_select_credit_product(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(
+        dependencies.get_scoped_publication_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
@@ -439,7 +439,7 @@ async def confirm_credit_product(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(
+        dependencies.get_scoped_publication_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
@@ -546,7 +546,7 @@ async def update_apps_send_notifications(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
     ),
 ):
     """
@@ -624,7 +624,7 @@ async def upload_document(
     file: UploadFile,
     type: str = Form(...),
     session: Session = Depends(get_db),
-    application: models.Application = Depends(dependencies.get_application_by_form),
+    application: models.Application = Depends(dependencies.get_publication_as_guest_via_form),
 ):
     """
     Upload a document for an application.
@@ -673,7 +673,9 @@ async def complete_information_request(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(statuses=(models.ApplicationStatus.INFORMATION_REQUESTED,))
+        dependencies.get_scoped_publication_as_guest_via_payload(
+            statuses=(models.ApplicationStatus.INFORMATION_REQUESTED,)
+        )
     ),
 ):
     """
@@ -734,7 +736,7 @@ async def upload_contract(
     file: UploadFile,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_form(statuses=(models.ApplicationStatus.APPROVED,))
+        dependencies.get_scoped_publication_as_guest_via_form(statuses=(models.ApplicationStatus.APPROVED,))
     ),
 ):
     """
@@ -774,7 +776,7 @@ async def confirm_upload_contract(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(statuses=(models.ApplicationStatus.APPROVED,))
+        dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.APPROVED,))
     ),
 ):
     """
@@ -846,7 +848,7 @@ async def find_alternative_credit_option(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_by_payload(statuses=(models.ApplicationStatus.REJECTED,))
+        dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.REJECTED,))
     ),
 ):
     """

@@ -31,9 +31,7 @@ async def get_auth_credentials(request: Request):
     return await auth.verifyTokeClass().__call__(request)
 
 
-async def get_current_user(
-    credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials),
-) -> str:
+async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials)) -> str:
     """
     Extracts the username of the current user from the provided JWT credentials.
 
@@ -49,10 +47,7 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Username missing")
 
 
-async def get_user(
-    credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials),
-    session: Session = Depends(get_db),
-) -> str:
+async def get_user(username: str = Depends(get_current_user), session: Session = Depends(get_db)) -> str:
     """
     Retrieves the user from the database using the username extracted from the provided JWT credentials.
 
@@ -64,10 +59,7 @@ async def get_user(
     :return: The user object retrieved from the database.
     :rtype: models.User
     """
-    try:
-        return models.User.first_by(session, "external_id", credentials.claims["username"])
-    except KeyError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found")
+    return models.User.first_by(session, "external_id", username)
 
 
 def OCP_only():
@@ -112,28 +104,42 @@ def OCP_only():
     return decorator
 
 
-def raise_if_application_expired(application: models.Application) -> None:
-    expired_at = application.expired_at
-    if expired_at and expired_at < datetime.now(expired_at.tzinfo):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Application expired")
+def raise_if_unauthorized(
+    application: models.Application,
+    user: models.User | None = None,
+    *,
+    roles: tuple[models.UserType] = (),
+    scopes: tuple[ApplicationScope] = (),
+    statuses: tuple[models.ApplicationStatus] = (),
+):
+    if roles:
+        for role in roles:
+            match role:
+                case models.UserType.OCP:
+                    if user.is_OCP():
+                        break
+                case models.UserType.FI:
+                    if user.lender_id == application.lender_id:
+                        break
+                case _:
+                    raise NotImplementedError
+        else:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not authorized")
+
+    if ApplicationScope.UNEXPIRED in scopes:
+        expired_at = application.expired_at
+        if expired_at and expired_at < datetime.now(expired_at.tzinfo):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Application expired")
+
+    if statuses:
+        if application.status not in statuses:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Application status should not be {application.status.name}",
+            )
 
 
-def raise_if_application_not_to_lender(application: models.Application, user: models.User) -> None:
-    if user.lender_id != application.lender_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not authorized")
-
-
-def raise_if_application_status_mismatch(
-    application: models.Application, statuses: tuple[models.ApplicationStatus]
-) -> None:
-    if application.status not in statuses:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Application status should not be {application.status.name}",
-        )
-
-
-def get_application(id: int, session: Session = Depends(get_db)) -> models.Application:
+def get_publication_as_user(id: int, session: Session = Depends(get_db)) -> models.Application:
     application = (
         models.Application.filter_by(session, "id", id)
         .options(joinedload(models.Application.borrower), joinedload(models.Application.award))
@@ -145,31 +151,19 @@ def get_application(id: int, session: Session = Depends(get_db)) -> models.Appli
     return application
 
 
-def get_authorized_application(roles: tuple[models.UserType] = (), statuses: tuple[models.ApplicationStatus] = ()):
+def get_scoped_publication_as_user(
+    *, roles: tuple[models.UserType] = (), statuses: tuple[models.ApplicationStatus] = ()
+):
     def inner(
-        application: models.Application = Depends(get_application), user: models.User = Depends(get_user)
+        application: models.Application = Depends(get_publication_as_user), user: models.User = Depends(get_user)
     ) -> models.Application:
-        if statuses:
-            raise_if_application_status_mismatch(application, statuses)
-        if roles:
-            for role in roles:
-                match role:
-                    case models.UserType.OCP:
-                        if user.is_OCP():
-                            break
-                    case models.UserType.FI:
-                        if user.lender_id == application.lender_id:
-                            break
-                    case _:
-                        raise NotImplementedError
-            else:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not authorized")
+        raise_if_unauthorized(application, user, roles=roles, statuses=statuses)
         return application
 
     return inner
 
 
-def _get_application_by_uuid(session: Session, uuid: str) -> models.Application:
+def _get_publication_as_guest_via_uuid(session: Session, uuid: str) -> models.Application:
     """
     Retrieve an application by its UUID from the database.
 
@@ -197,46 +191,43 @@ def _get_application_by_uuid(session: Session, uuid: str) -> models.Application:
     return application
 
 
-def _get_scoped_application_inner(
+def _get_scoped_publication_as_guest_inner(
     depends, scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
 ):
     def inner(application: models.Application = Depends(depends)) -> models.Application:
-        if statuses:
-            raise_if_application_status_mismatch(application, statuses)
-        if ApplicationScope.UNEXPIRED in scopes:
-            raise_if_application_expired(application)
+        raise_if_unauthorized(application, scopes=scopes, statuses=statuses)
         return application
 
     return inner
 
 
-def get_application_by_payload(
+def get_publication_as_guest_via_payload(
     payload: parsers.ApplicationBase, session: Session = Depends(get_db)
 ) -> models.Application:
-    return _get_application_by_uuid(session, payload.uuid)
+    return _get_publication_as_guest_via_uuid(session, payload.uuid)
 
 
-def get_application_by_uuid(uuid: str, session: Session = Depends(get_db)) -> models.Application:
-    return _get_application_by_uuid(session, uuid)
+def get_publication_as_guest_via_uuid(uuid: str, session: Session = Depends(get_db)) -> models.Application:
+    return _get_publication_as_guest_via_uuid(session, uuid)
 
 
-def get_application_by_form(uuid: str = Form(...), session: Session = Depends(get_db)) -> models.Application:
-    return _get_application_by_uuid(session, uuid)
+def get_publication_as_guest_via_form(uuid: str = Form(...), session: Session = Depends(get_db)) -> models.Application:
+    return _get_publication_as_guest_via_uuid(session, uuid)
 
 
-def get_scoped_application_by_payload(
-    scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
+def get_scoped_publication_as_guest_via_payload(
+    *, scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
 ):
-    return _get_scoped_application_inner(get_application_by_payload, scopes, statuses)
+    return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_payload, scopes, statuses)
 
 
-def get_scoped_application_by_uuid(
-    scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
+def get_scoped_publication_as_guest_via_uuid(
+    *, scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
 ):
-    return _get_scoped_application_inner(get_application_by_uuid, scopes, statuses)
+    return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_uuid, scopes, statuses)
 
 
-def get_scoped_application_by_form(
-    scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
+def get_scoped_publication_as_guest_via_form(
+    *, scopes: tuple[ApplicationScope] = (), statuses: tuple[models.ApplicationStatus] = ()
 ):
-    return _get_scoped_application_inner(get_application_by_form, scopes, statuses)
+    return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_form, scopes, statuses)
