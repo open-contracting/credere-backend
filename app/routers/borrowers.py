@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import desc
@@ -45,7 +44,7 @@ async def create_borrowers(borrower: Borrower, session: Session = Depends(get_db
 @router.get(
     "/borrowers/get-borrower-identifiers/",
     tags=["awards"],
-    response_model=List[str],
+    response_model=list[str],
 )
 async def get_borrowers_contracting_process_ids(session: Session = Depends(get_db)):
     """

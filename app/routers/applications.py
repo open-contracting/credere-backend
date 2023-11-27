@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from typing import List
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
@@ -653,7 +652,7 @@ async def upload_compliance(
 @router.get(
     "/applications/{id}/previous-awards",
     tags=["applications"],
-    response_model=List[models.Award],
+    response_model=list[models.Award],
 )
 async def previous_contracts(
     user: models.User = Depends(dependencies.get_user),

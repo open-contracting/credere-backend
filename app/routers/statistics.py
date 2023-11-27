@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends
@@ -23,10 +22,10 @@ router = APIRouter()
     response_model=serializers.StatisticResponse,
 )
 async def get_ocp_statistics_by_lender(
-    initial_date: Optional[str] = None,
-    final_date: Optional[str] = None,
-    lender_id: Optional[int] = None,
-    custom_range: Optional[str] = None,
+    initial_date: str | None = None,
+    final_date: str | None = None,
+    lender_id: int | None = None,
+    custom_range: str | None = None,
     admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):

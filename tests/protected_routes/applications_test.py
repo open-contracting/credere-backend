@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
@@ -14,8 +13,8 @@ router = APIRouter()
 
 class ApplicationTestPayload(BaseModel):
     status: models.ApplicationStatus
-    lender_id: Optional[int]
-    credit_product_id: Optional[int]
+    lender_id: int | None
+    credit_product_id: int | None
 
 
 class ApplicationActionTestPayload(BaseModel):

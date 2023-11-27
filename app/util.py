@@ -5,7 +5,6 @@ import os.path
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Optional
 
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -57,7 +56,7 @@ def get_secret_hash(nit_entidad: str) -> str:
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
 
-def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
+def validate_file(file: UploadFile = File(...)) -> dict[File, str]:
     """
     Validates the uploaded file.
 
@@ -131,7 +130,7 @@ def create_or_update_borrower_document(
     type: models.BorrowerDocumentType,
     session: Session,
     file: UploadFile = File(...),
-    verified: Optional[bool] = False,
+    verified: bool | None = False,
 ) -> models.BorrowerDocument:
     """
     Creates a new borrower document or updates an existing one.

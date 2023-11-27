@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from typing import Union
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
@@ -53,7 +52,7 @@ async def create_user(
 
 @router.put(
     "/users/change-password",
-    response_model=Union[serializers.ChangePasswordResponse, serializers.ResponseBase],
+    response_model=serializers.ChangePasswordResponse | serializers.ResponseBase,
 )
 def change_password(
     user: models.BasicUser,

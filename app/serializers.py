@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -9,14 +9,14 @@ class ApplicationResponse(BaseModel):
     application: models.ApplicationRead
     borrower: models.Borrower
     award: models.Award
-    lender: Optional[models.Lender] = None
-    documents: List[models.BorrowerDocumentBase] = []
-    creditProduct: Optional[models.CreditProduct] = None
+    lender: models.Lender | None = None
+    documents: list[models.BorrowerDocumentBase] = []
+    creditProduct: models.CreditProduct | None = None
 
 
 class CreditProductListResponse(BaseModel):
-    loans: List[models.CreditProductWithLender]
-    credit_lines: List[models.CreditProductWithLender]
+    loans: list[models.CreditProductWithLender]
+    credit_lines: list[models.CreditProductWithLender]
 
 
 class BasePagination(BaseModel):
@@ -26,15 +26,15 @@ class BasePagination(BaseModel):
 
 
 class ApplicationListResponse(BasePagination):
-    items: List[models.ApplicationWithRelations]
+    items: list[models.ApplicationWithRelations]
 
 
 class LenderListResponse(BasePagination):
-    items: List[models.Lender]
+    items: list[models.Lender]
 
 
 class UserListResponse(BasePagination):
-    items: List[models.UserWithLender]
+    items: list[models.UserWithLender]
 
 
 class ResponseBase(BaseModel):
@@ -57,8 +57,8 @@ class LoginResponse(UserResponse):
 
 
 class StatisticResponse(BaseModel):
-    statistics_kpis: Dict[Any, Any]
+    statistics_kpis: dict[Any, Any]
 
 
 class StatisticOptInResponse(BaseModel):
-    opt_in_stat: Dict[Any, Any]
+    opt_in_stat: dict[Any, Any]

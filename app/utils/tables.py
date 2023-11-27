@@ -1,6 +1,5 @@
 import locale
 from datetime import datetime
-from typing import List
 
 from reportlab.platypus import Paragraph, Table
 
@@ -236,7 +235,7 @@ def create_borrower_table(borrower: models.Borrower, application: models.Applica
     return create_table(data)
 
 
-def create_documents_table(documents: List[models.BorrowerDocument], lang: str) -> Table:
+def create_documents_table(documents: list[models.BorrowerDocument], lang: str) -> Table:
     """
     Creates a table of MSME information and documents.
 
