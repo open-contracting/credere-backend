@@ -15,7 +15,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
-def transaction_session(db: Session):
+def transaction_session(db: Session) -> Generator[Session, None, None]:
     """
     Context manager for database transactions. It takes a Session instance, commits the transaction if it is successful, # noqa
     and rolls back the transaction if any exception is raised.
@@ -33,7 +33,7 @@ def transaction_session(db: Session):
 
 
 @contextmanager
-def transaction_session_logger(session: Session, msg: str, *args):
+def transaction_session_logger(session: Session, msg: str, *args) -> Generator[Session, None, None]:
     try:
         yield session
         session.commit()
@@ -46,7 +46,7 @@ def transaction_session_logger(session: Session, msg: str, *args):
         session.rollback()
 
 
-def get_db() -> Generator:
+def get_db() -> Generator[Session, None, None]:
     """
     Generator function to get a new database session. Yields a database session instance and closes the session after
     it is used.

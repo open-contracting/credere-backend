@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Callable, Generator
 
 from sqlalchemy import Date, Integer, cast, distinct, func, text
 from sqlalchemy.orm import Session
@@ -23,7 +24,7 @@ from app.models import (
 logger = logging.getLogger(__name__)
 
 
-def update_statistics(db_provider: Session = get_db):
+def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] = get_db):
     """
     Update and store various statistics related to applications and lenders in the database.
 
@@ -298,7 +299,7 @@ def get_general_statistics(
 
     # Calculate the proportion
     if application_accepted_query == 0:
-        proportion_of_submitted_out_of_opt_in = 0
+        proportion_of_submitted_out_of_opt_in = 0.0
     else:
         proportion_of_submitted_out_of_opt_in = round((application_accepted_query / application_divisor) * 100, 2)
 

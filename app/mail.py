@@ -194,7 +194,7 @@ def send_email(ses: SESClient, email: str, data: dict, to_msme: bool = True) -> 
         TemplateData=json.dumps(data),
     )
 
-    return response.get("MessageId")
+    return response["MessageId"]
 
 
 def send_application_approved_email(ses: SESClient, application: Application):
@@ -518,7 +518,7 @@ def send_mail_submit_reminder(
     return send_email(ses, email, prepare_html("Access_to_credit_reminder", html_data))
 
 
-def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: list[str]):
+def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str):
     """
     Sends a notification email about a new application to a financial institution's email group.
 
@@ -540,7 +540,7 @@ def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: list[str
     )
 
 
-def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: list[str], lender_name: str):
+def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: str, lender_name: str):
     """
     Sends a notification email about a new application to the Open Contracting Partnership's (OCP) email group.
 

@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from typing import Callable, Generator
 
 from sqlalchemy.orm import Session
 
@@ -92,7 +93,11 @@ def _create_award(
     return models.Award.create(session, **data)
 
 
-def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Session, until_date: str | None = None):
+def fetch_new_awards_from_date(
+    last_updated_award_date: str,
+    db_provider: Callable[[], Generator[Session, None, None]],
+    until_date: str | None = None,
+):
     """
     Fetch new awards from the given date and process them.
 
@@ -146,7 +151,9 @@ def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Sessio
     logger.info("Total fetched contracts: %d", total)
 
 
-def fetch_previous_awards(borrower: models.Borrower, db_provider: Session = get_db):
+def fetch_previous_awards(
+    borrower: models.Borrower, db_provider: Callable[[], Generator[Session, None, None]] = get_db
+):
     """
     Fetch previous awards for a borrower that accepted an application. This wont generate an application,
     it will just insert the awards in our database

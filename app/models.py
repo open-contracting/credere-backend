@@ -37,6 +37,7 @@ def _get_missing_data_keys(input_dict: dict) -> dict:
 
 # https://github.com/tiangolo/sqlmodel/issues/254
 class ActiveRecordMixin:
+    # https://github.com/tiangolo/sqlmodel/issues/348
     __config__ = None
 
     @classmethod
@@ -689,6 +690,7 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
         obj = session.query(cls).order_by(desc(cls.source_last_updated_at)).first()
         if obj:
             return obj.source_last_updated_at
+        return None
 
 
 class Message(SQLModel, ActiveRecordMixin, table=True):
