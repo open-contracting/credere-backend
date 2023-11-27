@@ -6,6 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Up
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
+from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
@@ -244,7 +245,7 @@ async def credit_product_options(
                 models.CreditProduct.borrower_size == payload.borrower_size,
                 models.CreditProduct.lower_limit <= payload.amount_requested,
                 models.CreditProduct.upper_limit >= payload.amount_requested,
-                models.Lender.id.notin_(rejecter_lenders),
+                col(models.Lender.id).notin_(rejecter_lenders),
                 filter,
             )
         )
@@ -258,7 +259,7 @@ async def credit_product_options(
                 models.CreditProduct.borrower_size == payload.borrower_size,
                 models.CreditProduct.lower_limit <= payload.amount_requested,
                 models.CreditProduct.upper_limit >= payload.amount_requested,
-                models.Lender.id.notin_(rejecter_lenders),
+                col(models.Lender.id).notin_(rejecter_lenders),
                 filter,
             )
         )
@@ -420,7 +421,7 @@ async def confirm_credit_product(
                 models.Application.status == models.ApplicationStatus.REJECTED,
                 models.Application.award_borrower_identifier == application.award_borrower_identifier,
             )
-            .order_by(models.Application.created_at.desc())
+            .order_by(col(models.Application.created_at).desc())
             .first()
         )
         if lastest_application_id:
@@ -428,7 +429,7 @@ async def confirm_credit_product(
                 session.query(models.BorrowerDocument)
                 .filter(
                     models.BorrowerDocument.application_id == lastest_application_id[0],
-                    models.BorrowerDocument.type.in_(document_types_list),
+                    col(models.BorrowerDocument.type).in_(document_types_list),
                 )
                 .all()
             )

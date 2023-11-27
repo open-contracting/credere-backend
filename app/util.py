@@ -8,6 +8,7 @@ from enum import Enum
 
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
+from sqlmodel import col
 
 from app import models
 from app.settings import app_settings
@@ -89,7 +90,7 @@ def get_modified_data_fields(application: models.Application, session: Session):
         .join(models.Application)
         .filter(
             models.ApplicationAction.application_id == application.id,
-            models.ApplicationAction.type.in_(
+            col(models.ApplicationAction.type).in_(
                 [models.ApplicationActionType.AWARD_UPDATE.value, models.ApplicationActionType.BORROWER_UPDATE.value]
             ),
         )

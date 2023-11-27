@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import true
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, col
 
 from app.settings import app_settings
 
@@ -370,7 +370,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def unarchived(cls, session: Session):
-        return session.query(cls).filter(cls.archived_at.is_(None))
+        return session.query(cls).filter(col(cls.archived_at).is_(None))
 
     @classmethod
     def expiring_soon(cls, session: Session):
@@ -385,7 +385,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             cls.expiring_soon(session)
             .filter(
                 cls.status == ApplicationStatus.PENDING,
-                cls.id.notin_(Message.application_by_type(MessageType.BORROWER_PENDING_APPLICATION_REMINDER)),
+                col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_APPLICATION_REMINDER)),
                 Borrower.status == BorrowerStatus.ACTIVE,
             )
             .join(Borrower, cls.borrower_id == Borrower.id)
@@ -396,7 +396,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     def pending_submission_reminder(cls, session: Session):
         return cls.expiring_soon(session).filter(
             cls.status == ApplicationStatus.ACCEPTED,
-            cls.id.notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
+            col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
         )
 
     @classmethod
@@ -423,7 +423,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def submitted(cls, session: Session):
         return cls.unarchived(session).filter(
-            cls.status.notin_(
+            col(cls.status).notin_(
                 [
                     ApplicationStatus.PENDING,
                     ApplicationStatus.ACCEPTED,
@@ -437,7 +437,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     def submitted_to_lender(cls, session: Session, lender_id: int):
         return cls.submitted(session).filter(
             Application.lender_id == lender_id,
-            Application.lender_id.is_not(None),
+            col(Application.lender_id).isnot(None),
         )
 
     @classmethod
@@ -479,7 +479,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 Award.previous == true(),
                 Award.borrower_id == self.borrower_id,
             )
-            .order_by(Award.contractperiod_startdate.desc())
+            .order_by(col(Award.contractperiod_startdate).desc())
             .all()
         )
 
@@ -492,7 +492,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             .filter(
                 self.__class__.award_borrower_identifier == self.award_borrower_identifier,
                 self.__class__.status == ApplicationStatus.REJECTED,
-                self.__class__.lender_id.isnot(None),
+                col(self.__class__.lender_id).isnot(None),
             )
             .distinct()
             .all()
