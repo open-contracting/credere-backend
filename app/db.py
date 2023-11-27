@@ -10,13 +10,8 @@ from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
-SessionLocal = None
-if app_settings.database_url:
-    engine = create_engine(app_settings.database_url)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-if app_settings.test_database_url:
-    engine = create_engine(app_settings.test_database_url)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(app_settings.test_database_url if app_settings.test_database_url else app_settings.database_url)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
@@ -59,11 +54,7 @@ def get_db() -> Generator:
     :return: The database session instance.
     """
     try:
-        db = None
-        if SessionLocal:
-            db = SessionLocal()
-
+        db = SessionLocal()
         yield db
     finally:
-        if db:
-            db.close()
+        db.close()
