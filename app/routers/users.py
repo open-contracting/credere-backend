@@ -208,10 +208,10 @@ def login_mfa(
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
-            session = response["Session"]
+            auth_session = response["Session"]
             mfa_login_response = client.respond_to_auth_challenge(
                 user.username,
-                session,
+                auth_session,
                 response["ChallengeName"],
                 "",
                 mfa_code=user.temp_password,
