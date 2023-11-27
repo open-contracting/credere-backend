@@ -1,11 +1,14 @@
 -r requirements.txt
 black
+boto3-stubs
 coveralls
 flake8
 isort
 moto[cognitoidp]
+mypy-boto3-ses
 pip-tools
 pre-commit
 pytest
 pytest-cov
 pytest-mock
+reportlab-stubs

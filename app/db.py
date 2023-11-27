@@ -3,8 +3,7 @@ from contextlib import contextmanager
 from typing import Generator
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm.session import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings

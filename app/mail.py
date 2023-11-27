@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from urllib.parse import quote
 
-import botocore.client
+from mypy_boto3_ses.client import SESClient
 
 from app.models import Application
 from app.settings import app_settings
@@ -178,7 +178,7 @@ def prepare_html(template_name, parameters):
     return data
 
 
-def send_email(ses: "botocore.client.SES", email: str, data: dict, to_msme: bool = True) -> str:
+def send_email(ses: SESClient, email: str, data: dict, to_msme: bool = True) -> str:
     email = email.strip()
     if not email:
         logger.warning(f"{app_settings.environment} - Skipping empty email address")
@@ -197,7 +197,7 @@ def send_email(ses: "botocore.client.SES", email: str, data: dict, to_msme: bool
     return response.get("MessageId")
 
 
-def send_application_approved_email(ses: "botocore.client.SES", application: Application):
+def send_application_approved_email(ses: SESClient, application: Application):
     """
     Sends an email notification when an application has been approved.
 
@@ -223,7 +223,7 @@ def send_application_approved_email(ses: "botocore.client.SES", application: App
     send_email(ses, application.primary_email, data)
 
 
-def send_application_submission_completed(ses: "botocore.client.SES", application: Application):
+def send_application_submission_completed(ses: SESClient, application: Application):
     """
     Sends an email notification when an application is submitted.
 
@@ -241,7 +241,7 @@ def send_application_submission_completed(ses: "botocore.client.SES", applicatio
     send_email(ses, application.primary_email, prepare_html("Application_submitted", html_data))
 
 
-def send_application_credit_disbursed(ses: "botocore.client.SES", application: Application):
+def send_application_credit_disbursed(ses: SESClient, application: Application):
     """
     Sends an email notification when an application has the credit dibursed.
 
@@ -264,7 +264,7 @@ def send_application_credit_disbursed(ses: "botocore.client.SES", application: A
     )
 
 
-def send_mail_to_new_user(ses: "botocore.client.SES", name: str, username: str, temp_password: str):
+def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_password: str):
     """
     Sends an email to a new user with a link to set their password.
 
@@ -293,7 +293,7 @@ def send_mail_to_new_user(ses: "botocore.client.SES", name: str, username: str, 
     send_email(ses, username, prepare_html("New_Account_Created", html_data), False)
 
 
-def send_upload_contract_notification_to_FI(ses: "botocore.client.SES", application: Application):
+def send_upload_contract_notification_to_FI(ses: SESClient, application: Application):
     """
     Sends an email to the Financial Institution (FI) to notify them of a new contract submission.
 
@@ -320,7 +320,7 @@ def send_upload_contract_notification_to_FI(ses: "botocore.client.SES", applicat
     )
 
 
-def send_upload_contract_confirmation(ses: "botocore.client.SES", application: Application):
+def send_upload_contract_confirmation(ses: SESClient, application: Application):
     """
     Sends an email to the borrower confirming the successful upload of the contract.
 
@@ -394,7 +394,7 @@ def send_new_email_confirmation(
     return response
 
 
-def send_mail_to_reset_password(ses: "botocore.client.SES", username: str, temp_password: str):
+def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: str):
     """
     Sends an email to a user with instructions to reset their password.
 
@@ -422,7 +422,7 @@ def send_mail_to_reset_password(ses: "botocore.client.SES", username: str, temp_
 
 
 def send_invitation_email(
-    ses: "botocore.client.SES", uuid: str, email: str, borrower_name: str, buyer_name: str, tender_title: str
+    ses: SESClient, uuid: str, email: str, borrower_name: str, buyer_name: str, tender_title: str
 ) -> str:
     """
     Sends an invitation email to the provided email address.
@@ -455,7 +455,7 @@ def send_invitation_email(
 
 
 def send_mail_intro_reminder(
-    ses: "botocore.client.SES", uuid: str, email: str, borrower_name: str, buyer_name: str, tender_title: str
+    ses: SESClient, uuid: str, email: str, borrower_name: str, buyer_name: str, tender_title: str
 ) -> str:
     """
     Sends an introductory reminder email to the provided email address.
@@ -488,7 +488,7 @@ def send_mail_intro_reminder(
 
 
 def send_mail_submit_reminder(
-    ses: "botocore.client.SES", uuid: str, email: str, borrower_name: str, buyer_name: str, tender_title: str
+    ses: SESClient, uuid: str, email: str, borrower_name: str, buyer_name: str, tender_title: str
 ) -> str:
     """
     Sends a submission reminder email to the provided email address.
@@ -518,7 +518,7 @@ def send_mail_submit_reminder(
     return send_email(ses, email, prepare_html("Access_to_credit_reminder", html_data))
 
 
-def send_notification_new_app_to_fi(ses: "botocore.client.SES", lender_email_group: list[str]):
+def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: list[str]):
     """
     Sends a notification email about a new application to a financial institution's email group.
 
@@ -540,7 +540,7 @@ def send_notification_new_app_to_fi(ses: "botocore.client.SES", lender_email_gro
     )
 
 
-def send_notification_new_app_to_ocp(ses: "botocore.client.SES", ocp_email_group: list[str], lender_name: str):
+def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: list[str], lender_name: str):
     """
     Sends a notification email about a new application to the Open Contracting Partnership's (OCP) email group.
 
@@ -565,9 +565,7 @@ def send_notification_new_app_to_ocp(ses: "botocore.client.SES", ocp_email_group
     )
 
 
-def send_mail_request_to_sme(
-    ses: "botocore.client.SES", uuid: str, lender_name: str, email_message: str, sme_email: str
-) -> str:
+def send_mail_request_to_sme(ses: SESClient, uuid: str, lender_name: str, email_message: str, sme_email: str) -> str:
     """
     Sends an email request to the Small and Medium-Sized Enterprises (SME) from the lender for additional data.
 
@@ -590,7 +588,7 @@ def send_mail_request_to_sme(
     return send_email(ses, sme_email, prepare_html("Request_data_to_SME", html_data))
 
 
-def send_overdue_application_email_to_FI(ses: "botocore.client.SES", name: str, email: str, amount: int) -> str:
+def send_overdue_application_email_to_FI(ses: SESClient, name: str, email: str, amount: int) -> str:
     """
     Sends an email notification to the Financial Institution (FI) about overdue applications.
 
@@ -613,7 +611,7 @@ def send_overdue_application_email_to_FI(ses: "botocore.client.SES", name: str, 
     return send_email(ses, email, prepare_html("Overdue_application_FI", html_data), False)
 
 
-def send_overdue_application_email_to_OCP(ses: "botocore.client.SES", name: str) -> str:
+def send_overdue_application_email_to_OCP(ses: SESClient, name: str) -> str:
     """
     Sends an email notification to the Open Contracting Partnership (OCP) about overdue applications.
 
@@ -638,7 +636,7 @@ def send_overdue_application_email_to_OCP(ses: "botocore.client.SES", name: str)
     )
 
 
-def send_rejected_application_email(ses: "botocore.client.SES", application: Application) -> str:
+def send_rejected_application_email(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification to the applicant when an application has been rejected.
 
@@ -658,7 +656,7 @@ def send_rejected_application_email(ses: "botocore.client.SES", application: App
     return send_email(ses, application.primary_email, prepare_html("Application_declined", html_data))
 
 
-def send_rejected_application_email_without_alternatives(ses: "botocore.client.SES", application: Application) -> str:
+def send_rejected_application_email_without_alternatives(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification to the applicant when an application has been rejected,
     and no alternatives are available.
@@ -679,7 +677,7 @@ def send_rejected_application_email_without_alternatives(ses: "botocore.client.S
     )
 
 
-def send_copied_application_notification_to_sme(ses: "botocore.client.SES", application: Application) -> str:
+def send_copied_application_notification_to_sme(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification to the SME (Small and Medium-Sized Enterprises) when an application
     has been copied, allowing them to continue with the application process.
@@ -702,7 +700,7 @@ def send_copied_application_notification_to_sme(ses: "botocore.client.SES", appl
     )
 
 
-def send_upload_documents_notifications_to_FI(ses: "botocore.client.SES", email: str) -> str:
+def send_upload_documents_notifications_to_FI(ses: SESClient, email: str) -> str:
     """
     Sends an email notification to the Financial Institution (FI) to notify them that new
     documents have been uploaded and are ready for their review.

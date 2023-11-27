@@ -21,12 +21,16 @@ boto3==1.26.136
     # via
     #   -r requirements.txt
     #   moto
+boto3-stubs==1.29.7
+    # via -r requirements_dev.in
 botocore==1.29.136
     # via
     #   -r requirements.txt
     #   boto3
     #   moto
     #   s3transfer
+botocore-stubs==1.32.7
+    # via boto3-stubs
 build==0.10.0
     # via pip-tools
 certifi==2023.7.22
@@ -88,9 +92,7 @@ future==0.18.3
     #   -r requirements.txt
     #   pyseeyou
 greenlet==3.0.0
-    # via
-    #   -r requirements.txt
-    #   sqlalchemy
+    # via -r requirements.txt
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -142,6 +144,8 @@ mdurl==0.1.2
     #   -r requirements.txt
     #   markdown-it-py
 moto[cognitoidp]==4.1.10
+    # via -r requirements_dev.in
+mypy-boto3-ses==1.29.0
     # via -r requirements_dev.in
 mypy-extensions==1.0.0
     # via black
@@ -244,7 +248,11 @@ regex==2023.6.3
     #   -r requirements.txt
     #   parsimonious
 reportlab==4.0.4
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   reportlab-stubs
+reportlab-stubs==3.6.9.post0
+    # via -r requirements_dev.in
 requests==2.31.0
     # via
     #   -r requirements.txt
@@ -267,9 +275,7 @@ s3transfer==0.6.1
     #   -r requirements.txt
     #   boto3
 sentry-sdk[fastapi]==1.23.1
-    # via
-    #   -r requirements.txt
-    #   sentry-sdk
+    # via -r requirements.txt
 shellingham==1.5.0.post1
     # via
     #   -r requirements.txt
@@ -290,7 +296,6 @@ sqlalchemy[postgresql]==1.4.41
     # via
     #   -r requirements.txt
     #   alembic
-    #   sqlalchemy
     #   sqlmodel
 sqlalchemy2-stubs==0.0.2a34
     # via
@@ -309,15 +314,19 @@ toolz==0.12.0
 transifex-python==3.4.0
     # via -r requirements.txt
 typer[all]==0.9.0
-    # via
-    #   -r requirements.txt
-    #   typer
+    # via -r requirements.txt
+types-awscrt==0.19.17
+    # via botocore-stubs
 types-pyyaml==6.0.12.10
     # via responses
+types-s3transfer==0.7.0
+    # via boto3-stubs
 typing-extensions==4.5.0
     # via
     #   -r requirements.txt
     #   alembic
+    #   boto3-stubs
+    #   mypy-boto3-ses
     #   pydantic
     #   sqlalchemy2-stubs
     #   typer

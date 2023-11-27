@@ -8,6 +8,7 @@ from sqlalchemy import DECIMAL, Column, DateTime
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import true
 from sqlmodel import Field, Relationship, SQLModel
@@ -39,7 +40,7 @@ class ActiveRecordMixin:
     __config__ = None
 
     @classmethod
-    def filter_by(cls, session, field: str, value: Any):
+    def filter_by(cls, session: Session, field: str, value: Any):
         """
         Filter a model based on a field's value.
 
@@ -51,7 +52,7 @@ class ActiveRecordMixin:
         return session.query(cls).filter(getattr(cls, field) == value)
 
     @classmethod
-    def first_by(cls, session, field: str, value: Any):
+    def first_by(cls, session: Session, field: str, value: Any):
         """
         Get an existing instance based on a field's value.
 
@@ -63,7 +64,7 @@ class ActiveRecordMixin:
         return cls.filter_by(session, field, value).first()
 
     @classmethod
-    def create(cls, session, **data):
+    def create(cls, session: Session, **data):
         """
         Insert a new instance into the database.
 
@@ -79,7 +80,7 @@ class ActiveRecordMixin:
         session.flush()
         return obj
 
-    def update(self, session, **data):
+    def update(self, session: Session, **data):
         """
         Update an existing instance in the database.
 
@@ -370,18 +371,18 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     credit_product: "CreditProduct" = Relationship()
 
     @classmethod
-    def unarchived(cls, session):
+    def unarchived(cls, session: Session):
         return session.query(cls).filter(cls.archived_at.is_(None))
 
     @classmethod
-    def expiring_soon(cls, session):
+    def expiring_soon(cls, session: Session):
         return session.query(cls).filter(
             cls.expired_at > datetime.now(),
             cls.expired_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
         )
 
     @classmethod
-    def pending_introduction_reminder(cls, session):
+    def pending_introduction_reminder(cls, session: Session):
         return (
             cls.expiring_soon(session)
             .filter(
@@ -394,14 +395,14 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
-    def pending_submission_reminder(cls, session):
+    def pending_submission_reminder(cls, session: Session):
         return cls.expiring_soon(session).filter(
             cls.status == ApplicationStatus.ACCEPTED,
             cls.id.notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
         )
 
     @classmethod
-    def lapsed(cls, session):
+    def lapsed(cls, session: Session):
         delta = timedelta(days=app_settings.days_to_change_to_lapsed)
 
         return cls.unarchived(session).filter(
@@ -422,7 +423,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
-    def submitted(cls, session):
+    def submitted(cls, session: Session):
         return cls.unarchived(session).filter(
             cls.status.notin_(
                 [
@@ -435,14 +436,14 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
-    def submitted_to_lender(cls, session, lender_id: int):
+    def submitted_to_lender(cls, session: Session, lender_id: int):
         return cls.submitted(session).filter(
             Application.lender_id == lender_id,
             Application.lender_id.is_not(None),
         )
 
     @classmethod
-    def archivable(cls, session):
+    def archivable(cls, session: Session):
         delta = timedelta(days=app_settings.days_to_erase_borrower_data)
 
         return cls.unarchived(session).filter(
@@ -470,7 +471,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     def tz(self):
         return self.created_at.tzinfo
 
-    def previous_awards(self, session) -> List["Award"]:
+    def previous_awards(self, session: Session) -> List["Award"]:
         """
         :return: The previous awards for the application's borrower, in reverse time order by contract start date.
         """
@@ -484,7 +485,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             .all()
         )
 
-    def rejecter_lenders(self, session):
+    def rejecter_lenders(self, session: Session):
         """
         :return: The IDs of lenders who rejected applications from the application's borrower for the same award.
         """
@@ -499,7 +500,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             .all()
         )
 
-    def days_waiting_for_lender(self, session) -> int:
+    def days_waiting_for_lender(self, session: Session) -> int:
         """
         :return: The number of days while waiting for the lender to perform an action.
         """
@@ -681,7 +682,7 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
     )
 
     @classmethod
-    def last_updated(cls, session) -> Optional[datetime]:
+    def last_updated(cls, session: Session) -> Optional[datetime]:
         """
         Get the date of the last updated award.
 
