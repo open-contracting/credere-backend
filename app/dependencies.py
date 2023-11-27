@@ -52,10 +52,13 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
     :raises HTTPException: If the user does not exist in the database.
     :return: The user object retrieved from the database.
     """
-    return models.User.first_by(session, "external_id", username)
+    user = models.User.first_by(session, "external_id", username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found")
+    return user
 
 
-async def get_admin_user(user=Depends(get_user)) -> models.User:
+async def get_admin_user(user: models.User = Depends(get_user)) -> models.User:
     if not user.is_OCP():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,6 +76,7 @@ def raise_if_unauthorized(
     statuses: tuple[models.ApplicationStatus, ...] = (),
 ):
     if roles:
+        assert user is not None
         for role in roles:
             match role:
                 case models.UserType.OCP:
