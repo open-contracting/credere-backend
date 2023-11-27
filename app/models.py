@@ -435,7 +435,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
-    def submitted_to_lender(cls, session: Session, lender_id: int):
+    def submitted_to_lender(cls, session: Session, lender_id: int | None):
         return cls.submitted(session).filter(
             Application.lender_id == lender_id,
             col(Application.lender_id).isnot(None),
@@ -545,7 +545,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         self.lender_rejected_at = datetime.now(self.tz)
         self.lender_rejected_data = lender_rejected_data
 
-    def stage_as_completed(self, disbursed_final_amount: Decimal):
+    def stage_as_completed(self, disbursed_final_amount: Decimal | None):
         self.status = ApplicationStatus.COMPLETED
         self.lender_completed_at = datetime.now(self.tz)
         self.disbursed_final_amount = disbursed_final_amount

@@ -1,5 +1,6 @@
 import io
 import zipfile
+from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends
@@ -86,7 +87,7 @@ async def download_application(
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)
 
-        elements = []
+        elements: list[Any] = []
 
         elements.append(Paragraph(get_translated_string("Application Details", lang), styleTitle))
 

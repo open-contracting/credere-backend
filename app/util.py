@@ -126,11 +126,11 @@ def get_modified_data_fields(application: models.Application, session: Session):
 
 
 def create_or_update_borrower_document(
-    filename: str,
+    filename: str | None,
     application: models.Application,
     type: models.BorrowerDocumentType,
     session: Session,
-    file: UploadFile = File(...),
+    file: bytes,
     verified: bool | None = False,
 ) -> models.BorrowerDocument:
     """

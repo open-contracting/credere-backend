@@ -20,7 +20,12 @@ ApplicationStatus = models.ApplicationStatus
 
 
 def _create_application(
-    award_id: int, borrower_id: int, email: str, legal_identifier: str, source_contract_id: str, session: Session
+    award_id: int | None,
+    borrower_id: int | None,
+    email: str,
+    legal_identifier: str,
+    source_contract_id: str,
+    session: Session,
 ) -> models.Application:
     """
     Create a new application and insert it into the database.

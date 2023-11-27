@@ -558,7 +558,9 @@ async def upload_document(
                 detail="Cannot upload document at this stage",
             )
 
-        document = util.create_or_update_borrower_document(filename, application, type, session, new_file)
+        document = util.create_or_update_borrower_document(
+            filename, application, models.BorrowerDocumentType(type), session, new_file
+        )
 
         models.ApplicationAction.create(
             session,
