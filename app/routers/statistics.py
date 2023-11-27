@@ -75,7 +75,7 @@ async def get_ocp_statistics_by_lender(
 
             statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
 
-    except ClientError() as e:
+    except ClientError as e:
         logger.exception(e)
 
     return serializers.StatisticResponse(

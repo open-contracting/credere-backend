@@ -52,13 +52,12 @@ def get_secret_hash(nit_entidad: str) -> str:
     :return: The secret hash generated from the NIT.
     """
 
-    key = app_settings.hash_key
     message = bytes(nit_entidad, "utf-8")
-    key = bytes(key, "utf-8")
+    key = bytes(app_settings.hash_key, "utf-8")
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
 
-def validate_file(file: UploadFile = File(...)) -> dict[File, str]:
+def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     """
     Validates the uploaded file.
 

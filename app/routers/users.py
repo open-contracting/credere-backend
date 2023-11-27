@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import IntegrityError
@@ -56,7 +56,6 @@ async def create_user(
 )
 def change_password(
     user: models.BasicUser,
-    response: Response,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
@@ -104,7 +103,6 @@ def change_password(
 @router.put("/users/setup-mfa", response_model=serializers.ResponseBase)
 def setup_mfa(
     user: models.SetupMFA,
-    response: Response,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
@@ -143,7 +141,6 @@ def setup_mfa(
 )
 def login(
     user: models.BasicUser,
-    response: Response,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
 ):
@@ -161,10 +158,10 @@ def login(
     """
     try:
         response = client.initiate_auth(user.username, user.password)
-        user = models.User.first_by(session, "email", user.username)
+        db_user = models.User.first_by(session, "email", user.username)
 
         return serializers.LoginResponse(
-            user=user,
+            user=db_user,
             access_token=response["AuthenticationResult"]["AccessToken"],
             refresh_token=response["AuthenticationResult"]["RefreshToken"],
         )
@@ -217,16 +214,16 @@ def login_mfa(
                 mfa_code=user.temp_password,
             )
 
-            user = models.User.first_by(session, "email", user.username)
+            db_user = models.User.first_by(session, "email", user.username)
 
-            if not user:
+            if not db_user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="User not found",
                 )
 
             return serializers.LoginResponse(
-                user=user,
+                user=db_user,
                 access_token=mfa_login_response["access_token"],
                 refresh_token=mfa_login_response["refresh_token"],
             )

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Self
 
 from pydantic import BaseModel
 from sqlalchemy import DECIMAL, Column, DateTime
@@ -53,7 +53,7 @@ class ActiveRecordMixin:
         return session.query(cls).filter(getattr(cls, field) == value)
 
     @classmethod
-    def first_by(cls, session: Session, field: str, value: Any):
+    def first_by(cls, session: Session, field: str, value: Any) -> Self | None:
         """
         Get an existing instance based on a field's value.
 
@@ -65,7 +65,7 @@ class ActiveRecordMixin:
         return cls.filter_by(session, field, value).first()
 
     @classmethod
-    def create(cls, session: Session, **data):
+    def create(cls, session: Session, **data) -> Self:
         """
         Insert a new instance into the database.
 
@@ -81,7 +81,7 @@ class ActiveRecordMixin:
         session.flush()
         return obj
 
-    def update(self, session: Session, **data):
+    def update(self, session: Session, **data) -> Self:
         """
         Update an existing instance in the database.
 

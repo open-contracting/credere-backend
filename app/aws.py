@@ -4,6 +4,7 @@ import hmac
 import logging
 import random
 import string
+from typing import Any
 
 import boto3
 
@@ -110,7 +111,7 @@ class CognitoClient:
 
         return response
 
-    def initiate_auth(self, username, password):
+    def initiate_auth(self, username, password) -> dict[str, Any]:
         """
         Initiates an authentication request for a user in AWS Cognito.
 
