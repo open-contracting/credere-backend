@@ -375,8 +375,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def expiring_soon(cls, session: Session):
         return session.query(cls).filter(
-            cls.expired_at > datetime.now(),
-            cls.expired_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
+            col(cls.expired_at) > datetime.now(),
+            col(cls.expired_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
         )
 
     @classmethod
@@ -407,15 +407,15 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             or_(
                 and_(
                     cls.status == ApplicationStatus.PENDING,
-                    cls.created_at + delta < datetime.now(),
+                    col(cls.created_at) + delta < datetime.now(),
                 ),
                 and_(
                     cls.status == ApplicationStatus.ACCEPTED,
-                    cls.borrower_accepted_at + delta < datetime.now(),
+                    col(cls.borrower_accepted_at) + delta < datetime.now(),
                 ),
                 and_(
                     cls.status == ApplicationStatus.INFORMATION_REQUESTED,
-                    cls.information_requested_at + delta < datetime.now(),
+                    col(cls.information_requested_at) + delta < datetime.now(),
                 ),
             ),
         )
@@ -448,19 +448,19 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             or_(
                 and_(
                     cls.status == ApplicationStatus.DECLINED,
-                    cls.borrower_declined_at + delta < datetime.now(),
+                    col(cls.borrower_declined_at) + delta < datetime.now(),
                 ),
                 and_(
                     cls.status == ApplicationStatus.REJECTED,
-                    cls.lender_rejected_at + delta < datetime.now(),
+                    col(cls.lender_rejected_at) + delta < datetime.now(),
                 ),
                 and_(
                     cls.status == ApplicationStatus.COMPLETED,
-                    cls.lender_approved_at + delta < datetime.now(),
+                    col(cls.lender_approved_at) + delta < datetime.now(),
                 ),
                 and_(
                     cls.status == ApplicationStatus.LAPSED,
-                    cls.application_lapsed_at + delta < datetime.now(),
+                    col(cls.application_lapsed_at) + delta < datetime.now(),
                 ),
             ),
         )

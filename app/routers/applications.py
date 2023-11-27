@@ -6,6 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, U
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, joinedload
+from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
@@ -70,8 +71,8 @@ async def reject_application(
             .filter(
                 models.CreditProduct.borrower_size == application.borrower.size,
                 models.CreditProduct.lender_id != application.lender_id,
-                models.CreditProduct.lower_limit <= application.amount_requested,
-                models.CreditProduct.upper_limit >= application.amount_requested,
+                col(models.CreditProduct.lower_limit) <= application.amount_requested,
+                col(models.CreditProduct.upper_limit) >= application.amount_requested,
             )
             .all()
         )

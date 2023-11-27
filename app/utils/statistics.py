@@ -159,13 +159,13 @@ def _get_base_query(
     base_query = None
     if start_date is not None and end_date is not None:
         base_query = sessionBase.filter(
-            Application.created_at >= start_date,
-            Application.created_at <= end_date,
+            col(Application.created_at) >= start_date,
+            col(Application.created_at) <= end_date,
         )
     elif start_date is not None:
-        base_query = sessionBase.filter(Application.created_at >= start_date)
+        base_query = sessionBase.filter(col(Application.created_at) >= start_date)
     elif end_date is not None:
-        base_query = sessionBase.filter(Application.created_at <= end_date)
+        base_query = sessionBase.filter(col(Application.created_at) <= end_date)
     else:
         base_query = sessionBase
 
@@ -252,7 +252,9 @@ def get_general_statistics(
     # Average Repayment Period
     average_repayment_period_query = (
         _get_base_query(
-            session.query(func.avg(Application.repayment_years * 12 + Application.repayment_months).cast(Integer)),
+            session.query(
+                func.avg(col(Application.repayment_years) * 12 + col(Application.repayment_months)).cast(Integer)
+            ),
             start_date,
             end_date,
             lender_id,
