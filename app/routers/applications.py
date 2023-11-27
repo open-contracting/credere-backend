@@ -8,7 +8,6 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, joinedload
 
-import app.utils.applications as utils
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
 from app.db import get_db, transaction_session
@@ -482,7 +481,7 @@ async def update_application_award(
             user_id=user.id,
         )
 
-        application = utils.get_modified_data_fields(application, session)
+        application = util.get_modified_data_fields(application, session)
         return application
 
 
@@ -541,7 +540,7 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
-        application = utils.get_modified_data_fields(application, session)
+        application = util.get_modified_data_fields(application, session)
         return application
 
 
@@ -637,7 +636,7 @@ async def get_application(
     :raise: HTTPException with status code 401 if the user is not authorized to view the application.
 
     """
-    return utils.get_modified_data_fields(application, session)
+    return util.get_modified_data_fields(application, session)
 
 
 @router.post(

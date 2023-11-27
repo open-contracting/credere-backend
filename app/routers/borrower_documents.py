@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-import app.utils.applications as utils
-from app import dependencies, models
+from app import dependencies, models, util
 from app.db import get_db, transaction_session
 
 router = APIRouter()
@@ -36,14 +35,14 @@ async def upload_document(
 
     """
     with transaction_session(session):
-        new_file, filename = utils.validate_file(file)
+        new_file, filename = util.validate_file(file)
         if not application.pending_documents:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot upload document at this stage",
             )
 
-        document = utils.create_or_update_borrower_document(filename, application, type, session, new_file)
+        document = util.create_or_update_borrower_document(filename, application, type, session, new_file)
 
         models.ApplicationAction.create(
             session,
@@ -81,9 +80,9 @@ async def upload_contract(
 
     """
     with transaction_session(session):
-        new_file, filename = utils.validate_file(file)
+        new_file, filename = util.validate_file(file)
 
-        document = utils.create_or_update_borrower_document(
+        document = util.create_or_update_borrower_document(
             filename,
             application,
             models.BorrowerDocumentType.SIGNED_CONTRACT,
@@ -122,9 +121,9 @@ async def upload_compliance(
 
     """
     with transaction_session(session):
-        new_file, filename = utils.validate_file(file)
+        new_file, filename = util.validate_file(file)
 
-        document = utils.create_or_update_borrower_document(
+        document = util.create_or_update_borrower_document(
             filename,
             application,
             models.BorrowerDocumentType.COMPLIANCE_REPORT,
