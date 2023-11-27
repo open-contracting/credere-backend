@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from typing import Union
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
@@ -20,12 +19,11 @@ router = APIRouter()
 
 
 @router.post("/users", tags=["users"], response_model=models.User)
-@dependencies.OCP_only()
 async def create_user(
     payload: models.User,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
 ):
     """
     Create a new user.
@@ -33,16 +31,7 @@ async def create_user(
     This endpoint allows creating a new user. It is accessible only to users with the OCP role.
 
     :param payload: The user data for creating the new user.
-    :type payload: models.User
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-    :param client: The Cognito client dependency (automatically injected).
-    :type client: CognitoClient
-    :param current_user: The current user (automatically injected).
-    :type current_user: models.User
-
     :return: The created user.
-    :rtype: models.User
     """
     with transaction_session(session):
         try:
@@ -63,7 +52,7 @@ async def create_user(
 
 @router.put(
     "/users/change-password",
-    response_model=Union[serializers.ChangePasswordResponse, serializers.ResponseBase],
+    response_model=serializers.ChangePasswordResponse | serializers.ResponseBase,
 )
 def change_password(
     user: models.BasicUser,
@@ -77,14 +66,8 @@ def change_password(
     and handles different scenarios such as new password requirement, MFA setup, and error handling.
 
     :param user: The user data including the username, temporary password, and new password.
-    :type user: models.BasicUser
     :param response: The response object used to modify the response headers (automatically injected).
-    :type response: Response
-    :param client: The Cognito client dependency (automatically injected).
-    :type client: CognitoClient
-
     :return: The change password response or an error response.
-    :rtype: Union[serializers.ChangePasswordResponse, serializers.ResponseBase]
     """
     try:
         response = client.initiate_auth(user.username, user.temp_password)
@@ -131,14 +114,8 @@ def setup_mfa(
     token with the provided secret, session, and temporary password.
 
     :param user: The user data including the secret code, session, and temporary password.
-    :type user: models.SetupMFA
     :param response: The response object used to modify the response headers (automatically injected).
-    :type response: Response
-    :param client: The Cognito client dependency (automatically injected).
-    :type client: CognitoClient
-
     :return: The response indicating successful MFA setup or an error response.
-    :rtype: serializers.ResponseBase
     """
     try:
         client.verify_software_token(user.secret, user.session, user.temp_password)
@@ -179,16 +156,8 @@ def login(
     the generated access and refresh tokens.
 
     :param user: The user data including the username and password.
-    :type user: models.BasicUser
     :param response: The response object used to modify the response headers (automatically injected).
-    :type response: Response
-    :param client: The Cognito client dependency (automatically injected).
-    :type client: CognitoClient
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-
     :return: The response containing the user information and tokens if the login is successful.
-    :rtype: serializers.LoginResponse
     """
     try:
         response = client.initiate_auth(user.username, user.password)
@@ -233,14 +202,7 @@ def login_mfa(
     it returns the user information along with the generated access and refresh tokens.
 
     :param user: The user data including the username, password, and MFA code.
-    :type user: models.BasicUser
-    :param client: The Cognito client dependency (automatically injected).
-    :type client: CognitoClient
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-
     :return: The response containing the user information and tokens if the login is successful.
-    :rtype: serializers.LoginResponse
     """
     try:
         response = client.initiate_auth(user.username, user.password)
@@ -301,12 +263,7 @@ def logout(
     successful logout.
 
     :param authorization: The Authorization header containing the access token.
-    :type authorization: str
-    :param client: The Cognito client dependency (automatically injected).
-    :type client: CognitoClient
-
     :return: The response indicating successful logout.
-    :rtype: serializers.ResponseBase
     """
     try:
         access_token = authorization.split(" ")[1]
@@ -333,12 +290,7 @@ def me(
     and retrieve the user details.
 
     :param usernameFromToken: The username extracted from the JWT token.
-    :type usernameFromToken: str
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-
     :return: The response containing the details of the authenticated user.
-    :rtype: serializers.UserResponse
     """
     user = models.User.first_by(session, "external_id", usernameFromToken)
     return serializers.UserResponse(user=user)
@@ -356,12 +308,7 @@ def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(depe
     It sends an email to the user with a reset link that they can use to set a new password.
 
     :param user: The user information containing the username or email address of the user.
-    :type user: models.BasicUser
-    :param client: The Cognito client dependency (automatically injected).
-    :type client: CognitoClient
-
     :return: The response indicating that an email with a reset link was sent to the user.
-    :rtype: serializers.ResponseBase
     """
     detail = "An email with a reset link was sent to end user"
     try:
@@ -381,25 +328,19 @@ async def get_user(user_id: int, session: Session = Depends(get_db)):
     This endpoint retrieves information about a user based on their user_id.
 
     :param user_id: The ID of the user.
-    :type user_id: int
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-
     :return: The user information.
-    :rtype: models.User
     :raises HTTPException 404: If the user is not found.
     """
     return get_object_or_404(session, models.User, "id", user_id)
 
 
 @router.get("/users", tags=["users"], response_model=serializers.UserListResponse)
-@dependencies.OCP_only()
 async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -408,20 +349,10 @@ async def get_all_users(
     This endpoint retrieves a list of users, paginated and sorted based on the provided parameters.
 
     :param page: The page number (0-based) to retrieve.
-    :type page: int
     :param page_size: The number of users to retrieve per page.
-    :type page_size: int
     :param sort_field: The field to sort the users by. Defaults to "created_at".
-    :type sort_field: str
     :param sort_order: The sort order. Must be either "asc" or "desc". Defaults to "asc".
-    :type sort_order: str
-    :param current_user: The current user (automatically injected).
-    :type current_user: models.User
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-
     :return: The paginated and sorted list of users.
-    :rtype: serializers.UserListResponse
     """
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
@@ -451,11 +382,10 @@ async def get_all_users(
     tags=["users"],
     response_model=models.UserWithLender,
 )
-@dependencies.OCP_only()
 async def update_user(
     id: int,
     user: models.User,
-    current_user: models.User = Depends(dependencies.get_current_user),
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -464,16 +394,8 @@ async def update_user(
     This endpoint updates the information of a specific user identified by the provided ID.
 
     :param id: The ID of the user to update.
-    :type id: int
     :param user: The updated user information.
-    :type user: models.User
-    :param current_user: The current user (automatically injected).
-    :type current_user: models.User
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-
     :return: The updated user information.
-    :rtype: models.UserWithLender
     """
     # Rename the query parameter.
     payload = user

@@ -1,5 +1,6 @@
 -r requirements.txt
 black
+boto3-stubs
 coveralls
 flake8
 isort
@@ -9,3 +10,4 @@ pre-commit
 pytest
 pytest-cov
 pytest-mock
+reportlab-stubs

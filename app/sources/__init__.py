@@ -13,10 +13,7 @@ def is_valid_email(email: str) -> bool:
     Check if the given email is valid.
 
     :param email: The email address to validate.
-    :type email: str
-
     :return: True if the email is valid, False otherwise.
-    :rtype: bool
     """
     email = email.strip()
     if email and re.search(pattern, email):
@@ -24,17 +21,13 @@ def is_valid_email(email: str) -> bool:
     return False
 
 
-def make_request_with_retry(url, headers):
+def make_request_with_retry(url: str, headers: dict) -> httpx.Response | None:
     """
     Make an HTTP request with retry functionality.
 
     :param url: The URL to make the request to.
-    :type url: str
     :param headers: The headers to include in the request.
-    :type headers: dict
-
     :return: The HTTP response from the request if successful, otherwise None.
-    :rtype: httpx.Response or None
     """
 
     transport = httpx.HTTPTransport(retries=3, verify=False)

@@ -218,11 +218,11 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
 
     # diffrent FI user tries to fecth previous awards
     response = client.get("/applications/1/previous-awards", headers=FI_headers_2)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # different lender tries to get the application
     response = client.get("/applications/id/1", headers=FI_headers_2)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
     new_email = "new_test_email@example.com"
     new_wrong_email = "wrong_email@@noreply!$%&/().open-contracting.org"
@@ -285,7 +285,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
 
     # different FI user tries to start the application
     response = client.post("/applications/1/start", headers=FI_headers_2)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # different FI user tries to update the award
     response = client.put("/applications/1/award", json=update_award, headers=FI_headers_2)
@@ -389,7 +389,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
             headers=FI_headers_2,
         )
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
         response = client.post(
             "/applications/1/upload-compliance",

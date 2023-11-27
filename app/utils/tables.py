@@ -1,8 +1,7 @@
 import locale
 from datetime import datetime
-from typing import List
 
-from reportlab.platypus import Paragraph
+from reportlab.platypus import Paragraph, Table
 
 from app import models
 from app.i18n import get_translated_string
@@ -28,18 +27,13 @@ def _format_date(date_str):
     return formatted_date
 
 
-def create_application_table(application: models.Application, lang: str):
+def create_application_table(application: models.Application, lang: str) -> Table:
     """
     Creates a table of application information.
 
     :param application: The application's data.
-    :type application: Application
-
     :param lang: The lang requested.
-    :type lang: str
-
     :return: The generated table.
-    :rtype: Table
     """
 
     data = [
@@ -107,21 +101,13 @@ def create_application_table(application: models.Application, lang: str):
     return create_table(data)
 
 
-def create_award_table(award: models.Award, lang: str):
+def create_award_table(award: models.Award, lang: str) -> Table:
     """
     Creates a table of Open Contracting award data.
 
     :param award: The award data.
-    :type award: models.Award
-
-    :param previous_awards: Previous award amount.
-    :type previous_awards:  List[models.Award]
-
     :param lang: The lang requested.
-    :type lang: str
-
     :return: The generated table.
-    :rtype: Table
     """
 
     payment_method_text = f"""Habilita Pago Adelantado: {
@@ -203,18 +189,13 @@ Valor Pagado: {
     return create_table(data)
 
 
-def create_borrower_table(borrower: models.Borrower, application: models.Application, lang: str):
+def create_borrower_table(borrower: models.Borrower, application: models.Application, lang: str) -> Table:
     """
     Creates a table of borrower data.
 
     :param borrower: The borrower's data.
-    :type borrower: Borrower
-
     :param lang: The lang requested.
-    :type lang: str
-
     :return: The generated table.
-    :rtype: Table
     """
 
     data = [
@@ -254,18 +235,13 @@ def create_borrower_table(borrower: models.Borrower, application: models.Applica
     return create_table(data)
 
 
-def create_documents_table(documents: List[models.BorrowerDocument], lang: str):
+def create_documents_table(documents: list[models.BorrowerDocument], lang: str) -> Table:
     """
     Creates a table of MSME information and documents.
 
     :param documents: List of documents.
-    :type documents: List[Document]
-
     :param lang: The lang requested.
-    :type lang: str
-
     :return: The generated table.
-    :rtype: Table
     """
 
     data = [

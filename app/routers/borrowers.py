@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import desc
@@ -18,12 +17,7 @@ async def get_borrowers(borrower_id: int, session: Session = Depends(get_db)):
     Retrieve a borrower by ID.
 
     :param borrower_id: The ID of the borrower to retrieve.
-    :type borrower_id: int
-    :param session: The database session.
-    :type session: Session
-
     :return: The retrieved borrower.
-    :rtype: Borrower
     """
     return get_object_or_404(session, Borrower, "id", borrower_id)
 
@@ -34,12 +28,7 @@ async def create_borrowers(borrower: Borrower, session: Session = Depends(get_db
     Create a new borrower.
 
     :param borrower: The borrower data to create.
-    :type borrower: Borrower
-    :param session: The database session.
-    :type session: Session
-
     :return: The created borrower.
-    :rtype: Borrower
     """
     borrower.created_at = datetime.now()
     borrower.updated_at = datetime.now()
@@ -55,17 +44,13 @@ async def create_borrowers(borrower: Borrower, session: Session = Depends(get_db
 @router.get(
     "/borrowers/get-borrower-identifiers/",
     tags=["awards"],
-    response_model=List[str],
+    response_model=list[str],
 )
 async def get_borrowers_contracting_process_ids(session: Session = Depends(get_db)):
     """
     Get the list of borrower identifiers in descending order of creation.
 
-    :param session: The database session.
-    :type session: Session
-
     :return: The list of borrower identifiers.
-    :rtype: List[str]
     """
     borrowers = session.query(Borrower.borrower_identifier).order_by(desc(Borrower.created_at)).all()
     if not borrowers:

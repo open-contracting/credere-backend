@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-import app.utils.applications as utils
 from app import dependencies, models, parsers, util
 from app.aws import CognitoClient
 from app.db import get_db, transaction_session
@@ -23,25 +22,15 @@ async def change_email(
     payload: parsers.ChangeEmail,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
+    application: models.Application = Depends(dependencies.get_publication_as_guest_via_payload),
 ):
     """
     Change the email address for an application.
 
     :param payload: The data for changing the email address.
-    :type payload: parsers.ChangeEmail
-
-    :param session: The database session.
-    :type session: Session
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
     :return: The data for changing the email address.
-    :rtype: parsers.ChangeEmail
-
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
         old_email = application.primary_email
 
         # Update the primary email of an application.
@@ -88,22 +77,15 @@ async def change_email(
 async def confirm_email(
     payload: parsers.ConfirmNewEmail,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(dependencies.get_publication_as_guest_via_payload),
 ):
     """
     Confirm the email address change for an application.
 
     :param payload: The data for confirming the email address change.
-    :type payload: parsers.ConfirmNewEmail
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The data for confirming the email address change.
-    :rtype: parsers.ChangeEmail
-
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
         if not application.pending_email_confirmation:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

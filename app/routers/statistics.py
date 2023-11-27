@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends
@@ -22,13 +21,12 @@ router = APIRouter()
     tags=["statistics"],
     response_model=serializers.StatisticResponse,
 )
-@dependencies.OCP_only()
 async def get_ocp_statistics_by_lender(
-    initial_date: Optional[str] = None,
-    final_date: Optional[str] = None,
-    lender_id: Optional[int] = None,
-    custom_range: Optional[str] = None,
-    current_user: User = Depends(dependencies.get_current_user),
+    initial_date: str | None = None,
+    final_date: str | None = None,
+    lender_id: int | None = None,
+    custom_range: str | None = None,
+    admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -41,18 +39,9 @@ async def get_ocp_statistics_by_lender(
     - lender_id (optional): The lender ID to filter the statistics for a specific lender.
 
     :param initial_date: The initial date to filter the statistics (optional).
-    :type initial_date: str, optional
     :param final_date: The final date to filter the statistics (optional).
-    :type final_date: str, optional
     :param lender_id: The lender ID to filter the statistics for a specific lender (optional).
-    :type lender_id: int, optional
-    :param current_user: The current user with the OCP role (automatically injected).
-    :type current_user: User
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-
     :return: Response containing the OCP statistics.
-    :rtype: serializers.StatisticResponse
     """
     try:
         if initial_date is None and final_date is None and custom_range is None:
@@ -99,9 +88,8 @@ async def get_ocp_statistics_by_lender(
     tags=["statistics"],
     response_model=serializers.StatisticOptInResponse,
 )
-@dependencies.OCP_only()
 async def get_ocp_statistics_opt_in(
-    current_user: User = Depends(dependencies.get_current_user),
+    admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -110,13 +98,8 @@ async def get_ocp_statistics_opt_in(
     This secure endpoint is accessible only to users with the OCP role. It retrieves
     statistics related to MSME opt-in and the count of FIs chosen by MSMEs in the Online Credit Platform (OCP).
 
-    :param current_user: The current user with the OCP role (automatically injected).
-    :type current_user: User
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
 
     :return: Response containing the OCP statistics for MSME opt-in.
-    :rtype: serializers.StatisticOptInResponse
     """
     try:
         current_date = datetime.now().date()
@@ -149,13 +132,7 @@ async def get_fi_statistics(session: Session = Depends(get_db), user: User = Dep
     It provides general statistics such as the number of applications, awards, and borrowers
     associated with the FI.
 
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-    :param user: The current user (automatically injected).
-    :type user: User
-
     :return: Response containing the statistics for the Financial Institution.
-    :rtype: serializers.StatisticResponse
     """
     try:
         current_date = datetime.now().date()

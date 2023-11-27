@@ -10,20 +10,17 @@ from pydantic import BaseSettings
 VERSION: str = "0.1.1"
 
 
-def merge_dicts_with_condition(main_dict, override_dict):
+def merge_dicts_with_condition(main_dict: dict, override_dict: dict) -> dict:
     """
     Merges two dictionaries with the condition that empty strings ('') from the override_dict are not included in the
     merged dictionary. If a key in the main_dict has a corresponding non-empty string value in override_dict,
     the value from override_dict will replace the value from main_dict in the resulting merged dictionary.
 
     :param main_dict: The main dictionary, which serves as the base dictionary for the merge operation.
-    :type main_dict: dict
     :param override_dict: The dictionary that is used to update the main_dict.
                           If a key-value pair in override_dict has a non-empty string value,
                           it will replace the corresponding key-value pair in main_dict.
-    :type override_dict: dict
     :return: The merged dictionary.
-    :rtype: dict
     """
     temp_dict = {**override_dict}
     filtered_dict = {key: value for key, value in temp_dict.items() if value != ""}
@@ -31,19 +28,14 @@ def merge_dicts_with_condition(main_dict, override_dict):
     return merged_dict
 
 
-def sentry_filter_transactions(event, hint):
+def sentry_filter_transactions(event: dict, hint: dict) -> dict | None:
     """
     Filter transactions to be sent to Sentry.
     This function prevents transactions that interact with AWS Cognito from being sent to Sentry.
 
     :param event: The event data.
-    :type event: dict
-
     :param hint: A dictionary of extra data passed to the function.
-    :type hint: dict
-
     :return: The event data if it should be sent to Sentry, otherwise None.
-    :rtype: dict or None
     """
     data_url = event["breadcrumbs"]["values"][0]["data"]["url"] or None
     if data_url and re.search(r"https://cognito-idp.*\.amazonaws\.com", data_url):

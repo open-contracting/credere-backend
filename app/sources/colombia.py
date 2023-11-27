@@ -1,6 +1,8 @@
 from collections import Counter
 from datetime import datetime, timedelta
 
+import httpx
+
 from app import sources
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
@@ -28,23 +30,17 @@ def _get_remote_award(proceso_de_compra, proveedor_adjudicado):
 def create_new_award(
     source_contract_id: str,
     entry: dict,
-    borrower_id: int = None,
+    borrower_id: int | None = None,
     previous: bool = False,
 ) -> dict:
     """
     Create a new award and insert it into the database.
 
     :param source_contract_id: The unique identifier for the award's source contract.
-    :type source_contract_id: str
     :param entry: The dictionary containing the award data.
-    :type entry: dict
     :param borrower_id: The ID of the borrower associated with the award. (default: None)
-    :type borrower_id: int, optional
     :param previous: Whether the award is a previous award or not. (default: False)
-    :type previous: bool, optional
-
     :return: The newly created award data as a dictionary.
-    :rtype: dict
     """
 
     proceso_de_compra = entry["proceso_de_compra"]
@@ -135,15 +131,12 @@ def get_new_contracts(index: int, from_date, until_date=None):
     return sources.make_request_with_retry(url, headers)
 
 
-def get_previous_contracts(documento_proveedor):
+def get_previous_contracts(documento_proveedor: str) -> httpx.Response | None:
     """
     Get previous contracts data for the given document provider from the source API.
 
     :param documento_proveedor: The document provider to get previous contracts data for.
-    :type documento_proveedor: str
-
     :return: The response object containing the previous contracts data.
-    :rtype: httpx.Response
     """
 
     url = f"{URLS['CONTRACTS']}?$where=documento_proveedor = '{documento_proveedor}' AND fecha_de_firma IS NOT NULL"
@@ -151,15 +144,12 @@ def get_previous_contracts(documento_proveedor):
     return sources.make_request_with_retry(url, headers)
 
 
-def get_source_contract_id(entry):
+def get_source_contract_id(entry: dict) -> str:
     """
     Get the source contract ID from the given entry data.
 
     :param entry: The dictionary containing the award data.
-    :type entry: dict
-
     :return: The source contract ID.
-    :rtype: str
     """
 
     source_contract_id = entry.get("id_contrato", "")
@@ -175,14 +165,9 @@ def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entr
     Create a new borrower and insert it into the database.
 
     :param borrower_identifier: The unique identifier for the borrower.
-    :type borrower_identifier: str
     :param documento_proveedor: The document provider for the borrower.
-    :type documento_proveedor: str
     :param entry: The dictionary containing the borrower data.
-    :type entry: dict
-
     :return: The newly created borrower data as a dictionary.
-    :rtype: dict
     """
 
     borrower_url = (
@@ -219,17 +204,13 @@ def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entr
     return new_borrower
 
 
-def get_email(documento_proveedor, entry) -> str:
+def get_email(documento_proveedor: str, entry: dict) -> str:
     """
     Get the email address for the borrower based on the given document provider and entry data.
 
     :param documento_proveedor: The document provider for the borrower.
-    :type documento_proveedor: str
     :param entry: The dictionary containing the borrower data.
-    :type entry: dict
-
     :return: The email address of the borrower.
-    :rtype: str
     """
 
     borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
@@ -256,15 +237,12 @@ def get_email(documento_proveedor, entry) -> str:
     return email
 
 
-def get_documento_proveedor(entry) -> str:
+def get_documento_proveedor(entry: dict) -> str:
     """
     Get the document provider from the given entry data.
 
     :param entry: The dictionary containing the borrower data.
-    :type entry: dict
-
     :return: The document provider for the borrower.
-    :rtype: str
     """
 
     documento_proveedor = entry.get("documento_proveedor", None)

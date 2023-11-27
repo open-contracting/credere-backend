@@ -8,7 +8,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from sqlalchemy.orm import Session, joinedload
 
-import app.utils.applications as utils
 from app import dependencies, models, util
 from app.db import get_db, transaction_session
 from app.i18n import get_translated_string
@@ -31,20 +30,11 @@ async def get_borrower_document(
     Retrieve a borrower document by its ID and stream the file content as a response.
 
     :param id: The ID of the borrower document to retrieve.
-    :type id: int
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: A streaming response with the borrower document file content.
-    :rtype: StreamingResponse
-
     """
     with transaction_session(session):
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", id)
+        dependencies.raise_if_unauthorized(document.application, user, roles=(models.UserType.OCP, models.UserType.FI))
 
         if user.is_OCP():
             models.ApplicationAction.create(
@@ -54,7 +44,6 @@ async def get_borrower_document(
                 application_id=document.application.id,
             )
         else:
-            utils.check_FI_user_permission(document.application, user)
             models.ApplicationAction.create(
                 session,
                 type=models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
@@ -73,33 +62,21 @@ async def get_borrower_document(
 
 
 @router.get(
-    "/applications/{application_id}/download-application/{lang}",
+    "/applications/{id}/download-application/{lang}",
     tags=["applications"],
 )
 async def download_application(
-    application_id: int,
     lang: str,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
+    application: models.Application = Depends(dependencies.get_publication_as_user),
 ):
     """
     Retrieve all documents related to an application and stream them as a zip file.
 
-    :param application_id: The ID of the application to retrieve documents for.
-    :type application_id: int
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: A streaming response with a zip file containing the documents.
-    :rtype: StreamingResponse
     """
     with transaction_session(session):
-        application = utils.get_application_by_id(application_id, session)
-
         borrower = application.borrower
         award = application.award
         documents = list(application.borrower_documents)

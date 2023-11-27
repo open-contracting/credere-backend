@@ -1,5 +1,3 @@
-from typing import Dict, List, Optional
-
 import requests
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -9,17 +7,17 @@ from pydantic import BaseModel
 
 from app.settings import app_settings
 
-JWK = Dict[str, str]
+JWK = dict[str, str]
 
 
 class JWKS(BaseModel):
-    keys: List[JWK]
+    keys: list[JWK]
 
 
 class JWTAuthorizationCredentials(BaseModel):
     jwt_token: str
-    header: Dict[str, str]
-    claims: Dict[str, str]
+    header: dict[str, str]
+    claims: dict[str, str]
     signature: str
     message: str
 
@@ -31,7 +29,6 @@ class verifyTokeClass(HTTPBearer):
 
     :param auto_error: If set to True, automatic error responses will be sent when request authentication fails.
                        Default is True.
-    :type auto_error: bool
     """
 
     def __init__(self, auto_error: bool = True):
@@ -48,9 +45,7 @@ class verifyTokeClass(HTTPBearer):
         Verifies the provided JWT credentials with the loaded public keys.
 
         :param jwt_credentials: JWT credentials extracted from the request.
-        :type jwt_credentials: JWTAuthorizationCredentials
         :return: Returns True if the token is verified, False otherwise.
-        :rtype: bool
         """
         self.load_keys()
         try:
@@ -63,14 +58,12 @@ class verifyTokeClass(HTTPBearer):
 
         return key.verify(jwt_credentials.message.encode(), decoded_signature)
 
-    async def __call__(self, request: Request) -> Optional[JWTAuthorizationCredentials]:
+    async def __call__(self, request: Request) -> JWTAuthorizationCredentials | None:
         """
         Authenticate and verify the provided JWT token in the request.
 
         :param request: Incoming request instance.
-        :type request: Request
         :return: JWT credentials if the token is verified.
-        :rtype: Optional[JWTAuthorizationCredentials]
         """
         self.load_keys()
         credentials: HTTPAuthorizationCredentials = await super().__call__(request)
@@ -111,7 +104,7 @@ class verifyTokeClass(HTTPBearer):
 JsonPublicKeys = None
 
 
-def _get_public_keys():
+def _get_public_keys() -> JWKS:
     """
     Retrieves the public keys from the well-known JWKS (JSON Web Key Set) endpoint of AWS Cognito.
 
@@ -119,7 +112,6 @@ def _get_public_keys():
     to the endpoint.
 
     :return: The parsed JWKS, an object which holds a list of keys.
-    :rtype: JWKS
     """
     global JsonPublicKeys
     if JsonPublicKeys is None:

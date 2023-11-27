@@ -1,6 +1,5 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -8,60 +7,60 @@ from app.models import BorrowerSize
 
 
 class AwardUpdate(BaseModel):
-    source_contract_id: Optional[str]
-    title: Optional[str]
-    description: Optional[str]
-    contracting_process_id: Optional[str]
-    award_currency: Optional[str]
-    award_amount: Optional[Decimal]
-    award_date: Optional[datetime]
-    payment_method: Optional[dict]
-    buyer_name: Optional[str]
-    source_url: Optional[str]
-    entity_code: Optional[str]
-    contract_status: Optional[str]
-    contractperiod_startdate: Optional[datetime]
-    contractperiod_enddate: Optional[datetime]
-    procurement_method: Optional[str]
-    procurement_category: Optional[str]
+    source_contract_id: str | None
+    title: str | None
+    description: str | None
+    contracting_process_id: str | None
+    award_currency: str | None
+    award_amount: Decimal | None
+    award_date: datetime | None
+    payment_method: dict | None
+    buyer_name: str | None
+    source_url: str | None
+    entity_code: str | None
+    contract_status: str | None
+    contractperiod_startdate: datetime | None
+    contractperiod_enddate: datetime | None
+    procurement_method: str | None
+    procurement_category: str | None
 
 
 class LenderApprovedData(BaseModel):
     compliant_checks_completed: bool
     compliant_checks_passed: bool
-    additional_comments: Optional[str]
+    additional_comments: str | None
 
 
 class LenderReviewContract(BaseModel):
-    disbursed_final_amount: Optional[Decimal]
+    disbursed_final_amount: Decimal | None
 
 
 class BorrowerUpdate(BaseModel):
-    legal_name: Optional[str]
-    email: Optional[str]
-    address: Optional[str]
-    legal_identifier: Optional[str]
-    type: Optional[str]
-    sector: Optional[str]
-    size: Optional[BorrowerSize]
+    legal_name: str | None
+    email: str | None
+    address: str | None
+    legal_identifier: str | None
+    type: str | None
+    sector: str | None
+    size: BorrowerSize | None
 
 
 class UpdateDataField(BaseModel):
-    legal_name: Optional[bool]
-    email: Optional[bool]
-    address: Optional[bool]
-    legal_identifier: Optional[bool]
-    type: Optional[bool]
+    legal_name: bool | None
+    email: bool | None
+    address: bool | None
+    legal_identifier: bool | None
+    type: bool | None
 
 
 class ApplicationUpdate(BaseModel):
-    uuid: Optional[str]
-    contract_amount_submitted: Optional[Decimal]
-    amount_requested: Optional[Decimal]
-    currency: Optional[str]
-    repayment_months: Optional[int]
-    pending_documents: Optional[bool]
-    completed_in_days: Optional[int]
+    uuid: str | None
+    contract_amount_submitted: Decimal | None
+    amount_requested: Decimal | None
+    currency: str | None
+    repayment_months: int | None
+    pending_documents: bool | None
+    completed_in_days: int | None
 
 
 class LenderRejectedApplication(BaseModel):
@@ -69,7 +68,7 @@ class LenderRejectedApplication(BaseModel):
     poor_credit_history: bool
     risk_of_fraud: bool
     other: bool
-    other_reason: Optional[str]
+    other_reason: str | None
 
 
 class ApplicationBase(BaseModel):
@@ -96,13 +95,13 @@ class ApplicationCreditOptions(ApplicationBase):
 class ApplicationSelectCreditProduct(ApplicationCreditOptions):
     sector: str
     credit_product_id: int
-    repayment_years: Optional[int]
-    repayment_months: Optional[int]
-    payment_start_date: Optional[datetime]
+    repayment_years: int | None
+    repayment_months: int | None
+    payment_start_date: datetime | None
 
 
 class UploadContractConfirmation(ApplicationBase):
-    contract_amount_submitted: Optional[Decimal]
+    contract_amount_submitted: Decimal | None
 
 
 class ApplicationEmailSme(BaseModel):

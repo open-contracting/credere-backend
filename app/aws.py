@@ -14,14 +14,13 @@ from app.settings import app_settings
 logger = logging.getLogger(__name__)
 
 
-def generate_password_fn():
+def generate_password_fn() -> str:
     """
     Generates a random password of length at least 14 characters.
     The generated password includes characters from ASCII letters, digits and punctuation,
     but it excludes the following characters: '"/\\|_-#@%&*(){}[]<>~`'.
 
     :return: The randomly generated password.
-    :rtype: str
     """
     excluded_chars = '"/\\|_-#@%&*(){}[]<>~`'
     characters = string.ascii_letters + string.digits + string.punctuation
