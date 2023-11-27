@@ -27,7 +27,6 @@ def transaction_session(db: Session):
     and rolls back the transaction if any exception is raised.
 
     :param db: The database session where the transaction is to be performed.
-    :type db: Session
     :raises Exception: Any exception that occurs during the transaction.
     :yield: The same database session, for use in with-statement.
     """
@@ -59,7 +58,6 @@ def get_db() -> Generator:
     it is used.
 
     :return: The database session instance.
-    :rtype: Generator
     """
     try:
         db = None

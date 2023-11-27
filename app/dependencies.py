@@ -35,10 +35,8 @@ async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depen
     Extracts the username of the current user from the provided JWT credentials.
 
     :param credentials: JWT credentials provided by the user. Defaults to Depends(get_auth_credentials).
-    :type credentials: JWTAuthorizationCredentials
     :raises HTTPException: If the username key is missing in the JWT claims.
     :return: The username of the current user.
-    :rtype: str
     """
     try:
         return credentials.claims["username"]
@@ -50,13 +48,9 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
     """
     Retrieves the user from the database using the username extracted from the provided JWT credentials.
 
-    :param credentials: JWT credentials provided by the user. Defaults to Depends(get_auth_credentials).
-    :type credentials: JWTAuthorizationCredentials
     :param session: Database session to execute the query. Defaults to Depends(get_db).
-    :type session: Session
     :raises HTTPException: If the user does not exist in the database.
     :return: The user object retrieved from the database.
-    :rtype: models.User
     """
     return models.User.first_by(session, "external_id", username)
 

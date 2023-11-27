@@ -36,10 +36,7 @@ def generate_uuid(string: str) -> str:
     Generate a UUID based on the given string.
 
     :param string: The input string to generate the UUID from.
-    :type string: str
-
     :return: The generated UUID.
-    :rtype: str
     """
 
     generated_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, string)
@@ -51,10 +48,7 @@ def get_secret_hash(nit_entidad: str) -> str:
     Get the secret hash based on the given entity's NIT (National Taxpayer's ID).
 
     :param nit_entidad: The NIT (National Taxpayer's ID) of the entity.
-    :type nit_entidad: str
-
     :return: The secret hash generated from the NIT.
-    :rtype: str
     """
 
     key = app_settings.hash_key
@@ -72,11 +66,7 @@ def validate_file(file: UploadFile = File(...)) -> Dict[File, str]:
     and its filename are returned.
 
     :param file: The uploaded file.
-    :type file: UploadFile, optional
-
     :return: A dictionary mapping the file to its filename.
-    :rtype: Dict[File, str]
-
     :raise HTTPException: If the file format is not allowed or if the file size is too large.
     """
     filename = file.filename
@@ -151,25 +141,11 @@ def create_or_update_borrower_document(
     If it doesn't, it creates a new BorrowerDocument with the provided values and adds it to the session.
 
     :param filename: The name of the file to be added or updated.
-    :type filename: str
-
     :param application: The application associated with the document.
-    :type application: models.Application
-
     :param type: The type of the document.
-    :type type: models.BorrowerDocumentType
-
-    :param session: The database session.
-    :type session: Session
-
     :param file: The file to be added or updated.
-    :type file: UploadFile
-
     :param verified: The verified status of the document. Defaults to False.
-    :type verified: Optional[bool]
-
     :return: The newly created or updated BorrowerDocument.
-    :rtype: models.BorrowerDocument
     """
 
     existing_document = (

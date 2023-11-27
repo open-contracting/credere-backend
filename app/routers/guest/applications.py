@@ -33,14 +33,8 @@ async def application_by_uuid(
     """
     Retrieve an application by its UUID.
 
-    :param session: The database session.
-    :type session: Session
-
     :return: The application with the specified UUID and its associated entities.
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 404 if the application is expired.
-
     """
     return serializers.ApplicationResponse(
         application=application,
@@ -72,16 +66,8 @@ async def decline(
     Changes application status from "PENDING" to "DECLINED".
 
     :param payload: The application decline payload.
-    :type payload: parsers.ApplicationDeclinePayload
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 400 if the application is not in the PENDING status.
-
     """
     with transaction_session(session):
         borrower_declined_data = vars(payload)
@@ -122,16 +108,8 @@ async def rollback_decline(
     Rollback the decline of an application.
 
     :param payload: The application base payload.
-    :type payload: parsers.ApplicationBase
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
-
     """
     with transaction_session(session):
         application.borrower_declined_data = {}
@@ -168,16 +146,8 @@ async def decline_feedback(
     Provide feedback for a declined application.
 
     :param payload: The application decline feedback payload.
-    :type payload: parsers.ApplicationDeclineFeedbackPayload
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
-
     """
     with transaction_session(session):
         borrower_declined_preferences_data = vars(payload)
@@ -214,21 +184,10 @@ async def access_scheme(
 
     Search for previous awards for the borrower and add them to the application.
 
-
     :param payload: The application data.
-    :type payload: parsers.ApplicationBase
-
     :param background_tasks: The background tasks to be executed.
-    :type background_tasks: BackgroundTasks
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
-
     """
     with transaction_session(session):
         current_time = datetime.now(application.created_at.tzinfo)
@@ -264,16 +223,8 @@ async def credit_product_options(
     Get the available credit product options for an application.
 
     :param payload: The application credit options.
-    :type payload: parsers.ApplicationCreditOptions
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The credit product list response containing the available loans and credit lines.
-    :rtype: serializers.CreditProductListResponse
-
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the previous lenders are not found. # noqa
-
     """
     with transaction_session(session):
         rejecter_lenders = application.rejecter_lenders(session)
@@ -336,16 +287,8 @@ async def select_credit_product(
     Select a credit product for an application.
 
     :param payload: The application credit product selection payload.
-    :type payload: parsers.ApplicationSelectCreditProduct
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the calculator data is invalid. # noqa: E501
-
     """
     with transaction_session(session):
         # Extract the necessary fields for a calculator from a payload.
@@ -396,16 +339,8 @@ async def rollback_select_credit_product(
     Rollback the selection of a credit product for an application.
 
     :param payload: The application data.
-    :type payload: parsers.ApplicationBase
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 400 if the credit product is not selected or if the lender is already assigned. # noqa: E501
-
     """
     with transaction_session(session):
         if not application.credit_product_id:
@@ -448,17 +383,8 @@ async def confirm_credit_product(
     Confirm the selected credit product for an application.
 
     :param payload: The application data.
-    :type payload: parsers.ApplicationBase
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
-
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 400 if the credit product is not selected or not found.
-
     """
     with transaction_session(session):
         if not application.credit_product_id:
@@ -556,17 +482,7 @@ async def update_apps_send_notifications(
     This operation also ensures that the credit product and lender are selected before updating the status.
 
     :param payload: The application data to update.
-    :type payload: parsers.ApplicationBase
-
-    :param session: The database session.
-    :type session: Session
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
     :return: The updated application with borrower, award and lender details.
-    :rtype: serializers.ApplicationResponse
-
     :raises HTTPException: If credit product or lender is not selected, or if there's an error in submitting the application. # noqa: E501
     """
     with transaction_session(session):
@@ -630,17 +546,8 @@ async def upload_document(
     Upload a document for an application.
 
     :param file: The uploaded file.
-    :type file: UploadFile
-
     :param type: The type of the document.
-    :type type: str
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The created or updated borrower document.
-    :rtype: models.BorrowerDocumentBase
-
     """
     with transaction_session(session):
         new_file, filename = util.validate_file(file)
@@ -685,17 +592,7 @@ async def complete_information_request(
     This operation also sends a notification about the uploaded documents to the FI.
 
     :param payload: The application data to update.
-    :type payload: parsers.ApplicationBase
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The updated application with borrower, award, lender, and documents details.
-    :rtype: serializers.ApplicationResponse
-
     """
 
     with transaction_session(session):
@@ -743,14 +640,7 @@ async def upload_contract(
     Upload a contract document for an application.
 
     :param file: The uploaded file.
-    :type file: UploadFile
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The created or updated borrower document representing the contract.
-    :rtype: models.BorrowerDocumentBase
-
     """
     with transaction_session(session):
         new_file, filename = util.validate_file(file)
@@ -787,17 +677,7 @@ async def confirm_upload_contract(
     Sends an email to SME notifying the current stage of their application.
 
     :param payload: The confirmation data for the uploaded contract.
-    :type payload: parsers.UploadContractConfirmation
-
-    :param session: The database session.
-    :type session: Session
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
     :return: The application response containing the updated application and related entities.
-    :rtype: serializers.ApplicationResponse
-
     """
     with transaction_session(session):
         FI_message_id, SME_message_id = client.send_upload_contract_notifications(application)
@@ -855,20 +735,10 @@ async def find_alternative_credit_option(
     Find an alternative credit option for a rejected application by copying it.
 
     :param payload: The payload containing the UUID of the rejected application.
-    :type payload: parsers.ApplicationBase
-
-    :param session: The database session.
-    :type session: Session
-
     :param client: The Cognito client for sending notifications.
-    :type client: CognitoClient
-
     :return: The newly created application as an alternative credit option.
-    :rtype: serializers.ApplicationResponse
-
     :raise: HTTPException with status code 400 if the application has already been copied.
     :raise: HTTPException with status code 400 if the application is not in the rejected status.
-
     """
     with transaction_session(session):
         # Check if the application has already been copied.

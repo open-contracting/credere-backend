@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import Date, Integer, cast, distinct, func, text
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.query import Query
 
 from app.db import get_db, transaction_session_logger
 from app.models import (
@@ -138,7 +139,9 @@ def update_statistics(db_provider: Session = get_db):
                 session.add(statistic_kpi_data)
 
 
-def _get_base_query(sessionBase, start_date, end_date, lender_id):
+def _get_base_query(
+    sessionBase: Query, start_date: datetime | None, end_date: datetime | None, lender_id: int | None
+) -> Query:
     """
     Create the base query for filtering applications based on the provided start_date, end_date, and lender_id.
 
@@ -146,16 +149,10 @@ def _get_base_query(sessionBase, start_date, end_date, lender_id):
     the provided start_date, end_date, and lender_id (if available).
 
     :param sessionBase: The base query representing the Application model.
-    :type sessionBase: sqlalchemy.orm.query.Query
     :param start_date: The start date for filtering applications. (default: None)
-    :type start_date: datetime, optional
     :param end_date: The end date for filtering applications. (default: None)
-    :type end_date: datetime, optional
     :param lender_id: The ID of the lender for filtering applications. (default: None)
-    :type lender_id: int, optional
-
     :return: The base query for filtering applications.
-    :rtype: sqlalchemy.orm.query.Query
     """
 
     base_query = None
@@ -177,7 +174,12 @@ def _get_base_query(sessionBase, start_date, end_date, lender_id):
     return base_query
 
 
-def get_general_statistics(session, start_date=None, end_date=None, lender_id=None):
+def get_general_statistics(
+    session: Session,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    lender_id: int | None = None,
+) -> dict:
     """
     Get general statistics about applications based on the provided parameters.
 
@@ -187,17 +189,10 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
     average repayment period, count of overdue applications, average processing time, and proportion of submitted
     applications out of the opt-in applications.
 
-    :param session: The database session.
-    :type session: Session
     :param start_date: The start date for filtering applications. (default: None)
-    :type start_date: datetime, optional
     :param end_date: The end date for filtering applications. (default: None)
-    :type end_date: datetime, optional
     :param lender_id: The ID of the lender for filtering applications. (default: None)
-    :type lender_id: int, optional
-
     :return: A dictionary containing the general statistics about applications.
-    :rtype: dict
     """
 
     base_query = _get_base_query(session.query(Application), start_date, end_date, lender_id)
@@ -319,7 +314,7 @@ def get_general_statistics(session, start_date=None, end_date=None, lender_id=No
 
 
 # Group of Stat only for OCP USER (msme opt in stats)
-def get_msme_opt_in_stats(session):
+def get_msme_opt_in_stats(session: Session) -> dict:
     """
     Get statistics specific to MSME opt-in applications.
 
@@ -327,11 +322,7 @@ def get_msme_opt_in_stats(session):
     applications opted-in, the percentage of applications opted-in, statistics related to different sectors, and
     counts of declined reasons.
 
-    :param session: The database session.
-    :type session: Session
-
     :return: A dictionary containing the statistics specific to MSME opt-in applications.
-    :rtype: dict
     """
 
     logger.info("calculating msme opt in stas for lender ")
@@ -424,17 +415,13 @@ def get_msme_opt_in_stats(session):
 
 
 # Stat only for OCP USER Bars graph
-def get_count_of_fis_choosen_by_msme(session):
+def get_count_of_fis_choosen_by_msme(session: Session) -> list[StatisticData]:
     """
     Get the count of Financial Institutions (FIs) chosen by MSMEs.
 
     This function retrieves the count of Financial Institutions (FIs) chosen by MSMEs for their applications.
 
-    :param session: The database session.
-    :type session: Session
-
     :return: A list of StatisticData objects containing the count of FIs chosen by MSMEs.
-    :rtype: list[StatisticData]
     """
 
     fis_choosen_by_msme_query = (

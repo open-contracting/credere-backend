@@ -19,26 +19,17 @@ ApplicationStatus = models.ApplicationStatus
 
 
 def _create_application(
-    award_id, borrower_id, email, legal_identifier, source_contract_id, session: Session
+    award_id: int, borrower_id: int, email: str, legal_identifier: str, source_contract_id: str, session: Session
 ) -> models.Application:
     """
     Create a new application and insert it into the database.
 
     :param award_id: The ID of the award associated with the application.
-    :type award_id: int
     :param borrower_id: The ID of the borrower associated with the application.
-    :type borrower_id: int
     :param email: The email of the borrower.
-    :type email: str
     :param legal_identifier: The legal identifier of the borrower.
-    :type legal_identifier: str
     :param source_contract_id: The ID of the source contract.
-    :type source_contract_id: str
-    :param session: The database session.
-    :type session: Session
-
     :return: The created application.
-    :rtype: models.Application
     """
     award_borrower_identifier: str = util.get_secret_hash(legal_identifier + source_contract_id)
 
@@ -59,17 +50,12 @@ def _create_application(
     return models.Application.create(session, **data)
 
 
-def _get_or_create_borrower(entry, session: Session) -> models.Borrower:
+def _get_or_create_borrower(entry: dict, session: Session) -> models.Borrower:
     """
     Get an existing borrower or create a new borrower based on the entry data.
 
     :param entry: The dictionary containing the borrower data.
-    :type entry: dict
-    :param session: The database session.
-    :type session: Session
-
     :return: The existing or newly created borrower.
-    :rtype: models.Borrower
     """
 
     documento_proveedor = data_access.get_documento_proveedor(entry)
@@ -85,21 +71,16 @@ def _get_or_create_borrower(entry, session: Session) -> models.Borrower:
     return models.Borrower.create(session, **data)
 
 
-def _create_award(entry, session: Session, borrower_id=None, previous=False) -> models.Award:
+def _create_award(
+    entry: dict, session: Session, borrower_id: int | None = None, previous: bool = False
+) -> models.Award:
     """
     Create a new award and insert it into the database.
 
     :param entry: The dictionary containing the award data.
-    :type entry: dict
-    :param session: The database session.
-    :type session: Session
     :param borrower_id: The ID of the borrower associated with the award. (default: None)
-    :type borrower_id: int, optional
     :param previous: Whether the award is a previous award or not. (default: False)
-    :type previous: bool, optional
-
     :return: The inserted award.
-    :rtype: models.Award
     """
     source_contract_id = data_access.get_source_contract_id(entry)
 
@@ -171,7 +152,6 @@ def fetch_previous_awards(borrower: models.Borrower, db_provider: Session = get_
     it will just insert the awards in our database
 
     :param borrower: The borrower for whom to fetch and process previous awards.
-    :type borrower: models.Borrower
     """
     contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()

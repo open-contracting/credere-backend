@@ -15,16 +15,13 @@ from sqlmodel import Field, Relationship, SQLModel
 from app.settings import app_settings
 
 
-def _get_missing_data_keys(input_dict):
+def _get_missing_data_keys(input_dict: dict) -> dict:
     """
     Get a dictionary indicating whether each key in the input dictionary has missing data (empty or None).
 
     :param input_dict: The input dictionary to check for missing data.
-    :type input_dict: dict
-
     :return: A dictionary with the same keys as the input dictionary, where the values are True if the corresponding
              value in the input dictionary is empty or None, and False otherwise.
-    :rtype: dict
     """
 
     result_dict = {}
@@ -49,7 +46,6 @@ class ActiveRecordMixin:
         :param session: The database session.
         :param value: The field.
         :param field: The field's value.
-
         :return: The query.
         """
         return session.query(cls).filter(getattr(cls, field) == value)
@@ -62,7 +58,6 @@ class ActiveRecordMixin:
         :param session: The database session.
         :param value: The field.
         :param field: The field's value.
-
         :return: The existing instance if found, otherwise None.
         """
         return cls.filter_by(session, field, value).first()
@@ -74,7 +69,6 @@ class ActiveRecordMixin:
 
         :param session: The database session.
         :param data: The initial instance data.
-
         :return: The inserted instance.
         """
         obj = cls(**data)
@@ -91,7 +85,6 @@ class ActiveRecordMixin:
 
         :param session: The database session.
         :param data: The updated instance data.
-
         :return: The updated instance.
         """
         for key, value in data.items():

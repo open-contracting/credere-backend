@@ -38,20 +38,7 @@ async def reject_application(
     Changes the status from "STARTED" to "REJECTED".
 
     :param payload: The rejected application data.
-    :type payload: parsers.LenderRejectedApplication
-
-    :param session: The database session.
-    :type session: Session
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: The rejected application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     """
     with transaction_session(session):
         if application.status not in (
@@ -123,20 +110,7 @@ async def complete_application(
     Changes application status from "CONTRACT_UPLOADED" to "COMPLETED".
 
     :param payload: The completed application data.
-    :type payload: parsers.LenderReviewContract
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: models.User
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
     :return: The completed application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     """
     with transaction_session(session):
         application.stage_as_completed(payload.disbursed_final_amount)
@@ -187,20 +161,7 @@ async def approve_application(
     Sends an email to  SME notifying the current stage of their application.
 
     :param payload: The approved application data.
-    :type payload: parsers.LenderApprovedData
-
-    :param session: The database session.
-    :type session: Session
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: The approved application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     """
     with transaction_session(session):
         # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
@@ -279,17 +240,7 @@ async def verify_data_field(
     Verify and update a data field in an application.
 
     :param payload: The data field update payload.
-    :type payload: parsers.UpdateDataField
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: The updated application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     """
     with transaction_session(session):
         # Update a specific field in the application's `secop_data_verification` attribute.
@@ -325,20 +276,8 @@ async def verify_document(
     Verify a borrower document in an application.
 
     :param document_id: The ID of the borrower document.
-    :type document_id: int
-
     :param payload: The document verification payload.
-    :type payload: parsers.VerifyBorrowerDocument
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: The updated application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     """
     with transaction_session(session):
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", document_id)
@@ -383,17 +322,7 @@ async def update_application_award(
     Update the award details of an application.
 
     :param payload: The award update payload.
-    :type payload: parsers.AwardUpdate
-
-    :param user: The current user.
-    :type user: models.User
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The updated application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     """
     with transaction_session(session):
         if not application.award:
@@ -436,17 +365,7 @@ async def update_application_borrower(
     Update the borrower details of an application.
 
     :param payload: The borrower update payload.
-    :type payload: parsers.BorrowerUpdate
-
-    :param user: The current user.
-    :type user: models.User
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The updated application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     """
     with transaction_session(session):
         if not application.borrower:
@@ -491,23 +410,10 @@ async def get_applications_list(
     Get a paginated list of submitted applications for administrative purposes.
 
     :param page: The page number of the application list (default: 0).
-    :type page: int
-
     :param page_size: The number of applications per page (default: 10).
-    :type page_size: int
-
     :param sort_field: The field to sort the applications by (default: "application.created_at").
-    :type sort_field: str
-
     :param sort_order: The sort order of the applications ("asc" or "desc", default: "asc").
-    :type sort_order: str
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The paginated list of applications.
-    :rtype: serializers.ApplicationListResponse
-
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     sort_direction = desc if sort_order.lower() == "desc" else asc
@@ -550,17 +456,8 @@ async def get_application(
     """
     Retrieve an application by its ID.
 
-    :param user: The current user.
-    :type user: models.User
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The application with the specified ID and its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     :raise: HTTPException with status code 401 if the user is not authorized to view the application.
-
     """
     return util.get_modified_data_fields(application, session)
 
@@ -587,19 +484,8 @@ async def start_application(
     Changes application status from "SUBMITTED" to "STARTED".
 
     :param id: The ID of the application to start.
-    :type id: int
-
-    :param user: The current user.
-    :type user: models.User
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The started application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     :raise: HTTPException with status code 401 if the user is not authorized to start the application.
-
     """
     with transaction_session(session):
         application.status = models.ApplicationStatus.STARTED
@@ -625,26 +511,10 @@ async def get_applications(
     Get a paginated list of submitted applications for a specific FI user.
 
     :param page: The page number of the application list (default: 0).
-    :type page: int
-
     :param page_size: The number of applications per page (default: 10).
-    :type page_size: int
-
     :param sort_field: The field to sort the applications by (default: "application.created_at").
-    :type sort_field: str
-
     :param sort_order: The sort order of the applications ("asc" or "desc", default: "asc").
-    :type sort_order: str
-
-    :param user: The current user.
-    :type user: models.User
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The paginated list of applications for the specific user.
-    :rtype: serializers.ApplicationListResponse
-
     """
     sort_direction = desc if sort_order.lower() == "desc" else asc
 
@@ -693,20 +563,7 @@ async def email_sme(
     sends an email to SME notifying the request.
 
     :param payload: The payload containing the message to send to SME.
-    :type payload: parsers.ApplicationEmailSme
-
-    :param session: The database session.
-    :type session: Session
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: The updated application with its associated relations.
-    :rtype: models.ApplicationWithRelations
-
     :raises HTTPException: If there's an error in sending the email to SME.
     """
 
@@ -769,17 +626,7 @@ async def upload_compliance(
     Upload a compliance document for an application.
 
     :param file: The uploaded file.
-    :type file: UploadFile
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: The created or updated borrower document representing the compliance report.
-    :rtype: models.BorrowerDocumentBase
-
     """
     with transaction_session(session):
         new_file, filename = util.validate_file(file)
@@ -818,17 +665,8 @@ async def previous_contracts(
     """
     Get the previous awards associated with an application.
 
-    :param user: The current user authenticated.
-    :type user: models.User
-
-    :param session: The database session.
-    :type session: Session
-
     :return: A list of previous awards associated with the application.
-    :rtype: List[models.Award]
-
     :raise: HTTPException with status code 401 if the user is not authorized to access the application.
-
     """
     with transaction_session(session):
         return application.previous_awards(session)

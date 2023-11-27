@@ -30,17 +30,7 @@ async def get_borrower_document(
     Retrieve a borrower document by its ID and stream the file content as a response.
 
     :param id: The ID of the borrower document to retrieve.
-    :type id: int
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: A streaming response with the borrower document file content.
-    :rtype: StreamingResponse
-
     """
     with transaction_session(session):
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", id)
@@ -84,17 +74,7 @@ async def download_application(
     """
     Retrieve all documents related to an application and stream them as a zip file.
 
-    :param application_id: The ID of the application to retrieve documents for.
-    :type application_id: int
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: models.User
-
     :return: A streaming response with a zip file containing the documents.
-    :rtype: StreamingResponse
     """
     with transaction_session(session):
         borrower = application.borrower

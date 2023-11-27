@@ -28,14 +28,7 @@ async def create_lender(
     Create a new lender.
 
     :param lender: The lender data to be created.
-    :type lender: models.LenderCreate
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The created lender.
-    :rtype: models.Lender
-
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     # Rename query parameter.
@@ -78,17 +71,8 @@ async def create_credit_products(
     Create a new credit product for a specific lender.
 
     :param credit_product: The credit product data to be created.
-    :type credit_product: models.CreditProduct
-
     :param lender_id: The ID of the lender for which the credit product will be created.
-    :type lender_id: int
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The created credit product.
-    :rtype: models.CreditProduct
-
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with transaction_session(session):
@@ -103,14 +87,7 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)):
     Retrieve a lender by its ID.
 
     :param lender_id: The ID of the lender to retrieve.
-    :type lender_id: int
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The lender with the specified ID.
-    :rtype: models.LenderWithRelations
-
     :raise: HTTPException with status code 404 if the lender is not found.
     """
     return get_object_or_404(session, models.Lender, "id", lender_id)
@@ -131,17 +108,8 @@ async def update_lender(
     Update an existing lender.
 
     :param id: The ID of the lender to update.
-    :type id: int
-
     :param payload: The data to update the lender with.
-    :type payload: models.LenderBase
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The updated lender.
-    :rtype: models.Lender
-
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with transaction_session(session):
@@ -169,11 +137,7 @@ async def get_lenders_list(
     """
     Get the list of all lenders.
 
-    :param session: The database session.
-    :type session: Session
-
     :return: The list of all lenders.
-    :rtype: serializers.LenderListResponse
     """
     lenders_query = session.query(models.Lender)
 
@@ -202,14 +166,7 @@ async def get_credit_product(
     Retrieve a credit product by its ID, including its associated lender information.
 
     :param credit_product_id: The ID of the credit product to retrieve.
-    :type credit_product_id: int
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The credit product with the specified ID and its associated lender information.
-    :rtype: models.CreditProductWithLender
-
     :raise: HTTPException with status code 404 if the credit product is not found.
     """
     creditProduct = (
@@ -239,17 +196,8 @@ async def update_credit_products(
     Update an existing credit product.
 
     :param credit_product: The credit product data to update.
-    :type credit_product: models.CreditProduct
-
     :param credit_product_id: The ID of the credit product to update.
-    :type credit_product_id: int
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The updated credit product.
-    :rtype: models.CreditProduct
-
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     # Rename the query parameter.

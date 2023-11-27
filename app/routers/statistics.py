@@ -40,16 +40,9 @@ async def get_ocp_statistics_by_lender(
     - lender_id (optional): The lender ID to filter the statistics for a specific lender.
 
     :param initial_date: The initial date to filter the statistics (optional).
-    :type initial_date: str, optional
     :param final_date: The final date to filter the statistics (optional).
-    :type final_date: str, optional
     :param lender_id: The lender ID to filter the statistics for a specific lender (optional).
-    :type lender_id: int, optional
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-
     :return: Response containing the OCP statistics.
-    :rtype: serializers.StatisticResponse
     """
     try:
         if initial_date is None and final_date is None and custom_range is None:
@@ -106,11 +99,8 @@ async def get_ocp_statistics_opt_in(
     This secure endpoint is accessible only to users with the OCP role. It retrieves
     statistics related to MSME opt-in and the count of FIs chosen by MSMEs in the Online Credit Platform (OCP).
 
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
 
     :return: Response containing the OCP statistics for MSME opt-in.
-    :rtype: serializers.StatisticOptInResponse
     """
     try:
         current_date = datetime.now().date()
@@ -143,13 +133,7 @@ async def get_fi_statistics(session: Session = Depends(get_db), user: User = Dep
     It provides general statistics such as the number of applications, awards, and borrowers
     associated with the FI.
 
-    :param session: The database session dependency (automatically injected).
-    :type session: Session
-    :param user: The current user (automatically injected).
-    :type user: User
-
     :return: Response containing the statistics for the Financial Institution.
-    :rtype: serializers.StatisticResponse
     """
     try:
         current_date = datetime.now().date()

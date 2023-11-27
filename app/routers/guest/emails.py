@@ -28,17 +28,7 @@ async def change_email(
     Change the email address for an application.
 
     :param payload: The data for changing the email address.
-    :type payload: parsers.ChangeEmail
-
-    :param session: The database session.
-    :type session: Session
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
     :return: The data for changing the email address.
-    :rtype: parsers.ChangeEmail
-
     """
     with transaction_session(session):
         old_email = application.primary_email
@@ -93,14 +83,7 @@ async def confirm_email(
     Confirm the email address change for an application.
 
     :param payload: The data for confirming the email address change.
-    :type payload: parsers.ConfirmNewEmail
-
-    :param session: The database session.
-    :type session: Session
-
     :return: The data for confirming the email address change.
-    :rtype: parsers.ChangeEmail
-
     """
     with transaction_session(session):
         if not application.pending_email_confirmation:
