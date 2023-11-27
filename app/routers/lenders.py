@@ -79,7 +79,11 @@ async def create_credit_products(
         return models.CreditProduct.create(session, **credit_product.dict(), lender=lender)
 
 
-@router.get("/lenders/{lender_id}", tags=["lenders"], response_model=models.LenderWithRelations)
+@router.get(
+    "/lenders/{lender_id}",
+    tags=["lenders"],
+    response_model=models.LenderWithRelations,
+)
 async def get_lender(lender_id: int, session: Session = Depends(get_db)):
     """
     Retrieve a lender by its ID.

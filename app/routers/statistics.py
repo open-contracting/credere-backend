@@ -112,7 +112,10 @@ async def get_ocp_statistics_opt_in(
     )
 
 
-@router.get("/statistics-fi", tags=["statistics"])
+@router.get(
+    "/statistics-fi",
+    tags=["statistics"],
+)
 async def get_fi_statistics(
     session: Session = Depends(get_db), user: User = Depends(dependencies.get_user)
 ) -> serializers.StatisticResponse:

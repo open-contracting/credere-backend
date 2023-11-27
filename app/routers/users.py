@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/users", tags=["users"])
+@router.post(
+    "/users",
+    tags=["users"],
+)
 async def create_user(
     payload: models.User,
     session: Session = Depends(get_db),
@@ -99,7 +102,9 @@ def change_password(
             )
 
 
-@router.put("/users/setup-mfa")
+@router.put(
+    "/users/setup-mfa",
+)
 def setup_mfa(
     user: models.SetupMFA,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
@@ -313,7 +318,10 @@ def forgot_password(
     return serializers.ResponseBase(detail=detail)
 
 
-@router.get("/users/{user_id}", tags=["users"])
+@router.get(
+    "/users/{user_id}",
+    tags=["users"],
+)
 async def get_user(user_id: int, session: Session = Depends(get_db)) -> models.User:
     """
     Retrieve information about a user.
@@ -327,7 +335,10 @@ async def get_user(user_id: int, session: Session = Depends(get_db)) -> models.U
     return get_object_or_404(session, models.User, "id", user_id)
 
 
-@router.get("/users", tags=["users"])
+@router.get(
+    "/users",
+    tags=["users"],
+)
 async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
