@@ -11,11 +11,10 @@ from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core import user_dependencies
-from app.core.settings import app_settings
-from app.db.session import get_db
-from app.routers import applications, lenders, security, statistics, users
-from app.schema import core
+from app import aws, dependencies, models
+from app.db import get_db
+from app.routers import applications, borrower_documents, downloads, emails, lenders, security, statistics, users
+from app.settings import app_settings
 from tests.common.utils import create_enums
 from tests.protected_routes import users_test  # noqa
 from tests.protected_routes import applications_test, borrowers_test  # noqa
@@ -50,16 +49,14 @@ def get_test_db() -> Session:
 
 @pytest.fixture(scope="function")
 def start_background_db():
-    core.User.metadata.create_all(engine)
+    models.User.metadata.create_all(engine)
     yield
-    core.User.metadata.drop_all(engine)
+    models.User.metadata.drop_all(engine)
 
 
 @pytest.fixture(scope="function")
 def mock_templated_email():
-    with patch.object(
-        user_dependencies.sesClient, "send_templated_email", MagicMock()
-    ) as mock_send_templated_email:
+    with patch.object(aws.sesClient, "send_templated_email", MagicMock()) as mock_send_templated_email:
         mock_send_templated_email.return_value = {"MessageId": "123"}
         yield mock_send_templated_email
 
@@ -70,6 +67,9 @@ def start_application():
     app.include_router(lenders.router)
     app.include_router(security.router)
     app.include_router(applications.router)
+    app.include_router(borrower_documents.router)
+    app.include_router(downloads.router)
+    app.include_router(emails.router)
     app.include_router(users_test.router)
     app.include_router(applications_test.router)
     app.include_router(borrowers_test.router)
@@ -79,10 +79,10 @@ def start_application():
 
 @pytest.fixture(scope="function")
 def app() -> Generator[FastAPI, Any, None]:
-    core.User.metadata.create_all(engine)  # Create the tables.
+    models.User.metadata.create_all(engine)  # Create the tables.
     _app = start_application()
     yield _app
-    core.User.metadata.drop_all(engine)
+    models.User.metadata.drop_all(engine)
 
 
 @pytest.fixture(autouse=True)
@@ -116,9 +116,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
     cognito_client = boto3.client("cognito-idp", config=my_config)
     ses_client = boto3.client("ses", config=my_config)
 
-    cognito_pool_id = cognito_client.create_user_pool(PoolName="TestUserPool")[
-        "UserPool"
-    ]["Id"]
+    cognito_pool_id = cognito_client.create_user_pool(PoolName="TestUserPool")["UserPool"]["Id"]
 
     app_settings.cognito_pool_id = cognito_pool_id
 
@@ -140,7 +138,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
 
     def _get_test_cognito_client():
         try:
-            yield user_dependencies.CognitoClient(
+            yield aws.CognitoClient(
                 cognito_client,
                 ses_client,
                 generate_test_password,
@@ -158,9 +156,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
             session.close()
 
     # Override the clients dependencies with the mock implementations
-    app.dependency_overrides[
-        user_dependencies.get_cognito_client
-    ] = _get_test_cognito_client
+    app.dependency_overrides[dependencies.get_cognito_client] = _get_test_cognito_client
     app.dependency_overrides[get_db] = _get_test_db
 
     with TestClient(app) as client:

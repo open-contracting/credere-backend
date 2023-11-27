@@ -18,9 +18,7 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         "application",
-        sa.Column(
-            "information_requested_at", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("information_requested_at", sa.DateTime(timezone=True), nullable=True),
     )
     op.add_column(
         "application",

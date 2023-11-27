@@ -1,3 +1,7 @@
+"""
+This file is required, because reportlab/__init__.py runs `import reportlab_mods`.
+"""
+
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
@@ -5,20 +9,12 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Table, TableStyle
 
-from app.schema import core
+from app.models import BorrowerDocumentType, BorrowerSize
 
-pdfmetrics.registerFont(
-    TTFont("GTEestiProDisplay", "./fonts/GTEestiProDisplay-Regular.ttf")
-)
-pdfmetrics.registerFont(
-    TTFont("GTEestiProDisplayBd", "./fonts/GTEestiProDisplay-Bold.ttf")
-)
-pdfmetrics.registerFont(
-    TTFont("GTEestiProDisplayIt", "./fonts/GTEestiProDisplay-RegularItalic.ttf")
-)
-pdfmetrics.registerFont(
-    TTFont("GTEestiProDisplayBI", "./fonts/GTEestiProDisplay-BoldItalic.ttf")
-)
+pdfmetrics.registerFont(TTFont("GTEestiProDisplay", "./fonts/GTEestiProDisplay-Regular.ttf"))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayBd", "./fonts/GTEestiProDisplay-Bold.ttf"))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayIt", "./fonts/GTEestiProDisplay-RegularItalic.ttf"))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayBI", "./fonts/GTEestiProDisplay-BoldItalic.ttf"))
 pdfmetrics.registerFontFamily(
     "GTEestiProDisplay",
     normal="GTEestiProDisplay",
@@ -30,24 +26,24 @@ pdfmetrics.registerFontFamily(
 
 # Keep in sync with DOCUMENT_TYPES_NAMES in credere-frontend
 document_type_dict = {
-    core.BorrowerDocumentType.INCORPORATION_DOCUMENT: "Incorporation Document",
-    core.BorrowerDocumentType.SUPPLIER_REGISTRATION_DOCUMENT: "Supplier Registration Document",
-    core.BorrowerDocumentType.BANK_NAME: "Bank Name",
-    core.BorrowerDocumentType.BANK_CERTIFICATION_DOCUMENT: "Bank Certification Document",
-    core.BorrowerDocumentType.FINANCIAL_STATEMENT: "Financial Statement",
-    core.BorrowerDocumentType.SIGNED_CONTRACT: "Signed Contract",
-    core.BorrowerDocumentType.COMPLIANCE_REPORT: "Compliance Report",
-    core.BorrowerDocumentType.SHAREHOLDER_COMPOSITION: "Shareholder composition",
-    core.BorrowerDocumentType.CHAMBER_OF_COMMERCE: "Chamber of Commerce",
-    core.BorrowerDocumentType.THREE_LAST_BANK_STATEMENT: "Three last bank statement",
+    BorrowerDocumentType.INCORPORATION_DOCUMENT: "Incorporation Document",
+    BorrowerDocumentType.SUPPLIER_REGISTRATION_DOCUMENT: "Supplier Registration Document",
+    BorrowerDocumentType.BANK_NAME: "Bank Name",
+    BorrowerDocumentType.BANK_CERTIFICATION_DOCUMENT: "Bank Certification Document",
+    BorrowerDocumentType.FINANCIAL_STATEMENT: "Financial Statement",
+    BorrowerDocumentType.SIGNED_CONTRACT: "Signed Contract",
+    BorrowerDocumentType.COMPLIANCE_REPORT: "Compliance Report",
+    BorrowerDocumentType.SHAREHOLDER_COMPOSITION: "Shareholder composition",
+    BorrowerDocumentType.CHAMBER_OF_COMMERCE: "Chamber of Commerce",
+    BorrowerDocumentType.THREE_LAST_BANK_STATEMENT: "Three last bank statement",
 }
 
 # Keep in sync with MSME_TYPES_NAMES in credere-frontend
 borrower_size_dict = {
-    core.BorrowerSize.NOT_INFORMED: "Not informed",
-    core.BorrowerSize.MICRO: "0 to 10",
-    core.BorrowerSize.SMALL: "11 to 50",
-    core.BorrowerSize.MEDIUM: "51 to 200",
+    BorrowerSize.NOT_INFORMED: "Not informed",
+    BorrowerSize.MICRO: "0 to 10",
+    BorrowerSize.SMALL: "11 to 50",
+    BorrowerSize.MEDIUM: "51 to 200",
 }
 
 # Keep in sync with SECTOR_TYPES in credere-frontend

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.core.user_dependencies import CognitoClient, get_cognito_client
-from app.db.session import get_db
-from app.schema.core import User
+from app import dependencies
+from app.aws import CognitoClient
+from app.db import get_db
+from app.models import User
 
 tempPassword = "1234567890Abc!!"
 new_password = "!!!1234567890Abc!!"
@@ -15,7 +16,7 @@ router = APIRouter()
 async def create_test_user_headers(
     payload: User,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     user = User(**payload.dict())
 
@@ -29,10 +30,6 @@ async def create_test_user_headers(
     response = client.initiate_auth(payload.email, tempPassword)
     if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
         session = response["Session"]
-        response = client.respond_to_auth_challenge(
-            payload.email, session, "NEW_PASSWORD_REQUIRED", new_password
-        )
+        response = client.respond_to_auth_challenge(payload.email, session, "NEW_PASSWORD_REQUIRED", new_password)
 
-    return {
-        "Authorization": "Bearer " + response["AuthenticationResult"]["AccessToken"]
-    }
+    return {"Authorization": "Bearer " + response["AuthenticationResult"]["AccessToken"]}

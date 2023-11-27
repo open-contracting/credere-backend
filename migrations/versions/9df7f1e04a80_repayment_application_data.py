@@ -16,12 +16,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "application", sa.Column("payment_start_date", sa.DateTime(), nullable=True)
-    )
-    op.add_column(
-        "application", sa.Column("repayment_years", sa.Integer(), nullable=True)
-    )
+    op.add_column("application", sa.Column("payment_start_date", sa.DateTime(), nullable=True))
+    op.add_column("application", sa.Column("repayment_years", sa.Integer(), nullable=True))
     op.add_column(
         "application",
         sa.Column("borrower_credit_product_selected_at", sa.DateTime(), nullable=True),

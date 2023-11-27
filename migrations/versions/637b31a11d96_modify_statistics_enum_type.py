@@ -20,18 +20,14 @@ def upgrade() -> None:
     op.alter_column("statistic", "updated_at", new_column_name="created_at")
 
     # create new type
-    op.execute(
-        "CREATE TYPE statistic_type_new AS ENUM ('MSME_OPT_IN_STATISTICS', 'APPLICATION_KPIS');"
-    )
+    op.execute("CREATE TYPE statistic_type_new AS ENUM ('MSME_OPT_IN_STATISTICS', 'APPLICATION_KPIS');")
 
     # add a temporary column of new type
     op.add_column(
         "statistic",
         sa.Column(
             "type_temp",
-            sa.Enum(
-                "MSME_OPT_IN_STATISTICS", "APPLICATION_KPIS", name="statistic_type_new"
-            ),
+            sa.Enum("MSME_OPT_IN_STATISTICS", "APPLICATION_KPIS", name="statistic_type_new"),
         ),
     )
 
@@ -62,18 +58,14 @@ def downgrade() -> None:
     op.alter_column("statistic", "created_at", new_column_name="updated_at")
 
     # create old type
-    op.execute(
-        "CREATE TYPE statistic_type_old AS ENUM ('MSME opt-in statistics', 'Application KPIs');"
-    )
+    op.execute("CREATE TYPE statistic_type_old AS ENUM ('MSME opt-in statistics', 'Application KPIs');")
 
     # add a temporary column of old type
     op.add_column(
         "statistic",
         sa.Column(
             "type_temp",
-            sa.Enum(
-                "MSME opt-in statistics", "Application KPIs", name="statistic_type_old"
-            ),
+            sa.Enum("MSME opt-in statistics", "Application KPIs", name="statistic_type_old"),
         ),
     )
 

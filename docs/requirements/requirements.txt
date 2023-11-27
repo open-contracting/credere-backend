@@ -1,3 +1,0 @@
--r ../../requirements.txt
-furo
-sphinx_autodoc_typehints

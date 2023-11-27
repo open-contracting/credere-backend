@@ -4,18 +4,13 @@ from typing import Optional
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends
-from sqlalchemy import and_, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.schema import api as ApiSchema
-from app.utils.verify_token import get_current_user, get_user
-
-from ..background_processes import statistics_utils
-from ..db.session import get_db
-from ..schema import core
-from ..schema.core import User
-from ..schema.statistic import Statistic, StatisticCustomRange, StatisticType
-from ..utils.permissions import OCP_only
+import app.utils.statistics as statistics_utils
+from app import dependencies, serializers
+from app.db import get_db
+from app.models import Statistic, StatisticCustomRange, StatisticType, User
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +20,15 @@ router = APIRouter()
 @router.get(
     "/statistics-ocp",
     tags=["statistics"],
-    response_model=ApiSchema.StatisticResponse,
+    response_model=serializers.StatisticResponse,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def get_ocp_statistics_by_lender(
     initial_date: Optional[str] = None,
     final_date: Optional[str] = None,
     lender_id: Optional[int] = None,
     custom_range: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -57,7 +52,7 @@ async def get_ocp_statistics_by_lender(
     :type session: Session
 
     :return: Response containing the OCP statistics.
-    :rtype: ApiSchema.StatisticResponse
+    :rtype: serializers.StatisticResponse
     """
     try:
         if initial_date is None and final_date is None and custom_range is None:
@@ -76,9 +71,7 @@ async def get_ocp_statistics_by_lender(
                 statistics_kpis = statistics_kpis.data
             # If no record for the current date, calculate the statistics
             else:
-                statistics_kpis = statistics_utils.get_general_statistics(
-                    session, initial_date, final_date, lender_id
-                )
+                statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
         else:
             # If customRange is provided, calculate the statistics based on it
             if custom_range is not None:
@@ -91,14 +84,12 @@ async def get_ocp_statistics_by_lender(
 
                 final_date = current_date.isoformat()
 
-            statistics_kpis = statistics_utils.get_general_statistics(
-                session, initial_date, final_date, lender_id
-            )
+            statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
 
     except ClientError() as e:
         logger.exception(e)
 
-    return ApiSchema.StatisticResponse(
+    return serializers.StatisticResponse(
         statistics_kpis=statistics_kpis,
     )
 
@@ -106,11 +97,11 @@ async def get_ocp_statistics_by_lender(
 @router.get(
     "/statistics-ocp/opt-in",
     tags=["statistics"],
-    response_model=ApiSchema.StatisticOptInResponse,
+    response_model=serializers.StatisticOptInResponse,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def get_ocp_statistics_opt_in(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -125,17 +116,15 @@ async def get_ocp_statistics_opt_in(
     :type session: Session
 
     :return: Response containing the OCP statistics for MSME opt-in.
-    :rtype: ApiSchema.StatisticOCPResponse
+    :rtype: serializers.StatisticOptInResponse
     """
     try:
         current_date = datetime.now().date()
         opt_in_stats = (
             session.query(Statistic)
             .filter(
-                and_(
-                    Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
-                    func.date(Statistic.created_at) == current_date,
-                )
+                Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
+                func.date(Statistic.created_at) == current_date,
             )
             .first()
         )
@@ -146,17 +135,13 @@ async def get_ocp_statistics_opt_in(
 
     except ClientError as e:
         logger.exception(e)
-    return ApiSchema.StatisticOptInResponse(
+    return serializers.StatisticOptInResponse(
         opt_in_stat=opt_in_stats,
     )
 
 
-@router.get(
-    "/statistics-fi", tags=["statistics"], response_model=ApiSchema.StatisticResponse
-)
-async def get_fi_statistics(
-    session: Session = Depends(get_db), user: core.User = Depends(get_user)
-):
+@router.get("/statistics-fi", tags=["statistics"], response_model=serializers.StatisticResponse)
+async def get_fi_statistics(session: Session = Depends(get_db), user: User = Depends(dependencies.get_user)):
     """
     Retrieve statistics for a Financial Institution (FI).
 
@@ -167,10 +152,10 @@ async def get_fi_statistics(
     :param session: The database session dependency (automatically injected).
     :type session: Session
     :param user: The current user (automatically injected).
-    :type user: core.User
+    :type user: User
 
     :return: Response containing the statistics for the Financial Institution.
-    :rtype: ApiSchema.StatisticResponse
+    :rtype: serializers.StatisticResponse
     """
     try:
         current_date = datetime.now().date()
@@ -178,24 +163,20 @@ async def get_fi_statistics(
         statistics_kpis = (
             session.query(Statistic)
             .filter(
-                and_(
-                    Statistic.type == StatisticType.APPLICATION_KPIS,
-                    Statistic.lender_id == user.lender_id,
-                    func.date(Statistic.created_at) == current_date,
-                )
+                Statistic.type == StatisticType.APPLICATION_KPIS,
+                Statistic.lender_id == user.lender_id,
+                func.date(Statistic.created_at) == current_date,
             )
             .first()
         )
         if statistics_kpis is not None:
             statistics_kpis = statistics_kpis.data
         else:
-            statistics_kpis = statistics_utils.get_general_statistics(
-                session, None, None, user.lender_id
-            )
+            statistics_kpis = statistics_utils.get_general_statistics(session, None, None, user.lender_id)
 
     except ClientError as e:
         logger.exception(e)
 
-    return ApiSchema.StatisticResponse(
+    return serializers.StatisticResponse(
         statistics_kpis=statistics_kpis,
     )

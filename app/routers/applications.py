@@ -1,34 +1,20 @@
-import io
 import logging
-import zipfile
 from datetime import datetime
 from typing import List
 
-import pandas as pd
 from botocore.exceptions import ClientError
-from fastapi.responses import StreamingResponse
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Spacer
-from sqlalchemy import and_, text
-from sqlalchemy.orm import Session, joinedload
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy import asc, desc, text
+from sqlalchemy.orm import Session, defaultload, joinedload
 
 import app.utils.applications as utils
-from app.background_processes import application_utils
-from app.background_processes.fetcher import fetch_previous_awards
-from app.background_processes.update_statistic import update_statistics
-from app.core.settings import app_settings
-from app.schema import api as ApiSchema
-from app.schema.api import ChangeEmail
-
-from ..core.user_dependencies import CognitoClient, get_cognito_client
-from ..db.session import get_db, transaction_session
-from ..schema import core
-from ..utils.permissions import OCP_only
-from ..utils.verify_token import get_current_user, get_user
-
-from fastapi import Depends, Query, status  # isort:skip # noqa
-from fastapi import Form, UploadFile  # isort:skip # noqa
-from fastapi import APIRouter, BackgroundTasks, HTTPException  # isort:skip # noqa
+from app import dependencies, models, parsers, serializers, util
+from app.aws import CognitoClient
+from app.db import get_db, transaction_session
+from app.settings import app_settings
+from app.utils import background
+from app.utils.statistics import update_statistics
 
 logger = logging.getLogger(__name__)
 
@@ -38,15 +24,15 @@ router = APIRouter()
 @router.post(
     "/applications/{id}/reject-application",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def reject_application(
     id: int,
-    payload: ApiSchema.LenderRejectedApplication,
+    payload: parsers.LenderRejectedApplication,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-    user: core.User = Depends(get_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Reject an application:
@@ -56,7 +42,7 @@ async def reject_application(
     :type id: int
 
     :param payload: The rejected application data.
-    :type payload: ApiSchema.LenderRejectedApplication
+    :type payload: parsers.LenderRejectedApplication
 
     :param session: The database session.
     :type session: Session
@@ -65,52 +51,56 @@ async def reject_application(
     :type client: CognitoClient
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :return: The rejected application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
         if application.status not in (
-            core.ApplicationStatus.CONTRACT_UPLOADED,
-            core.ApplicationStatus.STARTED,
+            models.ApplicationStatus.CONTRACT_UPLOADED,
+            models.ApplicationStatus.STARTED,
         ):
             message = "Application status is not {} or {}".format(
-                core.ApplicationStatus.STARTED.name,
-                core.ApplicationStatus.CONTRACT_UPLOADED.name,
+                models.ApplicationStatus.STARTED.name,
+                models.ApplicationStatus.CONTRACT_UPLOADED.name,
             )
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=message,
             )
-        utils.reject_application(application, payload)
-        utils.create_application_action(
+
+        payload_dict = jsonable_encoder(payload, exclude_unset=True)
+        application.stage_as_rejected(payload_dict)
+        # This next call performs the `session.flush()`.
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application.id,
-            core.ApplicationActionType.REJECTED_APPLICATION,
-            payload,
+            type=models.ApplicationActionType.REJECTED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
         )
         options = (
-            session.query(core.CreditProduct)
-            .join(core.Lender)
-            .options(joinedload(core.CreditProduct.lender))
+            session.query(models.CreditProduct)
+            .join(models.Lender)
+            .options(joinedload(models.CreditProduct.lender))
             .filter(
-                and_(
-                    core.CreditProduct.borrower_size == application.borrower.size,
-                    core.CreditProduct.lender_id != application.lender_id,
-                    core.CreditProduct.lower_limit <= application.amount_requested,
-                    core.CreditProduct.upper_limit >= application.amount_requested,
-                )
+                models.CreditProduct.borrower_size == application.borrower.size,
+                models.CreditProduct.lender_id != application.lender_id,
+                models.CreditProduct.lower_limit <= application.amount_requested,
+                models.CreditProduct.upper_limit >= application.amount_requested,
             )
             .all()
         )
         message_id = client.send_rejected_email_to_sme(application, options)
-        utils.create_message(
-            application, core.MessageType.REJECTED_APPLICATION, session, message_id
+        models.Message.create(
+            session,
+            application=application,
+            type=models.MessageType.REJECTED_APPLICATION,
+            external_message_id=message_id,
         )
         background_tasks.add_task(update_statistics)
         return application
@@ -119,15 +109,15 @@ async def reject_application(
 @router.post(
     "/applications/{id}/complete-application",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def complete_application(
     id: int,
-    payload: ApiSchema.LenderReviewContract,
+    payload: parsers.LenderReviewContract,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    user: core.User = Depends(get_user),
-    client: CognitoClient = Depends(get_cognito_client),
+    user: models.User = Depends(dependencies.get_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Complete an application:
@@ -137,46 +127,44 @@ async def complete_application(
     :type id: int
 
     :param payload: The completed application data.
-    :type payload: ApiSchema.LenderReviewContract
+    :type payload: parsers.LenderReviewContract
 
     :param session: The database session.
     :type session: Session
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :param client: The Cognito client.
     :type client: CognitoClient
 
     :return: The completed application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
-        utils.check_application_status(
-            application, core.ApplicationStatus.CONTRACT_UPLOADED
-        )
-        utils.complete_application(application, payload.disbursed_final_amount)
-        application.completed_in_days = application_utils.get_application_days_passed(
-            application, session
-        )
-        utils.create_application_action(
+        utils.check_application_status(application, models.ApplicationStatus.CONTRACT_UPLOADED)
+
+        application.stage_as_completed(payload.disbursed_final_amount)
+        application.completed_in_days = application.days_waiting_for_lender(session)
+        # This next call performs the `session.flush()`.
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application.id,
-            core.ApplicationActionType.FI_COMPLETE_APPLICATION,
-            {
-                "disbursed_final_amount": payload.disbursed_final_amount,
-            },
+            type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
+            # payload.disbursed_final_amount is a Decimal.
+            data=jsonable_encoder({"disbursed_final_amount": payload.disbursed_final_amount}),
+            application_id=application.id,
+            user_id=user.id,
         )
+
         message_id = client.send_application_credit_disbursed(application)
-        utils.create_message(
-            application,
-            core.MessageType.CREDIT_DISBURSED,
+        models.Message.create(
             session,
-            message_id,
+            application=application,
+            type=models.MessageType.CREDIT_DISBURSED,
+            external_message_id=message_id,
         )
         background_tasks.add_task(update_statistics)
         return application
@@ -185,15 +173,15 @@ async def complete_application(
 @router.post(
     "/applications/{id}/approve-application",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def approve_application(
     id: int,
-    payload: ApiSchema.LenderApprovedData,
+    payload: parsers.LenderApprovedData,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-    user: core.User = Depends(get_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Approve an application:
@@ -205,7 +193,7 @@ async def approve_application(
     :type id: int
 
     :param payload: The approved application data.
-    :type payload: ApiSchema.LenderApprovedData
+    :type payload: parsers.LenderApprovedData
 
     :param session: The database session.
     :type session: Session
@@ -214,373 +202,79 @@ async def approve_application(
     :type client: CognitoClient
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :return: The approved application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     """
     with transaction_session(session):
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission(application, user)
-        utils.check_application_status(application, core.ApplicationStatus.STARTED)
-        utils.approve_application(application, payload)
-        utils.create_application_action(
+        utils.check_application_status(application, models.ApplicationStatus.STARTED)
+
+        # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
+        # the application's `secop_data_verification`.
+        not_validated_fields = []
+        app_secop_dict = application.secop_data_verification.copy()
+        fields = list(parsers.UpdateDataField().dict().keys())
+        for key in fields:
+            if key not in app_secop_dict or not app_secop_dict[key]:
+                not_validated_fields.append(key)
+        if not_validated_fields:
+            logger.error(f"Following fields were not validated: {not_validated_fields}")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=util.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
+            )
+
+        # Check all documents are verified.
+        not_validated_documents = []
+        for document in application.borrower_documents:
+            if not document.verified:
+                not_validated_documents.append(document.type.name)
+        if not_validated_documents:
+            logger.error(f"Following documents were not validated: {not_validated_documents}")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
+            )
+
+        # Approve the application.
+        payload_dict = jsonable_encoder(payload, exclude_unset=True)
+        application.lender_approved_data = payload_dict
+        application.status = models.ApplicationStatus.APPROVED
+        current_time = datetime.now(application.created_at.tzinfo)
+        application.lender_approved_at = current_time
+
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application.id,
-            core.ApplicationActionType.APPROVED_APPLICATION,
-            payload,
+            type=models.ApplicationActionType.APPROVED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
         )
 
         message_id = client.send_application_approved_to_sme(application)
-        utils.create_message(
-            application,
-            core.MessageType.APPROVED_APPLICATION,
+        models.Message.create(
             session,
-            message_id,
+            application=application,
+            type=models.MessageType.APPROVED_APPLICATION,
+            external_message_id=message_id,
         )
         background_tasks.add_task(update_statistics)
         return application
 
 
 @router.post(
-    "/applications/change-email",
-    tags=["applications"],
-    response_model=ChangeEmail,
-)
-async def change_email(
-    payload: ChangeEmail,
-    session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-):
-    """
-    Change the email address for an application.
-
-    :param payload: The data for changing the email address.
-    :type payload: ChangeEmail
-
-    :param session: The database session.
-    :type session: Session
-
-    :param client: The Cognito client.
-    :type client: CognitoClient
-
-    :return: The data for changing the email address.
-    :rtype: ChangeEmail
-
-    """
-    with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        old_email = application.primary_email
-        confirmation_email_token = utils.update_application_primary_email(
-            application, payload.new_email
-        )
-        utils.create_application_action(
-            session,
-            None,
-            application.id,
-            core.ApplicationActionType.MSME_CHANGE_EMAIL,
-            payload,
-        )
-
-        external_message_id = client.send_new_email_confirmation_to_sme(
-            application.borrower.legal_name,
-            payload.new_email,
-            old_email,
-            confirmation_email_token,
-            application.uuid,
-        )
-
-        utils.create_message(
-            application,
-            core.MessageType.EMAIL_CHANGE_CONFIRMATION,
-            session,
-            external_message_id,
-        )
-
-        return payload
-
-
-@router.post(
-    "/applications/confirm-change-email",
-    tags=["applications"],
-    response_model=ChangeEmail,
-)
-async def confirm_email(
-    payload: ApiSchema.ConfirmNewEmail,
-    session: Session = Depends(get_db),
-):
-    """
-    Confirm the email address change for an application.
-
-    :param payload: The data for confirming the email address change.
-    :type payload: ApiSchema.ConfirmNewEmail
-
-    :param session: The database session.
-    :type session: Session
-
-    :return: The data for confirming the email address change.
-    :rtype: ChangeEmail
-
-    """
-    with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-
-        utils.check_pending_email_confirmation(
-            application, payload.confirmation_email_token
-        )
-
-        utils.create_application_action(
-            session,
-            None,
-            application.id,
-            core.ApplicationActionType.MSME_CONFIRM_EMAIL,
-            payload,
-        )
-
-        return ChangeEmail(new_email=application.primary_email, uuid=application.uuid)
-
-
-@router.get(
-    "/applications/documents/id/{id}",
-    tags=["applications"],
-)
-async def get_borrower_document(
-    id: int,
-    session: Session = Depends(get_db),
-    user: core.User = Depends(get_user),
-):
-    """
-    Retrieve a borrower document by its ID and stream the file content as a response.
-
-    :param id: The ID of the borrower document to retrieve.
-    :type id: int
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: core.User
-
-    :return: A streaming response with the borrower document file content.
-    :rtype: StreamingResponse
-
-    """
-    with transaction_session(session):
-        document = (
-            session.query(core.BorrowerDocument)
-            .filter(core.BorrowerDocument.id == id)
-            .first()
-        )
-        utils.get_file(document, user, session)
-
-        def file_generator():
-            yield document.file
-
-        headers = {
-            "Content-Disposition": f'attachment; filename="{document.name}"',
-            "Content-Type": "application/octet-stream",
-        }
-        return StreamingResponse(file_generator(), headers=headers)
-
-
-@router.get(
-    "/applications/{application_id}/download-application/{lang}",
-    tags=["applications"],
-)
-async def download_application(
-    application_id: int,
-    lang: str,
-    session: Session = Depends(get_db),
-    user: core.User = Depends(get_user),
-):
-    """
-    Retrieve all documents related to an application and stream them as a zip file.
-
-    :param application_id: The ID of the application to retrieve documents for.
-    :type application_id: int
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: core.User
-
-    :return: A streaming response with a zip file containing the documents.
-    :rtype: StreamingResponse
-    """
-    with transaction_session(session):
-        application = utils.get_application_by_id(application_id, session)
-
-        borrower = application.borrower
-        award = application.award
-
-        documents = (
-            session.query(core.BorrowerDocument)
-            .filter(core.BorrowerDocument.application_id == application_id)
-            .all()
-        )
-
-        previous_awards = utils.get_previous_awards(application, session)
-
-        buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
-
-        elements = []
-
-        elements.append(utils.create_pdf_title("Application Details", lang))
-
-        elements.append(utils.create_application_table(application, lang))
-        elements.append(Spacer(1, 20))
-        elements.append(utils.create_borrower_table(borrower, application, lang))
-        elements.append(Spacer(1, 20))
-        elements.append(utils.create_documents_table(documents, lang))
-        elements.append(Spacer(1, 20))
-        elements.append(utils.create_award_table(award, lang))
-
-        if previous_awards and len(previous_awards) > 0:
-            elements.append(Spacer(1, 20))
-            elements.append(
-                utils.create_pdf_title("Previous Public Sector Contracts", lang, True)
-            )
-            for award in previous_awards:
-                elements.append(utils.create_award_table(award, lang))
-                elements.append(Spacer(1, 20))
-
-        doc.build(elements)
-
-        filename = utils.get_pdf_file_name(application, lang)
-
-        in_memory_zip = io.BytesIO()
-        with zipfile.ZipFile(in_memory_zip, "w") as zip_file:
-            zip_file.writestr(filename, buffer.getvalue())
-            for document in documents:
-                zip_file.writestr(document.name, document.file)
-
-        application_action_type = (
-            core.ApplicationActionType.OCP_DOWNLOAD_APPLICATION
-            if user.is_OCP()
-            else core.ApplicationActionType.FI_DOWNLOAD_APPLICATION
-        )
-        utils.create_application_action(
-            session, user.id, application.id, application_action_type, {}
-        )
-
-        headers = {
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Type": "application/zip",
-        }
-
-        return StreamingResponse(io.BytesIO(in_memory_zip.getvalue()), headers=headers)
-
-
-@router.post(
-    "/applications/upload-document",
-    tags=["applications"],
-    response_model=core.BorrowerDocumentBase,
-)
-async def upload_document(
-    file: UploadFile,
-    uuid: str = Form(...),
-    type: str = Form(...),
-    session: Session = Depends(get_db),
-):
-    """
-    Upload a document for an application.
-
-    :param file: The uploaded file.
-    :type file: UploadFile
-
-    :param uuid: The UUID of the application.
-    :type uuid: str
-
-    :param type: The type of the document.
-    :type type: str
-
-    :param session: The database session.
-    :type session: Session
-
-    :return: The created or updated borrower document.
-    :rtype: core.BorrowerDocumentBase
-
-    """
-    with transaction_session(session):
-        new_file, filename = utils.validate_file(file)
-        application = utils.get_application_by_uuid(uuid, session)
-        if not application.pending_documents:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot upload document at this stage",
-            )
-
-        document = utils.create_or_update_borrower_document(
-            filename, application, type, session, new_file
-        )
-
-        utils.create_application_action(
-            session,
-            None,
-            application.id,
-            core.ApplicationActionType.MSME_UPLOAD_DOCUMENT,
-            {"file_name": filename},
-        )
-
-        return document
-
-
-@router.post(
-    "/applications/upload-contract",
-    tags=["applications"],
-    response_model=core.BorrowerDocumentBase,
-)
-async def upload_contract(
-    file: UploadFile,
-    uuid: str = Form(...),
-    session: Session = Depends(get_db),
-):
-    """
-    Upload a contract document for an application.
-
-    :param file: The uploaded file.
-    :type file: UploadFile
-
-    :param uuid: The UUID of the application.
-    :type uuid: str
-
-    :param session: The database session.
-    :type session: Session
-
-    :return: The created or updated borrower document representing the contract.
-    :rtype: core.BorrowerDocumentBase
-
-    """
-    with transaction_session(session):
-        new_file, filename = utils.validate_file(file)
-        application = utils.get_application_by_uuid(uuid, session)
-
-        utils.check_application_status(application, core.ApplicationStatus.APPROVED)
-
-        document = utils.create_or_update_borrower_document(
-            filename,
-            application,
-            core.BorrowerDocumentType.SIGNED_CONTRACT,
-            session,
-            new_file,
-        )
-
-        return document
-
-
-@router.post(
     "/applications/confirm-upload-contract",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def confirm_upload_contract(
-    payload: ApiSchema.UploadContractConfirmation,
+    payload: parsers.UploadContractConfirmation,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Confirm the upload of a contract document for an application.
@@ -590,7 +284,7 @@ async def confirm_upload_contract(
     Sends an email to SME notifying the current stage of their application.
 
     :param payload: The confirmation data for the uploaded contract.
-    :type payload: ApiSchema.UploadContractConfirmation
+    :type payload: parsers.UploadContractConfirmation
 
     :param session: The database session.
     :type session: Session
@@ -599,48 +293,42 @@ async def confirm_upload_contract(
     :type client: CognitoClient
 
     :return: The application response containing the updated application and related entities.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_application_status(application, core.ApplicationStatus.APPROVED)
+        utils.check_application_status(application, models.ApplicationStatus.APPROVED)
 
-        FI_message_id, SME_message_id = client.send_upload_contract_notifications(
-            application
-        )
+        FI_message_id, SME_message_id = client.send_upload_contract_notifications(application)
 
         application.contract_amount_submitted = payload.contract_amount_submitted
-        application.status = core.ApplicationStatus.CONTRACT_UPLOADED
-        application.borrower_uploaded_contract_at = datetime.now(
-            application.created_at.tzinfo
-        )
+        application.status = models.ApplicationStatus.CONTRACT_UPLOADED
+        application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
 
-        utils.create_message(
-            application,
-            core.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
+        models.Message.create(
             session,
-            FI_message_id,
+            application=application,
+            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
+            external_message_id=FI_message_id,
         )
 
-        utils.create_message(
-            application,
-            core.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
+        models.Message.create(
             session,
-            SME_message_id,
+            application=application,
+            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
+            external_message_id=SME_message_id,
         )
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            core.ApplicationActionType.MSME_UPLOAD_CONTRACT,
-            {
-                "contract_amount_submitted": payload.contract_amount_submitted,
-            },
+            type=models.ApplicationActionType.MSME_UPLOAD_CONTRACT,
+            # payload.contract_amount_submitted is a Decimal.
+            data=jsonable_encoder({"contract_amount_submitted": payload.contract_amount_submitted}),
+            application_id=application.id,
         )
 
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -650,72 +338,16 @@ async def confirm_upload_contract(
         )
 
 
-@router.post(
-    "/applications/{id}/upload-compliance",
-    tags=["applications"],
-    response_model=core.BorrowerDocumentBase,
-)
-async def upload_compliance(
-    id: int,
-    file: UploadFile,
-    session: Session = Depends(get_db),
-    user: core.User = Depends(get_user),
-):
-    """
-    Upload a compliance document for an application.
-
-    :param id: The ID of the application.
-    :type id: int
-
-    :param file: The uploaded file.
-    :type file: UploadFile
-
-    :param session: The database session.
-    :type session: Session
-
-    :param user: The current user.
-    :type user: core.User
-
-    :return: The created or updated borrower document representing the compliance report.
-    :rtype: core.BorrowerDocumentBase
-
-    """
-    with transaction_session(session):
-        new_file, filename = utils.validate_file(file)
-        application = utils.get_application_by_id(id, session)
-
-        utils.check_FI_user_permission(application, user)
-
-        document = utils.create_or_update_borrower_document(
-            filename,
-            application,
-            core.BorrowerDocumentType.COMPLIANCE_REPORT,
-            session,
-            new_file,
-            True,
-        )
-
-        utils.create_application_action(
-            session,
-            None,
-            application.id,
-            core.ApplicationActionType.FI_UPLOAD_COMPLIANCE,
-            {"file_name": filename},
-        )
-
-        return document
-
-
 @router.put(
     "/applications/{id}/verify-data-field",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def verify_data_field(
     id: int,
-    payload: ApiSchema.UpdateDataField,
+    payload: parsers.UpdateDataField,
     session: Session = Depends(get_db),
-    user: core.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Verify and update a data field in an application.
@@ -724,16 +356,16 @@ async def verify_data_field(
     :type id: int
 
     :param payload: The data field update payload.
-    :type payload: ApiSchema.UpdateDataField
+    :type payload: parsers.UpdateDataField
 
     :param session: The database session.
     :type session: Session
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :return: The updated application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     """
     with transaction_session(session):
@@ -741,20 +373,26 @@ async def verify_data_field(
         utils.check_application_in_status(
             application,
             [
-                core.ApplicationStatus.STARTED,
-                core.ApplicationStatus.INFORMATION_REQUESTED,
+                models.ApplicationStatus.STARTED,
+                models.ApplicationStatus.INFORMATION_REQUESTED,
             ],
         )
 
         utils.check_FI_user_permission(application, user)
-        utils.update_data_field(application, payload)
 
-        utils.create_application_action(
+        # Update a specific field in the application's `secop_data_verification` attribute.
+        payload_dict = {key: value for key, value in payload.dict().items() if value is not None}
+        key, value = next(iter(payload_dict.items()), (None, None))
+        verified_data = application.secop_data_verification.copy()
+        verified_data[key] = value
+        application.secop_data_verification = verified_data.copy()
+
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application.id,
-            core.ApplicationActionType.DATA_VALIDATION_UPDATE,
-            payload,
+            type=models.ApplicationActionType.DATA_VALIDATION_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
         )
 
         return application
@@ -763,13 +401,13 @@ async def verify_data_field(
 @router.put(
     "/applications/documents/{document_id}/verify-document",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def verify_document(
     document_id: int,
-    payload: ApiSchema.VerifyBorrowerDocument,
+    payload: parsers.VerifyBorrowerDocument,
     session: Session = Depends(get_db),
-    user: core.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Verify a borrower document in an application.
@@ -778,37 +416,37 @@ async def verify_document(
     :type document_id: int
 
     :param payload: The document verification payload.
-    :type payload: ApiSchema.VerifyBorrowerDocument
+    :type payload: parsers.VerifyBorrowerDocument
 
     :param session: The database session.
     :type session: Session
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :return: The updated application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     """
     with transaction_session(session):
-        document = utils.get_document_by_id(document_id, session)
+        document = util.get_object_or_404(session, models.BorrowerDocument, "id", document_id)
         utils.check_FI_user_permission(document.application, user)
         utils.check_application_in_status(
             document.application,
             [
-                core.ApplicationStatus.STARTED,
-                core.ApplicationStatus.INFORMATION_REQUESTED,
+                models.ApplicationStatus.STARTED,
+                models.ApplicationStatus.INFORMATION_REQUESTED,
             ],
         )
 
         document.verified = payload.verified
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            user.id,
-            document.application.id,
-            core.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
-            payload,
+            type=models.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=document.application.id,
+            user_id=user.id,
         )
 
         return document.application
@@ -817,12 +455,12 @@ async def verify_document(
 @router.put(
     "/applications/{application_id}/award",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def update_application_award(
     application_id: int,
-    payload: ApiSchema.AwardUpdate,
-    user: core.User = Depends(get_user),
+    payload: parsers.AwardUpdate,
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -832,28 +470,51 @@ async def update_application_award(
     :type application_id: int
 
     :param payload: The award update payload.
-    :type payload: ApiSchema.AwardUpdate
+    :type payload: parsers.AwardUpdate
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The updated application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     """
     with transaction_session(session):
-        application = utils.update_application_award(
-            session, application_id, payload, user
+        application = (
+            models.Application.filter_by(session, "id", application_id)
+            .options(defaultload(models.Application.award))
+            .first()
         )
-        utils.create_application_action(
+        if not application or not application.award:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application or award not found",
+            )
+
+        utils.check_application_not_status(
+            application,
+            utils.OCP_cannot_modify,
+        )
+
+        if not user.is_OCP() and application.lender_id != user.lender_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This application is not owned by this lender",
+            )
+
+        # Update the award.
+        update_dict = jsonable_encoder(payload, exclude_unset=True)
+        application.award.update(session, **update_dict)
+
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application_id,
-            core.ApplicationActionType.AWARD_UPDATE,
-            payload,
+            type=models.ApplicationActionType.AWARD_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application_id,
+            user_id=user.id,
         )
 
         application = utils.get_modified_data_fields(application, session)
@@ -863,12 +524,12 @@ async def update_application_award(
 @router.put(
     "/applications/{application_id}/borrower",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def update_application_borrower(
     application_id: int,
-    payload: ApiSchema.BorrowerUpdate,
-    user: core.User = Depends(get_user),
+    payload: parsers.BorrowerUpdate,
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -878,29 +539,57 @@ async def update_application_borrower(
     :type application_id: int
 
     :param payload: The borrower update payload.
-    :type payload: ApiSchema.BorrowerUpdate
+    :type payload: parsers.BorrowerUpdate
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The updated application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     """
     with transaction_session(session):
-        application = utils.update_application_borrower(
-            session, application_id, payload, user
+        application = (
+            models.Application.filter_by(session, "id", application_id)
+            .options(defaultload(models.Application.borrower))
+            .first()
+        )
+        if not application or not application.borrower:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Application or borrower not found",
+            )
+
+        utils.check_application_not_status(
+            application,
+            utils.OCP_cannot_modify,
         )
 
-        utils.create_application_action(
+        if not user.is_OCP() and application.lender_id != user.lender_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This application is not owned by this lender",
+            )
+
+        # Update the borrower.
+        update_dict = jsonable_encoder(payload, exclude_unset=True)
+        for field, value in update_dict.items():
+            if not application.borrower.missing_data[field]:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="This column cannot be updated",
+                )
+        application.borrower.update(session, **update_dict)
+
+        models.ApplicationAction.create(
             session,
-            user.id,
-            application_id,
-            core.ApplicationActionType.BORROWER_UPDATE,
-            payload,
+            type=models.ApplicationActionType.BORROWER_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application_id,
+            user_id=user.id,
         )
 
         application = utils.get_modified_data_fields(application, session)
@@ -910,19 +599,19 @@ async def update_application_borrower(
 @router.get(
     "/applications/admin-list",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationListResponse,
+    response_model=serializers.ApplicationListResponse,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def get_applications_list(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: core.User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
-    Get a paginated list of applications for administrative purposes.
+    Get a paginated list of submitted applications for administrative purposes.
 
     :param page: The page number of the application list (default: 0).
     :type page: int
@@ -937,30 +626,49 @@ async def get_applications_list(
     :type sort_order: str
 
     :param current_user: The current user authenticated.
-    :type current_user: core.User
+    :type current_user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The paginated list of applications.
-    :rtype: ApiSchema.ApplicationListResponse
+    :rtype: serializers.ApplicationListResponse
 
     :raise: lumache.OCPOnlyError if the current user is not authorized.
-
     """
-    return utils.get_all_active_applications(
-        page, page_size, sort_field, sort_order, session
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    applications_query = (
+        models.Application.submitted(session)
+        .join(models.Award)
+        .join(models.Borrower)
+        .options(
+            joinedload(models.Application.award),
+            joinedload(models.Application.borrower),
+        )
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+    )
+
+    total_count = applications_query.count()
+
+    applications = applications_query.offset(page * page_size).limit(page_size).all()
+
+    return serializers.ApplicationListResponse(
+        items=applications,
+        count=total_count,
+        page=page,
+        page_size=page_size,
     )
 
 
 @router.get(
     "/applications/id/{id}",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def get_application(
     id: int,
-    user: core.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -970,13 +678,13 @@ async def get_application(
     :type id: int
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The application with the specified ID and its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     :raise: HTTPException with status code 401 if the user is not authorized to view the application.
 
@@ -999,12 +707,12 @@ async def get_application(
 @router.post(
     "/applications/{id}/start",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def start_application(
     id: int,
     background_tasks: BackgroundTasks,
-    user: core.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -1015,22 +723,20 @@ async def start_application(
     :type id: int
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The started application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     :raise: HTTPException with status code 401 if the user is not authorized to start the application.
 
     """
     with transaction_session(session):
-        application = (
-            session.query(core.Application).filter(core.Application.id == id).first()
-        )
-        utils.check_application_status(application, core.ApplicationStatus.SUBMITTED)
+        application = models.Application.first_by(session, "id", id)
+        utils.check_application_status(application, models.ApplicationStatus.SUBMITTED)
 
         if user.lender_id != application.lender_id:
             raise HTTPException(
@@ -1038,47 +744,27 @@ async def start_application(
                 detail="Unauthorized to start this application",
             )
 
-        application.status = core.ApplicationStatus.STARTED
+        application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
         background_tasks.add_task(update_statistics)
         return application
 
 
 @router.get(
-    "/applications/export/{lang}",
-    tags=["applications"],
-    response_class=StreamingResponse,
-)
-async def export_applications(
-    lang: str,
-    user: core.User = Depends(get_user),
-    session: Session = Depends(get_db),
-):
-    df = pd.DataFrame(
-        utils.get_all_fi_applications_emails(session, user.lender_id, lang)
-    )
-    stream = io.StringIO()
-    df.to_csv(stream, index=False)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers["Content-Disposition"] = "attachment; filename=export.csv"
-    return response
-
-
-@router.get(
     "/applications",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationListResponse,
+    response_model=serializers.ApplicationListResponse,
 )
 async def get_applications(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    user: core.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
-    Get a paginated list of applications for a specific user.
+    Get a paginated list of submitted applications for a specific FI user.
 
     :param page: The page number of the application list (default: 0).
     :type page: int
@@ -1093,24 +779,43 @@ async def get_applications(
     :type sort_order: str
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: The paginated list of applications for the specific user.
-    :rtype: ApiSchema.ApplicationListResponse
+    :rtype: serializers.ApplicationListResponse
 
     """
-    return utils.get_all_FI_user_applications(
-        page, page_size, sort_field, sort_order, session, user.lender_id
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    applications_query = (
+        models.Application.submitted_to_lender(session, user.lender_id)
+        .join(models.Award)
+        .join(models.Borrower)
+        .options(
+            joinedload(models.Application.award),
+            joinedload(models.Application.borrower),
+        )
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+    )
+    total_count = applications_query.count()
+
+    applications = applications_query.offset(page * page_size).limit(page_size).all()
+
+    return serializers.ApplicationListResponse(
+        items=applications,
+        count=total_count,
+        page=page,
+        page_size=page_size,
     )
 
 
 @router.get(
     "/applications/uuid/{uuid}",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     """
@@ -1123,7 +828,7 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     :type session: Session
 
     :return: The application with the specified UUID and its associated entities.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 404 if the application is expired.
 
@@ -1131,7 +836,7 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     application = utils.get_application_by_uuid(uuid, session)
     utils.check_is_application_expired(application)
 
-    return ApiSchema.ApplicationResponse(
+    return serializers.ApplicationResponse(
         application=application,
         borrower=application.borrower,
         award=application.award,
@@ -1144,10 +849,10 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
 @router.post(
     "/applications/access-scheme",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def access_scheme(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1160,7 +865,7 @@ async def access_scheme(
 
 
     :param payload: The application data.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param background_tasks: The background tasks to be executed.
     :type background_tasks: BackgroundTasks
@@ -1169,7 +874,7 @@ async def access_scheme(
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
 
@@ -1177,17 +882,17 @@ async def access_scheme(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
-        utils.check_application_status(application, core.ApplicationStatus.PENDING)
+        utils.check_application_status(application, models.ApplicationStatus.PENDING)
 
         current_time = datetime.now(application.created_at.tzinfo)
         application.borrower_accepted_at = current_time
-        application.status = core.ApplicationStatus.ACCEPTED
+        application.status = models.ApplicationStatus.ACCEPTED
         application.expired_at = None
 
-        background_tasks.add_task(fetch_previous_awards, application.borrower)
+        background_tasks.add_task(background.fetch_previous_awards, application.borrower)
         background_tasks.add_task(update_statistics)
 
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1197,23 +902,23 @@ async def access_scheme(
 @router.post(
     "/applications/credit-product-options",
     tags=["applications"],
-    response_model=ApiSchema.CreditProductListResponse,
+    response_model=serializers.CreditProductListResponse,
 )
 async def credit_product_options(
-    payload: ApiSchema.ApplicationCreditOptions,
+    payload: parsers.ApplicationCreditOptions,
     session: Session = Depends(get_db),
 ):
     """
     Get the available credit product options for an application.
 
     :param payload: The application credit options.
-    :type payload: ApiSchema.ApplicationCreditOptions
+    :type payload: parsers.ApplicationCreditOptions
 
     :param session: The database session.
     :type session: Session
 
     :return: The credit product list response containing the available loans and credit lines.
-    :rtype: ApiSchema.CreditProductListResponse
+    :rtype: serializers.CreditProductListResponse
 
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the previous lenders are not found. # noqa
 
@@ -1221,82 +926,70 @@ async def credit_product_options(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
 
-        previous_lenders = utils.get_previous_lenders(
-            application.award_borrower_identifier, session
-        )
+        rejecter_lenders = application.rejecter_lenders(session)
         utils.check_is_application_expired(application)
-        utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+        utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
 
         filter = None
         if application.borrower.type.lower() == "persona natural colombiana":
-            filter = text(
-                f"(borrower_types->>'{core.BorrowerType.NATURAL_PERSON.value}')::boolean is True"
-            )
+            filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON.value}')::boolean is True")
         else:
-            filter = text(
-                f"(borrower_types->>'{core.BorrowerType.LEGAL_PERSON.value}')::boolean is True"
-            )
+            filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON.value}')::boolean is True")
 
         loans_query = (
-            session.query(core.CreditProduct)
-            .join(core.Lender)
-            .options(joinedload(core.CreditProduct.lender))
+            session.query(models.CreditProduct)
+            .join(models.Lender)
+            .options(joinedload(models.CreditProduct.lender))
             .filter(
-                and_(
-                    core.CreditProduct.type == core.CreditType.LOAN,
-                    core.CreditProduct.borrower_size == payload.borrower_size,
-                    core.CreditProduct.lower_limit <= payload.amount_requested,
-                    core.CreditProduct.upper_limit >= payload.amount_requested,
-                    ~core.Lender.id.in_(previous_lenders),
-                    filter,
-                )
+                models.CreditProduct.type == models.CreditType.LOAN,
+                models.CreditProduct.borrower_size == payload.borrower_size,
+                models.CreditProduct.lower_limit <= payload.amount_requested,
+                models.CreditProduct.upper_limit >= payload.amount_requested,
+                models.Lender.id.notin_(rejecter_lenders),
+                filter,
             )
         )
 
         credit_lines_query = (
-            session.query(core.CreditProduct)
-            .join(core.Lender)
-            .options(joinedload(core.CreditProduct.lender))
+            session.query(models.CreditProduct)
+            .join(models.Lender)
+            .options(joinedload(models.CreditProduct.lender))
             .filter(
-                and_(
-                    core.CreditProduct.type == core.CreditType.CREDIT_LINE,
-                    core.CreditProduct.borrower_size == payload.borrower_size,
-                    core.CreditProduct.lower_limit <= payload.amount_requested,
-                    core.CreditProduct.upper_limit >= payload.amount_requested,
-                    ~core.Lender.id.in_(previous_lenders),
-                    filter,
-                )
+                models.CreditProduct.type == models.CreditType.CREDIT_LINE,
+                models.CreditProduct.borrower_size == payload.borrower_size,
+                models.CreditProduct.lower_limit <= payload.amount_requested,
+                models.CreditProduct.upper_limit >= payload.amount_requested,
+                models.Lender.id.notin_(rejecter_lenders),
+                filter,
             )
         )
 
         loans = loans_query.all()
         credit_lines = credit_lines_query.all()
 
-        return ApiSchema.CreditProductListResponse(
-            loans=loans, credit_lines=credit_lines
-        )
+        return serializers.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
 
 
 @router.post(
     "/applications/select-credit-product",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def select_credit_product(
-    payload: ApiSchema.ApplicationSelectCreditProduct,
+    payload: parsers.ApplicationSelectCreditProduct,
     session: Session = Depends(get_db),
 ):
     """
     Select a credit product for an application.
 
     :param payload: The application credit product selection payload.
-    :type payload: ApiSchema.ApplicationSelectCreditProduct
+    :type payload: parsers.ApplicationSelectCreditProduct
 
     :param session: The database session.
     :type session: Session
 
     :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the calculator data is invalid. # noqa: E501
 
@@ -1304,9 +997,13 @@ async def select_credit_product(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
-        utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+        utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
 
-        calculator_data = utils.get_calculator_data(payload)
+        # Extract the necessary fields for a calculator from a payload.
+        calculator_data = jsonable_encoder(payload, exclude_unset=True)
+        calculator_data.pop("uuid")
+        calculator_data.pop("credit_product_id")
+        calculator_data.pop("sector")
 
         application.calculator_data = calculator_data
         application.credit_product_id = payload.credit_product_id
@@ -1316,14 +1013,13 @@ async def select_credit_product(
         application.borrower.size = payload.borrower_size
         application.borrower.sector = payload.sector
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            core.ApplicationActionType.APPLICATION_CALCULATOR_DATA_UPDATE,
-            payload,
+            type=models.ApplicationActionType.APPLICATION_CALCULATOR_DATA_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1336,23 +1032,23 @@ async def select_credit_product(
 @router.post(
     "/applications/rollback-select-credit-product",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def rollback_select_credit_product(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
 ):
     """
     Rollback the selection of a credit product for an application.
 
     :param payload: The application data.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the credit product is not selected or if the lender is already assigned. # noqa: E501
 
@@ -1360,7 +1056,7 @@ async def rollback_select_credit_product(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
-        utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+        utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
 
         if not application.credit_product_id:
             raise HTTPException(
@@ -1376,7 +1072,7 @@ async def rollback_select_credit_product(
 
         application.credit_product_id = None
         application.borrower_credit_product_selected_at = None
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1386,10 +1082,10 @@ async def rollback_select_credit_product(
 @router.post(
     "/applications/confirm-credit-product",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def confirm_credit_product(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1397,14 +1093,14 @@ async def confirm_credit_product(
     Confirm the selected credit product for an application.
 
     :param payload: The application data.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
 
     :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
 
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the credit product is not selected or not found.
 
@@ -1412,7 +1108,7 @@ async def confirm_credit_product(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
-        utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+        utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
 
         if not application.credit_product_id:
             raise HTTPException(
@@ -1420,12 +1116,7 @@ async def confirm_credit_product(
                 detail="Credit product not selected",
             )
 
-        creditProduct = (
-            session.query(core.CreditProduct)
-            .filter(core.CreditProduct.id == application.credit_product_id)
-            .first()
-        )
-
+        creditProduct = models.CreditProduct.first_by(session, "id", application.credit_product_id)
         if not creditProduct:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1433,30 +1124,57 @@ async def confirm_credit_product(
             )
 
         application.lender_id = creditProduct.lender_id
-        application.amount_requested = application.calculator_data.get(
-            "amount_requested", None
-        )
-        application.repayment_years = application.calculator_data.get(
-            "repayment_years", None
-        )
-        application.repayment_months = application.calculator_data.get(
-            "repayment_months", None
-        )
-        application.payment_start_date = application.calculator_data.get(
-            "payment_start_date", None
-        )
+        application.amount_requested = application.calculator_data.get("amount_requested", None)
+        application.repayment_years = application.calculator_data.get("repayment_years", None)
+        application.repayment_months = application.calculator_data.get("repayment_months", None)
+        application.payment_start_date = application.calculator_data.get("payment_start_date", None)
 
         application.pending_documents = True
-        utils.get_previous_documents(application, session)
-        utils.create_application_action(
+
+        # Retrieve and copy the borrower documents from the most recent rejected application
+        # that shares the same award borrower identifier as the application. The documents
+        # to be copied are only those whose types are required by the credit product of the
+        # application.
+        document_types = application.credit_product.required_document_types
+        document_types_list = [key for key, value in document_types.items() if value]
+        lastest_application_id = (
+            session.query(models.Application.id)
+            .filter(
+                models.Application.status == models.ApplicationStatus.REJECTED,
+                models.Application.award_borrower_identifier == application.award_borrower_identifier,
+            )
+            .order_by(models.Application.created_at.desc())
+            .first()
+        )
+        if lastest_application_id:
+            documents = (
+                session.query(models.BorrowerDocument)
+                .filter(
+                    models.BorrowerDocument.application_id == lastest_application_id[0],
+                    models.BorrowerDocument.type.in_(document_types_list),
+                )
+                .all()
+            )
+
+            # Copy the documents into the database for the provided application.
+            for document in documents:
+                data = {
+                    "application_id": application.id,
+                    "type": document.type,
+                    "name": document.name,
+                    "file": document.file,
+                    "verified": False,
+                }
+                new_borrower_document = models.BorrowerDocument.create(session, **data)
+                application.borrower_documents.append(new_borrower_document)
+
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            core.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
-            {},
+            type=models.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
+            application_id=application.id,
         )
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1469,13 +1187,13 @@ async def confirm_credit_product(
 @router.post(
     "/applications/submit",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def update_apps_send_notifications(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Changes application status from "'ACCEPTED" to "SUBMITTED".
@@ -1484,7 +1202,7 @@ async def update_apps_send_notifications(
     This operation also ensures that the credit product and lender are selected before updating the status.
 
     :param payload: The application data to update.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
@@ -1493,14 +1211,14 @@ async def update_apps_send_notifications(
     :type client: CognitoClient
 
     :return: The updated application with borrower, award and lender details.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raises HTTPException: If credit product or lender is not selected, or if there's an error in submitting the application. # noqa: E501
     """
     with transaction_session(session):
         try:
             application = utils.get_application_by_uuid(payload.uuid, session)
-            utils.check_application_status(application, core.ApplicationStatus.ACCEPTED)
+            utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
 
             if not application.credit_product_id:
                 raise HTTPException(
@@ -1514,7 +1232,7 @@ async def update_apps_send_notifications(
                     detail="Lender not selected",
                 )
 
-            application.status = core.ApplicationStatus.SUBMITTED
+            application.status = models.ApplicationStatus.SUBMITTED
             current_time = datetime.now(application.created_at.tzinfo)
             application.borrower_submitted_at = current_time
             application.pending_documents = False
@@ -1525,14 +1243,14 @@ async def update_apps_send_notifications(
                 lender_email_group=application.lender.email_group,
             )
             message_id = client.send_application_submission_completed(application)
-            utils.create_message(
-                application,
-                core.MessageType.SUBMITION_COMPLETE,
+            models.Message.create(
                 session,
-                message_id,
+                application=application,
+                type=models.MessageType.SUBMITION_COMPLETE,
+                external_message_id=message_id,
             )
             background_tasks.add_task(update_statistics)
-            return ApiSchema.ApplicationResponse(
+            return serializers.ApplicationResponse(
                 application=application,
                 borrower=application.borrower,
                 award=application.award,
@@ -1549,15 +1267,15 @@ async def update_apps_send_notifications(
 @router.post(
     "/applications/email-sme/{id}",
     tags=["applications"],
-    response_model=core.ApplicationWithRelations,
+    response_model=models.ApplicationWithRelations,
 )
 async def email_sme(
     id: int,
-    payload: ApiSchema.ApplicationEmailSme,
+    payload: parsers.ApplicationEmailSme,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-    user: core.User = Depends(get_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    user: models.User = Depends(dependencies.get_user),
 ):
     """
     Send an email to SME and update the application status:
@@ -1568,7 +1286,7 @@ async def email_sme(
     :type id: int
 
     :param payload: The payload containing the message to send to SME.
-    :type payload: ApiSchema.ApplicationEmailSme
+    :type payload: parsers.ApplicationEmailSme
 
     :param session: The database session.
     :type session: Session
@@ -1577,10 +1295,10 @@ async def email_sme(
     :type client: CognitoClient
 
     :param user: The current user.
-    :type user: core.User
+    :type user: models.User
 
     :return: The updated application with its associated relations.
-    :rtype: core.ApplicationWithRelations
+    :rtype: models.ApplicationWithRelations
 
     :raises HTTPException: If there's an error in sending the email to SME.
     """
@@ -1589,8 +1307,8 @@ async def email_sme(
         try:
             application = utils.get_application_by_id(id, session)
             utils.check_FI_user_permission(application, user)
-            utils.check_application_status(application, core.ApplicationStatus.STARTED)
-            application.status = core.ApplicationStatus.INFORMATION_REQUESTED
+            utils.check_application_status(application, models.ApplicationStatus.STARTED)
+            application.status = models.ApplicationStatus.INFORMATION_REQUESTED
             current_time = datetime.now(application.created_at.tzinfo)
             application.information_requested_at = current_time
             application.pending_documents = True
@@ -1602,22 +1320,23 @@ async def email_sme(
                 application.primary_email,
             )
 
-            utils.create_application_action(
+            models.ApplicationAction.create(
                 session,
-                user.id,
-                application.id,
-                core.ApplicationActionType.FI_REQUEST_INFORMATION,
-                payload,
+                type=models.ApplicationActionType.FI_REQUEST_INFORMATION,
+                data=jsonable_encoder(payload, exclude_unset=True),
+                application_id=application.id,
+                user_id=user.id,
             )
 
-            new_message = core.Message(
+            models.Message.create(
+                session,
                 application_id=application.id,
                 body=payload.message,
                 lender_id=application.lender.id,
-                type=core.MessageType.FI_MESSAGE,
+                type=models.MessageType.FI_MESSAGE,
                 external_message_id=message_id,
             )
-            session.add(new_message)
+
             session.commit()
             background_tasks.add_task(update_statistics)
             return application
@@ -1632,12 +1351,12 @@ async def email_sme(
 @router.post(
     "/applications/complete-information-request",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def complete_information_request(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
 ):
     """
@@ -1647,7 +1366,7 @@ async def complete_information_request(
     This operation also sends a notification about the uploaded documents to the FI.
 
     :param payload: The application data to update.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param client: The Cognito client.
     :type client: CognitoClient
@@ -1656,39 +1375,34 @@ async def complete_information_request(
     :type session: Session
 
     :return: The updated application with borrower, award, lender, and documents details.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     """
 
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_application_status(
-            application, core.ApplicationStatus.INFORMATION_REQUESTED
-        )
+        utils.check_application_status(application, models.ApplicationStatus.INFORMATION_REQUESTED)
 
-        application.status = core.ApplicationStatus.STARTED
+        application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            core.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
-            payload,
+            type=models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
 
-        message_id = client.send_upload_documents_notifications(
-            application.lender.email_group
-        )
+        message_id = client.send_upload_documents_notifications(application.lender.email_group)
 
-        utils.create_message(
-            application,
-            core.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+        models.Message.create(
             session,
-            message_id,
+            application=application,
+            type=models.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            external_message_id=message_id,
         )
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1700,10 +1414,10 @@ async def complete_information_request(
 @router.post(
     "/applications/decline",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def decline(
-    payload: ApiSchema.ApplicationDeclinePayload,
+    payload: parsers.ApplicationDeclinePayload,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1712,13 +1426,13 @@ async def decline(
     Changes application status from "PENDING" to "DECLINED".
 
     :param payload: The application decline payload.
-    :type payload: ApiSchema.ApplicationDeclinePayload
+    :type payload: parsers.ApplicationDeclinePayload
 
     :param session: The database session.
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the PENDING status.
 
@@ -1726,21 +1440,21 @@ async def decline(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
-        utils.check_application_status(application, core.ApplicationStatus.PENDING)
+        utils.check_application_status(application, models.ApplicationStatus.PENDING)
 
         borrower_declined_data = vars(payload)
         borrower_declined_data.pop("uuid")
 
         application.borrower_declined_data = borrower_declined_data
-        application.status = core.ApplicationStatus.DECLINED
+        application.status = models.ApplicationStatus.DECLINED
         current_time = datetime.now(application.created_at.tzinfo)
         application.borrower_declined_at = current_time
 
         if payload.decline_all:
-            application.borrower.status = core.BorrowerStatus.DECLINE_OPPORTUNITIES
+            application.borrower.status = models.BorrowerStatus.DECLINE_OPPORTUNITIES
             application.borrower.declined_at = current_time
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1750,10 +1464,10 @@ async def decline(
 @router.post(
     "/applications/rollback-decline",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def rollback_decline(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1761,13 +1475,13 @@ async def rollback_decline(
     Rollback the decline of an application.
 
     :param payload: The application base payload.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
 
@@ -1775,17 +1489,17 @@ async def rollback_decline(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
-        utils.check_application_status(application, core.ApplicationStatus.DECLINED)
+        utils.check_application_status(application, models.ApplicationStatus.DECLINED)
 
         application.borrower_declined_data = {}
-        application.status = core.ApplicationStatus.PENDING
+        application.status = models.ApplicationStatus.PENDING
         application.borrower_declined_at = None
 
-        if application.borrower.status == core.BorrowerStatus.DECLINE_OPPORTUNITIES:
-            application.borrower.status = core.BorrowerStatus.ACTIVE
+        if application.borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
+            application.borrower.status = models.BorrowerStatus.ACTIVE
             application.borrower.declined_at = None
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1795,10 +1509,10 @@ async def rollback_decline(
 @router.post(
     "/applications/decline-feedback",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def decline_feedback(
-    payload: ApiSchema.ApplicationDeclineFeedbackPayload,
+    payload: parsers.ApplicationDeclineFeedbackPayload,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
 ):
@@ -1806,13 +1520,13 @@ async def decline_feedback(
     Provide feedback for a declined application.
 
     :param payload: The application decline feedback payload.
-    :type payload: ApiSchema.ApplicationDeclineFeedbackPayload
+    :type payload: parsers.ApplicationDeclineFeedbackPayload
 
     :param session: The database session.
     :type session: Session
 
     :return: The application response containing the updated application, borrower, and award.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
 
@@ -1820,16 +1534,14 @@ async def decline_feedback(
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
         utils.check_is_application_expired(application)
-        utils.check_application_status(application, core.ApplicationStatus.DECLINED)
+        utils.check_application_status(application, models.ApplicationStatus.DECLINED)
 
         borrower_declined_preferences_data = vars(payload)
         borrower_declined_preferences_data.pop("uuid")
 
-        application.borrower_declined_preferences_data = (
-            borrower_declined_preferences_data
-        )
+        application.borrower_declined_preferences_data = borrower_declined_preferences_data
         background_tasks.add_task(update_statistics)
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=application,
             borrower=application.borrower,
             award=application.award,
@@ -1839,11 +1551,11 @@ async def decline_feedback(
 @router.get(
     "/applications/{id}/previous-awards",
     tags=["applications"],
-    response_model=List[core.Award],
+    response_model=List[models.Award],
 )
 async def previous_contracts(
     id: int,
-    user: core.User = Depends(get_user),
+    user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -1853,13 +1565,13 @@ async def previous_contracts(
     :type id: int
 
     :param user: The current user authenticated.
-    :type user: core.User
+    :type user: models.User
 
     :param session: The database session.
     :type session: Session
 
     :return: A list of previous awards associated with the application.
-    :rtype: List[core.Award]
+    :rtype: List[models.Award]
 
     :raise: HTTPException with status code 401 if the user is not authorized to access the application.
 
@@ -1868,24 +1580,24 @@ async def previous_contracts(
         application = utils.get_application_by_id(id, session)
         utils.check_FI_user_permission_or_OCP(application, user)
 
-        return utils.get_previous_awards(application, session)
+        return application.previous_awards(session)
 
 
 @router.post(
     "/applications/find-alternative-credit-option",
     tags=["applications"],
-    response_model=ApiSchema.ApplicationResponse,
+    response_model=serializers.ApplicationResponse,
 )
 async def find_alternative_credit_option(
-    payload: ApiSchema.ApplicationBase,
+    payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Find an alternative credit option for a rejected application by copying it.
 
     :param payload: The payload containing the UUID of the rejected application.
-    :type payload: ApiSchema.ApplicationBase
+    :type payload: parsers.ApplicationBase
 
     :param session: The database session.
     :type session: Session
@@ -1894,7 +1606,7 @@ async def find_alternative_credit_option(
     :type client: CognitoClient
 
     :return: The newly created application as an alternative credit option.
-    :rtype: ApiSchema.ApplicationResponse
+    :rtype: serializers.ApplicationResponse
 
     :raise: HTTPException with status code 400 if the application has already been copied.
     :raise: HTTPException with status code 400 if the application is not in the rejected status.
@@ -1902,31 +1614,71 @@ async def find_alternative_credit_option(
     """
     with transaction_session(session):
         application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_if_application_was_already_copied(application, session)
-        utils.check_application_status(application, core.ApplicationStatus.REJECTED)
-        new_application = utils.copy_application(application, session)
+
+        # Check if the application has already been copied.
+        app_action = (
+            session.query(models.ApplicationAction)
+            .join(
+                models.Application,
+                models.Application.id == models.ApplicationAction.application_id,
+            )
+            .filter(
+                models.Application.id == application.id,
+                models.ApplicationAction.type == models.ApplicationActionType.COPIED_APPLICATION,
+            )
+            .options(joinedload(models.ApplicationAction.application))
+            .first()
+        )
+        if app_action:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=util.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
+            )
+
+        utils.check_application_status(application, models.ApplicationStatus.REJECTED)
+
+        # Copy the application, changing the uuid, status, and borrower_accepted_at.
+        try:
+            data = {
+                "award_id": application.award_id,
+                "uuid": util.generate_uuid(application.uuid),
+                "primary_email": application.primary_email,
+                "status": models.ApplicationStatus.ACCEPTED,
+                "award_borrower_identifier": application.award_borrower_identifier,
+                "borrower_id": application.borrower.id,
+                "calculator_data": application.calculator_data,
+                "borrower_accepted_at": datetime.now(application.created_at.tzinfo),
+            }
+            new_application = models.Application.create(session, **data)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"There was a problem copying the application.{e}",
+            )
+
         message_id = client.send_copied_application_notifications(new_application)
 
-        utils.create_message(
-            new_application, core.MessageType.APPLICATION_COPIED, session, message_id
+        models.Message.create(
+            session,
+            application=new_application,
+            type=models.MessageType.APPLICATION_COPIED,
+            external_message_id=message_id,
         )
 
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            application.id,
-            core.ApplicationActionType.COPIED_APPLICATION,
-            payload,
+            type=models.ApplicationActionType.COPIED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
-        utils.create_application_action(
+        models.ApplicationAction.create(
             session,
-            None,
-            new_application.id,
-            core.ApplicationActionType.APPLICATION_COPIED_FROM,
-            payload,
+            type=models.ApplicationActionType.APPLICATION_COPIED_FROM,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=new_application.id,
         )
 
-        return ApiSchema.ApplicationResponse(
+        return serializers.ApplicationResponse(
             application=new_application,
             borrower=new_application.borrower,
             award=new_application.award,

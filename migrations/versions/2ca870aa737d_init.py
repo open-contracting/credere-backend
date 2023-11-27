@@ -11,7 +11,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 from sqlmodel import create_engine
 
-from app.core.settings import app_settings
+from app.settings import app_settings
 
 # revision identifiers, used by Alembic.
 revision = "2ca870aa737d"
@@ -42,9 +42,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("source_data", postgresql.JSON(astext_type=sa.Text()), nullable=True),
-        sa.Column(
-            "missing_data", postgresql.JSON(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("missing_data", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -54,15 +52,11 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("declined_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column(
-            "borrower_identifier", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("borrower_identifier", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("legal_name", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("email", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("address", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column(
-            "legal_identifier", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("legal_identifier", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("type", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("sector", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
@@ -75,9 +69,7 @@ def upgrade() -> None:
             postgresql.JSON(astext_type=sa.Text()),
             nullable=True,
         ),
-        sa.Column(
-            "limits_preferences", postgresql.JSON(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("limits_preferences", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -101,21 +93,15 @@ def upgrade() -> None:
         sa.Column("award_amount", sa.DECIMAL(precision=16, scale=2), nullable=False),
         sa.Column("contractperiod_startdate", sa.DateTime(), nullable=True),
         sa.Column("contractperiod_enddate", sa.DateTime(), nullable=True),
-        sa.Column(
-            "payment_method", postgresql.JSON(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("payment_method", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("source_last_updated_at", sa.DateTime(), nullable=True),
         sa.Column(
             "source_data_contracts",
             postgresql.JSON(astext_type=sa.Text()),
             nullable=True,
         ),
-        sa.Column(
-            "source_data_awards", postgresql.JSON(astext_type=sa.Text()), nullable=True
-        ),
-        sa.Column(
-            "missing_data", postgresql.JSON(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("source_data_awards", postgresql.JSON(astext_type=sa.Text()), nullable=True),
+        sa.Column("missing_data", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -125,28 +111,18 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("borrower_id", sa.Integer(), nullable=True),
-        sa.Column(
-            "source_contract_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("source_contract_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("title", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("award_currency", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("buyer_name", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("source_url", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("entity_code", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column(
-            "contract_status", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("contract_status", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("previous", sa.Boolean(), nullable=False),
-        sa.Column(
-            "procurement_method", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
-        sa.Column(
-            "contracting_process_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
-        sa.Column(
-            "procurement_category", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("procurement_method", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("contracting_process_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("procurement_category", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.ForeignKeyConstraint(
             ["borrower_id"],
             ["borrower.id"],
@@ -201,9 +177,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("amount_requested", sa.DECIMAL(precision=16, scale=2), nullable=True),
-        sa.Column(
-            "calculator_data", postgresql.JSON(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("calculator_data", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("borrower_submitted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("borrower_accepted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("borrower_declined_at", sa.DateTime(timezone=True), nullable=True),
@@ -234,9 +208,7 @@ def upgrade() -> None:
             postgresql.JSON(astext_type=sa.Text()),
             nullable=True,
         ),
-        sa.Column(
-            "borrewed_uploaded_contracted_at", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("borrewed_uploaded_contracted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -383,9 +355,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("application_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "external_message_id", sqlmodel.sql.sqltypes.AutoString(), nullable=True
-        ),
+        sa.Column("external_message_id", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.Column("body", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.ForeignKeyConstraint(
             ["application_id"],
@@ -398,9 +368,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column(
             "type",
-            sa.Enum(
-                "MSME opt-in statistics", "Application KPIs", name="statistic_type"
-            ),
+            sa.Enum("MSME opt-in statistics", "Application KPIs", name="statistic_type"),
             nullable=False,
         ),
         sa.Column(

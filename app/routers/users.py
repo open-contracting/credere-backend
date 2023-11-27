@@ -1,33 +1,31 @@
 import logging
+from datetime import datetime
 from typing import Union
 
 from botocore.exceptions import ClientError
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy import asc, desc, text
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, joinedload
 
-import app.utils.users as utils
-from app.schema import api as ApiSchema
-from app.utils.verify_token import get_current_user
-
-from ..core.user_dependencies import CognitoClient, get_cognito_client
-from ..db.session import get_db, transaction_session
-from ..schema.core import BasicUser, SetupMFA, User, UserWithLender
-from ..utils.permissions import OCP_only
-
-from fastapi import APIRouter, Depends, Header  # isort:skip # noqa
-from fastapi import HTTPException, Query, Response, status  # isort:skip # noqa
+from app import dependencies, models, serializers
+from app.aws import CognitoClient
+from app.db import get_db, transaction_session
+from app.util import get_object_or_404
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@router.post("/users", tags=["users"], response_model=User)
-@OCP_only()
+@router.post("/users", tags=["users"], response_model=models.User)
+@dependencies.OCP_only()
 async def create_user(
-    payload: User,
+    payload: models.User,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(get_cognito_client),
-    current_user: User = Depends(get_current_user),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    current_user: models.User = Depends(dependencies.get_current_user),
 ):
     """
     Create a new user.
@@ -35,28 +33,42 @@ async def create_user(
     This endpoint allows creating a new user. It is accessible only to users with the OCP role.
 
     :param payload: The user data for creating the new user.
-    :type payload: User
+    :type payload: models.User
     :param session: The database session dependency (automatically injected).
     :type session: Session
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
     :param current_user: The current user (automatically injected).
-    :type current_user: User
+    :type current_user: models.User
 
     :return: The created user.
-    :rtype: User
+    :rtype: models.User
     """
-    return utils.create_user(payload, session, client)
+    with transaction_session(session):
+        try:
+            user = models.User(**payload.dict())
+            user.created_at = datetime.now()
+            session.add(user)
+            cognitoResponse = client.admin_create_user(payload.email, payload.name)
+            user.external_id = cognitoResponse["User"]["Username"]
+
+            return user
+        except (client.exceptions().UsernameExistsException, IntegrityError) as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Username already exists",
+            )
 
 
 @router.put(
     "/users/change-password",
-    response_model=Union[ApiSchema.ChangePasswordResponse, ApiSchema.ResponseBase],
+    response_model=Union[serializers.ChangePasswordResponse, serializers.ResponseBase],
 )
 def change_password(
-    user: BasicUser,
+    user: models.BasicUser,
     response: Response,
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Change user password.
@@ -65,37 +77,32 @@ def change_password(
     and handles different scenarios such as new password requirement, MFA setup, and error handling.
 
     :param user: The user data including the username, temporary password, and new password.
-    :type user: BasicUser
+    :type user: models.BasicUser
     :param response: The response object used to modify the response headers (automatically injected).
     :type response: Response
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
 
     :return: The change password response or an error response.
-    :rtype: Union[ApiSchema.ChangePasswordResponse, ApiSchema.ResponseBase]
+    :rtype: Union[serializers.ChangePasswordResponse, serializers.ResponseBase]
     """
     try:
         response = client.initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             session = response["Session"]
-            response = client.respond_to_auth_challenge(
-                user.username, session, "NEW_PASSWORD_REQUIRED", user.password
-            )
+            response = client.respond_to_auth_challenge(user.username, session, "NEW_PASSWORD_REQUIRED", user.password)
 
         client.verified_email(user.username)
-        if (
-            response.get("ChallengeName") is not None
-            and response["ChallengeName"] == "MFA_SETUP"
-        ):
+        if response.get("ChallengeName") is not None and response["ChallengeName"] == "MFA_SETUP":
             mfa_setup_response = client.mfa_setup(response["Session"])
-            return ApiSchema.ChangePasswordResponse(
+            return serializers.ChangePasswordResponse(
                 detail="Password changed with MFA setup required",
                 secret_code=mfa_setup_response["secret_code"],
                 session=mfa_setup_response["session"],
                 username=user.username,
             )
 
-        return ApiSchema.ResponseBase(detail="Password changed")
+        return serializers.ResponseBase(detail="Password changed")
     except ClientError as e:
         logger.exception(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
@@ -111,11 +118,11 @@ def change_password(
             )
 
 
-@router.put("/users/setup-mfa", response_model=ApiSchema.ResponseBase)
+@router.put("/users/setup-mfa", response_model=serializers.ResponseBase)
 def setup_mfa(
-    user: SetupMFA,
+    user: models.SetupMFA,
     response: Response,
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Set up multi-factor authentication (MFA) for the user.
@@ -124,19 +131,19 @@ def setup_mfa(
     token with the provided secret, session, and temporary password.
 
     :param user: The user data including the secret code, session, and temporary password.
-    :type user: SetupMFA
+    :type user: models.SetupMFA
     :param response: The response object used to modify the response headers (automatically injected).
     :type response: Response
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
 
     :return: The response indicating successful MFA setup or an error response.
-    :rtype: ApiSchema.ResponseBase
+    :rtype: serializers.ResponseBase
     """
     try:
         client.verify_software_token(user.secret, user.session, user.temp_password)
 
-        return ApiSchema.ResponseBase(detail="MFA configured successfully")
+        return serializers.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
         logger.exception(e)
 
@@ -155,13 +162,13 @@ def setup_mfa(
 
 @router.post(
     "/users/login",
-    response_model=ApiSchema.LoginResponse,
+    response_model=serializers.LoginResponse,
 )
 def login(
-    user: BasicUser,
+    user: models.BasicUser,
     response: Response,
-    client: CognitoClient = Depends(get_cognito_client),
-    db: Session = Depends(get_db),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    session: Session = Depends(get_db),
 ):
     """
     Authenticate the user and generate access and refresh tokens.
@@ -172,22 +179,22 @@ def login(
     the generated access and refresh tokens.
 
     :param user: The user data including the username and password.
-    :type user: BasicUser
+    :type user: models.BasicUser
     :param response: The response object used to modify the response headers (automatically injected).
     :type response: Response
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
-    :param db: The database session dependency (automatically injected).
-    :type db: Session
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
 
     :return: The response containing the user information and tokens if the login is successful.
-    :rtype: ApiSchema.LoginResponse
+    :rtype: serializers.LoginResponse
     """
     try:
         response = client.initiate_auth(user.username, user.password)
-        user = db.query(User).filter(User.email == user.username).first()
+        user = models.User.first_by(session, "email", user.username)
 
-        return ApiSchema.LoginResponse(
+        return serializers.LoginResponse(
             user=user,
             access_token=response["AuthenticationResult"]["AccessToken"],
             refresh_token=response["AuthenticationResult"]["RefreshToken"],
@@ -210,12 +217,12 @@ def login(
 
 @router.post(
     "/users/login-mfa",
-    response_model=ApiSchema.LoginResponse,
+    response_model=serializers.LoginResponse,
 )
 def login_mfa(
-    user: BasicUser,
-    client: CognitoClient = Depends(get_cognito_client),
-    db: Session = Depends(get_db),
+    user: models.BasicUser,
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    session: Session = Depends(get_db),
 ):
     """
     Authenticate the user with Multi-Factor Authentication (MFA) and generate access and refresh tokens.
@@ -226,29 +233,29 @@ def login_mfa(
     it returns the user information along with the generated access and refresh tokens.
 
     :param user: The user data including the username, password, and MFA code.
-    :type user: BasicUser
+    :type user: models.BasicUser
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
-    :param db: The database session dependency (automatically injected).
-    :type db: Session
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
 
     :return: The response containing the user information and tokens if the login is successful.
-    :rtype: ApiSchema.LoginResponse
+    :rtype: serializers.LoginResponse
     """
     try:
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
-            session = response["Session"]
+            auth_session = response["Session"]
             mfa_login_response = client.respond_to_auth_challenge(
                 user.username,
-                session,
+                auth_session,
                 response["ChallengeName"],
                 "",
                 mfa_code=user.temp_password,
             )
 
-            user = db.query(User).filter(User.email == user.username).first()
+            user = models.User.first_by(session, "email", user.username)
 
             if not user:
                 raise HTTPException(
@@ -256,7 +263,7 @@ def login_mfa(
                     detail="User not found",
                 )
 
-            return ApiSchema.LoginResponse(
+            return serializers.LoginResponse(
                 user=user,
                 access_token=mfa_login_response["access_token"],
                 refresh_token=mfa_login_response["refresh_token"],
@@ -279,11 +286,11 @@ def login_mfa(
 
 @router.get(
     "/users/logout",
-    response_model=ApiSchema.ResponseBase,
+    response_model=serializers.ResponseBase,
 )
 def logout(
     authorization: str = Header(None),
-    client: CognitoClient = Depends(get_cognito_client),
+    client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     """
     Logout the user by invalidating the access token.
@@ -299,7 +306,7 @@ def logout(
     :type client: CognitoClient
 
     :return: The response indicating successful logout.
-    :rtype: ApiSchema.ResponseBase
+    :rtype: serializers.ResponseBase
     """
     try:
         access_token = authorization.split(" ")[1]
@@ -307,16 +314,16 @@ def logout(
     except ClientError as e:
         logger.exception(e)
 
-    return ApiSchema.ResponseBase(detail="User logged out successfully")
+    return serializers.ResponseBase(detail="User logged out successfully")
 
 
 @router.get(
     "/users/me",
-    response_model=ApiSchema.UserResponse,
+    response_model=serializers.UserResponse,
 )
 def me(
-    usernameFromToken: str = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    usernameFromToken: str = Depends(dependencies.get_current_user),
+    session: Session = Depends(get_db),
 ):
     """
     Get the details of the currently authenticated user.
@@ -327,23 +334,21 @@ def me(
 
     :param usernameFromToken: The username extracted from the JWT token.
     :type usernameFromToken: str
-    :param db: The database session dependency (automatically injected).
-    :type db: Session
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
 
     :return: The response containing the details of the authenticated user.
-    :rtype: ApiSchema.UserResponse
+    :rtype: serializers.UserResponse
     """
-    user = db.query(User).filter(User.external_id == usernameFromToken).first()
-    return ApiSchema.UserResponse(user=user)
+    user = models.User.first_by(session, "external_id", usernameFromToken)
+    return serializers.UserResponse(user=user)
 
 
 @router.post(
     "/users/forgot-password",
-    response_model=ApiSchema.ResponseBase,
+    response_model=serializers.ResponseBase,
 )
-def forgot_password(
-    user: BasicUser, client: CognitoClient = Depends(get_cognito_client)
-):
+def forgot_password(user: models.BasicUser, client: CognitoClient = Depends(dependencies.get_cognito_client)):
     """
     Initiate the process of resetting a user's password.
 
@@ -351,12 +356,12 @@ def forgot_password(
     It sends an email to the user with a reset link that they can use to set a new password.
 
     :param user: The user information containing the username or email address of the user.
-    :type user: BasicUser
+    :type user: models.BasicUser
     :param client: The Cognito client dependency (automatically injected).
     :type client: CognitoClient
 
     :return: The response indicating that an email with a reset link was sent to the user.
-    :rtype: ApiSchema.ResponseBase
+    :rtype: serializers.ResponseBase
     """
     detail = "An email with a reset link was sent to end user"
     try:
@@ -365,11 +370,11 @@ def forgot_password(
         logger.exception("Error resetting password")
 
     # always return 200 to avoid user enumeration
-    return ApiSchema.ResponseBase(detail=detail)
+    return serializers.ResponseBase(detail=detail)
 
 
-@router.get("/users/{user_id}", tags=["users"], response_model=User)
-async def get_user(user_id: int, db: Session = Depends(get_db)):
+@router.get("/users/{user_id}", tags=["users"], response_model=models.User)
+async def get_user(user_id: int, session: Session = Depends(get_db)):
     """
     Retrieve information about a user.
 
@@ -377,30 +382,24 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
 
     :param user_id: The ID of the user.
     :type user_id: int
-    :param db: The database session dependency (automatically injected).
-    :type db: Session
+    :param session: The database session dependency (automatically injected).
+    :type session: Session
 
     :return: The user information.
-    :rtype: User
+    :rtype: models.User
     :raises HTTPException 404: If the user is not found.
     """
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    return user
+    return get_object_or_404(session, models.User, "id", user_id)
 
 
-@router.get("/users", tags=["users"], response_model=ApiSchema.UserListResponse)
-@OCP_only()
+@router.get("/users", tags=["users"], response_model=serializers.UserListResponse)
+@dependencies.OCP_only()
 async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("created_at"),
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
-    current_user: User = Depends(get_current_user),
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -417,26 +416,46 @@ async def get_all_users(
     :param sort_order: The sort order. Must be either "asc" or "desc". Defaults to "asc".
     :type sort_order: str
     :param current_user: The current user (automatically injected).
-    :type current_user: User
+    :type current_user: models.User
     :param session: The database session dependency (automatically injected).
     :type session: Session
 
     :return: The paginated and sorted list of users.
-    :rtype: ApiSchema.UserListResponse
+    :rtype: serializers.UserListResponse
     """
-    return utils.get_all_users(page, page_size, sort_field, sort_order, session)
+    sort_direction = desc if sort_order.lower() == "desc" else asc
+
+    list_query = (
+        session.query(models.User)
+        .outerjoin(models.Lender)
+        .options(
+            joinedload(models.User.lender),
+        )
+        .order_by(text(f"{sort_field} {sort_direction.__name__}"), models.User.id)
+    )
+
+    total_count = list_query.count()
+
+    users = list_query.offset(page * page_size).limit(page_size).all()
+
+    return serializers.UserListResponse(
+        items=users,
+        count=total_count,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.put(
     "/users/{id}",
     tags=["users"],
-    response_model=UserWithLender,
+    response_model=models.UserWithLender,
 )
-@OCP_only()
+@dependencies.OCP_only()
 async def update_user(
     id: int,
-    user: User,
-    current_user: User = Depends(get_current_user),
+    user: models.User,
+    current_user: models.User = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ):
     """
@@ -447,14 +466,27 @@ async def update_user(
     :param id: The ID of the user to update.
     :type id: int
     :param user: The updated user information.
-    :type user: User
+    :type user: models.User
     :param current_user: The current user (automatically injected).
-    :type current_user: User
+    :type current_user: models.User
     :param session: The database session dependency (automatically injected).
     :type session: Session
 
     :return: The updated user information.
-    :rtype: UserWithLender
+    :rtype: models.UserWithLender
     """
+    # Rename the query parameter.
+    payload = user
+
     with transaction_session(session):
-        return utils.update_user(session, user, id)
+        try:
+            user = get_object_or_404(session, models.User, "id", id)
+
+            update_dict = jsonable_encoder(payload, exclude_unset=True)
+            return user.update(session, **update_dict)
+        except IntegrityError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="User already exists",
+            )

@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
-from app.schema import core
+from app import models
 
 datetime_keys = ["award_date", "contractperiod_enddate", "expired_at"]
 excluded_keys = [
@@ -28,9 +28,7 @@ class MockResponse:
 
 
 def load_json_file(filename):
-    __location__ = os.path.realpath(
-        os.path.join(os.getcwd(), os.path.dirname(__file__))
-    )
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
     filepath = os.path.join(__location__, filename)
 
     with open(filepath, "r") as json_file:
@@ -69,9 +67,7 @@ def mock_response(status_code: int, content: dict, function_path: str):
 
 
 @contextmanager
-def mock_whole_process_once(
-    status_code: int, award: dict, borrower: dict, email: dict, function_path: str
-):
+def mock_whole_process_once(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
     # this will mock the whole process of the fetcher once responding to make_request_with_retry in order
     mock = MagicMock(
         side_effect=[
@@ -86,9 +82,7 @@ def mock_whole_process_once(
 
 
 @contextmanager
-def mock_whole_process(
-    status_code: int, award: dict, borrower: dict, email: dict, function_path: str
-):
+def mock_whole_process(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
     # this will mock the whole process of the fetcher responding to make_request_with_retry in order
     #
     mock = MagicMock(
@@ -133,13 +127,10 @@ def compare_objects(
             continue
 
         if key == "size":
-            assert core.BorrowerSize.NOT_INFORMED == value
+            assert models.BorrowerSize.NOT_INFORMED == value
             continue
         if key == "status":
-            assert (
-                core.BorrowerStatus.ACTIVE == value
-                or core.ApplicationStatus.PENDING == value
-            )
+            assert models.BorrowerStatus.ACTIVE == value or models.ApplicationStatus.PENDING == value
             continue
 
         assert expected_result[key] == value
