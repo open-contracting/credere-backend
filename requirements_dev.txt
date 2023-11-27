@@ -92,7 +92,9 @@ future==0.18.3
     #   -r requirements.txt
     #   pyseeyou
 greenlet==3.0.0
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -146,7 +148,7 @@ mdurl==0.1.2
 moto[cognitoidp]==4.1.10
     # via -r requirements_dev.in
 mypy-boto3-ses==1.29.0
-    # via -r requirements_dev.in
+    # via -r requirements.txt
 mypy-extensions==1.0.0
     # via black
 nodeenv==1.8.0

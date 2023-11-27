@@ -3,6 +3,7 @@ boto3
 botocore
 fastapi
 httpx
+mypy-boto3-ses
 pandas
 pydantic
 python-dotenv
