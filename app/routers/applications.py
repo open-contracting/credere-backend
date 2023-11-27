@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
-from sqlalchemy.orm import Session, defaultload, joinedload
+from sqlalchemy.orm import Session, joinedload
 
 import app.utils.applications as utils
 from app import dependencies, models, parsers, serializers, util
@@ -27,19 +27,16 @@ router = APIRouter()
     response_model=models.ApplicationWithRelations,
 )
 async def reject_application(
-    id: int,
     payload: parsers.LenderRejectedApplication,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
+    application: models.Application = Depends(dependencies.get_authorized_application(roles=(models.UserType.FI,))),
 ):
     """
     Reject an application:
     Changes the status from "STARTED" to "REJECTED".
-
-    :param id: The ID of the application to reject.
-    :type id: int
 
     :param payload: The rejected application data.
     :type payload: parsers.LenderRejectedApplication
@@ -58,8 +55,6 @@ async def reject_application(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_id(id, session)
-        utils.check_FI_user_permission(application, user)
         if application.status not in (
             models.ApplicationStatus.CONTRACT_UPLOADED,
             models.ApplicationStatus.STARTED,
@@ -112,19 +107,21 @@ async def reject_application(
     response_model=models.ApplicationWithRelations,
 )
 async def complete_application(
-    id: int,
     payload: parsers.LenderReviewContract,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(
+            roles=(models.UserType.FI,),
+            statuses=(models.ApplicationStatus.CONTRACT_UPLOADED,),
+        )
+    ),
 ):
     """
     Complete an application:
     Changes application status from "CONTRACT_UPLOADED" to "COMPLETED".
-
-    :param id: The ID of the application to complete.
-    :type id: int
 
     :param payload: The completed application data.
     :type payload: parsers.LenderReviewContract
@@ -143,10 +140,6 @@ async def complete_application(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_id(id, session)
-        utils.check_FI_user_permission(application, user)
-        utils.check_application_status(application, models.ApplicationStatus.CONTRACT_UPLOADED)
-
         application.stage_as_completed(payload.disbursed_final_amount)
         application.completed_in_days = application.days_waiting_for_lender(session)
         # This next call performs the `session.flush()`.
@@ -176,21 +169,23 @@ async def complete_application(
     response_model=models.ApplicationWithRelations,
 )
 async def approve_application(
-    id: int,
     payload: parsers.LenderApprovedData,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(
+            roles=(models.UserType.FI,),
+            statuses=(models.ApplicationStatus.STARTED,),
+        )
+    ),
 ):
     """
     Approve an application:
     Changes application status from "STARTED" to "APPROVED".
 
     Sends an email to  SME notifying the current stage of their application.
-
-    :param id: The ID of the application to approve.
-    :type id: int
 
     :param payload: The approved application data.
     :type payload: parsers.LenderApprovedData
@@ -209,10 +204,6 @@ async def approve_application(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_id(id, session)
-        utils.check_FI_user_permission(application, user)
-        utils.check_application_status(application, models.ApplicationStatus.STARTED)
-
         # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
         # the application's `secop_data_verification`.
         not_validated_fields = []
@@ -275,6 +266,9 @@ async def confirm_upload_contract(
     payload: parsers.UploadContractConfirmation,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(statuses=(models.ApplicationStatus.APPROVED,))
+    ),
 ):
     """
     Confirm the upload of a contract document for an application.
@@ -297,9 +291,6 @@ async def confirm_upload_contract(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_application_status(application, models.ApplicationStatus.APPROVED)
-
         FI_message_id, SME_message_id = client.send_upload_contract_notifications(application)
 
         application.contract_amount_submitted = payload.contract_amount_submitted
@@ -344,16 +335,21 @@ async def confirm_upload_contract(
     response_model=models.ApplicationWithRelations,
 )
 async def verify_data_field(
-    id: int,
     payload: parsers.UpdateDataField,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(
+            roles=(models.UserType.FI,),
+            statuses=(
+                models.ApplicationStatus.STARTED,
+                models.ApplicationStatus.INFORMATION_REQUESTED,
+            ),
+        )
+    ),
 ):
     """
     Verify and update a data field in an application.
-
-    :param id: The ID of the application.
-    :type id: int
 
     :param payload: The data field update payload.
     :type payload: parsers.UpdateDataField
@@ -369,17 +365,6 @@ async def verify_data_field(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_id(id, session)
-        utils.check_application_in_status(
-            application,
-            [
-                models.ApplicationStatus.STARTED,
-                models.ApplicationStatus.INFORMATION_REQUESTED,
-            ],
-        )
-
-        utils.check_FI_user_permission(application, user)
-
         # Update a specific field in the application's `secop_data_verification` attribute.
         payload_dict = {key: value for key, value in payload.dict().items() if value is not None}
         key, value = next(iter(payload_dict.items()), (None, None))
@@ -430,13 +415,9 @@ async def verify_document(
     """
     with transaction_session(session):
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", document_id)
-        utils.check_FI_user_permission(document.application, user)
-        utils.check_application_in_status(
-            document.application,
-            [
-                models.ApplicationStatus.STARTED,
-                models.ApplicationStatus.INFORMATION_REQUESTED,
-            ],
+        dependencies.raise_if_application_not_to_lender(document.application, user)
+        dependencies.raise_if_application_status_mismatch(
+            document.application, (models.ApplicationStatus.STARTED, models.ApplicationStatus.INFORMATION_REQUESTED)
         )
 
         document.verified = payload.verified
@@ -453,21 +434,24 @@ async def verify_document(
 
 
 @router.put(
-    "/applications/{application_id}/award",
+    "/applications/{id}/award",
     tags=["applications"],
     response_model=models.ApplicationWithRelations,
 )
 async def update_application_award(
-    application_id: int,
+    id: int,
     payload: parsers.AwardUpdate,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(
+            roles=(models.UserType.OCP, models.UserType.FI),
+            statuses=dependencies.OCP_CAN_MODIFY,
+        )
+    ),
 ):
     """
     Update the award details of an application.
-
-    :param application_id: The ID of the application.
-    :type application_id: int
 
     :param payload: The award update payload.
     :type payload: parsers.AwardUpdate
@@ -483,27 +467,8 @@ async def update_application_award(
 
     """
     with transaction_session(session):
-        application = (
-            models.Application.filter_by(session, "id", application_id)
-            .options(defaultload(models.Application.award))
-            .first()
-        )
-        if not application or not application.award:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Application or award not found",
-            )
-
-        utils.check_application_not_status(
-            application,
-            utils.OCP_cannot_modify,
-        )
-
-        if not user.is_OCP() and application.lender_id != user.lender_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This application is not owned by this lender",
-            )
+        if not application.award:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Award not found")
 
         # Update the award.
         update_dict = jsonable_encoder(payload, exclude_unset=True)
@@ -513,7 +478,7 @@ async def update_application_award(
             session,
             type=models.ApplicationActionType.AWARD_UPDATE,
             data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application_id,
+            application_id=id,
             user_id=user.id,
         )
 
@@ -522,21 +487,24 @@ async def update_application_award(
 
 
 @router.put(
-    "/applications/{application_id}/borrower",
+    "/applications/{id}/borrower",
     tags=["applications"],
     response_model=models.ApplicationWithRelations,
 )
 async def update_application_borrower(
-    application_id: int,
+    id: int,
     payload: parsers.BorrowerUpdate,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(
+            roles=(models.UserType.OCP, models.UserType.FI),
+            statuses=dependencies.OCP_CAN_MODIFY,
+        )
+    ),
 ):
     """
     Update the borrower details of an application.
-
-    :param application_id: The ID of the application.
-    :type application_id: int
 
     :param payload: The borrower update payload.
     :type payload: parsers.BorrowerUpdate
@@ -552,27 +520,8 @@ async def update_application_borrower(
 
     """
     with transaction_session(session):
-        application = (
-            models.Application.filter_by(session, "id", application_id)
-            .options(defaultload(models.Application.borrower))
-            .first()
-        )
-        if not application or not application.borrower:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Application or borrower not found",
-            )
-
-        utils.check_application_not_status(
-            application,
-            utils.OCP_cannot_modify,
-        )
-
-        if not user.is_OCP() and application.lender_id != user.lender_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="This application is not owned by this lender",
-            )
+        if not application.borrower:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Borrower not found")
 
         # Update the borrower.
         update_dict = jsonable_encoder(payload, exclude_unset=True)
@@ -588,7 +537,7 @@ async def update_application_borrower(
             session,
             type=models.ApplicationActionType.BORROWER_UPDATE,
             data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application_id,
+            application_id=id,
             user_id=user.id,
         )
 
@@ -667,15 +616,14 @@ async def get_applications_list(
     response_model=models.ApplicationWithRelations,
 )
 async def get_application(
-    id: int,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(roles=(models.UserType.OCP, models.UserType.FI))
+    ),
 ):
     """
     Retrieve an application by its ID.
-
-    :param id: The ID of the application to retrieve.
-    :type id: int
 
     :param user: The current user.
     :type user: models.User
@@ -689,19 +637,7 @@ async def get_application(
     :raise: HTTPException with status code 401 if the user is not authorized to view the application.
 
     """
-    application = utils.get_application_by_id(id, session)
-    application = utils.get_modified_data_fields(application, session)
-
-    if user.is_OCP():
-        return application
-
-    if user.lender_id != application.lender_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized to view this application",
-        )
-
-    return application
+    return utils.get_modified_data_fields(application, session)
 
 
 @router.post(
@@ -714,6 +650,12 @@ async def start_application(
     background_tasks: BackgroundTasks,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(
+            roles=(models.UserType.FI,),
+            statuses=(models.ApplicationStatus.SUBMITTED,),
+        )
+    ),
 ):
     """
     Start an application:
@@ -735,15 +677,6 @@ async def start_application(
 
     """
     with transaction_session(session):
-        application = models.Application.first_by(session, "id", id)
-        utils.check_application_status(application, models.ApplicationStatus.SUBMITTED)
-
-        if user.lender_id != application.lender_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Unauthorized to start this application",
-            )
-
         application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
         background_tasks.add_task(update_statistics)
@@ -817,12 +750,14 @@ async def get_applications(
     tags=["applications"],
     response_model=serializers.ApplicationResponse,
 )
-async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
+async def application_by_uuid(
+    session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_uuid(scopes=(dependencies.ApplicationScope.UNEXPIRED,))
+    ),
+):
     """
     Retrieve an application by its UUID.
-
-    :param uuid: The UUID of the application to retrieve.
-    :type uuid: str
 
     :param session: The database session.
     :type session: Session
@@ -833,9 +768,6 @@ async def application_by_uuid(uuid: str, session: Session = Depends(get_db)):
     :raise: HTTPException with status code 404 if the application is expired.
 
     """
-    application = utils.get_application_by_uuid(uuid, session)
-    utils.check_is_application_expired(application)
-
     return serializers.ApplicationResponse(
         application=application,
         borrower=application.borrower,
@@ -855,6 +787,11 @@ async def access_scheme(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
+        )
+    ),
 ):
     """
     Access the scheme for an application.
@@ -880,10 +817,6 @@ async def access_scheme(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_is_application_expired(application)
-        utils.check_application_status(application, models.ApplicationStatus.PENDING)
-
         current_time = datetime.now(application.created_at.tzinfo)
         application.borrower_accepted_at = current_time
         application.status = models.ApplicationStatus.ACCEPTED
@@ -907,6 +840,11 @@ async def access_scheme(
 async def credit_product_options(
     payload: parsers.ApplicationCreditOptions,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
+        )
+    ),
 ):
     """
     Get the available credit product options for an application.
@@ -924,11 +862,7 @@ async def credit_product_options(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-
         rejecter_lenders = application.rejecter_lenders(session)
-        utils.check_is_application_expired(application)
-        utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
 
         filter = None
         if application.borrower.type.lower() == "persona natural colombiana":
@@ -978,6 +912,11 @@ async def credit_product_options(
 async def select_credit_product(
     payload: parsers.ApplicationSelectCreditProduct,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
+        )
+    ),
 ):
     """
     Select a credit product for an application.
@@ -995,10 +934,6 @@ async def select_credit_product(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_is_application_expired(application)
-        utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
-
         # Extract the necessary fields for a calculator from a payload.
         calculator_data = jsonable_encoder(payload, exclude_unset=True)
         calculator_data.pop("uuid")
@@ -1037,6 +972,11 @@ async def select_credit_product(
 async def rollback_select_credit_product(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
+        )
+    ),
 ):
     """
     Rollback the selection of a credit product for an application.
@@ -1054,10 +994,6 @@ async def rollback_select_credit_product(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_is_application_expired(application)
-        utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
-
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1088,6 +1024,11 @@ async def confirm_credit_product(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
+        )
+    ),
 ):
     """
     Confirm the selected credit product for an application.
@@ -1106,10 +1047,6 @@ async def confirm_credit_product(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_is_application_expired(application)
-        utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
-
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1194,6 +1131,9 @@ async def update_apps_send_notifications(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+    ),
 ):
     """
     Changes application status from "'ACCEPTED" to "SUBMITTED".
@@ -1217,9 +1157,6 @@ async def update_apps_send_notifications(
     """
     with transaction_session(session):
         try:
-            application = utils.get_application_by_uuid(payload.uuid, session)
-            utils.check_application_status(application, models.ApplicationStatus.ACCEPTED)
-
             if not application.credit_product_id:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -1270,20 +1207,21 @@ async def update_apps_send_notifications(
     response_model=models.ApplicationWithRelations,
 )
 async def email_sme(
-    id: int,
     payload: parsers.ApplicationEmailSme,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(
+            roles=(models.UserType.FI,), statuses=(models.ApplicationStatus.STARTED,)
+        )
+    ),
 ):
     """
     Send an email to SME and update the application status:
     Changes the application status from "STARTED" to "INFORMATION_REQUESTED".
     sends an email to SME notifying the request.
-
-    :param id: The ID of the application.
-    :type id: int
 
     :param payload: The payload containing the message to send to SME.
     :type payload: parsers.ApplicationEmailSme
@@ -1305,9 +1243,6 @@ async def email_sme(
 
     with transaction_session(session):
         try:
-            application = utils.get_application_by_id(id, session)
-            utils.check_FI_user_permission(application, user)
-            utils.check_application_status(application, models.ApplicationStatus.STARTED)
             application.status = models.ApplicationStatus.INFORMATION_REQUESTED
             current_time = datetime.now(application.created_at.tzinfo)
             application.information_requested_at = current_time
@@ -1358,6 +1293,9 @@ async def complete_information_request(
     background_tasks: BackgroundTasks,
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(statuses=(models.ApplicationStatus.INFORMATION_REQUESTED,))
+    ),
 ):
     """
     Complete the information request for an application:
@@ -1380,9 +1318,6 @@ async def complete_information_request(
     """
 
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_application_status(application, models.ApplicationStatus.INFORMATION_REQUESTED)
-
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
@@ -1420,6 +1355,11 @@ async def decline(
     payload: parsers.ApplicationDeclinePayload,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
+        )
+    ),
 ):
     """
     Decline an application.
@@ -1438,10 +1378,6 @@ async def decline(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_is_application_expired(application)
-        utils.check_application_status(application, models.ApplicationStatus.PENDING)
-
         borrower_declined_data = vars(payload)
         borrower_declined_data.pop("uuid")
 
@@ -1470,6 +1406,11 @@ async def rollback_decline(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
+        )
+    ),
 ):
     """
     Rollback the decline of an application.
@@ -1487,10 +1428,6 @@ async def rollback_decline(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_is_application_expired(application)
-        utils.check_application_status(application, models.ApplicationStatus.DECLINED)
-
         application.borrower_declined_data = {}
         application.status = models.ApplicationStatus.PENDING
         application.borrower_declined_at = None
@@ -1515,6 +1452,11 @@ async def decline_feedback(
     payload: parsers.ApplicationDeclineFeedbackPayload,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
+        )
+    ),
 ):
     """
     Provide feedback for a declined application.
@@ -1532,10 +1474,6 @@ async def decline_feedback(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-        utils.check_is_application_expired(application)
-        utils.check_application_status(application, models.ApplicationStatus.DECLINED)
-
         borrower_declined_preferences_data = vars(payload)
         borrower_declined_preferences_data.pop("uuid")
 
@@ -1554,15 +1492,14 @@ async def decline_feedback(
     response_model=List[models.Award],
 )
 async def previous_contracts(
-    id: int,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_authorized_application(roles=(models.UserType.OCP, models.UserType.FI))
+    ),
 ):
     """
     Get the previous awards associated with an application.
-
-    :param id: The ID of the application.
-    :type id: int
 
     :param user: The current user authenticated.
     :type user: models.User
@@ -1577,9 +1514,6 @@ async def previous_contracts(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_id(id, session)
-        utils.check_FI_user_permission_or_OCP(application, user)
-
         return application.previous_awards(session)
 
 
@@ -1592,6 +1526,9 @@ async def find_alternative_credit_option(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_by_payload(statuses=(models.ApplicationStatus.REJECTED,))
+    ),
 ):
     """
     Find an alternative credit option for a rejected application by copying it.
@@ -1613,8 +1550,6 @@ async def find_alternative_credit_option(
 
     """
     with transaction_session(session):
-        application = utils.get_application_by_uuid(payload.uuid, session)
-
         # Check if the application has already been copied.
         app_action = (
             session.query(models.ApplicationAction)
@@ -1634,8 +1569,6 @@ async def find_alternative_credit_option(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=util.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
             )
-
-        utils.check_application_status(application, models.ApplicationStatus.REJECTED)
 
         # Copy the application, changing the uuid, status, and borrower_accepted_at.
         try:

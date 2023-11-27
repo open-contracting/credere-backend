@@ -8,7 +8,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from sqlalchemy.orm import Session, joinedload
 
-import app.utils.applications as utils
 from app import dependencies, models, util
 from app.db import get_db, transaction_session
 from app.i18n import get_translated_string
@@ -54,7 +53,7 @@ async def get_borrower_document(
                 application_id=document.application.id,
             )
         else:
-            utils.check_FI_user_permission(document.application, user)
+            dependencies.raise_if_application_not_to_lender(document.application, user)
             models.ApplicationAction.create(
                 session,
                 type=models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
@@ -73,14 +72,14 @@ async def get_borrower_document(
 
 
 @router.get(
-    "/applications/{application_id}/download-application/{lang}",
+    "/applications/{id}/download-application/{lang}",
     tags=["applications"],
 )
 async def download_application(
-    application_id: int,
     lang: str,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
+    application: models.Application = Depends(dependencies.get_application),
 ):
     """
     Retrieve all documents related to an application and stream them as a zip file.
@@ -98,8 +97,6 @@ async def download_application(
     :rtype: StreamingResponse
     """
     with transaction_session(session):
-        application = utils.get_application_by_id(application_id, session)
-
         borrower = application.borrower
         award = application.award
         documents = list(application.borrower_documents)
