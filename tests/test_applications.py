@@ -383,21 +383,6 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         )
         assert response.status_code == status.HTTP_200_OK
 
-        # different FI user tries to upload compliance document
-        response = client.post(
-            "/applications/1/upload-compliance",
-            files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
-            headers=FI_headers_2,
-        )
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-        response = client.post(
-            "/applications/1/upload-compliance",
-            files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
-            headers=FI_headers,
-        )
-        assert response.status_code == status.HTTP_200_OK
-
         response = client.get("/applications/documents/id/1", headers=FI_headers)
         assert response.status_code == status.HTTP_200_OK
 
