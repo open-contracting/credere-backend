@@ -116,13 +116,13 @@ def get_publication_as_user(id: int, session: Session = Depends(get_db)) -> mode
 def get_scoped_publication_as_user(
     *,
     roles: tuple[models.UserType, ...] = (),
-    statuses: tuple[models.ApplicationStatus, ...] = (),
     scopes: tuple[ApplicationScope, ...] = (),
+    statuses: tuple[models.ApplicationStatus, ...] = (),
 ) -> Callable[[models.Application, models.User], models.Application]:
     def inner(
         application: models.Application = Depends(get_publication_as_user), user: models.User = Depends(get_user)
     ) -> models.Application:
-        raise_if_unauthorized(application, user, roles=roles, statuses=statuses, scopes=scopes)
+        raise_if_unauthorized(application, user, roles=roles, scopes=scopes, statuses=statuses)
         return application
 
     return inner
