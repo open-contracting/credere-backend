@@ -208,52 +208,55 @@ class CognitoClient:
             authentication challenges issued by AWS Cognito.
         """
         secret_hash = self.get_secret_hash(username)
-        if challenge_name == "NEW_PASSWORD_REQUIRED":
-            return self.client.respond_to_auth_challenge(
-                ClientId=app_settings.cognito_client_id,
-                ChallengeName=challenge_name,
-                ChallengeResponses={
-                    "USERNAME": username,
-                    "NEW_PASSWORD": new_password,
-                    "SECRET_HASH": secret_hash,
-                },
-                Session=session,
-            )
-        if challenge_name == "MFA_SETUP":
-            associate_response = self.client.associate_software_token(Session=session)
-            access_token = associate_response["SecretCode"]
-            session = associate_response["Session"]
+        match challenge_name:
+            case "NEW_PASSWORD_REQUIRED":
+                return self.client.respond_to_auth_challenge(
+                    ClientId=app_settings.cognito_client_id,
+                    ChallengeName=challenge_name,
+                    ChallengeResponses={
+                        "USERNAME": username,
+                        "NEW_PASSWORD": new_password,
+                        "SECRET_HASH": secret_hash,
+                    },
+                    Session=session,
+                )
+            case "MFA_SETUP":
+                associate_response = self.client.associate_software_token(Session=session)
+                access_token = associate_response["SecretCode"]
+                session = associate_response["Session"]
 
-            verify_response = self.client.verify_software_token(
-                AccessToken=access_token, Session=session, UserCode=mfa_code
-            )
-            session = verify_response["Session"]
-            return self.client.respond_to_auth_challenge(
-                ClientId=app_settings.cognito_client_id,
-                ChallengeName=challenge_name,
-                ChallengeResponses={
-                    "USERNAME": username,
-                    "NEW_PASSWORD": new_password,
-                    "SECRET_HASH": secret_hash,
-                },
-                Session=session,
-            )
-        if challenge_name == "SOFTWARE_TOKEN_MFA":
-            challenge_response = self.client.respond_to_auth_challenge(
-                ClientId=app_settings.cognito_client_id,
-                ChallengeName=challenge_name,
-                ChallengeResponses={
-                    "USERNAME": username,
-                    "SOFTWARE_TOKEN_MFA_CODE": mfa_code,
-                    "SECRET_HASH": secret_hash,
-                },
-                Session=session,
-            )
+                verify_response = self.client.verify_software_token(
+                    AccessToken=access_token, Session=session, UserCode=mfa_code
+                )
+                session = verify_response["Session"]
+                return self.client.respond_to_auth_challenge(
+                    ClientId=app_settings.cognito_client_id,
+                    ChallengeName=challenge_name,
+                    ChallengeResponses={
+                        "USERNAME": username,
+                        "NEW_PASSWORD": new_password,
+                        "SECRET_HASH": secret_hash,
+                    },
+                    Session=session,
+                )
+            case "SOFTWARE_TOKEN_MFA":
+                challenge_response = self.client.respond_to_auth_challenge(
+                    ClientId=app_settings.cognito_client_id,
+                    ChallengeName=challenge_name,
+                    ChallengeResponses={
+                        "USERNAME": username,
+                        "SOFTWARE_TOKEN_MFA_CODE": mfa_code,
+                        "SECRET_HASH": secret_hash,
+                    },
+                    Session=session,
+                )
 
-            return {
-                "access_token": challenge_response["AuthenticationResult"]["AccessToken"],
-                "refresh_token": challenge_response["AuthenticationResult"]["RefreshToken"],
-            }
+                return {
+                    "access_token": challenge_response["AuthenticationResult"]["AccessToken"],
+                    "refresh_token": challenge_response["AuthenticationResult"]["RefreshToken"],
+                }
+            case _:
+                raise NotImplementedError
 
     def logout_user(self, access_token: str) -> dict[str, Any]:
         """
