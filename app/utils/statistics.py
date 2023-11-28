@@ -28,8 +28,7 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
     Update and store various statistics related to applications and lenders in the database.
 
     This function retrieves and logs different types of statistics related to applications
-    and lenders. It uses the `get_general_statistics`, `get_msme_opt_in_stats`,
-    and `get_count_of_fis_choosen_by_msme` functions
+    and lenders. It uses the `get_general_statistics` and `get_msme_opt_in_stats` functions
     to fetch the respective statistics. The retrieved statistics are then logged using
     the `logger.info()` function.
 
@@ -422,24 +421,3 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     }
 
     return opt_in_statistics
-
-
-# Stat only for OCP USER Bars graph
-def get_count_of_fis_choosen_by_msme(session: Session) -> list[StatisticData]:
-    """
-    Get the count of Financial Institutions (FIs) chosen by MSMEs.
-
-    This function retrieves the count of Financial Institutions (FIs) chosen by MSMEs for their applications.
-
-    :return: A list of StatisticData objects containing the count of FIs chosen by MSMEs.
-    """
-
-    fis_choosen_by_msme_query = (
-        session.query(Lender.name, func.count(Application.id))
-        .join(Lender, Application.lender_id == Lender.id)
-        .filter(col(Application.borrower_submitted_at).isnot(None))
-        .group_by(Lender.name)
-        .all()
-    )
-
-    return [StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query]
