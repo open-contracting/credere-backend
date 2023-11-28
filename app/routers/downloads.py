@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, util
 from app.db import get_db, transaction_session
+from app.dependencies import ApplicationScope
 from app.i18n import get_translated_string
 from app.utils import tables
 from reportlab_mods import styleSubTitle, styleTitle
@@ -78,6 +79,9 @@ async def download_application(
     :return: A streaming response with a zip file containing the documents.
     """
     with transaction_session(session):
+        dependencies.raise_if_unauthorized(
+            application, user, roles=(models.UserType.OCP, models.UserType.FI), scopes=(ApplicationScope.UNEXPIRED,)
+        )
         borrower = application.borrower
         award = application.award
         documents = list(application.borrower_documents)
