@@ -4,12 +4,14 @@ import hmac
 import logging
 import random
 import string
-from typing import Any
+from typing import Any, Callable
 
 import boto3
+from mypy_boto3_cognito_idp import CognitoIdentityProviderClient, literals, type_defs
+from mypy_boto3_ses.client import SESClient
 
 from app import mail
-from app.models import Application
+from app.models import Application, CreditProduct
 from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
@@ -42,9 +44,9 @@ class CognitoClient:
 
     def __init__(
         self,
-        cognitoClient,
-        sesClient,
-        generate_password_fn,
+        cognitoClient: CognitoIdentityProviderClient,
+        sesClient: SESClient,
+        generate_password_fn: Callable[[], str],
     ):
         #: A boto3 client for Cognito
         self.client = cognitoClient
@@ -56,7 +58,7 @@ class CognitoClient:
     def exceptions(self):
         return self.client.exceptions
 
-    def get_secret_hash(self, username):
+    def get_secret_hash(self, username: str) -> str:
         """
         Generates a secret hash for the given username using Cognito client secret and Cognito client id.
 
@@ -64,12 +66,11 @@ class CognitoClient:
         :return: A base64 encoded string containing the generated secret hash.
         """
         app_client_id = app_settings.cognito_client_id
-        key = app_settings.cognito_client_secret
         message = bytes(username + app_client_id, "utf-8")
-        key = bytes(key, "utf-8")
+        key = bytes(app_settings.cognito_client_secret, "utf-8")
         return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
-    def admin_create_user(self, username, name):
+    def admin_create_user(self, username: str, name: str) -> type_defs.AdminCreateUserResponseTypeDef:
         """
         Creates a new user in AWS Cognito with the specified username and name. Sends an email to the new user
         with their temporary password.
@@ -93,7 +94,7 @@ class CognitoClient:
 
         return responseCreateUser
 
-    def verified_email(self, username):
+    def verified_email(self, username: str) -> dict[str, Any]:
         """
         Verifies the email of a user in AWS Cognito.
 
@@ -111,7 +112,7 @@ class CognitoClient:
 
         return response
 
-    def initiate_auth(self, username, password) -> dict[str, Any]:
+    def initiate_auth(self, username: str, password: str) -> type_defs.InitiateAuthResponseTypeDef:
         """
         Initiates an authentication request for a user in AWS Cognito.
 
@@ -145,7 +146,7 @@ class CognitoClient:
 
         return response
 
-    def mfa_setup(self, session):
+    def mfa_setup(self, session: str) -> dict[str, str]:
         """
         Sets up multi-factor authentication (MFA) for a user in AWS Cognito.
 
@@ -164,7 +165,9 @@ class CognitoClient:
 
         return {"secret_code": secret_code, "session": session}
 
-    def verify_software_token(self, access_token, session, mfa_code):
+    def verify_software_token(
+        self, access_token: str, session: str, mfa_code: str
+    ) -> type_defs.VerifySoftwareTokenResponseTypeDef:
         """
         Verifies a multi-factor authentication (MFA) code entered by the user in AWS Cognito.
 
@@ -182,7 +185,14 @@ class CognitoClient:
 
         return response
 
-    def respond_to_auth_challenge(self, username, session, challenge_name, new_password="", mfa_code=""):
+    def respond_to_auth_challenge(
+        self,
+        username: str,
+        session: str,
+        challenge_name: literals.ChallengeNameTypeType,
+        new_password: str = "",
+        mfa_code: str = "",
+    ) -> type_defs.RespondToAuthChallengeResponseTypeDef | dict[str, str]:
         """
         Responds to the authentication challenge provided by AWS Cognito.
 
@@ -213,12 +223,14 @@ class CognitoClient:
                 Session=session,
             )
         if challenge_name == "MFA_SETUP":
-            response = self.client.associate_software_token(Session=session)
-            access_token = response["SecretCode"]
-            session = response["Session"]
+            associate_response = self.client.associate_software_token(Session=session)
+            access_token = associate_response["SecretCode"]
+            session = associate_response["Session"]
 
-            response = self.client.verify_software_token(AccessToken=access_token, Session=session, UserCode=mfa_code)
-            session = response["Session"]
+            verify_response = self.client.verify_software_token(
+                AccessToken=access_token, Session=session, UserCode=mfa_code
+            )
+            session = verify_response["Session"]
             return self.client.respond_to_auth_challenge(
                 ClientId=app_settings.cognito_client_id,
                 ChallengeName=challenge_name,
@@ -230,7 +242,7 @@ class CognitoClient:
                 Session=session,
             )
         if challenge_name == "SOFTWARE_TOKEN_MFA":
-            response = self.client.respond_to_auth_challenge(
+            challenge_response = self.client.respond_to_auth_challenge(
                 ClientId=app_settings.cognito_client_id,
                 ChallengeName=challenge_name,
                 ChallengeResponses={
@@ -242,11 +254,11 @@ class CognitoClient:
             )
 
             return {
-                "access_token": response["AuthenticationResult"]["AccessToken"],
-                "refresh_token": response["AuthenticationResult"]["RefreshToken"],
+                "access_token": challenge_response["AuthenticationResult"]["AccessToken"],
+                "refresh_token": challenge_response["AuthenticationResult"]["RefreshToken"],
             }
 
-    def logout_user(self, access_token):
+    def logout_user(self, access_token: str) -> dict[str, Any]:
         """
         Logs out a user from all devices in AWS Cognito.
 
@@ -260,16 +272,11 @@ class CognitoClient:
             and chooses to log out from all devices.
         """
         response = self.client.get_user(AccessToken=access_token)
-        username = None
-        for attribute in response["UserAttributes"]:
-            if attribute["Name"] == "sub":
-                username = attribute["Value"]
-                break
-        response = self.client.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=username)
+        # https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html
+        username = next(attribute["Value"] for attribute in response["UserAttributes"] if attribute["Name"] == "sub")
+        return self.client.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=username)
 
-        return response
-
-    def reset_password(self, username):
+    def reset_password(self, username: str) -> dict[str, Any]:
         """
         Resets the user's password.
 
@@ -293,10 +300,10 @@ class CognitoClient:
 
     def send_notifications_of_new_applications(
         self,
-        ocp_email_group,
-        lender_name,
-        lender_email_group,
-    ):
+        ocp_email_group: str,
+        lender_name: str,
+        lender_email_group: str,
+    ) -> None:
         """
         Sends notifications of new applications.
 
@@ -310,7 +317,7 @@ class CognitoClient:
         mail.send_notification_new_app_to_fi(self.ses, lender_email_group)
         mail.send_notification_new_app_to_ocp(self.ses, ocp_email_group, lender_name)
 
-    def send_request_to_sme(self, uuid, lender_name, email_message, sme_email):
+    def send_request_to_sme(self, uuid: str, lender_name: str, email_message: str, sme_email: str) -> str:
         """
         Sends a request to the SME via email.
 
@@ -324,7 +331,7 @@ class CognitoClient:
         message_id = mail.send_mail_request_to_sme(self.ses, uuid, lender_name, email_message, sme_email)
         return message_id
 
-    def send_rejected_email_to_sme(self, application, options):
+    def send_rejected_email_to_sme(self, application: Application, options: list[CreditProduct]) -> str:
         """
         Sends a rejection email to the SME, potentially with alternatives.
 
@@ -339,7 +346,7 @@ class CognitoClient:
         message_id = mail.send_rejected_application_email_without_alternatives(self.ses, application)
         return message_id
 
-    def send_application_approved_to_sme(self, application: Application):
+    def send_application_approved_to_sme(self, application: Application) -> str:
         """
         Sends a approved confirmation email to the SME.
 
@@ -350,7 +357,7 @@ class CognitoClient:
         message_id = mail.send_application_approved_email(self.ses, application)
         return message_id
 
-    def send_application_submission_completed(self, application: Application):
+    def send_application_submission_completed(self, application: Application) -> str:
         """
         Sends a submission confirmation email to the SME.
 
@@ -361,7 +368,7 @@ class CognitoClient:
         message_id = mail.send_application_submission_completed(self.ses, application)
         return message_id
 
-    def send_application_credit_disbursed(self, application: Application):
+    def send_application_credit_disbursed(self, application: Application) -> str:
         """
         Sends a credit disbursed confirmation email to the SME.
 
@@ -379,7 +386,7 @@ class CognitoClient:
         old_email: str,
         confirmation_email_token: str,
         application_uuid: str,
-    ):
+    ) -> str:
         """
         Sends an email confirmation message to a SME for a new email.
 
@@ -400,7 +407,7 @@ class CognitoClient:
             application_uuid,
         )
 
-    def send_upload_contract_notifications(self, application):
+    def send_upload_contract_notifications(self, application: Application) -> tuple[str, str]:
         """
         Sends upload contract notifications to both the Financial Institution (FI) and the SME.
 
@@ -419,7 +426,7 @@ class CognitoClient:
 
         return FI_message_id, SME_message_id
 
-    def send_upload_documents_notifications(self, email: str):
+    def send_upload_documents_notifications(self, email: str) -> str:
         """
         Sends upload documents notifications to the Financial Institution (FI).
 
@@ -433,7 +440,7 @@ class CognitoClient:
         )
         return message_id
 
-    def send_copied_application_notifications(self, application):
+    def send_copied_application_notifications(self, application: Application) -> str:
         """
         Sends copied application notifications to the SME.
 
