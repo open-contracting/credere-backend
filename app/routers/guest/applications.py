@@ -12,6 +12,7 @@ from sqlmodel import col
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
 from app.db import get_db, transaction_session
+from app.dependencies import ApplicationScope
 from app.settings import app_settings
 from app.utils import background
 from app.utils.statistics import update_statistics
@@ -464,7 +465,9 @@ async def update_apps_send_notifications(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        dependencies.get_scoped_publication_as_guest_via_payload(
+            statuses=(models.ApplicationStatus.ACCEPTED,), scopes=(ApplicationScope.UNEXPIRED,)
+        )
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -519,7 +522,7 @@ async def update_apps_send_notifications(
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="There was an error submiting the application",
+                detail="There was an error submitting the application",
             )
 
 
