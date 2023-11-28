@@ -1,11 +1,13 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, joinedload
+from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
@@ -31,7 +33,7 @@ async def reject_application(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
     ),
-):
+) -> Any:
     """
     Reject an application:
     Changes the status from "STARTED" to "REJECTED".
@@ -44,9 +46,9 @@ async def reject_application(
             models.ApplicationStatus.CONTRACT_UPLOADED,
             models.ApplicationStatus.STARTED,
         ):
-            message = "Application status is not {} or {}".format(
-                models.ApplicationStatus.STARTED.name,
-                models.ApplicationStatus.CONTRACT_UPLOADED.name,
+            message = (
+                f"Application status is not {models.ApplicationStatus.STARTED.name} "
+                f"or {models.ApplicationStatus.CONTRACT_UPLOADED.name}"
             )
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -70,8 +72,8 @@ async def reject_application(
             .filter(
                 models.CreditProduct.borrower_size == application.borrower.size,
                 models.CreditProduct.lender_id != application.lender_id,
-                models.CreditProduct.lower_limit <= application.amount_requested,
-                models.CreditProduct.upper_limit >= application.amount_requested,
+                col(models.CreditProduct.lower_limit) <= application.amount_requested,
+                col(models.CreditProduct.upper_limit) >= application.amount_requested,
             )
             .all()
         )
@@ -103,7 +105,7 @@ async def complete_application(
             statuses=(models.ApplicationStatus.CONTRACT_UPLOADED,),
         )
     ),
-):
+) -> Any:
     """
     Complete an application:
     Changes application status from "CONTRACT_UPLOADED" to "COMPLETED".
@@ -152,7 +154,7 @@ async def approve_application(
             statuses=(models.ApplicationStatus.STARTED,),
         )
     ),
-):
+) -> Any:
     """
     Approve an application:
     Changes application status from "STARTED" to "APPROVED".
@@ -172,7 +174,7 @@ async def approve_application(
             if key not in app_secop_dict or not app_secop_dict[key]:
                 not_validated_fields.append(key)
         if not_validated_fields:
-            logger.error(f"Following fields were not validated: {not_validated_fields}")
+            logger.error("Following fields were not validated: %s", not_validated_fields)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=util.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
@@ -184,7 +186,7 @@ async def approve_application(
             if not document.verified:
                 not_validated_documents.append(document.type.name)
         if not_validated_documents:
-            logger.error(f"Following documents were not validated: {not_validated_documents}")
+            logger.error("Following documents were not validated: %s", not_validated_documents)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
@@ -234,7 +236,7 @@ async def verify_data_field(
             ),
         )
     ),
-):
+) -> Any:
     """
     Verify and update a data field in an application.
 
@@ -270,7 +272,7 @@ async def verify_document(
     payload: parsers.VerifyBorrowerDocument,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-):
+) -> Any:
     """
     Verify a borrower document in an application.
 
@@ -316,7 +318,7 @@ async def update_application_award(
             statuses=dependencies.OCP_CAN_MODIFY,
         )
     ),
-):
+) -> Any:
     """
     Update the award details of an application.
 
@@ -339,8 +341,7 @@ async def update_application_award(
             user_id=user.id,
         )
 
-        application = util.get_modified_data_fields(application, session)
-        return application
+        return util.get_modified_data_fields(application, session)
 
 
 @router.put(
@@ -359,7 +360,7 @@ async def update_application_borrower(
             statuses=dependencies.OCP_CAN_MODIFY,
         )
     ),
-):
+) -> Any:
     """
     Update the borrower details of an application.
 
@@ -388,14 +389,12 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
-        application = util.get_modified_data_fields(application, session)
-        return application
+        return util.get_modified_data_fields(application, session)
 
 
 @router.get(
     "/applications/admin-list",
     tags=["applications"],
-    response_model=serializers.ApplicationListResponse,
 )
 async def get_applications_list(
     page: int = Query(0, ge=0),
@@ -404,7 +403,7 @@ async def get_applications_list(
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> serializers.ApplicationListResponse:
     """
     Get a paginated list of submitted applications for administrative purposes.
 
@@ -451,7 +450,7 @@ async def get_application(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(roles=(models.UserType.OCP, models.UserType.FI))
     ),
-):
+) -> Any:
     """
     Retrieve an application by its ID.
 
@@ -477,7 +476,7 @@ async def start_application(
             statuses=(models.ApplicationStatus.SUBMITTED,),
         )
     ),
-):
+) -> Any:
     """
     Start an application:
     Changes application status from "SUBMITTED" to "STARTED".
@@ -496,7 +495,6 @@ async def start_application(
 @router.get(
     "/applications",
     tags=["applications"],
-    response_model=serializers.ApplicationListResponse,
 )
 async def get_applications(
     page: int = Query(0, ge=0),
@@ -505,7 +503,7 @@ async def get_applications(
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
-):
+) -> serializers.ApplicationListResponse:
     """
     Get a paginated list of submitted applications for a specific FI user.
 
@@ -555,7 +553,7 @@ async def email_sme(
             roles=(models.UserType.FI,), statuses=(models.ApplicationStatus.STARTED,)
         )
     ),
-):
+) -> Any:
     """
     Send an email to SME and update the application status:
     Changes the application status from "STARTED" to "INFORMATION_REQUESTED".
@@ -620,7 +618,7 @@ async def upload_compliance(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
     ),
-):
+) -> Any:
     """
     Upload a compliance document for an application.
 
@@ -652,7 +650,6 @@ async def upload_compliance(
 @router.get(
     "/applications/{id}/previous-awards",
     tags=["applications"],
-    response_model=list[models.Award],
 )
 async def previous_contracts(
     user: models.User = Depends(dependencies.get_user),
@@ -660,7 +657,7 @@ async def previous_contracts(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(roles=(models.UserType.OCP, models.UserType.FI))
     ),
-):
+) -> list[models.Award]:
     """
     Get the previous awards associated with an application.
 

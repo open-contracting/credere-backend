@@ -1,5 +1,6 @@
 import locale
 from datetime import datetime
+from decimal import Decimal
 
 from reportlab.platypus import Paragraph, Table
 
@@ -8,23 +9,22 @@ from app.i18n import get_translated_string
 from reportlab_mods import borrower_size_dict, create_table, document_type_dict, sector_dict, styleN
 
 
-def _format_currency(number, currency):
+def _format_currency(number: Decimal | None, currency: str) -> str:
     if isinstance(number, str):
         try:
             number = int(number)
         except ValueError:
             return "-"
+
     locale.setlocale(locale.LC_ALL, "")
     formatted_number = locale.format_string("%d", number, grouping=True)
-    return f"{currency}$ " + formatted_number
+    return f"{currency}$ {formatted_number}"
 
 
-def _format_date(date_str):
+def _format_date(date_str: str) -> str:
     if date_str == "None":
         return "-"
-    date_object = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-    formatted_date = date_object.strftime("%Y-%m-%d")
-    return formatted_date
+    return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
 
 
 def create_application_table(application: models.Application, lang: str) -> Table:
@@ -126,7 +126,7 @@ Valor Pagado: {
     _format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
 }
 """
-    secop_link = '<link href="' + award.source_url + '">' + award.source_url + "</link>"
+    secop_link = f"""<link href="{award.source_url}">{award.source_url}</link>"""
 
     data = [
         [

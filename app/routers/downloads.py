@@ -1,5 +1,6 @@
 import io
 import zipfile
+from typing import Any, Generator
 
 import pandas as pd
 from fastapi import APIRouter, Depends
@@ -25,7 +26,7 @@ async def get_borrower_document(
     id: int,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-):
+) -> StreamingResponse:
     """
     Retrieve a borrower document by its ID and stream the file content as a response.
 
@@ -51,7 +52,7 @@ async def get_borrower_document(
                 application_id=document.application.id,
             )
 
-        def file_generator():
+        def file_generator() -> Generator[bytes, None, None]:
             yield document.file
 
         headers = {
@@ -70,7 +71,7 @@ async def download_application(
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(dependencies.get_publication_as_user),
-):
+) -> StreamingResponse:
     """
     Retrieve all documents related to an application and stream them as a zip file.
 
@@ -86,7 +87,7 @@ async def download_application(
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)
 
-        elements = []
+        elements: list[Any] = []
 
         elements.append(Paragraph(get_translated_string("Application Details", lang), styleTitle))
 
@@ -108,7 +109,7 @@ async def download_application(
         doc.build(elements)
 
         name = get_translated_string("Application Details", lang).replace(" ", "_")
-        filename = f"{name}-{application.borrower.legal_identifier}" + f"-{application.award.source_contract_id}.pdf"
+        filename = f"{name}-{application.borrower.legal_identifier}-{application.award.source_contract_id}.pdf"
 
         in_memory_zip = io.BytesIO()
         with zipfile.ZipFile(in_memory_zip, "w") as zip_file:
@@ -145,7 +146,7 @@ async def export_applications(
     lang: str,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
-):
+) -> StreamingResponse:
     applications_query = (
         models.Application.submitted_to_lender(session, user.lender_id)
         .join(models.Borrower)

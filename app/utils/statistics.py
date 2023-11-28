@@ -1,10 +1,10 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Any, Callable, Generator
 
 from sqlalchemy import Date, Integer, cast, distinct, func, text
-from sqlalchemy.orm import Session
-from sqlalchemy.orm.query import Query
+from sqlalchemy.orm import Query, Session
 from sqlmodel import col
 
 from app.db import get_db, transaction_session_logger
@@ -23,7 +23,7 @@ from app.models import (
 logger = logging.getLogger(__name__)
 
 
-def update_statistics(db_provider: Session = get_db):
+def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] = get_db) -> None:
     """
     Update and store various statistics related to applications and lenders in the database.
 
@@ -141,8 +141,11 @@ def update_statistics(db_provider: Session = get_db):
 
 
 def _get_base_query(
-    sessionBase: Query, start_date: datetime | None, end_date: datetime | None, lender_id: int | None
-) -> Query:
+    sessionBase: "Query[Application]",
+    start_date: datetime | str | None,
+    end_date: datetime | str | None,
+    lender_id: int | None,
+) -> "Query[Application]":
     """
     Create the base query for filtering applications based on the provided start_date, end_date, and lender_id.
 
@@ -159,13 +162,13 @@ def _get_base_query(
     base_query = None
     if start_date is not None and end_date is not None:
         base_query = sessionBase.filter(
-            Application.created_at >= start_date,
-            Application.created_at <= end_date,
+            col(Application.created_at) >= start_date,
+            col(Application.created_at) <= end_date,
         )
     elif start_date is not None:
-        base_query = sessionBase.filter(Application.created_at >= start_date)
+        base_query = sessionBase.filter(col(Application.created_at) >= start_date)
     elif end_date is not None:
-        base_query = sessionBase.filter(Application.created_at <= end_date)
+        base_query = sessionBase.filter(col(Application.created_at) <= end_date)
     else:
         base_query = sessionBase
 
@@ -177,10 +180,10 @@ def _get_base_query(
 
 def get_general_statistics(
     session: Session,
-    start_date: datetime | None = None,
-    end_date: datetime | None = None,
+    start_date: datetime | str | None = None,
+    end_date: datetime | str | None = None,
     lender_id: int | None = None,
-) -> dict:
+) -> dict[str, int | float]:
     """
     Get general statistics about applications based on the provided parameters.
 
@@ -252,7 +255,9 @@ def get_general_statistics(
     # Average Repayment Period
     average_repayment_period_query = (
         _get_base_query(
-            session.query(func.avg(Application.repayment_years * 12 + Application.repayment_months).cast(Integer)),
+            session.query(
+                func.avg(col(Application.repayment_years) * 12 + col(Application.repayment_months)).cast(Integer)
+            ),
             start_date,
             end_date,
             lender_id,
@@ -296,7 +301,7 @@ def get_general_statistics(
 
     # Calculate the proportion
     if application_accepted_query == 0:
-        proportion_of_submitted_out_of_opt_in = 0
+        proportion_of_submitted_out_of_opt_in = 0.0
     else:
         proportion_of_submitted_out_of_opt_in = round((application_accepted_query / application_divisor) * 100, 2)
 
@@ -319,7 +324,7 @@ def get_general_statistics(
 
 
 # Group of Stat only for OCP USER (msme opt in stats)
-def get_msme_opt_in_stats(session: Session) -> dict:
+def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     """
     Get statistics specific to MSME opt-in applications.
 

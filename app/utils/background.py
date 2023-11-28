@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from typing import Any, Callable, Generator
 
 from sqlalchemy.orm import Session
 
@@ -19,7 +20,12 @@ ApplicationStatus = models.ApplicationStatus
 
 
 def _create_application(
-    award_id: int, borrower_id: int, email: str, legal_identifier: str, source_contract_id: str, session: Session
+    award_id: int | None,
+    borrower_id: int | None,
+    email: str,
+    legal_identifier: str,
+    source_contract_id: str,
+    session: Session,
 ) -> models.Application:
     """
     Create a new application and insert it into the database.
@@ -31,7 +37,7 @@ def _create_application(
     :param source_contract_id: The ID of the source contract.
     :return: The created application.
     """
-    award_borrower_identifier: str = util.get_secret_hash(legal_identifier + source_contract_id)
+    award_borrower_identifier: str = util.get_secret_hash(f"{legal_identifier}{source_contract_id}")
 
     application = models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
     if application:
@@ -50,7 +56,7 @@ def _create_application(
     return models.Application.create(session, **data)
 
 
-def _get_or_create_borrower(entry: dict, session: Session) -> models.Borrower:
+def _get_or_create_borrower(entry: dict[str, Any], session: Session) -> models.Borrower:
     """
     Get an existing borrower or create a new borrower based on the entry data.
 
@@ -72,7 +78,7 @@ def _get_or_create_borrower(entry: dict, session: Session) -> models.Borrower:
 
 
 def _create_award(
-    entry: dict, session: Session, borrower_id: int | None = None, previous: bool = False
+    entry: dict[str, Any], session: Session, borrower_id: int | None = None, previous: bool = False
 ) -> models.Award:
     """
     Create a new award and insert it into the database.
@@ -92,7 +98,11 @@ def _create_award(
     return models.Award.create(session, **data)
 
 
-def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Session, until_date: str | None = None):
+def fetch_new_awards_from_date(
+    last_updated_award_date: datetime,
+    db_provider: Callable[[], Generator[Session, None, None]],
+    until_date: datetime | None = None,
+) -> None:
     """
     Fetch new awards from the given date and process them.
 
@@ -146,7 +156,9 @@ def fetch_new_awards_from_date(last_updated_award_date: str, db_provider: Sessio
     logger.info("Total fetched contracts: %d", total)
 
 
-def fetch_previous_awards(borrower: models.Borrower, db_provider: Session = get_db):
+def fetch_previous_awards(
+    borrower: models.Borrower, db_provider: Callable[[], Generator[Session, None, None]] = get_db
+) -> None:
     """
     Fetch previous awards for a borrower that accepted an application. This wont generate an application,
     it will just insert the awards in our database
@@ -156,11 +168,11 @@ def fetch_previous_awards(borrower: models.Borrower, db_provider: Session = get_
     contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
     if not contracts_response_json:
-        logger.info(f"No previous contracts for {borrower.legal_identifier}")
+        logger.info("No previous contracts for %s", borrower.legal_identifier)
         return
 
     logger.info(
-        f"Previous contracts for {borrower.legal_identifier} response length: " + str(len(contracts_response_json))
+        "Previous contracts for %s response length: %s", borrower.legal_identifier, len(contracts_response_json)
     )
     for entry in contracts_response_json:
         with contextmanager(db_provider)() as session:

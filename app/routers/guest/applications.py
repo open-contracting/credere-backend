@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
@@ -23,14 +24,13 @@ router = APIRouter()
 @router.get(
     "/applications/uuid/{uuid}",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def application_by_uuid(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_guest_via_uuid(scopes=(dependencies.ApplicationScope.UNEXPIRED,))
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Retrieve an application by its UUID.
 
@@ -50,7 +50,6 @@ async def application_by_uuid(
 @router.post(
     "/applications/decline",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def decline(
     payload: parsers.ApplicationDeclinePayload,
@@ -61,7 +60,7 @@ async def decline(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
         )
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Decline an application.
     Changes application status from "PENDING" to "DECLINED".
@@ -93,7 +92,6 @@ async def decline(
 @router.post(
     "/applications/rollback-decline",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def rollback_decline(
     payload: parsers.ApplicationBase,
@@ -104,7 +102,7 @@ async def rollback_decline(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
         )
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Rollback the decline of an application.
 
@@ -131,7 +129,6 @@ async def rollback_decline(
 @router.post(
     "/applications/decline-feedback",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def decline_feedback(
     payload: parsers.ApplicationDeclineFeedbackPayload,
@@ -142,7 +139,7 @@ async def decline_feedback(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
         )
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Provide feedback for a declined application.
 
@@ -166,7 +163,6 @@ async def decline_feedback(
 @router.post(
     "/applications/access-scheme",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def access_scheme(
     payload: parsers.ApplicationBase,
@@ -177,7 +173,7 @@ async def access_scheme(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
         )
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Access the scheme for an application.
 
@@ -209,7 +205,6 @@ async def access_scheme(
 @router.post(
     "/applications/credit-product-options",
     tags=["applications"],
-    response_model=serializers.CreditProductListResponse,
 )
 async def credit_product_options(
     payload: parsers.ApplicationCreditOptions,
@@ -219,7 +214,7 @@ async def credit_product_options(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
-):
+) -> serializers.CreditProductListResponse:
     """
     Get the available credit product options for an application.
 
@@ -273,7 +268,6 @@ async def credit_product_options(
 @router.post(
     "/applications/select-credit-product",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def select_credit_product(
     payload: parsers.ApplicationSelectCreditProduct,
@@ -283,7 +277,7 @@ async def select_credit_product(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Select a credit product for an application.
 
@@ -325,7 +319,6 @@ async def select_credit_product(
 @router.post(
     "/applications/rollback-select-credit-product",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def rollback_select_credit_product(
     payload: parsers.ApplicationBase,
@@ -335,7 +328,7 @@ async def rollback_select_credit_product(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Rollback the selection of a credit product for an application.
 
@@ -368,7 +361,6 @@ async def rollback_select_credit_product(
 @router.post(
     "/applications/confirm-credit-product",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def confirm_credit_product(
     payload: parsers.ApplicationBase,
@@ -379,7 +371,7 @@ async def confirm_credit_product(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Confirm the selected credit product for an application.
 
@@ -465,7 +457,6 @@ async def confirm_credit_product(
 @router.post(
     "/applications/submit",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def update_apps_send_notifications(
     payload: parsers.ApplicationBase,
@@ -475,7 +466,7 @@ async def update_apps_send_notifications(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Changes application status from "'ACCEPTED" to "SUBMITTED".
     Sends a notification to OCP and FI user.
@@ -526,7 +517,7 @@ async def update_apps_send_notifications(
             )
         except ClientError as e:
             logger.exception(e)
-            return HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error submiting the application",
             )
@@ -542,7 +533,7 @@ async def upload_document(
     type: str = Form(...),
     session: Session = Depends(get_db),
     application: models.Application = Depends(dependencies.get_publication_as_guest_via_form),
-):
+) -> Any:
     """
     Upload a document for an application.
 
@@ -558,7 +549,9 @@ async def upload_document(
                 detail="Cannot upload document at this stage",
             )
 
-        document = util.create_or_update_borrower_document(filename, application, type, session, new_file)
+        document = util.create_or_update_borrower_document(
+            filename, application, models.BorrowerDocumentType(type), session, new_file
+        )
 
         models.ApplicationAction.create(
             session,
@@ -573,7 +566,6 @@ async def upload_document(
 @router.post(
     "/applications/complete-information-request",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def complete_information_request(
     payload: parsers.ApplicationBase,
@@ -585,7 +577,7 @@ async def complete_information_request(
             statuses=(models.ApplicationStatus.INFORMATION_REQUESTED,)
         )
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Complete the information request for an application:
     Changes the application from "INFORMATION REQUESTED" status back to "STARTED" and updates the pending documents status. # noqa: E501
@@ -636,7 +628,7 @@ async def upload_contract(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_guest_via_form(statuses=(models.ApplicationStatus.APPROVED,))
     ),
-):
+) -> Any:
     """
     Upload a contract document for an application.
 
@@ -660,7 +652,6 @@ async def upload_contract(
 @router.post(
     "/applications/confirm-upload-contract",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def confirm_upload_contract(
     payload: parsers.UploadContractConfirmation,
@@ -669,7 +660,7 @@ async def confirm_upload_contract(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.APPROVED,))
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Confirm the upload of a contract document for an application.
 
@@ -722,7 +713,6 @@ async def confirm_upload_contract(
 @router.post(
     "/applications/find-alternative-credit-option",
     tags=["applications"],
-    response_model=serializers.ApplicationResponse,
 )
 async def find_alternative_credit_option(
     payload: parsers.ApplicationBase,
@@ -731,7 +721,7 @@ async def find_alternative_credit_option(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.REJECTED,))
     ),
-):
+) -> serializers.ApplicationResponse:
     """
     Find an alternative credit option for a rejected application by copying it.
 

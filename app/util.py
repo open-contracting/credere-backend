@@ -25,7 +25,7 @@ class ERROR_CODES(Enum):
     APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
-def get_object_or_404(session, model, field, value):
+def get_object_or_404(session: Session, model: type[models.ActiveRecordMixin], field: str, value: Any):
     obj = model.first_by(session, field, value)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{model.__name__} not found")
@@ -52,13 +52,12 @@ def get_secret_hash(nit_entidad: str) -> str:
     :return: The secret hash generated from the NIT.
     """
 
-    key = app_settings.hash_key
     message = bytes(nit_entidad, "utf-8")
-    key = bytes(key, "utf-8")
+    key = bytes(app_settings.hash_key, "utf-8")
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
 
-def validate_file(file: UploadFile = File(...)) -> dict[File, str]:
+def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     """
     Validates the uploaded file.
 
@@ -85,7 +84,7 @@ def validate_file(file: UploadFile = File(...)) -> dict[File, str]:
     return new_file, filename
 
 
-def get_modified_data_fields(application: models.Application, session: Session):
+def get_modified_data_fields(application: models.Application, session: Session) -> models.ApplicationWithRelations:
     application_actions = (
         session.query(models.ApplicationAction)
         .join(models.Application)
@@ -127,11 +126,11 @@ def get_modified_data_fields(application: models.Application, session: Session):
 
 
 def create_or_update_borrower_document(
-    filename: str,
+    filename: str | None,
     application: models.Application,
     type: models.BorrowerDocumentType,
     session: Session,
-    file: UploadFile = File(...),
+    file: bytes,
     verified: bool | None = False,
 ) -> models.BorrowerDocument:
     """

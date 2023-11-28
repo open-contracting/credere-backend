@@ -6,15 +6,9 @@ from app.settings import app_settings
 
 app = FastAPI()
 
-# Configure CORS settings
-origins = [
-    "http://localhost:3000",
-    app_settings.frontend_url,
-]  # Add more allowed origins as needed
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:3000", app_settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -30,10 +24,10 @@ app.include_router(statistics.router)
 
 
 @app.get("/")
-def read_root():
+def read_root() -> dict[str, str]:
     return {"Title": "Credere backend"}
 
 
 @app.api_route("/info")
-async def info():
+async def info() -> dict[str, str]:
     return {"Title": "Credere backend", "version": app_settings.version}

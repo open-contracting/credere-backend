@@ -1,6 +1,6 @@
 import requests
 from fastapi import HTTPException, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from jose import JWTError, jwk, jwt
 from jose.utils import base64url_decode
 from pydantic import BaseModel
@@ -33,9 +33,9 @@ class verifyTokeClass(HTTPBearer):
 
     def __init__(self, auto_error: bool = True):
         super().__init__(auto_error=auto_error)
-        self.kid_to_jwk = None
+        self.kid_to_jwk: dict[str, JWK] | None = None
 
-    def load_keys(self):
+    def load_keys(self) -> None:
         if self.kid_to_jwk is None:
             jwks = _get_public_keys()
             self.kid_to_jwk = {jwk["kid"]: jwk for jwk in jwks.keys}
@@ -66,7 +66,7 @@ class verifyTokeClass(HTTPBearer):
         :return: JWT credentials if the token is verified.
         """
         self.load_keys()
-        credentials: HTTPAuthorizationCredentials = await super().__call__(request)
+        credentials = await super().__call__(request)
 
         if credentials:
             if not credentials.scheme == "Bearer":

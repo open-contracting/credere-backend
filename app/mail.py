@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 from mypy_boto3_ses.client import SESClient
@@ -117,7 +118,7 @@ def set_destinations(email: str, to_msme: bool = True) -> str:
     return app_settings.test_mail_receiver
 
 
-def generate_common_data() -> dict:
+def generate_common_data() -> dict[str, str]:
     """
     Generates a dictionary containing common data used in the application.
 
@@ -126,13 +127,12 @@ def generate_common_data() -> dict:
 
     :return: Returns a dictionary containing the frontend URL, URLs of various logos and social media links.
     """
-
     return {
-        "OCP_LOGO": app_settings.images_base_url + "/logoocp.jpg",
-        "TWITTER_LOGO": app_settings.images_base_url + "/twiterlogo.png",
-        "FB_LOGO": app_settings.images_base_url + "/facebook.png",
-        "LINK_LOGO": app_settings.images_base_url + "/link.png",
-        "STRIVE_LOGO": app_settings.images_base_url + "/strive_logo_lockup_horizontal_positive.png",
+        "OCP_LOGO": f"{app_settings.images_base_url}/logoocp.jpg",
+        "TWITTER_LOGO": f"{app_settings.images_base_url}/twiterlogo.png",
+        "FB_LOGO": f"{app_settings.images_base_url}/facebook.png",
+        "LINK_LOGO": f"{app_settings.images_base_url}/link.png",
+        "STRIVE_LOGO": f"{app_settings.images_base_url}/strive_logo_lockup_horizontal_positive.png",
         "TWITTER_LINK": app_settings.twitter_link,
         "FACEBOOK_LINK": app_settings.facebook_link,
         "LINK_LINK": app_settings.link_link,
@@ -148,7 +148,6 @@ def get_images_base_url() -> str:
 
     :return: Returns the base URL for images.
     """
-
     images_base_url = app_settings.images_base_url
     if app_settings.email_template_lang != "":
         images_base_url = f"{images_base_url}/{app_settings.email_template_lang}"
@@ -156,7 +155,7 @@ def get_images_base_url() -> str:
     return images_base_url
 
 
-def prepare_html(template_name, parameters):
+def prepare_html(template_name: str, parameters: dict[str, Any]) -> dict[str, str]:
     """
     Reads the content of the file in template_name, replace its parameters, and prepare the rest of the main
     parameters and Subject to send the email via AWS.
@@ -168,8 +167,7 @@ def prepare_html(template_name, parameters):
     with open(os.path.join(BASE_TEMPLATES_PATH, template_name), encoding="utf-8") as f:
         html = f.read()
     for key in parameters.keys():
-        to_replace = "{{" + key + "}}"
-        html = html.replace(to_replace, str(parameters[key]))
+        html = html.replace("{{%s}}" % key, str(parameters[key]))
     data = {
         **generate_common_data(),
         "CONTENT": html,
@@ -178,15 +176,15 @@ def prepare_html(template_name, parameters):
     return data
 
 
-def send_email(ses: SESClient, email: str, data: dict, to_msme: bool = True) -> str:
+def send_email(ses: SESClient, email: str, data: dict[str, str], to_msme: bool = True) -> str:
     email = email.strip()
     if not email:
-        logger.warning(f"{app_settings.environment} - Skipping empty email address")
+        logger.warning("%s - Skipping empty email address", app_settings.environment)
         return ""
 
     destinations = set_destinations(email, to_msme)
 
-    logger.info(f"{app_settings.environment} - Email to: {email} sent to {destinations}")
+    logger.info("%s - Email to: %s sent to %s", app_settings.environment, email, destinations)
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
@@ -194,10 +192,10 @@ def send_email(ses: SESClient, email: str, data: dict, to_msme: bool = True) -> 
         TemplateData=json.dumps(data),
     )
 
-    return response.get("MessageId")
+    return response["MessageId"]
 
 
-def send_application_approved_email(ses: SESClient, application: Application):
+def send_application_approved_email(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application has been approved.
 
@@ -208,7 +206,6 @@ def send_application_approved_email(ses: SESClient, application: Application):
     :param ses: SES client instance used to send emails.
     :param application: The application object which has been approved.
     """
-
     images_base_url = get_images_base_url()
     html_data = {
         "FI": application.lender.name,
@@ -218,12 +215,11 @@ def send_application_approved_email(ses: SESClient, application: Application):
         "UPLOAD_CONTRACT_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/upload-contract",
         "UPLOAD_CONTRACT_IMAGE_LINK": f"{images_base_url}/uploadContract.png",
     }
-    data = prepare_html("Application_approved", html_data)
 
-    send_email(ses, application.primary_email, data)
+    return send_email(ses, application.primary_email, prepare_html("Application_approved", html_data))
 
 
-def send_application_submission_completed(ses: SESClient, application: Application):
+def send_application_submission_completed(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application is submitted.
 
@@ -238,10 +234,10 @@ def send_application_submission_completed(ses: SESClient, application: Applicati
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
 
-    send_email(ses, application.primary_email, prepare_html("Application_submitted", html_data))
+    return send_email(ses, application.primary_email, prepare_html("Application_submitted", html_data))
 
 
-def send_application_credit_disbursed(ses: SESClient, application: Application):
+def send_application_credit_disbursed(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application has the credit dibursed.
 
@@ -257,14 +253,14 @@ def send_application_credit_disbursed(ses: SESClient, application: Application):
         "FI_EMAIL": application.lender.email_group,
     }
 
-    send_email(
+    return send_email(
         ses,
         application.primary_email,
         prepare_html("Application_credit_disbursed", html_data),
     )
 
 
-def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_password: str):
+def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_password: str) -> str:
     """
     Sends an email to a new user with a link to set their password.
 
@@ -277,23 +273,17 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_passwor
     :param username: The username (email address) of the new user.
     :param temp_password: The temporary password for the new user.
     """
-
     images_base_url = get_images_base_url()
-
     html_data = {
         "USER": name,
         "SET_PASSWORD_IMAGE_LINK": f"{images_base_url}/set_password.png",
-        "LOGIN_URL": app_settings.frontend_url
-        + "/create-password?key="
-        + quote(temp_password)
-        + "&email="
-        + quote(username),
+        "LOGIN_URL": f"{app_settings.frontend_url}/create-password?key={quote(temp_password)}&email={quote(username)}",
     }
 
-    send_email(ses, username, prepare_html("New_Account_Created", html_data), False)
+    return send_email(ses, username, prepare_html("New_Account_Created", html_data), False)
 
 
-def send_upload_contract_notification_to_FI(ses: SESClient, application: Application):
+def send_upload_contract_notification_to_FI(ses: SESClient, application: Application) -> str:
     """
     Sends an email to the Financial Institution (FI) to notify them of a new contract submission.
 
@@ -304,15 +294,13 @@ def send_upload_contract_notification_to_FI(ses: SESClient, application: Applica
     :param ses: SES client instance used to send emails.
     :param application: The application associated with the contract.
     """
-
     images_base_url = get_images_base_url()
-
     html_data = {
-        "LOGIN_URL": app_settings.frontend_url + "/login",
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
     }
 
-    send_email(
+    return send_email(
         ses,
         application.lender.email_group,
         prepare_html("New_contract_submission", html_data),
@@ -320,7 +308,7 @@ def send_upload_contract_notification_to_FI(ses: SESClient, application: Applica
     )
 
 
-def send_upload_contract_confirmation(ses: SESClient, application: Application):
+def send_upload_contract_confirmation(ses: SESClient, application: Application) -> str:
     """
     Sends an email to the borrower confirming the successful upload of the contract.
 
@@ -330,14 +318,13 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application):
     :param ses: SES client instance used to send emails.
     :param application: The application associated with the contract.
     """
-
     html_data = {
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
         "TENDER_TITLE": application.award.title,
         "BUYER_NAME": application.award.buyer_name,
     }
 
-    send_email(
+    return send_email(
         ses,
         application.lender.email_group,
         prepare_html("Contract_upload_confirmation", html_data),
@@ -346,7 +333,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application):
 
 
 def send_new_email_confirmation(
-    ses,
+    ses: SESClient,
     borrower_name: str,
     new_email: str,
     old_email: str,
@@ -367,20 +354,16 @@ def send_new_email_confirmation(
     :param application_uuid: The unique identifier for the application.
     :return: The ID of the sent message.
     """
-
     images_base_url = get_images_base_url()
     confirm_email_change_url = (
-        app_settings.frontend_url
-        + "/application/"
-        + quote(application_uuid)
-        + "/change-primary-email?token="
-        + quote(confirmation_email_token)
+        f"{app_settings.frontend_url}/application/{quote(application_uuid)}/"
+        f"change-primary-email?token={quote(confirmation_email_token)}"
     )
     html_data = {
         "NEW_MAIL": new_email,
         "AWARD_SUPPLIER_NAME": borrower_name,
         "CONFIRM_EMAIL_CHANGE_URL": confirm_email_change_url,
-        "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": images_base_url + "/confirmemailchange.png",
+        "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": f"{images_base_url}/confirmemailchange.png",
     }
 
     new_email_address = set_destinations(new_email)
@@ -394,7 +377,7 @@ def send_new_email_confirmation(
     return response
 
 
-def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: str):
+def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: str) -> str:
     """
     Sends an email to a user with instructions to reset their password.
 
@@ -405,20 +388,16 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: st
     :param username: The username associated with the account for which the password is to be reset.
     :param temp_password: A temporary password generated for the account.
     """
-
     images_base_url = get_images_base_url()
-
     html_data = {
         "USER_ACCOUNT": username,
-        "RESET_PASSWORD_URL": app_settings.frontend_url
-        + "/create-password?key="
-        + quote(temp_password)
-        + "&email="
-        + quote(username),
-        "RESET_PASSWORD_IMAGE": images_base_url + "/ResetPassword.png",
+        "RESET_PASSWORD_URL": (
+            f"{app_settings.frontend_url}/create-password?key={quote(temp_password)}&email={quote(username)}"
+        ),
+        "RESET_PASSWORD_IMAGE": f"{images_base_url}/ResetPassword.png",
     }
 
-    send_email(ses, username, prepare_html("Reset_password", html_data), False)
+    return send_email(ses, username, prepare_html("Reset_password", html_data), False)
 
 
 def send_invitation_email(
@@ -438,9 +417,7 @@ def send_invitation_email(
     :param tender_title: The title of the tender.
     :return: The MessageId of the sent email.
     """
-
     images_base_url = get_images_base_url()
-
     html_data = {
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
@@ -471,16 +448,14 @@ def send_mail_intro_reminder(
     :param tender_title: The title of the tender.
     :return: The MessageId of the sent email.
     """
-
     images_base_url = get_images_base_url()
-
     html_data = {
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "FIND_OUT_MORE_URL": app_settings.frontend_url + "/application/" + quote(uuid) + "/intro",
-        "FIND_OUT_MORE_IMAGE_LINK": images_base_url + "/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
+        "FIND_OUT_MORE_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/intro",
+        "FIND_OUT_MORE_IMAGE_LINK": f"{images_base_url}/findoutmore.png",
+        "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
@@ -509,16 +484,16 @@ def send_mail_submit_reminder(
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "APPLY_FOR_CREDIT_URL": app_settings.frontend_url + "/application/" + quote(uuid) + "/intro",
-        "APPLY_FOR_CREDIT_IMAGE_LINK": images_base_url + "/applyForCredit.png",
-        "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
+        "APPLY_FOR_CREDIT_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/intro",
+        "APPLY_FOR_CREDIT_IMAGE_LINK": f"{images_base_url}/applyForCredit.png",
+        "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
     return send_email(ses, email, prepare_html("Access_to_credit_reminder", html_data))
 
 
-def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: list[str]):
+def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str) -> str:
     """
     Sends a notification email about a new application to a financial institution's email group.
 
@@ -526,13 +501,12 @@ def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: list[str
     :param lender_email_group: List of email addresses belonging to the lender.
     """
     images_base_url = get_images_base_url()
-
     html_data = {
-        "LOGIN_URL": app_settings.frontend_url + "/login",
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
     }
 
-    send_email(
+    return send_email(
         ses,
         lender_email_group,
         prepare_html("FI_New_application_submission_FI_user", html_data),
@@ -540,7 +514,7 @@ def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: list[str
     )
 
 
-def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: list[str], lender_name: str):
+def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: str, lender_name: str) -> str:
     """
     Sends a notification email about a new application to the Open Contracting Partnership's (OCP) email group.
 
@@ -548,16 +522,14 @@ def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: list[str],
     :param ocp_email_group: List of email addresses belonging to the OCP.
     :param lender_name: Name of the lender associated with the new application.
     """
-
     images_base_url = get_images_base_url()
-
     html_data = {
         "FI": lender_name,
-        "LOGIN_URL": app_settings.frontend_url + "/login",
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
     }
 
-    send_email(
+    return send_email(
         ses,
         ocp_email_group,
         prepare_html("New_application_submission_OCP_user", html_data),
@@ -577,7 +549,6 @@ def send_mail_request_to_sme(ses: SESClient, uuid: str, lender_name: str, email_
     :return: The unique identifier for the sent message.
     """
     images_base_url = get_images_base_url()
-
     html_data = {
         "FI": lender_name,
         "FI_MESSAGE": email_message,
@@ -598,14 +569,12 @@ def send_overdue_application_email_to_FI(ses: SESClient, name: str, email: str, 
     :param amount: Number of overdue applications.
     :return: The unique identifier for the sent message.
     """
-
     images_base_url = get_images_base_url()
-
     html_data = {
         "USER": name,
         "NUMBER_APPLICATIONS": amount,
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
-        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
     }
 
     return send_email(ses, email, prepare_html("Overdue_application_FI", html_data), False)
@@ -620,12 +589,11 @@ def send_overdue_application_email_to_OCP(ses: SESClient, name: str) -> str:
     :return: The unique identifier for the sent message.
     """
     images_base_url = get_images_base_url()
-
     html_data = {
         "USER": name,
         "FI": name,
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
-        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
     }
 
     return send_email(
@@ -645,13 +613,13 @@ def send_rejected_application_email(ses: SESClient, application: Application) ->
     :return: The unique identifier for the sent message.
     """
     images_base_url = get_images_base_url()
-
     html_data = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-        "FIND_ALTENATIVE_URL": app_settings.frontend_url
-        + f"/application/{quote(application.uuid)}/find-alternative-credit",
-        "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
+        "FIND_ALTENATIVE_URL": (
+            f"{app_settings.frontend_url}/application/{quote(application.uuid)}/find-alternative-credit"
+        ),
+        "FIND_ALTERNATIVE_IMAGE_LINK": f"{images_base_url}/findAlternative.png",
     }
     return send_email(ses, application.primary_email, prepare_html("Application_declined", html_data))
 
@@ -665,7 +633,6 @@ def send_rejected_application_email_without_alternatives(ses: SESClient, applica
     :param application: An object that contains information about the application that was rejected.
     :return: The unique identifier for the sent message.
     """
-
     html_data = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -709,12 +676,11 @@ def send_upload_documents_notifications_to_FI(ses: SESClient, email: str) -> str
     :param email: Email address of the Financial Institution to receive the notification.
     :return: The unique identifier for the sent message.
     """
-
     images_base_url = get_images_base_url()
     html_data = {
         **generate_common_data(),
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
-        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
     }
 
     return send_email(ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data), False)
