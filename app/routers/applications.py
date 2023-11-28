@@ -31,7 +31,13 @@ async def reject_application(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
+        dependencies.get_scoped_application_as_user(
+            roles=(models.UserType.FI,),
+            statuses=(
+                models.ApplicationStatus.CONTRACT_UPLOADED,
+                models.ApplicationStatus.STARTED,
+            ),
+        )
     ),
 ) -> Any:
     """
@@ -42,19 +48,6 @@ async def reject_application(
     :return: The rejected application with its associated relations.
     """
     with transaction_session(session):
-        if application.status not in (
-            models.ApplicationStatus.CONTRACT_UPLOADED,
-            models.ApplicationStatus.STARTED,
-        ):
-            message = (
-                f"Application status is not {models.ApplicationStatus.STARTED.name} "
-                f"or {models.ApplicationStatus.CONTRACT_UPLOADED.name}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=message,
-            )
-
         payload_dict = jsonable_encoder(payload, exclude_unset=True)
         application.stage_as_rejected(payload_dict)
         # This next call performs the `session.flush()`.
@@ -100,7 +93,7 @@ async def complete_application(
     user: models.User = Depends(dependencies.get_user),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(
+        dependencies.get_scoped_application_as_user(
             roles=(models.UserType.FI,),
             statuses=(models.ApplicationStatus.CONTRACT_UPLOADED,),
         )
@@ -149,7 +142,7 @@ async def approve_application(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(
+        dependencies.get_scoped_application_as_user(
             roles=(models.UserType.FI,),
             statuses=(models.ApplicationStatus.STARTED,),
         )
@@ -228,7 +221,7 @@ async def verify_data_field(
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(
+        dependencies.get_scoped_application_as_user(
             roles=(models.UserType.FI,),
             statuses=(
                 models.ApplicationStatus.STARTED,
@@ -313,9 +306,9 @@ async def update_application_award(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(
+        dependencies.get_scoped_application_as_user(
             roles=(models.UserType.OCP, models.UserType.FI),
-            statuses=dependencies.OCP_CAN_MODIFY,
+            statuses=dependencies.USER_CAN_EDIT_AWARD_BORROWER_DATA,
         )
     ),
 ) -> Any:
@@ -355,9 +348,9 @@ async def update_application_borrower(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(
+        dependencies.get_scoped_application_as_user(
             roles=(models.UserType.OCP, models.UserType.FI),
-            statuses=dependencies.OCP_CAN_MODIFY,
+            statuses=dependencies.USER_CAN_EDIT_AWARD_BORROWER_DATA,
         )
     ),
 ) -> Any:
@@ -448,7 +441,7 @@ async def get_application(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(roles=(models.UserType.OCP, models.UserType.FI))
+        dependencies.get_scoped_application_as_user(roles=(models.UserType.OCP, models.UserType.FI))
     ),
 ) -> Any:
     """
@@ -471,7 +464,7 @@ async def start_application(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(
+        dependencies.get_scoped_application_as_user(
             roles=(models.UserType.FI,),
             statuses=(models.ApplicationStatus.SUBMITTED,),
         )
@@ -549,7 +542,7 @@ async def email_sme(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(
+        dependencies.get_scoped_application_as_user(
             roles=(models.UserType.FI,), statuses=(models.ApplicationStatus.STARTED,)
         )
     ),
@@ -614,7 +607,7 @@ async def previous_contracts(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(roles=(models.UserType.OCP, models.UserType.FI))
+        dependencies.get_scoped_application_as_user(roles=(models.UserType.OCP, models.UserType.FI))
     ),
 ) -> list[models.Award]:
     """

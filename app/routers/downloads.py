@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, util
 from app.db import get_db, transaction_session
+from app.dependencies import ApplicationScope
 from app.i18n import get_translated_string
 from app.utils import tables
 from reportlab_mods import styleSubTitle, styleTitle
@@ -70,7 +71,11 @@ async def download_application(
     lang: str,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(dependencies.get_publication_as_user),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_as_user(
+            roles=(models.UserType.OCP, models.UserType.FI), scopes=(ApplicationScope.UNEXPIRED,)
+        )
+    ),
 ) -> StreamingResponse:
     """
     Retrieve all documents related to an application and stream them as a zip file.

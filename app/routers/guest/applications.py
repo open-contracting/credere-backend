@@ -12,6 +12,7 @@ from sqlmodel import col
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
 from app.db import get_db, transaction_session
+from app.dependencies import ApplicationScope
 from app.settings import app_settings
 from app.utils import background
 from app.utils.statistics import update_statistics
@@ -28,7 +29,7 @@ router = APIRouter()
 async def application_by_uuid(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_uuid(scopes=(dependencies.ApplicationScope.UNEXPIRED,))
+        dependencies.get_scoped_application_as_guest_via_uuid(scopes=(dependencies.ApplicationScope.UNEXPIRED,))
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -56,7 +57,7 @@ async def decline(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
         )
     ),
@@ -98,7 +99,7 @@ async def rollback_decline(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
         )
     ),
@@ -135,7 +136,7 @@ async def decline_feedback(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
         )
     ),
@@ -169,7 +170,7 @@ async def access_scheme(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
         )
     ),
@@ -210,7 +211,7 @@ async def credit_product_options(
     payload: parsers.ApplicationCreditOptions,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
@@ -273,7 +274,7 @@ async def select_credit_product(
     payload: parsers.ApplicationSelectCreditProduct,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
@@ -324,7 +325,7 @@ async def rollback_select_credit_product(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
@@ -367,7 +368,7 @@ async def confirm_credit_product(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
@@ -386,14 +387,14 @@ async def confirm_credit_product(
                 detail="Credit product not selected",
             )
 
-        creditProduct = models.CreditProduct.first_by(session, "id", application.credit_product_id)
-        if not creditProduct:
+        credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
+        if not credit_product:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Credit product not found",
             )
 
-        application.lender_id = creditProduct.lender_id
+        application.lender_id = credit_product.lender_id
         application.amount_requested = application.calculator_data.get("amount_requested", None)
         application.repayment_years = application.calculator_data.get("repayment_years", None)
         application.repayment_months = application.calculator_data.get("repayment_months", None)
@@ -464,7 +465,9 @@ async def update_apps_send_notifications(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        dependencies.get_scoped_application_as_guest_via_payload(
+            scopes=(ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
+        )
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -519,7 +522,7 @@ async def update_apps_send_notifications(
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="There was an error submiting the application",
+                detail="There was an error submitting the application",
             )
 
 
@@ -532,7 +535,7 @@ async def upload_document(
     file: UploadFile,
     type: str = Form(...),
     session: Session = Depends(get_db),
-    application: models.Application = Depends(dependencies.get_publication_as_guest_via_form),
+    application: models.Application = Depends(dependencies.get_application_as_guest_via_form),
 ) -> Any:
     """
     Upload a document for an application.
@@ -573,7 +576,7 @@ async def complete_information_request(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_payload(
             statuses=(models.ApplicationStatus.INFORMATION_REQUESTED,)
         )
     ),
@@ -626,7 +629,7 @@ async def upload_contract(
     file: UploadFile,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_form(statuses=(models.ApplicationStatus.APPROVED,))
+        dependencies.get_scoped_application_as_guest_via_form(statuses=(models.ApplicationStatus.APPROVED,))
     ),
 ) -> Any:
     """
@@ -658,7 +661,7 @@ async def confirm_upload_contract(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.APPROVED,))
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.APPROVED,))
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -719,7 +722,7 @@ async def find_alternative_credit_option(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_guest_via_payload(statuses=(models.ApplicationStatus.REJECTED,))
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.REJECTED,))
     ),
 ) -> serializers.ApplicationResponse:
     """

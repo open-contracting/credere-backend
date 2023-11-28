@@ -295,7 +295,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     response = client.put("/applications/1/award", json=update_borrower, headers=FI_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    # Fi user starts application
+    # The FI user starts application
     response = client.post("/applications/1/start", headers=FI_headers)
     assert response.json()["status"] == models.ApplicationStatus.STARTED.value
     assert response.status_code == status.HTTP_200_OK
@@ -383,6 +383,10 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         )
         assert response.status_code == status.HTTP_200_OK
 
+        response = client.post("/applications/complete-information-request", json={"uuid": "123-456-789"})
+        assert response.json()["application"]["status"] == models.ApplicationStatus.STARTED.value
+        assert response.status_code == status.HTTP_200_OK
+
         response = client.get("/applications/documents/id/1", headers=FI_headers)
         assert response.status_code == status.HTTP_200_OK
 
@@ -394,11 +398,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         response = client.get("/applications/documents/id/100", headers=OCP_headers)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-        response = client.post("/applications/complete-information-request", json={"uuid": "123-456-789"})
-        assert response.json()["application"]["status"] == models.ApplicationStatus.STARTED.value
-        assert response.status_code == status.HTTP_200_OK
-
-    # lender tries to approve the application without verifing legal_name
+    # lender tries to approve the application without verifying legal_name
     response = client.post(
         "/applications/1/approve-application",
         json=approve_application,
@@ -406,7 +406,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
-    # verifly legal_name
+    # verify legal_name
     response = client.put(
         "/applications/1/verify-data-field",
         json={"legal_name": True},
@@ -414,7 +414,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     )
     assert response.status_code == status.HTTP_200_OK
 
-    # lender tries to approve the application without verifing INCORPORATION_DOCUMENT
+    # lender tries to approve the application without verifying INCORPORATION_DOCUMENT
     response = client.post(
         "/applications/1/approve-application",
         json=approve_application,
@@ -422,7 +422,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
-    # verifly borrower document
+    # verify borrower document
     response = client.put(
         "/applications/documents/1/verify-document",
         json={"verified": True},

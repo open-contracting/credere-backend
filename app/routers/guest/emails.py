@@ -21,7 +21,7 @@ async def change_email(
     payload: parsers.ChangeEmail,
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
-    application: models.Application = Depends(dependencies.get_publication_as_guest_via_payload),
+    application: models.Application = Depends(dependencies.get_application_as_guest_via_payload),
 ) -> parsers.ChangeEmail:
     """
     Change the email address for an application.
@@ -75,7 +75,7 @@ async def change_email(
 async def confirm_email(
     payload: parsers.ConfirmNewEmail,
     session: Session = Depends(get_db),
-    application: models.Application = Depends(dependencies.get_publication_as_guest_via_payload),
+    application: models.Application = Depends(dependencies.get_application_as_guest_via_payload),
 ) -> parsers.ChangeEmail:
     """
     Confirm the email address change for an application.
