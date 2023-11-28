@@ -609,7 +609,9 @@ async def upload_compliance(
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
+        dependencies.get_scoped_publication_as_user(
+            roles=(models.UserType.FI,), statuses=(models.ApplicationStatus.STARTED,)
+        )
     ),
 ) -> Any:
     """
