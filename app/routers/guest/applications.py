@@ -466,7 +466,7 @@ async def update_apps_send_notifications(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_guest_via_payload(
-            statuses=(models.ApplicationStatus.ACCEPTED,), scopes=(ApplicationScope.UNEXPIRED,)
+            scopes=(ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
         )
     ),
 ) -> serializers.ApplicationResponse:
