@@ -141,8 +141,11 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
 
 
 def _get_base_query(
-    sessionBase: Query, start_date: datetime | str | None, end_date: datetime | str | None, lender_id: int | None
-) -> Query:
+    sessionBase: "Query[Application]",
+    start_date: datetime | str | None,
+    end_date: datetime | str | None,
+    lender_id: int | None,
+) -> "Query[Application]":
     """
     Create the base query for filtering applications based on the provided start_date, end_date, and lender_id.
 

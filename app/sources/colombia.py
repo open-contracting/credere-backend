@@ -18,7 +18,7 @@ URLS = {
 HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 
 
-def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, Any]], str]:
+def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, str]], str]:
     award_url = (
         f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
         f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
@@ -31,7 +31,7 @@ def create_new_award(
     entry: dict[str, Any],
     borrower_id: int | None = None,
     previous: bool = False,
-) -> dict[str, Any]:
+) -> dict[str, str | None]:
     """
     Create a new award and insert it into the database.
 
@@ -143,7 +143,7 @@ def get_previous_contracts(documento_proveedor: str) -> httpx.Response:
     return sources.make_request_with_retry(url, HEADERS)
 
 
-def get_source_contract_id(entry: dict[str, Any]) -> str:
+def get_source_contract_id(entry: dict[str, str]) -> str:
     """
     Get the source contract ID from the given entry data.
 
@@ -159,7 +159,7 @@ def get_source_contract_id(entry: dict[str, Any]) -> str:
     return source_contract_id
 
 
-def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict[str, Any]) -> dict[str, str]:
+def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict[str, str]) -> dict[str, str]:
     """
     Create a new borrower and insert it into the database.
 
@@ -203,7 +203,7 @@ def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entr
     return new_borrower
 
 
-def get_email(documento_proveedor: str, entry: dict[str, Any]) -> str:
+def get_email(documento_proveedor: str, entry: dict[str, str]) -> str:
     """
     Get the email address for the borrower based on the given document provider and entry data.
 
@@ -222,7 +222,7 @@ def get_email(documento_proveedor: str, entry: dict[str, Any]) -> str:
             f"0 borrower emails from {borrower_email_url} " f"(response={borrower_response_email_json})"
         )
 
-    remote_email = borrower_response_email_json[0]
+    remote_email: dict[str, str] = borrower_response_email_json[0]
     email = remote_email.get("correo_entidad", "")
 
     if len_borrower_response_email_json > 1:
@@ -236,7 +236,7 @@ def get_email(documento_proveedor: str, entry: dict[str, Any]) -> str:
     return email
 
 
-def get_documento_proveedor(entry: dict[str, Any]) -> str:
+def get_documento_proveedor(entry: dict[str, str]) -> str:
     """
     Get the document provider from the given entry data.
 

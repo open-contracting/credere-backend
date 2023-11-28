@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -84,7 +85,7 @@ async def create_credit_products(
     tags=["lenders"],
     response_model=models.LenderWithRelations,
 )
-async def get_lender(lender_id: int, session: Session = Depends(get_db)):
+async def get_lender(lender_id: int, session: Session = Depends(get_db)) -> Any:
     """
     Retrieve a lender by its ID.
 
@@ -161,7 +162,7 @@ async def get_lenders_list(
 async def get_credit_product(
     credit_product_id: int,
     session: Session = Depends(get_db),
-):
+) -> Any:
     """
     Retrieve a credit product by its ID, including its associated lender information.
 

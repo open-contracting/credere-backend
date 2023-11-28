@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
@@ -32,7 +33,7 @@ async def reject_application(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
     ),
-):
+) -> Any:
     """
     Reject an application:
     Changes the status from "STARTED" to "REJECTED".
@@ -104,7 +105,7 @@ async def complete_application(
             statuses=(models.ApplicationStatus.CONTRACT_UPLOADED,),
         )
     ),
-):
+) -> Any:
     """
     Complete an application:
     Changes application status from "CONTRACT_UPLOADED" to "COMPLETED".
@@ -153,7 +154,7 @@ async def approve_application(
             statuses=(models.ApplicationStatus.STARTED,),
         )
     ),
-):
+) -> Any:
     """
     Approve an application:
     Changes application status from "STARTED" to "APPROVED".
@@ -235,7 +236,7 @@ async def verify_data_field(
             ),
         )
     ),
-):
+) -> Any:
     """
     Verify and update a data field in an application.
 
@@ -271,7 +272,7 @@ async def verify_document(
     payload: parsers.VerifyBorrowerDocument,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-):
+) -> Any:
     """
     Verify a borrower document in an application.
 
@@ -317,7 +318,7 @@ async def update_application_award(
             statuses=dependencies.OCP_CAN_MODIFY,
         )
     ),
-):
+) -> Any:
     """
     Update the award details of an application.
 
@@ -359,7 +360,7 @@ async def update_application_borrower(
             statuses=dependencies.OCP_CAN_MODIFY,
         )
     ),
-):
+) -> Any:
     """
     Update the borrower details of an application.
 
@@ -449,7 +450,7 @@ async def get_application(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(roles=(models.UserType.OCP, models.UserType.FI))
     ),
-):
+) -> Any:
     """
     Retrieve an application by its ID.
 
@@ -475,7 +476,7 @@ async def start_application(
             statuses=(models.ApplicationStatus.SUBMITTED,),
         )
     ),
-):
+) -> Any:
     """
     Start an application:
     Changes application status from "SUBMITTED" to "STARTED".
@@ -552,7 +553,7 @@ async def email_sme(
             roles=(models.UserType.FI,), statuses=(models.ApplicationStatus.STARTED,)
         )
     ),
-):
+) -> Any:
     """
     Send an email to SME and update the application status:
     Changes the application status from "STARTED" to "INFORMATION_REQUESTED".
@@ -617,7 +618,7 @@ async def upload_compliance(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
     ),
-):
+) -> Any:
     """
     Upload a compliance document for an application.
 

@@ -1,12 +1,12 @@
 from datetime import datetime
 from enum import Enum
-from typing import Generator
+from typing import Any, Callable, Generator
 
 from fastapi import Depends, Form, HTTPException, Request, status
 from sqlalchemy.orm import Session, defaultload, joinedload
 
 from app import auth, models, parsers, util
-from app.aws import cognito_client
+from app.aws import CognitoClient, cognito_client
 from app.db import get_db
 
 OCP_CAN_MODIFY = (
@@ -22,11 +22,11 @@ class ApplicationScope(Enum):
     UNEXPIRED = "UNEXPIRED"
 
 
-def get_cognito_client() -> Generator:  # new
+def get_cognito_client() -> Generator[CognitoClient, None, None]:
     yield cognito_client
 
 
-async def get_auth_credentials(request: Request):
+async def get_auth_credentials(request: Request) -> auth.JWTAuthorizationCredentials | None:
     return await auth.verifyTokeClass().__call__(request)
 
 
@@ -117,7 +117,7 @@ def get_publication_as_user(id: int, session: Session = Depends(get_db)) -> mode
 
 def get_scoped_publication_as_user(
     *, roles: tuple[models.UserType, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
-):
+) -> Callable[[models.Application, models.User], models.Application]:
     def inner(
         application: models.Application = Depends(get_publication_as_user), user: models.User = Depends(get_user)
     ) -> models.Application:
@@ -156,8 +156,10 @@ def _get_publication_as_guest_via_uuid(session: Session, uuid: str) -> models.Ap
 
 
 def _get_scoped_publication_as_guest_inner(
-    depends, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
-):
+    depends: Callable[[Any, Session], models.Application],
+    scopes: tuple[ApplicationScope, ...] = (),
+    statuses: tuple[models.ApplicationStatus, ...] = (),
+) -> Callable[[models.Application], models.Application]:
     def inner(application: models.Application = Depends(depends)) -> models.Application:
         raise_if_unauthorized(application, scopes=scopes, statuses=statuses)
         return application
@@ -181,17 +183,17 @@ def get_publication_as_guest_via_form(uuid: str = Form(...), session: Session = 
 
 def get_scoped_publication_as_guest_via_payload(
     *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
-):
+) -> Callable[[models.Application], models.Application]:
     return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_payload, scopes, statuses)
 
 
 def get_scoped_publication_as_guest_via_uuid(
     *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
-):
+) -> Callable[[models.Application], models.Application]:
     return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_uuid, scopes, statuses)
 
 
 def get_scoped_publication_as_guest_via_form(
     *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
-):
+) -> Callable[[models.Application], models.Application]:
     return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_form, scopes, statuses)

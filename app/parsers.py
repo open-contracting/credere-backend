@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -14,7 +15,7 @@ class AwardUpdate(BaseModel):
     award_currency: str | None
     award_amount: Decimal | None
     award_date: datetime | None
-    payment_method: dict | None
+    payment_method: dict[str, Any] | None
     buyer_name: str | None
     source_url: str | None
     entity_code: str | None

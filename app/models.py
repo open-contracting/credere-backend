@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional, Self
@@ -8,15 +8,15 @@ from sqlalchemy import DECIMAL, Column, DateTime
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
+from sqlalchemy.orm import Query, Session
+from sqlalchemy.sql import Select, func
 from sqlalchemy.sql.expression import true
 from sqlmodel import Field, Relationship, SQLModel, col
 
 from app.settings import app_settings
 
 
-def _get_missing_data_keys(input_dict: dict) -> dict:
+def _get_missing_data_keys(input_dict: dict[str, Any]) -> dict[str, bool]:
     """
     Get a dictionary indicating whether each key in the input dictionary has missing data (empty or None).
 
@@ -41,7 +41,7 @@ class ActiveRecordMixin:
     __config__ = None
 
     @classmethod
-    def filter_by(cls, session: Session, field: str, value: Any):
+    def filter_by(cls, session: Session, field: str, value: Any) -> "Query[Self]":
         """
         Filter a model based on a field's value.
 
@@ -65,7 +65,7 @@ class ActiveRecordMixin:
         return cls.filter_by(session, field, value).first()
 
     @classmethod
-    def create(cls, session: Session, **data) -> Self:
+    def create(cls, session: Session, **data: Any) -> Self:
         """
         Insert a new instance into the database.
 
@@ -81,7 +81,7 @@ class ActiveRecordMixin:
         session.flush()
         return obj
 
-    def update(self, session: Session, **data) -> Self:
+    def update(self, session: Session, **data: Any) -> Self:
         """
         Update an existing instance in the database.
 
@@ -218,8 +218,8 @@ class CreditProductBase(SQLModel):
     interest_rate: str = Field(default="", nullable=False)
     additional_information: str = Field(default="", nullable=False)
     type: CreditType = Field(sa_column=Column(SAEnum(CreditType, name="credit_type")), nullable=False)
-    borrower_types: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    required_document_types: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    borrower_types: dict[str, bool] = Field(default={}, sa_column=Column(JSON), nullable=False)
+    required_document_types: dict[str, bool] = Field(default={}, sa_column=Column(JSON), nullable=False)
     other_fees_total_amount: Decimal = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
     other_fees_description: str = Field(default="", nullable=False)
     more_info_url: str = Field(default="", nullable=False)
@@ -307,7 +307,7 @@ class ApplicationBase(SQLModel):
     repayment_years: int | None = Field(nullable=True)
     repayment_months: int | None = Field(nullable=True)
     payment_start_date: datetime | None = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
-    calculator_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    calculator_data: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
     borrower_credit_product_selected_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
@@ -317,13 +317,13 @@ class ApplicationBase(SQLModel):
     borrower_accepted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     borrower_declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     overdued_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    borrower_declined_preferences_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    borrower_declined_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    borrower_declined_preferences_data: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
+    borrower_declined_data: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
     lender_started_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    secop_data_verification: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    secop_data_verification: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
     lender_approved_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    lender_approved_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    lender_rejected_data: dict | None = Field(default={}, sa_column=Column(JSON), nullable=False)
+    lender_approved_data: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
+    lender_rejected_data: dict[str, Any] | None = Field(default={}, sa_column=Column(JSON), nullable=False)
     lender_rejected_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     borrower_uploaded_contract_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     lender_completed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
@@ -370,18 +370,18 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     credit_product: "CreditProduct" = Relationship()
 
     @classmethod
-    def unarchived(cls, session: Session):
+    def unarchived(cls, session: Session) -> "Query[Self]":
         return session.query(cls).filter(col(cls.archived_at).is_(None))
 
     @classmethod
-    def expiring_soon(cls, session: Session):
+    def expiring_soon(cls, session: Session) -> "Query[Self]":
         return session.query(cls).filter(
             col(cls.expired_at) > datetime.now(),
             col(cls.expired_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
         )
 
     @classmethod
-    def pending_introduction_reminder(cls, session: Session):
+    def pending_introduction_reminder(cls, session: Session) -> "Query[Self]":
         return (
             cls.expiring_soon(session)
             .filter(
@@ -394,14 +394,14 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
-    def pending_submission_reminder(cls, session: Session):
+    def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
         return cls.expiring_soon(session).filter(
             cls.status == ApplicationStatus.ACCEPTED,
             col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
         )
 
     @classmethod
-    def lapsed(cls, session: Session):
+    def lapsed(cls, session: Session) -> "Query[Self]":
         delta = timedelta(days=app_settings.days_to_change_to_lapsed)
 
         return cls.unarchived(session).filter(
@@ -422,7 +422,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
-    def submitted(cls, session: Session):
+    def submitted(cls, session: Session) -> "Query[Self]":
         return cls.unarchived(session).filter(
             col(cls.status).notin_(
                 [
@@ -435,14 +435,14 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
-    def submitted_to_lender(cls, session: Session, lender_id: int | None):
+    def submitted_to_lender(cls, session: Session, lender_id: int | None) -> "Query[Self]":
         return cls.submitted(session).filter(
             Application.lender_id == lender_id,
             col(Application.lender_id).isnot(None),
         )
 
     @classmethod
-    def archivable(cls, session: Session):
+    def archivable(cls, session: Session) -> "Query[Self]":
         delta = timedelta(days=app_settings.days_to_erase_borrower_data)
 
         return cls.unarchived(session).filter(
@@ -467,7 +467,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @property
-    def tz(self):
+    def tz(self) -> tzinfo | None:
         return self.created_at.tzinfo
 
     def previous_awards(self, session: Session) -> list["Award"]:
@@ -484,7 +484,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             .all()
         )
 
-    def rejecter_lenders(self, session: Session):
+    def rejecter_lenders(self, session: Session) -> list[Self]:
         """
         :return: The IDs of lenders who rejected applications from the application's borrower for the same award.
         """
@@ -540,12 +540,12 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
         return round(days)
 
-    def stage_as_rejected(self, lender_rejected_data: dict):
+    def stage_as_rejected(self, lender_rejected_data: dict[str, Any]) -> None:
         self.status = ApplicationStatus.REJECTED
         self.lender_rejected_at = datetime.now(self.tz)
         self.lender_rejected_data = lender_rejected_data
 
-    def stage_as_completed(self, disbursed_final_amount: Decimal | None):
+    def stage_as_completed(self, disbursed_final_amount: Decimal | None) -> None:
         self.status = ApplicationStatus.COMPLETED
         self.lender_completed_at = datetime.now(self.tz)
         self.disbursed_final_amount = disbursed_final_amount
@@ -567,7 +567,7 @@ class BorrowerBase(SQLModel):
         ),
         default=BorrowerSize.NOT_INFORMED,
     )
-    missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    missing_data: dict[str, bool] = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: datetime | None = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -588,7 +588,7 @@ class BorrowerBase(SQLModel):
 
 
 class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
-    source_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    source_data: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
     status: BorrowerStatus = Field(
         sa_column=Column(SAEnum(BorrowerStatus, name="borrower_status")),
         default=BorrowerStatus.ACTIVE,
@@ -645,7 +645,7 @@ class AwardBase(SQLModel):
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
     contractperiod_startdate: datetime | None = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
     contractperiod_enddate: datetime | None = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
-    payment_method: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    payment_method: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
     buyer_name: str = Field(default="")
     source_url: str = Field(default="")
     entity_code: str = Field(default="")
@@ -655,14 +655,14 @@ class AwardBase(SQLModel):
     procurement_method: str = Field(default="")
     contracting_process_id: str = Field(default="")
     procurement_category: str = Field(default="")
-    missing_data: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    missing_data: dict[str, bool] = Field(default={}, sa_column=Column(JSON), nullable=False)
 
 
 class Award(AwardBase, ActiveRecordMixin, table=True):
     applications: list["Application"] | None = Relationship(back_populates="award")
     borrower: Borrower = Relationship(back_populates="awards")
-    source_data_contracts: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
-    source_data_awards: dict = Field(default={}, sa_column=Column(JSON), nullable=False)
+    source_data_contracts: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
+    source_data_awards: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: datetime | None = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -719,7 +719,7 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
     lender_id: int | None = Field(default=None, foreign_key="lender.id", nullable=True)
 
     @classmethod
-    def application_by_type(cls, message_type):
+    def application_by_type(cls, message_type: MessageType) -> Select:
         """
         :return: The IDs of applications that sent messages of the provided type.
         """
@@ -764,7 +764,7 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     type: ApplicationActionType = Field(
         sa_column=Column(SAEnum(ApplicationActionType, name="application_action_type"))
     )
-    data: dict = Field(default={}, sa_column=Column(JSON))
+    data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="actions")
     user_id: int = Field(default=None, foreign_key="credere_user.id")
@@ -821,14 +821,14 @@ class StatisticData(BaseModel):
     name: str
     value: int
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return {"name": self.name, "value": self.value}
 
 
 class Statistic(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: StatisticType = Field(sa_column=Column(SAEnum(StatisticType, name="statistic_type")))
-    data: dict = Field(default={}, sa_column=Column(JSON))
+    data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     created_at: datetime | None = Field(
         sa_column=Column(
             DateTime(timezone=True),

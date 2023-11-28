@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
@@ -532,7 +533,7 @@ async def upload_document(
     type: str = Form(...),
     session: Session = Depends(get_db),
     application: models.Application = Depends(dependencies.get_publication_as_guest_via_form),
-):
+) -> Any:
     """
     Upload a document for an application.
 
@@ -627,7 +628,7 @@ async def upload_contract(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_guest_via_form(statuses=(models.ApplicationStatus.APPROVED,))
     ),
-):
+) -> Any:
     """
     Upload a contract document for an application.
 

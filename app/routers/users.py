@@ -391,7 +391,7 @@ async def update_user(
     user: models.User,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
-):
+) -> models.User:
     """
     Update a user's information.
 

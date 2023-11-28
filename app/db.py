@@ -1,6 +1,6 @@
 import logging
 from contextlib import contextmanager
-from typing import Any, Generator
+from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -33,7 +33,7 @@ def transaction_session(db: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def transaction_session_logger(session: Session, msg: str, *args: list[Any]) -> Generator[Session, None, None]:
+def transaction_session_logger(session: Session, msg: str, *args: str) -> Generator[Session, None, None]:
     try:
         yield session
         session.commit()
