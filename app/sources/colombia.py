@@ -108,13 +108,7 @@ def create_new_award(
 
 def get_new_contracts(index: int, from_date: datetime, until_date: datetime | None = None) -> httpx.Response:
     offset = index * app_settings.secop_pagination_limit
-    delta = timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
     date_format = "%Y-%m-%dT%H:%M:%S.000"
-    converted_date = (datetime.now() - delta).strftime(date_format)
-
-    if from_date and not until_date:
-        delta = timedelta(seconds=1)
-        converted_date = (from_date + delta).strftime(date_format)
 
     base_url = (
         f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
@@ -123,11 +117,19 @@ def get_new_contracts(index: int, from_date: datetime, until_date: datetime | No
     )
 
     if from_date and until_date:
-        until_date = until_date.strftime(date_format)
-        from_date = from_date.strftime(date_format)
-        url = f"{base_url}" f"AND ultima_actualizacion >= '{from_date}' " f"AND ultima_actualizacion < '{until_date}' "
+        url = (
+            f"{base_url} AND ultima_actualizacion >= '{from_date.strftime(date_format)}' "
+            f"AND ultima_actualizacion < '{until_date.strftime(date_format)}' "
+        )
     else:
-        url = f"{base_url}" f"AND estado_contrato = 'Borrador' AND ultima_actualizacion >= '{converted_date}'"
+        if from_date:
+            converted_date = from_date + timedelta(seconds=1)
+        else:
+            converted_date = datetime.now() - timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
+        url = (
+            f"{base_url} AND estado_contrato = 'Borrador' "
+            f"AND ultima_actualizacion >= '{converted_date.strftime(date_format)}'"
+        )
 
     return sources.make_request_with_retry(url, HEADERS)
 
@@ -172,7 +174,7 @@ def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entr
     """
 
     borrower_url = (
-        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}" f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
+        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}&codigo_entidad={entry.get('codigo_proveedor', '')}"
     )
     borrower_response = sources.make_request_with_retry(borrower_url, HEADERS)
     borrower_response_json = borrower_response.json()
@@ -221,7 +223,7 @@ def get_email(documento_proveedor: str, entry: dict[str, str]) -> str:
 
     if len_borrower_response_email_json == 0:
         raise SkippedAwardError(
-            f"0 borrower emails from {borrower_email_url} " f"(response={borrower_response_email_json})"
+            f"0 borrower emails from {borrower_email_url} (response={borrower_response_email_json})"
         )
 
     remote_email: dict[str, str] = borrower_response_email_json[0]

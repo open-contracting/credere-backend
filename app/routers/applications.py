@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
@@ -432,7 +432,7 @@ async def get_applications_list(
     applications = applications_query.offset(page * page_size).limit(page_size).all()
 
     return serializers.ApplicationListResponse(
-        items=applications,
+        items=cast(list[models.ApplicationWithRelations], applications),
         count=total_count,
         page=page,
         page_size=page_size,
@@ -530,7 +530,7 @@ async def get_applications(
     applications = applications_query.offset(page * page_size).limit(page_size).all()
 
     return serializers.ApplicationListResponse(
-        items=applications,
+        items=cast(list[models.ApplicationWithRelations], applications),
         count=total_count,
         page=page,
         page_size=page_size,

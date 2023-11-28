@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
@@ -38,11 +38,11 @@ async def application_by_uuid(
     :raise: HTTPException with status code 404 if the application is expired.
     """
     return serializers.ApplicationResponse(
-        application=application,
+        application=cast(models.ApplicationRead, application),
         borrower=application.borrower,
         award=application.award,
         lender=application.lender,
-        documents=application.borrower_documents,
+        documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
         creditProduct=application.credit_product,
     )
 
@@ -83,7 +83,7 @@ async def decline(
             application.borrower.declined_at = current_time
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -120,7 +120,7 @@ async def rollback_decline(
             application.borrower.declined_at = None
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -154,7 +154,7 @@ async def decline_feedback(
         application.borrower_declined_preferences_data = borrower_declined_preferences_data
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -196,7 +196,7 @@ async def access_scheme(
         background_tasks.add_task(update_statistics)
 
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -307,11 +307,11 @@ async def select_credit_product(
             application_id=application.id,
         )
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
-            documents=application.borrower_documents,
+            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
             creditProduct=application.credit_product,
         )
 
@@ -352,7 +352,7 @@ async def rollback_select_credit_product(
         application.credit_product_id = None
         application.borrower_credit_product_selected_at = None
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -445,11 +445,11 @@ async def confirm_credit_product(
         )
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
-            documents=application.borrower_documents,
+            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
             creditProduct=application.credit_product,
         )
 
@@ -510,7 +510,7 @@ async def update_apps_send_notifications(
             )
             background_tasks.add_task(update_statistics)
             return serializers.ApplicationResponse(
-                application=application,
+                application=cast(models.ApplicationRead, application),
                 borrower=application.borrower,
                 award=application.award,
                 lender=application.lender,
@@ -609,11 +609,11 @@ async def complete_information_request(
         )
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
-            documents=application.borrower_documents,
+            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
         )
 
 
@@ -701,11 +701,11 @@ async def confirm_upload_contract(
         )
 
         return serializers.ApplicationResponse(
-            application=application,
+            application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
-            documents=application.borrower_documents,
+            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
             creditProduct=application.credit_product,
         )
 
@@ -794,7 +794,7 @@ async def find_alternative_credit_option(
         )
 
         return serializers.ApplicationResponse(
-            application=new_application,
+            application=cast(models.ApplicationRead, new_application),
             borrower=new_application.borrower,
             award=new_application.award,
         )
