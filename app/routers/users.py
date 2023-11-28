@@ -41,8 +41,8 @@ async def create_user(
             user = models.User(**payload.dict())
             user.created_at = datetime.now()
             session.add(user)
-            cognitoResponse = client.admin_create_user(payload.email, payload.name)
-            user.external_id = cognitoResponse["User"]["Username"]
+            cognito_response = client.admin_create_user(payload.email, payload.name)
+            user.external_id = cognito_response["User"]["Username"]
 
             return user
         except (client.exceptions().UsernameExistsException, IntegrityError) as e:
@@ -161,7 +161,7 @@ def login(
     """
     try:
         response = client.initiate_auth(user.username, user.password)
-        db_user = models.User.first_by(session, "email", user.username)
+        db_user = get_object_or_404(session, models.User, "email", user.username)
 
         return serializers.LoginResponse(
             user=db_user,
@@ -276,7 +276,7 @@ def logout(
     "/users/me",
 )
 def me(
-    usernameFromToken: str = Depends(dependencies.get_current_user),
+    username_from_token: str = Depends(dependencies.get_current_user),
     session: Session = Depends(get_db),
 ) -> serializers.UserResponse:
     """
@@ -286,10 +286,10 @@ def me(
     It uses the username extracted from the JWT token to query the database
     and retrieve the user details.
 
-    :param usernameFromToken: The username extracted from the JWT token.
+    :param username_from_token: The username extracted from the JWT token.
     :return: The response containing the details of the authenticated user.
     """
-    user = models.User.first_by(session, "external_id", usernameFromToken)
+    user = get_object_or_404(session, models.User, "external_id", username_from_token)
     return serializers.UserResponse(user=user)
 
 
