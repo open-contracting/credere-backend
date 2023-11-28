@@ -106,5 +106,5 @@ JSON to Send Mail Example
      "Destination": {
        "ToAddresses": ["credereadmin@open-contracting.org"]
      },
-     "TemplateData": "{\"AWARD_SUPPLIER_NAME\": \"VENDOR XX\", \"TENDER_TITLE\": \"FOOD PROVIDER\""}"
+     "TemplateData": "{\"AWARD_SUPPLIER_NAME\": \"VENDOR XX\", \"TENDER_TITLE\": \"FOOD PROVIDER\"}"
    }

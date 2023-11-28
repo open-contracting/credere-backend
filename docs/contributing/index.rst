@@ -175,7 +175,7 @@ First admin user set up
 
    Insert in the user table from the Credere database a record for the user.
 
-   .. code-block:: sql
+   .. code-block:: none
 
       INSERT INTO public.credere_user(type, language, email, name, external_id) VALUES (“OCP”, “es”, {EMAIL}, “Admin User”, {COGNITO_USER_ID});
 
