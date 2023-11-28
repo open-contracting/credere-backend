@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 from mypy_boto3_ses.client import SESClient
@@ -117,7 +118,7 @@ def set_destinations(email: str, to_msme: bool = True) -> str:
     return app_settings.test_mail_receiver
 
 
-def generate_common_data() -> dict:
+def generate_common_data() -> dict[str, str]:
     """
     Generates a dictionary containing common data used in the application.
 
@@ -154,7 +155,7 @@ def get_images_base_url() -> str:
     return images_base_url
 
 
-def prepare_html(template_name, parameters):
+def prepare_html(template_name: str, parameters: dict[str, Any]) -> dict[str, str]:
     """
     Reads the content of the file in template_name, replace its parameters, and prepare the rest of the main
     parameters and Subject to send the email via AWS.
@@ -176,7 +177,7 @@ def prepare_html(template_name, parameters):
     return data
 
 
-def send_email(ses: SESClient, email: str, data: dict, to_msme: bool = True) -> str:
+def send_email(ses: SESClient, email: str, data: dict[str, str], to_msme: bool = True) -> str:
     email = email.strip()
     if not email:
         logger.warning(f"{app_settings.environment} - Skipping empty email address")
@@ -195,7 +196,7 @@ def send_email(ses: SESClient, email: str, data: dict, to_msme: bool = True) -> 
     return response["MessageId"]
 
 
-def send_application_approved_email(ses: SESClient, application: Application):
+def send_application_approved_email(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application has been approved.
 
@@ -216,10 +217,10 @@ def send_application_approved_email(ses: SESClient, application: Application):
         "UPLOAD_CONTRACT_IMAGE_LINK": f"{images_base_url}/uploadContract.png",
     }
 
-    send_email(ses, application.primary_email, prepare_html("Application_approved", html_data))
+    return send_email(ses, application.primary_email, prepare_html("Application_approved", html_data))
 
 
-def send_application_submission_completed(ses: SESClient, application: Application):
+def send_application_submission_completed(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application is submitted.
 
@@ -234,10 +235,10 @@ def send_application_submission_completed(ses: SESClient, application: Applicati
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
     }
 
-    send_email(ses, application.primary_email, prepare_html("Application_submitted", html_data))
+    return send_email(ses, application.primary_email, prepare_html("Application_submitted", html_data))
 
 
-def send_application_credit_disbursed(ses: SESClient, application: Application):
+def send_application_credit_disbursed(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application has the credit dibursed.
 
@@ -253,14 +254,14 @@ def send_application_credit_disbursed(ses: SESClient, application: Application):
         "FI_EMAIL": application.lender.email_group,
     }
 
-    send_email(
+    return send_email(
         ses,
         application.primary_email,
         prepare_html("Application_credit_disbursed", html_data),
     )
 
 
-def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_password: str):
+def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_password: str) -> str:
     """
     Sends an email to a new user with a link to set their password.
 
@@ -284,10 +285,10 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_passwor
         + quote(username),
     }
 
-    send_email(ses, username, prepare_html("New_Account_Created", html_data), False)
+    return send_email(ses, username, prepare_html("New_Account_Created", html_data), False)
 
 
-def send_upload_contract_notification_to_FI(ses: SESClient, application: Application):
+def send_upload_contract_notification_to_FI(ses: SESClient, application: Application) -> str:
     """
     Sends an email to the Financial Institution (FI) to notify them of a new contract submission.
 
@@ -304,7 +305,7 @@ def send_upload_contract_notification_to_FI(ses: SESClient, application: Applica
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    send_email(
+    return send_email(
         ses,
         application.lender.email_group,
         prepare_html("New_contract_submission", html_data),
@@ -312,7 +313,7 @@ def send_upload_contract_notification_to_FI(ses: SESClient, application: Applica
     )
 
 
-def send_upload_contract_confirmation(ses: SESClient, application: Application):
+def send_upload_contract_confirmation(ses: SESClient, application: Application) -> str:
     """
     Sends an email to the borrower confirming the successful upload of the contract.
 
@@ -328,7 +329,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application):
         "BUYER_NAME": application.award.buyer_name,
     }
 
-    send_email(
+    return send_email(
         ses,
         application.lender.email_group,
         prepare_html("Contract_upload_confirmation", html_data),
@@ -337,7 +338,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application):
 
 
 def send_new_email_confirmation(
-    ses,
+    ses: SESClient,
     borrower_name: str,
     new_email: str,
     old_email: str,
@@ -384,7 +385,7 @@ def send_new_email_confirmation(
     return response
 
 
-def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: str):
+def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: str) -> str:
     """
     Sends an email to a user with instructions to reset their password.
 
@@ -406,7 +407,7 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: st
         "RESET_PASSWORD_IMAGE": images_base_url + "/ResetPassword.png",
     }
 
-    send_email(ses, username, prepare_html("Reset_password", html_data), False)
+    return send_email(ses, username, prepare_html("Reset_password", html_data), False)
 
 
 def send_invitation_email(
@@ -502,7 +503,7 @@ def send_mail_submit_reminder(
     return send_email(ses, email, prepare_html("Access_to_credit_reminder", html_data))
 
 
-def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str):
+def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str) -> str:
     """
     Sends a notification email about a new application to a financial institution's email group.
 
@@ -515,7 +516,7 @@ def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str):
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    send_email(
+    return send_email(
         ses,
         lender_email_group,
         prepare_html("FI_New_application_submission_FI_user", html_data),
@@ -523,7 +524,7 @@ def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str):
     )
 
 
-def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: str, lender_name: str):
+def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: str, lender_name: str) -> str:
     """
     Sends a notification email about a new application to the Open Contracting Partnership's (OCP) email group.
 
@@ -538,7 +539,7 @@ def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: str, lende
         "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
     }
 
-    send_email(
+    return send_email(
         ses,
         ocp_email_group,
         prepare_html("New_application_submission_OCP_user", html_data),
