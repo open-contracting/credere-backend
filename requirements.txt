@@ -69,6 +69,8 @@ markupsafe==2.1.2
     # via mako
 mdurl==0.1.2
     # via markdown-it-py
+mypy-boto3-cognito-idp==1.29.0
+    # via -r requirements.in
 mypy-boto3-ses==1.29.0
     # via -r requirements.in
 numpy==1.26.0
@@ -156,6 +158,7 @@ typer[all]==0.9.0
 typing-extensions==4.5.0
     # via
     #   alembic
+    #   mypy-boto3-cognito-idp
     #   mypy-boto3-ses
     #   pydantic
     #   sqlalchemy2-stubs

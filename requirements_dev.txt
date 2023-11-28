@@ -147,6 +147,8 @@ mdurl==0.1.2
     #   markdown-it-py
 moto[cognitoidp]==4.1.10
     # via -r requirements_dev.in
+mypy-boto3-cognito-idp==1.29.0
+    # via -r requirements.txt
 mypy-boto3-ses==1.29.0
     # via -r requirements.txt
 mypy-extensions==1.0.0
@@ -328,6 +330,7 @@ typing-extensions==4.5.0
     #   -r requirements.txt
     #   alembic
     #   boto3-stubs
+    #   mypy-boto3-cognito-idp
     #   mypy-boto3-ses
     #   pydantic
     #   sqlalchemy2-stubs
