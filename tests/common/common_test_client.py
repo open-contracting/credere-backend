@@ -13,13 +13,13 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app import aws, dependencies, models
 from app.db import get_db
-from app.routers import applications, downloads, guest, lenders, security, statistics, users
+from app.routers import applications, downloads, guest, lenders, statistics, users
 from app.settings import app_settings
 from tests.common.utils import create_enums
 from tests.protected_routes import users_test  # noqa
 from tests.protected_routes import applications_test, borrowers_test  # noqa
 
-tempPassword = "1234567890Abc!!"
+tmp_password = "1234567890Abc!!"
 
 
 class MockResponse:
@@ -65,7 +65,6 @@ def start_application():
     app = FastAPI()
     app.include_router(users.router)
     app.include_router(lenders.router)
-    app.include_router(security.router)
     app.include_router(applications.router)
     app.include_router(guest.applications.router)
     app.include_router(guest.emails.router)
@@ -134,7 +133,7 @@ def client(app: FastAPI) -> Generator[TestClient, Any, None]:
     create_templates(ses_client)
 
     def generate_test_password():
-        return tempPassword
+        return tmp_password
 
     def _get_test_cognito_client():
         try:

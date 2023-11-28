@@ -26,47 +26,47 @@ test_user = {
 
 
 def test_get_me(client):  # noqa
-    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
 
-    response = client.get("/users/me", headers=OCP_headers)
+    response = client.get("/users/me", headers=ocp_headers)
     assert response.json()["user"]["name"] == OCP_user["name"]
     assert response.status_code == status.HTTP_200_OK
 
 
 def test_create_and_get_user(client):  # noqa
-    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
-    FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
+    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    fi_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
-    response = client.post("/users", json=test_user, headers=OCP_headers)
+    response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
 
     # fetch second user since the first one is the OCP user created for headers
     response = client.get("/users/2")
     assert response.status_code == status.HTTP_200_OK
 
-    # try to get a non existing user
+    # try to get a non-existing user
     response = client.get("/users/200")
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # try to get all users
     response = client.get(
         "/users?page=0&page_size=5&sort_field=credere_user_created_at&sort_order=desc",
-        headers=OCP_headers,
+        headers=ocp_headers,
     )
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get(
         "/users?page=0&page_size=5&sort_field=credere_user_created_at&sort_order=desc",
-        headers=FI_headers,
+        headers=fi_headers,
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_update_user(client):  # noqa
-    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
-    FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
+    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    fi_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
-    response = client.post("/users", json=test_user, headers=OCP_headers)
+    response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.json()["name"] == test_user["name"]
     assert response.status_code == status.HTTP_200_OK
 
@@ -74,7 +74,7 @@ def test_update_user(client):  # noqa
     response = client.put(
         "/users/3",
         json={"email": "new_name@noreply.open-contracting.org"},
-        headers=OCP_headers,
+        headers=ocp_headers,
     )
     assert response.json()["email"] == "new_name@noreply.open-contracting.org"
     assert response.status_code == status.HTTP_200_OK
@@ -82,64 +82,46 @@ def test_update_user(client):  # noqa
     response = client.put(
         "/users/3",
         json={"email": "anoter_email@noreply.open-contracting.org"},
-        headers=FI_headers,
+        headers=fi_headers,
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_duplicate_user(client):  # noqa
-    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
 
-    response = client.post("/users", json=test_user, headers=OCP_headers)
+    response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
     # duplicate user
-    response = client.post("/users", json=test_user, headers=OCP_headers)
+    response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 def test_login(client):  # noqa
-    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
-    response = client.post("/users", json=test_user, headers=OCP_headers)
+    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
 
-    setupPasswordPayload = {
+    setup_password_payload = {
         "username": test_user["email"],
-        "temp_password": common_test_client.tempPassword,
-        "password": common_test_client.tempPassword,
+        "temp_password": common_test_client.tmp_password,
+        "password": common_test_client.tmp_password,
     }
-    responseSetupPassword = client.put("/users/change-password", json=setupPasswordPayload)
-    assert responseSetupPassword.status_code == status.HTTP_200_OK
+    response_setup_password = client.put("/users/change-password", json=setup_password_payload)
+    assert response_setup_password.status_code == status.HTTP_200_OK
 
-    loginPayload = {
+    login_payload = {
         "username": test_user["email"],
-        "password": common_test_client.tempPassword,
+        "password": common_test_client.tmp_password,
     }
-    responseLogin = client.post("/users/login", json=loginPayload)
+    response_login = client.post("/users/login", json=login_payload)
 
-    assert responseLogin.status_code == status.HTTP_200_OK
-    assert responseLogin.json()["access_token"] is not None
-
-    responseAccessProtectedRoute = client.get(
-        "/secure-endpoint-example",
-        headers={"Authorization": "Bearer " + responseLogin.json()["access_token"]},
-    )
-
-    assert responseAccessProtectedRoute.status_code == status.HTTP_200_OK
-    assert (
-        responseAccessProtectedRoute.json()["message"] is not None
-        and responseAccessProtectedRoute.json()["message"] == "OK"
-    )
-
-    responseAccessProtectedRouteWithUser = client.get(
-        "/secure-endpoint-example-username-extraction",
-        headers={"Authorization": "Bearer " + responseLogin.json()["access_token"]},
-    )
-
-    assert responseAccessProtectedRouteWithUser.status_code == status.HTTP_200_OK
-    assert responseAccessProtectedRouteWithUser.json()["username"] == setupPasswordPayload["username"]
+    assert response_login.status_code == status.HTTP_200_OK
+    assert response_login.json()["access_token"] is not None
 
     response = client.get(
         "/users/logout",
-        headers={"Authorization": "Bearer " + responseLogin.json()["access_token"]},
+        headers={"Authorization": "Bearer " + response_login.json()["access_token"]},
     )
-    assert responseAccessProtectedRoute.status_code == status.HTTP_200_OK
+
+    assert response.status_code == status.HTTP_200_OK
