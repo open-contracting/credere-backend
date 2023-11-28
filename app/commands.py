@@ -47,7 +47,6 @@ def fetch_all_awards_from_period(from_date: datetime, until_date: datetime) -> N
     background.fetch_new_awards_from_date(from_date, get_db, until_date)
 
 
-@app.command()
 def remove_dated_application_data() -> None:
     """
     Remove dated data from the database.
