@@ -33,7 +33,6 @@ document_type_dict = {
     BorrowerDocumentType.BANK_CERTIFICATION_DOCUMENT: "Bank Certification Document",
     BorrowerDocumentType.FINANCIAL_STATEMENT: "Financial Statement",
     BorrowerDocumentType.SIGNED_CONTRACT: "Signed Contract",
-    BorrowerDocumentType.COMPLIANCE_REPORT: "Compliance Report",
     BorrowerDocumentType.SHAREHOLDER_COMPOSITION: "Shareholder composition",
     BorrowerDocumentType.CHAMBER_OF_COMMERCE: "Chamber of Commerce",
     BorrowerDocumentType.THREE_LAST_BANK_STATEMENT: "Three last bank statement",
