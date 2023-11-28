@@ -31,7 +31,13 @@ async def reject_application(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(roles=(models.UserType.FI,))
+        dependencies.get_scoped_publication_as_user(
+            roles=(models.UserType.FI,),
+            statuses=(
+                models.ApplicationStatus.CONTRACT_UPLOADED,
+                models.ApplicationStatus.STARTED,
+            ),
+        )
     ),
 ) -> Any:
     """
@@ -42,19 +48,6 @@ async def reject_application(
     :return: The rejected application with its associated relations.
     """
     with transaction_session(session):
-        if application.status not in (
-            models.ApplicationStatus.CONTRACT_UPLOADED,
-            models.ApplicationStatus.STARTED,
-        ):
-            message = (
-                f"Application status is not {models.ApplicationStatus.STARTED.name} "
-                f"or {models.ApplicationStatus.CONTRACT_UPLOADED.name}"
-            )
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=message,
-            )
-
         payload_dict = jsonable_encoder(payload, exclude_unset=True)
         application.stage_as_rejected(payload_dict)
         # This next call performs the `session.flush()`.
