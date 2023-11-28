@@ -517,7 +517,7 @@ async def update_apps_send_notifications(
             )
         except ClientError as e:
             logger.exception(e)
-            return HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error submiting the application",
             )
