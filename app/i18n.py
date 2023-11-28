@@ -14,5 +14,4 @@ if app_settings.transifex_token and app_settings.transifex_secret:
 def get_translated_string(key: str, lang: str, params: dict[str, Any] | None = None) -> str:
     from transifex.native import tx
 
-    translation = tx.translate(key, lang, params=params)
-    return translation
+    return tx.translate(key, lang, params=params)

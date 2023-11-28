@@ -181,9 +181,7 @@ class CognitoClient:
             The 'verify_software_token' method validates the MFA code provided by the user. If the code is valid, the
             method will return a successful response.
         """
-        response = self.client.verify_software_token(AccessToken=access_token, Session=session, UserCode=mfa_code)
-
-        return response
+        return self.client.verify_software_token(AccessToken=access_token, Session=session, UserCode=mfa_code)
 
     def respond_to_auth_challenge(
         self,
@@ -328,8 +326,7 @@ class CognitoClient:
         :return: A string representing the message id of the sent email.
         :raises boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = mail.send_mail_request_to_sme(self.ses, uuid, lender_name, email_message, sme_email)
-        return message_id
+        return mail.send_mail_request_to_sme(self.ses, uuid, lender_name, email_message, sme_email)
 
     def send_rejected_email_to_sme(self, application: Application, options: list[CreditProduct]) -> str:
         """
@@ -341,10 +338,8 @@ class CognitoClient:
         :raises boto3.exceptions: Any exceptions that occur when sending the email.
         """
         if options:
-            message_id = mail.send_rejected_application_email(self.ses, application)
-            return message_id
-        message_id = mail.send_rejected_application_email_without_alternatives(self.ses, application)
-        return message_id
+            return mail.send_rejected_application_email(self.ses, application)
+        return mail.send_rejected_application_email_without_alternatives(self.ses, application)
 
     def send_application_approved_to_sme(self, application: Application) -> str:
         """
@@ -354,8 +349,7 @@ class CognitoClient:
         :return: A string representing the message id of the sent email.
         :raises boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = mail.send_application_approved_email(self.ses, application)
-        return message_id
+        return mail.send_application_approved_email(self.ses, application)
 
     def send_application_submission_completed(self, application: Application) -> str:
         """
@@ -365,8 +359,7 @@ class CognitoClient:
         :return: A string representing the message id of the sent email.
         :raises boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = mail.send_application_submission_completed(self.ses, application)
-        return message_id
+        return mail.send_application_submission_completed(self.ses, application)
 
     def send_application_credit_disbursed(self, application: Application) -> str:
         """
@@ -376,8 +369,7 @@ class CognitoClient:
         :return: A string representing the message id of the sent email.
         :raises boto3.exceptions: Any exceptions that occur when sending the email.
         """
-        message_id = mail.send_application_credit_disbursed(self.ses, application)
-        return message_id
+        return mail.send_application_credit_disbursed(self.ses, application)
 
     def send_new_email_confirmation_to_sme(
         self,

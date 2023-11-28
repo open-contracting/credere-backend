@@ -23,9 +23,7 @@ def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tupl
         f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
         f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
     )
-    award_response = sources.make_request_with_retry(award_url, HEADERS)
-    award_response_json = award_response.json()
-    return award_response_json, award_url
+    return sources.make_request_with_retry(award_url, HEADERS).json(), award_url
 
 
 def create_new_award(

@@ -24,9 +24,7 @@ def _format_currency(number: Decimal | None, currency: str) -> str:
 def _format_date(date_str: str) -> str:
     if date_str == "None":
         return "-"
-    date_object = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-    formatted_date = date_object.strftime("%Y-%m-%d")
-    return formatted_date
+    return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
 
 
 def create_application_table(application: models.Application, lang: str) -> Table:

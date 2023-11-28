@@ -340,8 +340,7 @@ async def update_application_award(
             user_id=user.id,
         )
 
-        application = util.get_modified_data_fields(application, session)
-        return application
+        return util.get_modified_data_fields(application, session)
 
 
 @router.put(
@@ -389,8 +388,7 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
-        application = util.get_modified_data_fields(application, session)
-        return application
+        return util.get_modified_data_fields(application, session)
 
 
 @router.get(

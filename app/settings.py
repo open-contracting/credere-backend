@@ -25,8 +25,7 @@ def merge_dicts_with_condition(main_dict: dict[str, Any], override_dict: dict[st
     """
     temp_dict = {**override_dict}
     filtered_dict = {key: value for key, value in temp_dict.items() if value != ""}
-    merged_dict = {**main_dict, **filtered_dict}
-    return merged_dict
+    return {**main_dict, **filtered_dict}
 
 
 def sentry_filter_transactions(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
