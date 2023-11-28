@@ -33,7 +33,7 @@ def transaction_session(db: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def transaction_session_logger(session: Session, msg: str, *args: *Any) -> Generator[Session, None, None]:
+def transaction_session_logger(session: Session, msg: str, *args: list[Any]) -> Generator[Session, None, None]:
     try:
         yield session
         session.commit()
