@@ -6,15 +6,9 @@ from app.settings import app_settings
 
 app = FastAPI()
 
-# Configure CORS settings
-origins = [
-    "http://localhost:3000",
-    app_settings.frontend_url,
-]  # Add more allowed origins as needed
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:3000", app_settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

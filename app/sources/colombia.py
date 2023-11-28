@@ -15,7 +15,7 @@ URLS = {
     "BORROWER": "https://www.datos.gov.co/resource/4ex9-j3n8.json?&es_pyme=SI",
 }
 
-headers = {"X-App-Token": app_settings.colombia_secop_app_token}
+HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 
 
 def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, Any]], str]:
@@ -23,7 +23,7 @@ def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tupl
         f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
         f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
     )
-    award_response = sources.make_request_with_retry(award_url, headers)
+    award_response = sources.make_request_with_retry(award_url, HEADERS)
     award_response_json = award_response.json()
     return award_response_json, award_url
 
@@ -129,7 +129,7 @@ def get_new_contracts(index: int, from_date: datetime, until_date: datetime | No
     else:
         url = f"{base_url}" f"AND estado_contrato = 'Borrador' AND ultima_actualizacion >= '{converted_date}'"
 
-    return sources.make_request_with_retry(url, headers)
+    return sources.make_request_with_retry(url, HEADERS)
 
 
 def get_previous_contracts(documento_proveedor: str) -> httpx.Response:
@@ -142,7 +142,7 @@ def get_previous_contracts(documento_proveedor: str) -> httpx.Response:
 
     url = f"{URLS['CONTRACTS']}?$where=documento_proveedor = '{documento_proveedor}' AND fecha_de_firma IS NOT NULL"
 
-    return sources.make_request_with_retry(url, headers)
+    return sources.make_request_with_retry(url, HEADERS)
 
 
 def get_source_contract_id(entry: dict[str, Any]) -> str:
@@ -174,7 +174,7 @@ def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entr
     borrower_url = (
         f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}" f"&codigo_entidad={entry.get('codigo_proveedor', '')}"
     )
-    borrower_response = sources.make_request_with_retry(borrower_url, headers)
+    borrower_response = sources.make_request_with_retry(borrower_url, HEADERS)
     borrower_response_json = borrower_response.json()
     len_borrower_response_json = len(borrower_response_json)
 
@@ -215,7 +215,7 @@ def get_email(documento_proveedor: str, entry: dict[str, Any]) -> str:
     """
 
     borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
-    borrower_response_email = sources.make_request_with_retry(borrower_email_url, headers)
+    borrower_response_email = sources.make_request_with_retry(borrower_email_url, HEADERS)
     borrower_response_email_json = borrower_response_email.json()
     len_borrower_response_email_json = len(borrower_response_email_json)
 

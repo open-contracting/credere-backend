@@ -10,7 +10,7 @@ from app.db import get_db, transaction_session
 
 router = APIRouter()
 
-valid_email = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+VALID_EMAIL = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
 
 @router.post(
@@ -34,7 +34,7 @@ async def change_email(
 
         # Update the primary email of an application.
         email = payload.new_email
-        if not re.match(valid_email, email):
+        if not re.match(VALID_EMAIL, email):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="New email is not valid",
