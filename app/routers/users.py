@@ -406,10 +406,10 @@ async def update_user(
 
     with transaction_session(session):
         try:
-            user = get_object_or_404(session, models.User, "id", id)
+            db_user = get_object_or_404(session, models.User, "id", id)
 
             update_dict = jsonable_encoder(payload, exclude_unset=True)
-            return user.update(session, **update_dict)
+            return db_user.update(session, **update_dict)
         except IntegrityError as e:
             logger.exception(e)
             raise HTTPException(

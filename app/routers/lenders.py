@@ -31,23 +31,23 @@ async def create_lender(
     :return: The created lender.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
-    # Rename query parameter.
+    # Rename the query parameter.
     payload = lender
 
     with transaction_session(session):
         try:
             # Create a Lender instance without the credit_product data
-            lender = models.Lender(**payload.dict(exclude={"credit_products"}))
-            session.add(lender)
+            db_lender = models.Lender(**payload.dict(exclude={"credit_products"}))
+            session.add(db_lender)
 
             # Create a CreditProduct instance for each credit product and add it to the lender
             if payload.credit_products:
                 for cp in payload.credit_products:
-                    credit_product = models.CreditProduct(**cp.dict(), lender=lender)
+                    credit_product = models.CreditProduct(**cp.dict(), lender=db_lender)
                     session.add(credit_product)
 
             session.flush()
-            return lender
+            return db_lender
         except IntegrityError as e:
             logger.exception(e)
             raise HTTPException(
@@ -204,7 +204,7 @@ async def update_credit_products(
     payload = credit_product
 
     with transaction_session(session):
-        credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
+        db_credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
 
         update_dict = jsonable_encoder(payload, exclude_unset=True)
-        return credit_product.update(session, **update_dict)
+        return db_credit_product.update(session, **update_dict)
