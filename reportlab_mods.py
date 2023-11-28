@@ -1,6 +1,7 @@
 """
 This file is required, because reportlab/__init__.py runs `import reportlab_mods`.
 """
+from typing import Any
 
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
@@ -89,7 +90,7 @@ styleSubTitle = styles["Heading2"]
 styleSubTitle.fontName = "GTEestiProDisplay"
 
 
-def create_table(data):
+def create_table(data: Any) -> Table:
     table = Table(data, colWidths=[250, 350])
     table.setStyle(
         TableStyle(

@@ -1,6 +1,6 @@
 import io
 import zipfile
-from typing import Any
+from typing import Any, Generator
 
 import pandas as pd
 from fastapi import APIRouter, Depends
@@ -26,7 +26,7 @@ async def get_borrower_document(
     id: int,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-):
+) -> StreamingResponse:
     """
     Retrieve a borrower document by its ID and stream the file content as a response.
 
@@ -52,7 +52,7 @@ async def get_borrower_document(
                 application_id=document.application.id,
             )
 
-        def file_generator():
+        def file_generator() -> Generator[bytes, None, None]:
             yield document.file
 
         headers = {
@@ -71,7 +71,7 @@ async def download_application(
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(dependencies.get_publication_as_user),
-):
+) -> StreamingResponse:
     """
     Retrieve all documents related to an application and stream them as a zip file.
 
@@ -146,7 +146,7 @@ async def export_applications(
     lang: str,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
-):
+) -> StreamingResponse:
     applications_query = (
         models.Application.submitted_to_lender(session, user.lender_id)
         .join(models.Borrower)

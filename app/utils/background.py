@@ -1,7 +1,7 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Callable, Generator
+from typing import Any, Callable, Generator
 
 from sqlalchemy.orm import Session
 
@@ -56,7 +56,7 @@ def _create_application(
     return models.Application.create(session, **data)
 
 
-def _get_or_create_borrower(entry: dict, session: Session) -> models.Borrower:
+def _get_or_create_borrower(entry: dict[str, Any], session: Session) -> models.Borrower:
     """
     Get an existing borrower or create a new borrower based on the entry data.
 
@@ -78,7 +78,7 @@ def _get_or_create_borrower(entry: dict, session: Session) -> models.Borrower:
 
 
 def _create_award(
-    entry: dict, session: Session, borrower_id: int | None = None, previous: bool = False
+    entry: dict[str, Any], session: Session, borrower_id: int | None = None, previous: bool = False
 ) -> models.Award:
     """
     Create a new award and insert it into the database.
@@ -102,7 +102,7 @@ def fetch_new_awards_from_date(
     last_updated_award_date: datetime,
     db_provider: Callable[[], Generator[Session, None, None]],
     until_date: datetime | None = None,
-):
+) -> None:
     """
     Fetch new awards from the given date and process them.
 
@@ -158,7 +158,7 @@ def fetch_new_awards_from_date(
 
 def fetch_previous_awards(
     borrower: models.Borrower, db_provider: Callable[[], Generator[Session, None, None]] = get_db
-):
+) -> None:
     """
     Fetch previous awards for a borrower that accepted an application. This wont generate an application,
     it will just insert the awards in our database

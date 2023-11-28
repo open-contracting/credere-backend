@@ -25,7 +25,7 @@ class ERROR_CODES(Enum):
     APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
-def get_object_or_404(session, model, field, value):
+def get_object_or_404(session: Session, model: type[models.ActiveRecordMixin], field: str, value: Any):
     obj = model.first_by(session, field, value)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{model.__name__} not found")
@@ -84,7 +84,7 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     return new_file, filename
 
 
-def get_modified_data_fields(application: models.Application, session: Session):
+def get_modified_data_fields(application: models.Application, session: Session) -> models.ApplicationWithRelations:
     application_actions = (
         session.query(models.ApplicationAction)
         .join(models.Application)

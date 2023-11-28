@@ -1,5 +1,6 @@
 from collections import Counter
 from datetime import datetime, timedelta
+from typing import Any
 
 import httpx
 
@@ -17,7 +18,7 @@ URLS = {
 headers = {"X-App-Token": app_settings.colombia_secop_app_token}
 
 
-def _get_remote_award(proceso_de_compra, proveedor_adjudicado):
+def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, Any]], str]:
     award_url = (
         f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
         f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
@@ -29,10 +30,10 @@ def _get_remote_award(proceso_de_compra, proveedor_adjudicado):
 
 def create_new_award(
     source_contract_id: str,
-    entry: dict,
+    entry: dict[str, Any],
     borrower_id: int | None = None,
     previous: bool = False,
-) -> dict:
+) -> dict[str, Any]:
     """
     Create a new award and insert it into the database.
 
@@ -144,7 +145,7 @@ def get_previous_contracts(documento_proveedor: str) -> httpx.Response:
     return sources.make_request_with_retry(url, headers)
 
 
-def get_source_contract_id(entry: dict) -> str:
+def get_source_contract_id(entry: dict[str, Any]) -> str:
     """
     Get the source contract ID from the given entry data.
 
@@ -160,7 +161,7 @@ def get_source_contract_id(entry: dict) -> str:
     return source_contract_id
 
 
-def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict) -> dict:
+def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict[str, Any]) -> dict[str, str]:
     """
     Create a new borrower and insert it into the database.
 
@@ -204,7 +205,7 @@ def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entr
     return new_borrower
 
 
-def get_email(documento_proveedor: str, entry: dict) -> str:
+def get_email(documento_proveedor: str, entry: dict[str, Any]) -> str:
     """
     Get the email address for the borrower based on the given document provider and entry data.
 
@@ -237,7 +238,7 @@ def get_email(documento_proveedor: str, entry: dict) -> str:
     return email
 
 
-def get_documento_proveedor(entry: dict) -> str:
+def get_documento_proveedor(entry: dict[str, Any]) -> str:
     """
     Get the document provider from the given entry data.
 

@@ -1,11 +1,10 @@
 import logging
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Callable, Generator
+from typing import Any, Callable, Generator
 
 from sqlalchemy import Date, Integer, cast, distinct, func, text
-from sqlalchemy.orm import Session
-from sqlalchemy.orm.query import Query
+from sqlalchemy.orm import Query, Session
 from sqlmodel import col
 
 from app.db import get_db, transaction_session_logger
@@ -24,7 +23,7 @@ from app.models import (
 logger = logging.getLogger(__name__)
 
 
-def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] = get_db):
+def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] = get_db) -> None:
     """
     Update and store various statistics related to applications and lenders in the database.
 
@@ -181,7 +180,7 @@ def get_general_statistics(
     start_date: datetime | str | None = None,
     end_date: datetime | str | None = None,
     lender_id: int | None = None,
-) -> dict:
+) -> dict[str, int | float]:
     """
     Get general statistics about applications based on the provided parameters.
 
@@ -322,7 +321,7 @@ def get_general_statistics(
 
 
 # Group of Stat only for OCP USER (msme opt in stats)
-def get_msme_opt_in_stats(session: Session) -> dict:
+def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     """
     Get statistics specific to MSME opt-in applications.
 

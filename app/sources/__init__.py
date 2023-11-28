@@ -21,7 +21,7 @@ def is_valid_email(email: str) -> bool:
     return False
 
 
-def make_request_with_retry(url: str, headers: dict) -> httpx.Response:
+def make_request_with_retry(url: str, headers: dict[str, str]) -> httpx.Response:
     """
     Make an HTTP request with retry functionality.
 

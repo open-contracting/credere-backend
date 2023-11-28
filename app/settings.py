@@ -2,6 +2,7 @@ import logging
 import logging.config
 import os
 import re
+from typing import Any
 
 import sentry_sdk
 from dotenv import dotenv_values
@@ -10,7 +11,7 @@ from pydantic import BaseSettings
 VERSION: str = "0.1.1"
 
 
-def merge_dicts_with_condition(main_dict: dict, override_dict: dict) -> dict:
+def merge_dicts_with_condition(main_dict: dict[str, Any], override_dict: dict[str, Any]) -> dict[str, Any]:
     """
     Merges two dictionaries with the condition that empty strings ('') from the override_dict are not included in the
     merged dictionary. If a key in the main_dict has a corresponding non-empty string value in override_dict,
@@ -28,7 +29,7 @@ def merge_dicts_with_condition(main_dict: dict, override_dict: dict) -> dict:
     return merged_dict
 
 
-def sentry_filter_transactions(event: dict, hint: dict) -> dict | None:
+def sentry_filter_transactions(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
     """
     Filter transactions to be sent to Sentry.
     This function prevents transactions that interact with AWS Cognito from being sent to Sentry.

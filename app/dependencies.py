@@ -74,7 +74,7 @@ def raise_if_unauthorized(
     roles: tuple[models.UserType, ...] = (),
     scopes: tuple[ApplicationScope, ...] = (),
     statuses: tuple[models.ApplicationStatus, ...] = (),
-):
+) -> None:
     if roles:
         assert user is not None
         for role in roles:
