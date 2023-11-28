@@ -2,9 +2,11 @@ import logging
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Any
 
 import typer
 from sqlalchemy.orm import joinedload
+from sqlmodel import col
 
 import app.utils.statistics as statistics_utils
 from app import mail, models
@@ -19,7 +21,7 @@ app = typer.Typer()
 
 
 @app.command()
-def fetch_awards():
+def fetch_awards() -> None:
     """
     Fetch new awards, checks if they exist in our database. If not it checks award's borrower and check if they exist.
     if either award and borrower doesn't exist or if borrower exist but the award doesn't it will create an application
@@ -36,12 +38,12 @@ def fetch_awards():
 
 
 @app.command()
-def fetch_contracts_from_date(from_date: str, until_date: str):
+def fetch_contracts_from_date(from_date: str, until_date: str) -> None:
     background.fetch_new_awards_from_date(from_date, get_db, until_date)
 
 
 @app.command()
-def remove_dated_application_data():
+def remove_dated_application_data() -> None:
     """
     Remove dated data from the database.
 
@@ -88,7 +90,7 @@ def remove_dated_application_data():
 
 
 @app.command()
-def update_applications_to_lapsed():
+def update_applications_to_lapsed() -> None:
     """
     Set applications with lapsed status in the database.
 
@@ -106,7 +108,7 @@ def update_applications_to_lapsed():
 
 
 @app.command()
-def send_reminders():
+def send_reminders() -> None:
     """
     Send reminders to borrowers.
 
@@ -189,19 +191,19 @@ def send_reminders():
 
 
 @app.command()
-def update_statistics():
+def update_statistics() -> None:
     statistics_utils.update_statistics()
 
 
 @app.command()
-def SLA_overdue_applications():
+def SLA_overdue_applications() -> None:
     """
     Send SLA (Service Level Agreement) overdue reminders to borrowers.
     """
     with contextmanager(get_db)() as session:
-        overdue_lenders = defaultdict(lambda: {"count": 0})
+        overdue_lenders: dict[str, Any] = defaultdict(lambda: {"count": 0})
         for application in session.query(models.Application).filter(
-            models.Application.status.in_(
+            col(models.Application.status).in_(
                 [models.ApplicationStatus.CONTRACT_UPLOADED, models.ApplicationStatus.STARTED]
             )
         ):
@@ -228,9 +230,9 @@ def SLA_overdue_applications():
                         )
 
         for id, lender_data in overdue_lenders.items():
-            name = lender_data.get("name")
-            count = lender_data.get("count")
-            email = lender_data.get("email")
+            name = lender_data["name"]
+            count = lender_data["count"]
+            email = lender_data["email"]
             message_id = mail.send_overdue_application_email_to_FI(sesClient, name, email, count)
 
             models.Message.create(
