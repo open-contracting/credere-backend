@@ -229,16 +229,19 @@ def login_mfa(
                 access_token=mfa_login_response["access_token"],
                 refresh_token=mfa_login_response["refresh_token"],
             )
+        else:
+            raise NotImplementedError
 
     except ClientError as e:
         logger.exception(e)
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#parsing-error-responses-and-catching-exceptions-from-aws-services
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Temporal password is expired, please request a new one",
             )
 
-        elif e.response["Error"]["Code"] and e.response["Error"]["Message"]:
+        else:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=e.response["Error"]["Message"],
