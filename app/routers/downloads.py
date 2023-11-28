@@ -109,7 +109,7 @@ async def download_application(
         doc.build(elements)
 
         name = get_translated_string("Application Details", lang).replace(" ", "_")
-        filename = f"{name}-{application.borrower.legal_identifier}" + f"-{application.award.source_contract_id}.pdf"
+        filename = f"{name}-{application.borrower.legal_identifier}-{application.award.source_contract_id}.pdf"
 
         in_memory_zip = io.BytesIO()
         with zipfile.ZipFile(in_memory_zip, "w") as zip_file:

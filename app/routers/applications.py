@@ -45,9 +45,9 @@ async def reject_application(
             models.ApplicationStatus.CONTRACT_UPLOADED,
             models.ApplicationStatus.STARTED,
         ):
-            message = "Application status is not {} or {}".format(
-                models.ApplicationStatus.STARTED.name,
-                models.ApplicationStatus.CONTRACT_UPLOADED.name,
+            message = (
+                f"Application status is not {models.ApplicationStatus.STARTED.name} "
+                f"or {models.ApplicationStatus.CONTRACT_UPLOADED.name}"
             )
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -173,7 +173,7 @@ async def approve_application(
             if key not in app_secop_dict or not app_secop_dict[key]:
                 not_validated_fields.append(key)
         if not_validated_fields:
-            logger.error(f"Following fields were not validated: {not_validated_fields}")
+            logger.error("Following fields were not validated: %s", not_validated_fields)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=util.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
@@ -185,7 +185,7 @@ async def approve_application(
             if not document.verified:
                 not_validated_documents.append(document.type.name)
         if not_validated_documents:
-            logger.error(f"Following documents were not validated: {not_validated_documents}")
+            logger.error("Following documents were not validated: %s", not_validated_documents)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,

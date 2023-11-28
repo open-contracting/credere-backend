@@ -26,7 +26,7 @@ def generate_password_fn() -> str:
     :return: The randomly generated password.
     """
     excluded_chars = '"/\\|_-#@%&*(){}[]<>~`'
-    characters = string.ascii_letters + string.digits + string.punctuation
+    characters = f"{string.ascii_letters}{string.digits}{string.punctuation}"
     password = ""
 
     while len(password) < 14:
@@ -65,8 +65,7 @@ class CognitoClient:
         :param username: The username
         :return: A base64 encoded string containing the generated secret hash.
         """
-        app_client_id = app_settings.cognito_client_id
-        message = bytes(username + app_client_id, "utf-8")
+        message = bytes(f"{username}{app_settings.cognito_client_id}", "utf-8")
         key = bytes(app_settings.cognito_client_secret, "utf-8")
         return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 

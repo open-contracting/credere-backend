@@ -39,6 +39,7 @@ def transaction_session_logger(session: Session, msg: str, *args: list[Any]) -> 
         session.commit()
     # Don't display tracebacks in emails from cron jobs for anticipated errors.
     except SkippedAwardError as e:
+        # msg can contain %s placeholders.
         logger.error(f"{msg}: {e}", *args)
         session.rollback()
     except Exception:

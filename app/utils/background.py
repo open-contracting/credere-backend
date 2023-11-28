@@ -37,7 +37,7 @@ def _create_application(
     :param source_contract_id: The ID of the source contract.
     :return: The created application.
     """
-    award_borrower_identifier: str = util.get_secret_hash(legal_identifier + source_contract_id)
+    award_borrower_identifier: str = util.get_secret_hash(f"{legal_identifier}{source_contract_id}")
 
     application = models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
     if application:
@@ -168,11 +168,11 @@ def fetch_previous_awards(
     contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
     if not contracts_response_json:
-        logger.info(f"No previous contracts for {borrower.legal_identifier}")
+        logger.info("No previous contracts for %s", borrower.legal_identifier)
         return
 
     logger.info(
-        f"Previous contracts for {borrower.legal_identifier} response length: " + str(len(contracts_response_json))
+        "Previous contracts for %s response length: %s", borrower.legal_identifier, len(contracts_response_json)
     )
     for entry in contracts_response_json:
         with contextmanager(db_provider)() as session:

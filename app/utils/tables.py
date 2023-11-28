@@ -18,7 +18,7 @@ def _format_currency(number: Decimal | None, currency: str) -> str:
 
     locale.setlocale(locale.LC_ALL, "")
     formatted_number = locale.format_string("%d", number, grouping=True)
-    return f"{currency}$ " + formatted_number
+    return f"{currency}$ {formatted_number}"
 
 
 def _format_date(date_str: str) -> str:
@@ -126,7 +126,7 @@ Valor Pagado: {
     _format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
 }
 """
-    secop_link = '<link href="' + award.source_url + '">' + award.source_url + "</link>"
+    secop_link = f"""<link href="{award.source_url}">{award.source_url}</link>"""
 
     data = [
         [

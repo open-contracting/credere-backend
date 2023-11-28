@@ -189,11 +189,11 @@ def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entr
         "borrower_identifier": borrower_identifier,
         "legal_name": remote_borrower.get("nombre_entidad", ""),
         "email": email,
-        "address": "Direccion: {}\nCiudad: {}\nProvincia: {}\nEstado: {}".format(
-            remote_borrower.get("direccion", "No provisto"),
-            remote_borrower.get("ciudad", "No provisto"),
-            remote_borrower.get("provincia", "No provisto"),
-            remote_borrower.get("estado", "No provisto"),
+        "address": (
+            f"Direccion: {remote_borrower.get('direccion', 'No provisto')}\n"
+            f"Ciudad: {remote_borrower.get('ciudad', 'No provisto')}\n"
+            f"Provincia: {remote_borrower.get('provincia', 'No provisto')}\n"
+            f"Estado: {remote_borrower.get('estado', 'No provisto')}"
         ),
         "legal_identifier": remote_borrower.get("nit_entidad", ""),
         "type": remote_borrower.get("tipo_organizacion", ""),

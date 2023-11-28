@@ -128,11 +128,11 @@ def generate_common_data() -> dict[str, str]:
     :return: Returns a dictionary containing the frontend URL, URLs of various logos and social media links.
     """
     return {
-        "OCP_LOGO": app_settings.images_base_url + "/logoocp.jpg",
-        "TWITTER_LOGO": app_settings.images_base_url + "/twiterlogo.png",
-        "FB_LOGO": app_settings.images_base_url + "/facebook.png",
-        "LINK_LOGO": app_settings.images_base_url + "/link.png",
-        "STRIVE_LOGO": app_settings.images_base_url + "/strive_logo_lockup_horizontal_positive.png",
+        "OCP_LOGO": f"{app_settings.images_base_url}/logoocp.jpg",
+        "TWITTER_LOGO": f"{app_settings.images_base_url}/twiterlogo.png",
+        "FB_LOGO": f"{app_settings.images_base_url}/facebook.png",
+        "LINK_LOGO": f"{app_settings.images_base_url}/link.png",
+        "STRIVE_LOGO": f"{app_settings.images_base_url}/strive_logo_lockup_horizontal_positive.png",
         "TWITTER_LINK": app_settings.twitter_link,
         "FACEBOOK_LINK": app_settings.facebook_link,
         "LINK_LINK": app_settings.link_link,
@@ -167,8 +167,7 @@ def prepare_html(template_name: str, parameters: dict[str, Any]) -> dict[str, st
     with open(os.path.join(BASE_TEMPLATES_PATH, template_name), encoding="utf-8") as f:
         html = f.read()
     for key in parameters.keys():
-        to_replace = "{{" + key + "}}"
-        html = html.replace(to_replace, str(parameters[key]))
+        html = html.replace("{{%s}}" % key, str(parameters[key]))
     data = {
         **generate_common_data(),
         "CONTENT": html,
@@ -180,12 +179,12 @@ def prepare_html(template_name: str, parameters: dict[str, Any]) -> dict[str, st
 def send_email(ses: SESClient, email: str, data: dict[str, str], to_msme: bool = True) -> str:
     email = email.strip()
     if not email:
-        logger.warning(f"{app_settings.environment} - Skipping empty email address")
+        logger.warning("%s - Skipping empty email address", app_settings.environment)
         return ""
 
     destinations = set_destinations(email, to_msme)
 
-    logger.info(f"{app_settings.environment} - Email to: {email} sent to {destinations}")
+    logger.info("%s - Email to: %s sent to %s", app_settings.environment, email, destinations)
     response = ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [destinations]},
@@ -278,11 +277,7 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_passwor
     html_data = {
         "USER": name,
         "SET_PASSWORD_IMAGE_LINK": f"{images_base_url}/set_password.png",
-        "LOGIN_URL": app_settings.frontend_url
-        + "/create-password?key="
-        + quote(temp_password)
-        + "&email="
-        + quote(username),
+        "LOGIN_URL": f"{app_settings.frontend_url}/create-password?key={quote(temp_password)}&email={quote(username)}",
     }
 
     return send_email(ses, username, prepare_html("New_Account_Created", html_data), False)
@@ -301,8 +296,8 @@ def send_upload_contract_notification_to_FI(ses: SESClient, application: Applica
     """
     images_base_url = get_images_base_url()
     html_data = {
-        "LOGIN_URL": app_settings.frontend_url + "/login",
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
     }
 
     return send_email(
@@ -361,17 +356,14 @@ def send_new_email_confirmation(
     """
     images_base_url = get_images_base_url()
     confirm_email_change_url = (
-        app_settings.frontend_url
-        + "/application/"
-        + quote(application_uuid)
-        + "/change-primary-email?token="
-        + quote(confirmation_email_token)
+        f"{app_settings.frontend_url}/application/{quote(application_uuid)}/"
+        f"change-primary-email?token={quote(confirmation_email_token)}"
     )
     html_data = {
         "NEW_MAIL": new_email,
         "AWARD_SUPPLIER_NAME": borrower_name,
         "CONFIRM_EMAIL_CHANGE_URL": confirm_email_change_url,
-        "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": images_base_url + "/confirmemailchange.png",
+        "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": f"{images_base_url}/confirmemailchange.png",
     }
 
     new_email_address = set_destinations(new_email)
@@ -399,12 +391,10 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: st
     images_base_url = get_images_base_url()
     html_data = {
         "USER_ACCOUNT": username,
-        "RESET_PASSWORD_URL": app_settings.frontend_url
-        + "/create-password?key="
-        + quote(temp_password)
-        + "&email="
-        + quote(username),
-        "RESET_PASSWORD_IMAGE": images_base_url + "/ResetPassword.png",
+        "RESET_PASSWORD_URL": (
+            f"{app_settings.frontend_url}/create-password?key={quote(temp_password)}&email={quote(username)}"
+        ),
+        "RESET_PASSWORD_IMAGE": f"{images_base_url}/ResetPassword.png",
     }
 
     return send_email(ses, username, prepare_html("Reset_password", html_data), False)
@@ -463,9 +453,9 @@ def send_mail_intro_reminder(
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "FIND_OUT_MORE_URL": app_settings.frontend_url + "/application/" + quote(uuid) + "/intro",
-        "FIND_OUT_MORE_IMAGE_LINK": images_base_url + "/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
+        "FIND_OUT_MORE_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/intro",
+        "FIND_OUT_MORE_IMAGE_LINK": f"{images_base_url}/findoutmore.png",
+        "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
@@ -494,9 +484,9 @@ def send_mail_submit_reminder(
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
-        "APPLY_FOR_CREDIT_URL": app_settings.frontend_url + "/application/" + quote(uuid) + "/intro",
-        "APPLY_FOR_CREDIT_IMAGE_LINK": images_base_url + "/applyForCredit.png",
-        "REMOVE_ME_IMAGE_LINK": images_base_url + "/removeme.png",
+        "APPLY_FOR_CREDIT_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/intro",
+        "APPLY_FOR_CREDIT_IMAGE_LINK": f"{images_base_url}/applyForCredit.png",
+        "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
         "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
     }
 
@@ -512,8 +502,8 @@ def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str) -> 
     """
     images_base_url = get_images_base_url()
     html_data = {
-        "LOGIN_URL": app_settings.frontend_url + "/login",
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
     }
 
     return send_email(
@@ -535,8 +525,8 @@ def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: str, lende
     images_base_url = get_images_base_url()
     html_data = {
         "FI": lender_name,
-        "LOGIN_URL": app_settings.frontend_url + "/login",
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
     }
 
     return send_email(
@@ -583,8 +573,8 @@ def send_overdue_application_email_to_FI(ses: SESClient, name: str, email: str, 
     html_data = {
         "USER": name,
         "NUMBER_APPLICATIONS": amount,
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
-        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
     }
 
     return send_email(ses, email, prepare_html("Overdue_application_FI", html_data), False)
@@ -602,8 +592,8 @@ def send_overdue_application_email_to_OCP(ses: SESClient, name: str) -> str:
     html_data = {
         "USER": name,
         "FI": name,
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
-        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
     }
 
     return send_email(
@@ -626,9 +616,10 @@ def send_rejected_application_email(ses: SESClient, application: Application) ->
     html_data = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-        "FIND_ALTENATIVE_URL": app_settings.frontend_url
-        + f"/application/{quote(application.uuid)}/find-alternative-credit",
-        "FIND_ALTERNATIVE_IMAGE_LINK": images_base_url + "/findAlternative.png",
+        "FIND_ALTENATIVE_URL": (
+            f"{app_settings.frontend_url}/application/{quote(application.uuid)}/find-alternative-credit"
+        ),
+        "FIND_ALTERNATIVE_IMAGE_LINK": f"{images_base_url}/findAlternative.png",
     }
     return send_email(ses, application.primary_email, prepare_html("Application_declined", html_data))
 
@@ -688,8 +679,8 @@ def send_upload_documents_notifications_to_FI(ses: SESClient, email: str) -> str
     images_base_url = get_images_base_url()
     html_data = {
         **generate_common_data(),
-        "LOGIN_IMAGE_LINK": images_base_url + "/logincompleteimage.png",
-        "LOGIN_URL": app_settings.frontend_url + "/login",
+        "LOGIN_IMAGE_LINK": f"{images_base_url}/logincompleteimage.png",
+        "LOGIN_URL": f"{app_settings.frontend_url}/login",
     }
 
     return send_email(ses, email, prepare_html("FI_Documents_Updated_FI_user", html_data), False)
