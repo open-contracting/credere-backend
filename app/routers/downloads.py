@@ -71,7 +71,11 @@ async def download_application(
     lang: str,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(dependencies.get_publication_as_user),
+    application: models.Application = Depends(
+        dependencies.get_scoped_publication_as_user(
+            roles=(models.UserType.OCP, models.UserType.FI), scopes=(ApplicationScope.UNEXPIRED,)
+        )
+    ),
 ) -> StreamingResponse:
     """
     Retrieve all documents related to an application and stream them as a zip file.
@@ -79,9 +83,6 @@ async def download_application(
     :return: A streaming response with a zip file containing the documents.
     """
     with transaction_session(session):
-        dependencies.raise_if_unauthorized(
-            application, user, roles=(models.UserType.OCP, models.UserType.FI), scopes=(ApplicationScope.UNEXPIRED,)
-        )
         borrower = application.borrower
         award = application.award
         documents = list(application.borrower_documents)
