@@ -72,7 +72,7 @@ async def download_application(
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
-        dependencies.get_scoped_publication_as_user(
+        dependencies.get_scoped_application_as_user(
             roles=(models.UserType.OCP, models.UserType.FI), scopes=(ApplicationScope.UNEXPIRED,)
         )
     ),

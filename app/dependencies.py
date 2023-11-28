@@ -101,7 +101,7 @@ def raise_if_unauthorized(
             )
 
 
-def get_publication_as_user(id: int, session: Session = Depends(get_db)) -> models.Application:
+def get_application_as_user(id: int, session: Session = Depends(get_db)) -> models.Application:
     application = (
         models.Application.filter_by(session, "id", id)
         .options(joinedload(models.Application.borrower), joinedload(models.Application.award))
@@ -113,14 +113,14 @@ def get_publication_as_user(id: int, session: Session = Depends(get_db)) -> mode
     return application
 
 
-def get_scoped_publication_as_user(
+def get_scoped_application_as_user(
     *,
     roles: tuple[models.UserType, ...] = (),
     scopes: tuple[ApplicationScope, ...] = (),
     statuses: tuple[models.ApplicationStatus, ...] = (),
 ) -> Callable[[models.Application, models.User], models.Application]:
     def inner(
-        application: models.Application = Depends(get_publication_as_user), user: models.User = Depends(get_user)
+        application: models.Application = Depends(get_application_as_user), user: models.User = Depends(get_user)
     ) -> models.Application:
         raise_if_unauthorized(application, user, roles=roles, scopes=scopes, statuses=statuses)
         return application
@@ -128,7 +128,7 @@ def get_scoped_publication_as_user(
     return inner
 
 
-def _get_publication_as_guest_via_uuid(session: Session, uuid: str) -> models.Application:
+def _get_application_as_guest_via_uuid(session: Session, uuid: str) -> models.Application:
     """
     Retrieve an application by its UUID from the database.
 
@@ -156,7 +156,7 @@ def _get_publication_as_guest_via_uuid(session: Session, uuid: str) -> models.Ap
     return application
 
 
-def _get_scoped_publication_as_guest_inner(
+def _get_scoped_application_as_guest_inner(
     depends: Callable[[Any, Session], models.Application],
     scopes: tuple[ApplicationScope, ...] = (),
     statuses: tuple[models.ApplicationStatus, ...] = (),
@@ -168,33 +168,33 @@ def _get_scoped_publication_as_guest_inner(
     return inner
 
 
-def get_publication_as_guest_via_payload(
+def get_application_as_guest_via_payload(
     payload: parsers.ApplicationBase, session: Session = Depends(get_db)
 ) -> models.Application:
-    return _get_publication_as_guest_via_uuid(session, payload.uuid)
+    return _get_application_as_guest_via_uuid(session, payload.uuid)
 
 
-def get_publication_as_guest_via_uuid(uuid: str, session: Session = Depends(get_db)) -> models.Application:
-    return _get_publication_as_guest_via_uuid(session, uuid)
+def get_application_as_guest_via_uuid(uuid: str, session: Session = Depends(get_db)) -> models.Application:
+    return _get_application_as_guest_via_uuid(session, uuid)
 
 
-def get_publication_as_guest_via_form(uuid: str = Form(...), session: Session = Depends(get_db)) -> models.Application:
-    return _get_publication_as_guest_via_uuid(session, uuid)
+def get_application_as_guest_via_form(uuid: str = Form(...), session: Session = Depends(get_db)) -> models.Application:
+    return _get_application_as_guest_via_uuid(session, uuid)
 
 
-def get_scoped_publication_as_guest_via_payload(
+def get_scoped_application_as_guest_via_payload(
     *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
 ) -> Callable[[models.Application], models.Application]:
-    return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_payload, scopes, statuses)
+    return _get_scoped_application_as_guest_inner(get_application_as_guest_via_payload, scopes, statuses)
 
 
-def get_scoped_publication_as_guest_via_uuid(
+def get_scoped_application_as_guest_via_uuid(
     *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
 ) -> Callable[[models.Application], models.Application]:
-    return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_uuid, scopes, statuses)
+    return _get_scoped_application_as_guest_inner(get_application_as_guest_via_uuid, scopes, statuses)
 
 
-def get_scoped_publication_as_guest_via_form(
+def get_scoped_application_as_guest_via_form(
     *, scopes: tuple[ApplicationScope, ...] = (), statuses: tuple[models.ApplicationStatus, ...] = ()
 ) -> Callable[[models.Application], models.Application]:
-    return _get_scoped_publication_as_guest_inner(get_publication_as_guest_via_form, scopes, statuses)
+    return _get_scoped_application_as_guest_inner(get_application_as_guest_via_form, scopes, statuses)
