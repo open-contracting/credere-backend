@@ -9,9 +9,7 @@ from app import auth, models, parsers, util
 from app.aws import CognitoClient, cognito_client
 from app.db import get_db
 
-OCP_CAN_MODIFY = (
-    models.ApplicationStatus.PENDING,
-    models.ApplicationStatus.ACCEPTED,
+USER_CAN_EDIT_AWARD_BORROWER_DATA = (
     models.ApplicationStatus.SUBMITTED,
     models.ApplicationStatus.STARTED,
     models.ApplicationStatus.INFORMATION_REQUESTED,

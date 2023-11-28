@@ -315,7 +315,7 @@ async def update_application_award(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.OCP, models.UserType.FI),
-            statuses=dependencies.OCP_CAN_MODIFY,
+            statuses=dependencies.USER_CAN_EDIT_AWARD_BORROWER_DATA,
         )
     ),
 ) -> Any:
@@ -357,7 +357,7 @@ async def update_application_borrower(
     application: models.Application = Depends(
         dependencies.get_scoped_publication_as_user(
             roles=(models.UserType.OCP, models.UserType.FI),
-            statuses=dependencies.OCP_CAN_MODIFY,
+            statuses=dependencies.USER_CAN_EDIT_AWARD_BORROWER_DATA,
         )
     ),
 ) -> Any:
