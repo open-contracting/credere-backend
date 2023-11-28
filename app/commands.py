@@ -38,7 +38,12 @@ def fetch_awards() -> None:
 
 
 @app.command()
-def fetch_contracts_from_date(from_date: str, until_date: str) -> None:
+def fetch_all_awards_from_period(from_date: datetime, until_date: datetime) -> None:
+    """
+    NOTE: For manual use only.
+    Fetch all awards, regardless of their status, from the from_date, until_date period.
+    Useful when want to force send invitations for awards made in the past.
+    """
     background.fetch_new_awards_from_date(from_date, get_db, until_date)
 
 

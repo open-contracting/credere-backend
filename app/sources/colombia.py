@@ -123,6 +123,8 @@ def get_new_contracts(index: int, from_date: datetime, until_date: datetime | No
     )
 
     if from_date and until_date:
+        until_date = until_date.strftime(date_format)
+        from_date = from_date.strftime(date_format)
         url = f"{base_url}" f"AND ultima_actualizacion >= '{from_date}' " f"AND ultima_actualizacion < '{until_date}' "
     else:
         url = f"{base_url}" f"AND estado_contrato = 'Borrador' AND ultima_actualizacion >= '{converted_date}'"
