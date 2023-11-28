@@ -387,14 +387,14 @@ async def confirm_credit_product(
                 detail="Credit product not selected",
             )
 
-        creditProduct = models.CreditProduct.first_by(session, "id", application.credit_product_id)
-        if not creditProduct:
+        credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
+        if not credit_product:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Credit product not found",
             )
 
-        application.lender_id = creditProduct.lender_id
+        application.lender_id = credit_product.lender_id
         application.amount_requested = application.calculator_data.get("amount_requested", None)
         application.repayment_years = application.calculator_data.get("repayment_years", None)
         application.repayment_months = application.calculator_data.get("repayment_months", None)
