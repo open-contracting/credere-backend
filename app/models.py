@@ -521,6 +521,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             end_time = datetime.now(self.tz)
         days += (end_time - self.lender_started_at).days
 
+        # A lender can have only one unresponded request at a time.
         for borrower_response in base_query.filter(
             ApplicationAction.type == ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED
         ):
