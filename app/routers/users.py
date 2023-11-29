@@ -148,51 +148,6 @@ def login(
     session: Session = Depends(get_db),
 ) -> serializers.LoginResponse:
     """
-    Authenticate the user and generate access and refresh tokens.
-
-    This endpoint handles user login and authentication. It initiates the
-    authentication process using the provided username and password.
-    If the authentication is successful, it returns the user information along with
-    the generated access and refresh tokens.
-
-    :param user: The user data including the username and password.
-    :param response: The response object used to modify the response headers (automatically injected).
-    :return: The response containing the user information and tokens if the login is successful.
-    """
-    try:
-        response = client.initiate_auth(user.username, user.password)
-        db_user = get_object_or_404(session, models.User, "email", user.username)
-
-        return serializers.LoginResponse(
-            user=db_user,
-            access_token=response["AuthenticationResult"]["AccessToken"],
-            refresh_token=response["AuthenticationResult"]["RefreshToken"],
-        )
-
-    except ClientError as e:
-        logger.exception(e)
-
-        if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Temporal password is expired, please request a new one",
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="There was an error trying to login",
-            )
-
-
-@router.post(
-    "/users/login-mfa",
-)
-def login_mfa(
-    user: models.BasicUser,
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
-    session: Session = Depends(get_db),
-) -> serializers.LoginResponse:
-    """
     Authenticate the user with Multi-Factor Authentication (MFA) and generate access and refresh tokens.
 
     This endpoint handles user login and authentication with MFA. It initiates the authentication
@@ -204,6 +159,7 @@ def login_mfa(
     :return: The response containing the user information and tokens if the login is successful.
     """
     try:
+        db_user = get_object_or_404(session, models.User, "email", user.username)
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
@@ -215,14 +171,6 @@ def login_mfa(
                 "",
                 mfa_code=user.temp_password,
             )
-
-            db_user = models.User.first_by(session, "email", user.username)
-
-            if not db_user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="User not found",
-                )
 
             return serializers.LoginResponse(
                 user=db_user,

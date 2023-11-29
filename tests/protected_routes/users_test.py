@@ -6,7 +6,7 @@ from app.aws import CognitoClient
 from app.db import get_db
 from app.models import User
 
-tempPassword = "1234567890Abc!!"
+temp_password = "1234567890Abc!!"
 new_password = "!!!1234567890Abc!!"
 
 router = APIRouter()
@@ -20,14 +20,14 @@ async def create_test_user_headers(
 ):
     user = User(**payload.dict())
 
-    cognitoResponse = client.admin_create_user(payload.email, payload.name)
-    user.external_id = cognitoResponse["User"]["Username"]
+    cognito_response = client.admin_create_user(payload.email, payload.name)
+    user.external_id = cognito_response["User"]["Username"]
 
     session.add(user)
     session.commit()
 
     client.verified_email(payload.email)
-    response = client.initiate_auth(payload.email, tempPassword)
+    response = client.initiate_auth(payload.email, temp_password)
     if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
         session = response["Session"]
         response = client.respond_to_auth_challenge(payload.email, session, "NEW_PASSWORD_REQUIRED", new_password)
