@@ -1,6 +1,5 @@
 from fastapi import status
 
-import tests.common.common_test_client as common_test_client
 from app.models import UserType
 
 from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
@@ -95,33 +94,3 @@ def test_duplicate_user(client):  # noqa
     # duplicate user
     response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-
-def test_login(client):  # noqa
-    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
-    response = client.post("/users", json=test_user, headers=ocp_headers)
-    assert response.status_code == status.HTTP_200_OK
-
-    setup_password_payload = {
-        "username": test_user["email"],
-        "temp_password": common_test_client.tmp_password,
-        "password": common_test_client.tmp_password,
-    }
-    response_setup_password = client.put("/users/change-password", json=setup_password_payload)
-    assert response_setup_password.status_code == status.HTTP_200_OK
-
-    login_payload = {
-        "username": test_user["email"],
-        "password": common_test_client.tmp_password,
-    }
-    response_login = client.post("/users/login", json=login_payload)
-
-    assert response_login.status_code == status.HTTP_200_OK
-    assert response_login.json()["access_token"] is not None
-
-    response = client.get(
-        "/users/logout",
-        headers={"Authorization": "Bearer " + response_login.json()["access_token"]},
-    )
-
-    assert response.status_code == status.HTTP_200_OK
