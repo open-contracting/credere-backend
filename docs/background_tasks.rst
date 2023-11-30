@@ -1,5 +1,5 @@
-Background jobs Commands
-========================
+Background tasks
+================
 
 To run the list of commands available use
 
