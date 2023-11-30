@@ -113,17 +113,41 @@ class BorrowerDocumentType(Enum):
 
 # https://github.com/open-contracting/credere-backend/issues/39
 class ApplicationStatus(Enum):
+    """
+    The status different work flows are as follow:
+    PENDING -> DECLINED
+    PENDING -> LAPSED
+    PENDING -> ACCEPTED -> LAPSED
+    PENDING -> ACCEPTED -> SUBMITTED -> STARTED -> REJECTED
+    PENDING -> ACCEPTED -> SUBMITTED -> STARTED -> APPROVED -> CONTRACT_UPLOADED -> COMPLETED
+    # https://github.com/open-contracting/credere-backend/issues/186#issuecomment-1778414338
+    PENDING -> ACCEPTED -> SUBMITTED -> STARTED -> APPROVED -> CONTRACT_UPLOADED -> REJECTED
+    PENDING -> ACCEPTED -> SUBMITTED -> STARTED -> INFORMATION_REQUESTED <-> STARTED
+    PENDING -> ACCEPTED -> SUBMITTED -> STARTED -> INFORMATION_REQUESTED -> LAPSED
+    """
+
+    # Credere sends an invitation to a borrower
     PENDING = "PENDING"
-    ACCEPTED = "ACCEPTED"
-    LAPSED = "LAPSED"
+    # Borrower declines the invitation
     DECLINED = "DECLINED"
+    # Borrower accepts the invitation
+    ACCEPTED = "ACCEPTED"
+    # Borrower submits its application
     SUBMITTED = "SUBMITTED"
+    # Lender start reviewing the application
     STARTED = "STARTED"
-    APPROVED = "APPROVED"
-    CONTRACT_UPLOADED = "CONTRACT_UPLOADED"
-    COMPLETED = "COMPLETED"
+    # Lender rejects the application
     REJECTED = "REJECTED"
+    # Lender requests the borrower to update a document
     INFORMATION_REQUESTED = "INFORMATION_REQUESTED"
+    # Borrower doesn't accept or submit the application or the information requested
+    LAPSED = "LAPSED"
+    # Lender pre-approve the application and Credere asks the borrower to upload its contract
+    APPROVED = "APPROVED"
+    # Borrower uploads its contract and final contract amount
+    CONTRACT_UPLOADED = "CONTRACT_UPLOADED"
+    # Lender sets the final credit disbursed
+    COMPLETED = "COMPLETED"
 
 
 class BorrowerStatus(Enum):
