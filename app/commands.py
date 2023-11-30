@@ -91,7 +91,7 @@ def remove_dated_application_data() -> None:
                     application.borrower.email = ""
                     application.borrower.address = ""
                     application.borrower.legal_identifier = ""
-                    application.borrower.source_data = ""
+                    application.borrower.source_data = {}
 
 
 @app.command()
