@@ -163,9 +163,9 @@ def get_source_contract_id(entry: dict[str, str]) -> str:
     return source_contract_id
 
 
-def create_new_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict[str, str]) -> dict[str, str]:
+def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict[str, str]) -> dict[str, str]:
     """
-    Create a new borrower and insert it into the database.
+    Get the borrower information from the source
 
     :param borrower_identifier: The unique identifier for the borrower.
     :param documento_proveedor: The document provider for the borrower.

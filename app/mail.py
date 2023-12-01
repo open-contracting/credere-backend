@@ -177,11 +177,6 @@ def prepare_html(template_name: str, parameters: dict[str, Any]) -> dict[str, st
 
 
 def send_email(ses: SESClient, email: str, data: dict[str, str], to_msme: bool = True) -> str:
-    email = email.strip()
-    if not email:
-        logger.warning("%s - Skipping empty email address", app_settings.environment)
-        return ""
-
     destinations = set_destinations(email, to_msme)
 
     logger.info("%s - Email to: %s sent to %s", app_settings.environment, email, destinations)
