@@ -15,7 +15,6 @@ def is_valid_email(email: str) -> bool:
     :param email: The email address to validate.
     :return: True if the email is valid, False otherwise.
     """
-    email = email.strip()
     if email and re.search(VALID_EMAIL, email):
         return True
     return False

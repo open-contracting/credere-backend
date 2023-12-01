@@ -66,12 +66,12 @@ def _get_or_create_borrower(entry: dict[str, Any], session: Session) -> models.B
 
     documento_proveedor = data_access.get_documento_proveedor(entry)
     borrower_identifier = util.get_secret_hash(documento_proveedor)
-    data = data_access.create_new_borrower(borrower_identifier, documento_proveedor, entry)
+    data = data_access.get_borrower(borrower_identifier, documento_proveedor, entry)
 
     borrower = models.Borrower.first_by(session, "borrower_identifier", borrower_identifier)
     if borrower:
         if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
-            raise ValueError("Skipping Award - Borrower choosed to not receive any new opportunity")
+            raise ValueError("Skipping Award - Borrower chose to not receive any new opportunity")
         return borrower.update(session, **data)
 
     return models.Borrower.create(session, **data)
@@ -141,7 +141,7 @@ def fetch_new_awards_from_date(
                         type=models.MessageType.BORROWER_INVITACION,
                     )
 
-                    messageId = mail.send_invitation_email(
+                    message_id = mail.send_invitation_email(
                         sesClient,
                         application.uuid,
                         borrower.email,
@@ -149,7 +149,7 @@ def fetch_new_awards_from_date(
                         award.buyer_name,
                         award.title,
                     )
-                    message.external_message_id = messageId
+                    message.external_message_id = message_id
         index += 1
         contracts_response = data_access.get_new_contracts(index, last_updated_award_date, until_date)
         contracts_response_json = contracts_response.json()
