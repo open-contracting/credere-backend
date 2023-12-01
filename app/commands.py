@@ -76,17 +76,17 @@ def remove_dated_application_data() -> None:
                 for document in application.borrower_documents:
                     session.delete(document)
 
-                # Check if there are any other active applications that use the same award
-                active_applications_with_same_award = (
+                # Check if there are any other active borrowers with active applications
+                active_applications_with_same_borrower = (
                     models.Application.unarchived(session)
                     .filter(
-                        models.Application.award_id == application.award_id,
+                        models.Application.borrower_id == application.borrower_id,
                         models.Application.id != application.id,
                     )
                     .all()
                 )
-                # Delete the associated Award if no other active applications uses the award
-                if len(active_applications_with_same_award) == 0:
+                # Delete the associated borrower info if no other active applications uses the borrower
+                if len(active_applications_with_same_borrower) == 0:
                     application.borrower.legal_name = ""
                     application.borrower.email = ""
                     application.borrower.address = ""
@@ -154,8 +154,10 @@ def send_reminders() -> None:
                     buyer_name = application.award.buyer_name
                     title = application.award.title
 
-                    messageID = mail.send_mail_intro_reminder(sesClient, uuid, email, borrower_name, buyer_name, title)
-                    new_message.external_message_id = messageID
+                    message_id = mail.send_mail_intro_reminder(
+                        sesClient, uuid, email, borrower_name, buyer_name, title
+                    )
+                    new_message.external_message_id = message_id
                     logger.info("Mail sent and status updated")
 
     with contextmanager(get_db)() as session:
@@ -188,10 +190,10 @@ def send_reminders() -> None:
                     buyer_name = application.award.buyer_name
                     title = application.award.title
 
-                    messageID = mail.send_mail_submit_reminder(
+                    message_id = mail.send_mail_submit_reminder(
                         sesClient, uuid, email, borrower_name, buyer_name, title
                     )
-                    new_message.external_message_id = messageID
+                    new_message.external_message_id = message_id
                     logger.info("Mail sent and status updated")
 
 
