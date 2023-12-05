@@ -393,7 +393,7 @@ async def get_applications_list(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
@@ -493,7 +493,7 @@ async def get_applications(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
