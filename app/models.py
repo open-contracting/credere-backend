@@ -274,13 +274,7 @@ class BorrowerDocumentBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            onupdate=func.now(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
     )
     submitted_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
