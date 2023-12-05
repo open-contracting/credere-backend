@@ -128,10 +128,6 @@ class ApplicationStatus(Enum):
     -  -> REJECTED
     -  -> APPROVED -> CONTRACT_UPLOADED -> COMPLETED
     -  -> APPROVED -> CONTRACT_UPLOADED -> REJECTED
-
-       .. seealso::
-
-          `GitHub issue <https://github.com/open-contracting/credere-backend/issues/186#issuecomment-1778414338>`__
     """
 
     # Credere sends an invitation to the borrower.
@@ -144,8 +140,8 @@ class ApplicationStatus(Enum):
     SUBMITTED = "SUBMITTED"
     # Lender start reviewing the application.
     STARTED = "STARTED"
-    # Lender rejects the application. The rejection can happen after the application first submission or after
-    # CONTRACT_UPLOADED, as the current APPROVED status represents a pre-approval only.
+    # Lender rejects the application, after the borrower either submits its application, updates a document, or uploads
+    # its contract and final contract amount.
     REJECTED = "REJECTED"
     # Lender requests the borrower to update a document.
     INFORMATION_REQUESTED = "INFORMATION_REQUESTED"
