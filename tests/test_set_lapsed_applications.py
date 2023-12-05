@@ -6,7 +6,7 @@ from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
 from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
 from tests.common.common_test_client import app, client  # isort:skip # noqa
 
-application_payload = {"status": models.ApplicationStatus.PENDING.value}
+application_payload = {"status": models.ApplicationStatus.PENDING}
 
 
 def test_set_lapsed_applications(client):  # noqa

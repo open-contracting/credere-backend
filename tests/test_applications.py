@@ -18,7 +18,7 @@ wrong_file = os.path.join(__location__, "file.gif")
 FI_user = {
     "email": "FI_user@noreply.open-contracting.org",
     "name": "Test FI",
-    "type": models.UserType.FI.value,
+    "type": models.UserType.FI,
 }
 
 
@@ -26,7 +26,7 @@ FI_user_with_lender = {
     "id": 2,
     "email": "FI_user_with_lender@noreply.open-contracting.org",
     "name": "Test FI with lender",
-    "type": models.UserType.FI.value,
+    "type": models.UserType.FI,
     "lender_id": 1,
 }
 
@@ -34,39 +34,39 @@ FI_user_with_lender_2 = {
     "id": 3,
     "email": "FI_user_with_lender_2@noreply.open-contracting.org",
     "name": "Test FI with lender 2",
-    "type": models.UserType.FI.value,
+    "type": models.UserType.FI,
     "lender_id": 2,
 }
 
 OCP_user = {
     "email": "OCP_user@noreply.open-contracting.org",
     "name": "OCP_user@noreply.open-contracting.org",
-    "type": models.UserType.OCP.value,
+    "type": models.UserType.OCP,
 }
 
 application_base = {"uuid": "123-456-789"}
-application_payload = {"status": models.ApplicationStatus.PENDING.value}
+application_payload = {"status": models.ApplicationStatus.PENDING}
 application_with_lender_payload = {
-    "status": models.ApplicationStatus.PENDING.value,
+    "status": models.ApplicationStatus.PENDING,
     "lender_id": 1,
     "credit_product_id": 1,
 }
 application_with_credit_product = {
-    "status": models.ApplicationStatus.ACCEPTED.value,
+    "status": models.ApplicationStatus.ACCEPTED,
     "credit_product_id": 1,
 }
-application_lapsed_payload = {"status": models.ApplicationStatus.LAPSED.value}
-application_declined_payload = {"status": models.ApplicationStatus.DECLINED.value}
-borrower_declined_oportunity_payload = {"status": models.BorrowerStatus.DECLINE_OPPORTUNITIES.value}
+application_lapsed_payload = {"status": models.ApplicationStatus.LAPSED}
+application_declined_payload = {"status": models.ApplicationStatus.DECLINED}
+borrower_declined_oportunity_payload = {"status": models.BorrowerStatus.DECLINE_OPPORTUNITIES}
 application_credit_option = {
     "uuid": "123-456-789",
-    "borrower_size": models.BorrowerSize.SMALL.value,
+    "borrower_size": models.BorrowerSize.SMALL,
     "amount_requested": 10000,
 }
 
 application_select_credit_option = {
     "uuid": "123-456-789",
-    "borrower_size": models.BorrowerSize.SMALL.value,
+    "borrower_size": models.BorrowerSize.SMALL,
     "amount_requested": 10000,
     "sector": "adminstration",
     "credit_product_id": 1,
@@ -140,7 +140,7 @@ def test_reject_application(client, mock_templated_email):  # noqa
 
     response = client.post(
         "/applications/1/update-test-application-status",
-        json={"status": models.ApplicationStatus.STARTED.value},
+        json={"status": models.ApplicationStatus.STARTED},
     )
 
     response = client.post(
@@ -148,7 +148,7 @@ def test_reject_application(client, mock_templated_email):  # noqa
         json=reject_payload,
         headers=FI_headers,
     )
-    assert response.json()["status"] == models.ApplicationStatus.REJECTED.value
+    assert response.json()["status"] == models.ApplicationStatus.REJECTED
     assert response.status_code == status.HTTP_200_OK
 
     response = client.post("/applications/find-alternative-credit-option", json=application_base)
@@ -196,7 +196,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         return_value=MockResponse(status.HTTP_200_OK, {}),
     ):
         response = client.post("/applications/access-scheme", json=application_base)
-        assert response.json()["application"]["status"] == models.ApplicationStatus.ACCEPTED.value
+        assert response.json()["application"]["status"] == models.ApplicationStatus.ACCEPTED
         assert response.status_code == status.HTTP_200_OK
 
         # Application should be accepted now so it cannot be accepted again
@@ -268,7 +268,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     assert response.status_code == status.HTTP_409_CONFLICT
 
     response = client.post("/applications/submit", json=application_base)
-    assert response.json()["application"]["status"] == models.ApplicationStatus.SUBMITTED.value
+    assert response.json()["application"]["status"] == models.ApplicationStatus.SUBMITTED
     assert response.status_code == status.HTTP_200_OK
 
     # tries to upload document before application starting
@@ -277,7 +277,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
             "/applications/upload-document",
             data={
                 "uuid": "123-456-789",
-                "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT.value,
+                "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT,
             },
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
@@ -297,7 +297,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
 
     # The FI user starts application
     response = client.post("/applications/1/start", headers=FI_headers)
-    assert response.json()["status"] == models.ApplicationStatus.STARTED.value
+    assert response.json()["status"] == models.ApplicationStatus.STARTED
     assert response.status_code == status.HTTP_200_OK
 
     # different FI user tries to update the award
@@ -357,7 +357,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         headers=FI_headers,
     )
 
-    assert response.json()["status"] == models.ApplicationStatus.INFORMATION_REQUESTED.value
+    assert response.json()["status"] == models.ApplicationStatus.INFORMATION_REQUESTED
     assert response.status_code == status.HTTP_200_OK
 
     # borrower uploads the wrong type of document
@@ -366,7 +366,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
             "/applications/upload-document",
             data={
                 "uuid": "123-456-789",
-                "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT.value,
+                "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT,
             },
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
@@ -377,14 +377,14 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
             "/applications/upload-document",
             data={
                 "uuid": "123-456-789",
-                "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT.value,
+                "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT,
             },
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert response.status_code == status.HTTP_200_OK
 
         response = client.post("/applications/complete-information-request", json={"uuid": "123-456-789"})
-        assert response.json()["application"]["status"] == models.ApplicationStatus.STARTED.value
+        assert response.json()["application"]["status"] == models.ApplicationStatus.STARTED
         assert response.status_code == status.HTTP_200_OK
 
         response = client.get("/applications/documents/id/1", headers=FI_headers)
@@ -436,7 +436,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         json=approve_application,
         headers=FI_headers,
     )
-    assert response.json()["status"] == models.ApplicationStatus.APPROVED.value
+    assert response.json()["status"] == models.ApplicationStatus.APPROVED
     assert response.status_code == status.HTTP_200_OK
 
     # msme uploads contract
@@ -453,7 +453,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         json={"uuid": "123-456-789", "contract_amount_submitted": 100000},
     )
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["application"]["status"] == models.ApplicationStatus.CONTRACT_UPLOADED.value
+    assert response.json()["application"]["status"] == models.ApplicationStatus.CONTRACT_UPLOADED
 
     response = client.post(
         "/applications/1/complete-application",
@@ -461,7 +461,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
         headers=FI_headers,
     )
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["status"] == models.ApplicationStatus.COMPLETED.value
+    assert response.json()["status"] == models.ApplicationStatus.COMPLETED
 
 
 def test_get_applications(client):  # noqa
@@ -521,8 +521,8 @@ def test_application_declined(client, mock_templated_email):  # noqa
         "/applications/decline",
         json={"uuid": "123-456-789", "decline_this": False, "decline_all": True},
     )
-    assert response.json()["application"]["status"] == models.ApplicationStatus.DECLINED.value
-    assert response.json()["borrower"]["status"] == models.BorrowerStatus.DECLINE_OPPORTUNITIES.value
+    assert response.json()["application"]["status"] == models.ApplicationStatus.DECLINED
+    assert response.json()["borrower"]["status"] == models.BorrowerStatus.DECLINE_OPPORTUNITIES
     assert response.status_code == status.HTTP_200_OK
 
     response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
@@ -535,8 +535,8 @@ def test_application_rollback_declined(client):  # isort:skip # noqa
 
     response = client.post("/applications/rollback-decline", json={"uuid": "123-456-789"})
 
-    assert response.json()["application"]["status"] == models.ApplicationStatus.PENDING.value
-    assert response.json()["borrower"]["status"] == models.BorrowerStatus.ACTIVE.value
+    assert response.json()["application"]["status"] == models.ApplicationStatus.PENDING
+    assert response.json()["borrower"]["status"] == models.BorrowerStatus.ACTIVE
     assert response.status_code == status.HTTP_200_OK
 
     response = client.post("/applications/rollback-decline", json={"uuid": "123-456-789"})
@@ -546,7 +546,7 @@ def test_application_rollback_declined(client):  # isort:skip # noqa
 def test_application_declined_feedback(client):  # isort:skip # noqa
     client.post(
         "/create-test-application",
-        json={"status": models.ApplicationStatus.DECLINED.value},
+        json={"status": models.ApplicationStatus.DECLINED},
     )
 
     declined_feedback = {
@@ -560,5 +560,5 @@ def test_application_declined_feedback(client):  # isort:skip # noqa
     }
 
     response = client.post("/applications/decline-feedback", json=declined_feedback)
-    assert response.json()["application"]["status"] == models.ApplicationStatus.DECLINED.value
+    assert response.json()["application"]["status"] == models.ApplicationStatus.DECLINED
     assert response.status_code == status.HTTP_200_OK

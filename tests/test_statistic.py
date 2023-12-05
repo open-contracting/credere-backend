@@ -12,7 +12,7 @@ from tests.common.common_test_client import app, client  # isort:skip # noqa
 OCP_user = {
     "email": "OCP_user@example.com",
     "name": "OCP_user@example.com",
-    "type": models.UserType.OCP.value,
+    "type": models.UserType.OCP,
 }
 lender = {
     "id": 1,
@@ -26,7 +26,7 @@ FI_user_with_lender = {
     "id": 2,
     "email": "FI_user_with_lender@example.com",
     "name": "Test FI with lender",
-    "type": models.UserType.FI.value,
+    "type": models.UserType.FI,
     "lender_id": 1,
 }
 

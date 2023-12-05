@@ -74,7 +74,7 @@ async def set_test_application_as_started(id: int, session: Session = Depends(ge
     application = session.query(models.Application).filter(models.Application.id == id).first()
 
     application.lender_started_at = datetime.now(application.created_at.tzinfo)
-    application.status = models.ApplicationStatus.STARTED.value
+    application.status = models.ApplicationStatus.STARTED
 
     session.commit()
     session.refresh(application)
@@ -90,7 +90,7 @@ async def set_test_application_as_started(id: int, session: Session = Depends(ge
 async def set_test_application_as_overdue(id: int, session: Session = Depends(get_db)):
     application = session.query(models.Application).filter(models.Application.id == id).first()
 
-    application.status = models.ApplicationStatus.STARTED.value
+    application.status = models.ApplicationStatus.STARTED
     application.lender_started_at = datetime.now(application.created_at.tzinfo) - timedelta(
         days=application.lender.sla_days + 1
     )
@@ -109,7 +109,7 @@ async def set_test_application_as_overdue(id: int, session: Session = Depends(ge
 async def set_test_application_as_expired(id: int, session: Session = Depends(get_db)):
     application = session.query(models.Application).filter(models.Application.id == id).first()
 
-    application.status = models.ApplicationStatus.PENDING.value
+    application.status = models.ApplicationStatus.PENDING
     application.expired_at = datetime.now(application.created_at.tzinfo) - timedelta(days=+1)
 
     session.commit()

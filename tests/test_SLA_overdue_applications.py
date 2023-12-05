@@ -10,13 +10,13 @@ from tests.common.common_test_client import app, client  # isort:skip # noqa
 OCP_user = {
     "email": "OCP_user@example.com",
     "name": "OCP_user@example.com",
-    "type": models.UserType.OCP.value,
+    "type": models.UserType.OCP,
 }
 
-application = {"status": models.ApplicationStatus.STARTED.value}
+application = {"status": models.ApplicationStatus.STARTED}
 
 application_with_lender_payload = {
-    "status": models.ApplicationStatus.STARTED.value,
+    "status": models.ApplicationStatus.STARTED,
     "lender_id": 1,
 }
 lender = {
