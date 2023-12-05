@@ -144,7 +144,8 @@ class ApplicationStatus(Enum):
     SUBMITTED = "SUBMITTED"
     # Lender start reviewing the application.
     STARTED = "STARTED"
-    # Lender rejects the application.
+    # Lender rejects the application. The rejection can happen after the application first submission or after
+    # CONTRACT_UPLOADED, as the current APPROVED status represents a pre-approval only.
     REJECTED = "REJECTED"
     # Lender requests the borrower to update a document.
     INFORMATION_REQUESTED = "INFORMATION_REQUESTED"
