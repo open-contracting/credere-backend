@@ -63,9 +63,9 @@ async def get_ocp_statistics_by_lender(
         if custom_range is not None:
             custom_range = custom_range.upper()
             current_date = datetime.now().date()
-            if custom_range == StatisticCustomRange.LAST_WEEK.value:
+            if custom_range == StatisticCustomRange.LAST_WEEK:
                 initial_date = (current_date - timedelta(days=7)).isoformat()
-            elif custom_range == StatisticCustomRange.LAST_MONTH.value:
+            elif custom_range == StatisticCustomRange.LAST_MONTH:
                 initial_date = (current_date - timedelta(days=30)).isoformat()
 
             final_date = current_date.isoformat()

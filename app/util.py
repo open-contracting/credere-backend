@@ -4,7 +4,7 @@ import hmac
 import os.path
 import uuid
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from fastapi import File, HTTPException, UploadFile, status
@@ -18,7 +18,7 @@ MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg"}
 
 
-class ERROR_CODES(Enum):
+class ERROR_CODES(StrEnum):
     BORROWER_FIELD_VERIFICATION_MISSING = "BORROWER_FIELD_VERIFICATION_MISSING"
     DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
     APPLICATION_LAPSED = "APPLICATION_LAPSED"
@@ -91,7 +91,7 @@ def get_modified_data_fields(application: models.Application, session: Session) 
         .filter(
             models.ApplicationAction.application_id == application.id,
             col(models.ApplicationAction.type).in_(
-                [models.ApplicationActionType.AWARD_UPDATE.value, models.ApplicationActionType.BORROWER_UPDATE.value]
+                [models.ApplicationActionType.AWARD_UPDATE, models.ApplicationActionType.BORROWER_UPDATE]
             ),
         )
         .all()

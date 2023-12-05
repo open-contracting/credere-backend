@@ -150,7 +150,7 @@ def _get_application_as_guest_via_uuid(session: Session, uuid: str) -> models.Ap
     if application.status == models.ApplicationStatus.LAPSED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=util.ERROR_CODES.APPLICATION_LAPSED.value,
+            detail=util.ERROR_CODES.APPLICATION_LAPSED,
         )
 
     return application
