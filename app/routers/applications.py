@@ -240,6 +240,12 @@ async def verify_data_field(
         # Update a specific field in the application's `secop_data_verification` attribute.
         payload_dict = {key: value for key, value in payload.dict().items() if value is not None}
         key, value = next(iter(payload_dict.items()), (None, None))
+        if not key:
+            logger.error("Trying to update an empty key")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot update a field without a name",
+            )
         verified_data = application.secop_data_verification.copy()
         verified_data[key] = value
         application.secop_data_verification = verified_data.copy()
