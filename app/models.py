@@ -256,20 +256,10 @@ class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     lender: "Lender" = Relationship(back_populates="credit_products")
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            onupdate=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
     )
 
 
@@ -281,12 +271,7 @@ class BorrowerDocumentBase(SQLModel):
     verified: bool = Field(default=False)
     name: str = Field(default="")
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
     updated_at: datetime | None = Field(
         sa_column=Column(
@@ -298,12 +283,7 @@ class BorrowerDocumentBase(SQLModel):
         )
     )
     submitted_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
 
 
@@ -354,20 +334,10 @@ class ApplicationBase(SQLModel):
     lender_completed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     completed_in_days: int | None = Field(nullable=True)
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            onupdate=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
     )
     expired_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     archived_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
@@ -595,20 +565,10 @@ class BorrowerBase(SQLModel):
     )
     missing_data: dict[str, bool] = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            onupdate=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
     )
     declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
 
@@ -637,20 +597,10 @@ class Lender(LenderBase, ActiveRecordMixin, table=True):
     users: list["User"] | None = Relationship(back_populates="lender")
     status: str = Field(default="")
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            onupdate=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
     )
     deleted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
     credit_products: list["CreditProduct"] | None = Relationship(back_populates="lender")
@@ -690,20 +640,10 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
     source_data_contracts: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
     source_data_awards: dict[str, Any] = Field(default={}, sa_column=Column(JSON), nullable=False)
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            onupdate=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
     )
 
     @classmethod
@@ -727,20 +667,10 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
     external_message_id: str | None = Field(default="")
     body: str | None = Field(default="")
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            onupdate=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
     )
     lender_id: int | None = Field(default=None, foreign_key="lender.id", nullable=True)
 
@@ -761,12 +691,7 @@ class UserBase(SQLModel):
     external_id: str = Field(default="", index=True)
     lender_id: int | None = Field(default=None, foreign_key="lender.id", nullable=True)
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
 
     def is_OCP(self) -> bool:
@@ -794,12 +719,7 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     user_id: int = Field(default=None, foreign_key="credere_user.id")
     user: User | None = Relationship(back_populates="application_actions")
     created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            default=datetime.utcnow(),
-            server_default=func.now(),
-        )
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
 
     class Config:
@@ -853,11 +773,5 @@ class Statistic(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: StatisticType = Field(sa_column=Column(Enum(StatisticType, name="statistic_type")))
     data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
-    created_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True),
-            nullable=False,
-            onupdate=func.now(),
-        )
-    )
+    created_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now()))
     lender_id: int | None = Field(foreign_key="lender.id", nullable=True)
