@@ -571,7 +571,7 @@ class LenderBase(SQLModel):
     email_group: str = Field(default="")
     type: str = Field(default="")
     sla_days: int | None
-    logo_filename: str = Field(default="")
+    logo_filename: str = Field(default="", nullable=True)
 
 
 class Lender(LenderBase, ActiveRecordMixin, table=True):
