@@ -1,3 +1,5 @@
+from typing import Any
+
 import requests
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPBearer
@@ -17,7 +19,7 @@ class JWKS(BaseModel):
 class JWTAuthorizationCredentials(BaseModel):
     jwt_token: str
     header: dict[str, str]
-    claims: dict[str, str]
+    claims: dict[str, Any]
     signature: str
     message: str
 
@@ -115,7 +117,7 @@ def _get_public_keys() -> JWKS:
     """
     global JsonPublicKeys
     if JsonPublicKeys is None:
-        JsonPublicKeys = JWKS.parse_obj(
+        JsonPublicKeys = JWKS.model_validate(
             requests.get(
                 f"https://cognito-idp.{app_settings.aws_region}.amazonaws.com/"
                 f"{app_settings.cognito_pool_id}/.well-known/jwks.json"

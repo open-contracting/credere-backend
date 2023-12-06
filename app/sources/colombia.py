@@ -49,7 +49,7 @@ def get_award(
         "source_contract_id": source_contract_id,
         "source_url": entry.get("urlproceso", {}).get("url", ""),
         "entity_code": entry.get("codigo_entidad", ""),
-        "source_last_updated_at": entry.get("ultima_actualizacion", ""),
+        "source_last_updated_at": entry.get("ultima_actualizacion", None),
         "award_amount": entry.get("valor_del_contrato", ""),
         "contractperiod_startdate": entry.get("fecha_de_inicio_del_contrato", None),
         "contractperiod_enddate": entry.get("fecha_de_fin_del_contrato", None),

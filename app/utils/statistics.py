@@ -77,13 +77,13 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
             # Get Opt in statistics
             statistics_msme_opt_in = get_msme_opt_in_stats(session)
             statistics_msme_opt_in["sector_statistics"] = [
-                data.dict() for data in statistics_msme_opt_in["sector_statistics"]
+                data.model_dump() for data in statistics_msme_opt_in["sector_statistics"]
             ]
             statistics_msme_opt_in["rejected_reasons_count_by_reason"] = [
-                data.dict() for data in statistics_msme_opt_in["rejected_reasons_count_by_reason"]
+                data.model_dump() for data in statistics_msme_opt_in["rejected_reasons_count_by_reason"]
             ]
             statistics_msme_opt_in["fis_choosen_by_msme"] = [
-                data.dict() for data in statistics_msme_opt_in["fis_choosen_by_msme"]
+                data.model_dump() for data in statistics_msme_opt_in["fis_choosen_by_msme"]
             ]
             # Try to get the existing row
             statistic_opt_data = (

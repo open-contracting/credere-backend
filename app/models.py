@@ -699,7 +699,7 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="actions")
-    user_id: int = Field(default=None, foreign_key="credere_user.id")
+    user_id: int | None = Field(default=None, foreign_key="credere_user.id")
     user: User | None = Relationship(back_populates="application_actions")
     created_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
