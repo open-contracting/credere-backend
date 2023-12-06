@@ -38,7 +38,7 @@ async def create_user(
     """
     with transaction_session(session):
         try:
-            user = models.User(**payload.dict())
+            user = models.User(**payload.model_dump())
             user.created_at = datetime.now()
             session.add(user)
             cognito_response = client.admin_create_user(payload.email, payload.name)
