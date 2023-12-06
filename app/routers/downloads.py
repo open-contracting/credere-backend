@@ -167,9 +167,7 @@ async def export_applications(
                 get_translated_string("Legal Name", lang): application.borrower.legal_name,
                 get_translated_string("Email Address", lang): application.primary_email,
                 get_translated_string("Submission Date", lang): application.borrower_submitted_at,
-                get_translated_string("Stage", lang): get_translated_string(
-                    application.status.name.capitalize(), lang
-                ),
+                get_translated_string("Stage", lang): get_translated_string(application.status.capitalize(), lang),
             }
         )
 

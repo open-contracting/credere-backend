@@ -177,7 +177,7 @@ async def approve_application(
         not_validated_documents = []
         for document in application.borrower_documents:
             if not document.verified:
-                not_validated_documents.append(document.type.name)
+                not_validated_documents.append(document.type)
         if not_validated_documents:
             logger.error("Following documents were not validated: %s", not_validated_documents)
             raise HTTPException(
