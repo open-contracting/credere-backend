@@ -221,7 +221,8 @@ async def credit_product_options(
 
     :param payload: The application credit options.
     :return: The credit product list response containing the available loans and credit lines.
-    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the previous lenders are not found. # noqa
+    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
+            previous lenders are not found.
     """
     with transaction_session(session):
         rejecter_lenders = application.rejecter_lenders(session)
@@ -283,8 +284,10 @@ async def select_credit_product(
     Select a credit product for an application.
 
     :param payload: The application credit product selection payload.
-    :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
-    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the calculator data is invalid. # noqa: E501
+    :return: The application response containing the updated application, borrower, award, lender, documents, and
+             credit product.
+    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
+            calculator data is invalid.
     """
     with transaction_session(session):
         # Extract the necessary fields for a calculator from a payload.
@@ -335,7 +338,8 @@ async def rollback_select_credit_product(
 
     :param payload: The application data.
     :return: The application response containing the updated application, borrower, and award.
-    :raise: HTTPException with status code 400 if the credit product is not selected or if the lender is already assigned. # noqa: E501
+    :raise: HTTPException with status code 400 if the credit product is not selected or if the lender is already
+            assigned.
     """
     with transaction_session(session):
         if not application.credit_product_id:
@@ -377,7 +381,8 @@ async def confirm_credit_product(
     Confirm the selected credit product for an application.
 
     :param payload: The application data.
-    :return: The application response containing the updated application, borrower, award, lender, documents, and credit product. # noqa: E501
+    :return: The application response containing the updated application, borrower, award, lender, documents, and
+             credit product.
     :raise: HTTPException with status code 400 if the credit product is not selected or not found.
     """
     with transaction_session(session):
@@ -478,7 +483,8 @@ async def update_apps_send_notifications(
 
     :param payload: The application data to update.
     :return: The updated application with borrower, award and lender details.
-    :raises HTTPException: If credit product or lender is not selected, or if there's an error in submitting the application. # noqa: E501
+    :raises HTTPException: If credit product or lender is not selected, or if there's an error in submitting the
+            application.
     """
     with transaction_session(session):
         try:
@@ -583,7 +589,8 @@ async def complete_information_request(
 ) -> serializers.ApplicationResponse:
     """
     Complete the information request for an application:
-    Changes the application from "INFORMATION REQUESTED" status back to "STARTED" and updates the pending documents status. # noqa: E501
+    Changes the application from "INFORMATION REQUESTED" status back to "STARTED" and updates the pending documents
+    status.
 
     This operation also sends a notification about the uploaded documents to the FI.
 

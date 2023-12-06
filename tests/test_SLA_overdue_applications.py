@@ -1,12 +1,6 @@
 from app import models
 from app.commands import SLA_overdue_applications
 
-from tests.common.common_test_client import start_background_db  # isort:skip # noqa
-from tests.common.common_test_client import mock_templated_email  # isort:skip # noqa
-from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
-from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
-from tests.common.common_test_client import app, client  # isort:skip # noqa
-
 OCP_user = {
     "email": "OCP_user@example.com",
     "name": "OCP_user@example.com",
@@ -29,7 +23,7 @@ lender = {
 }
 
 
-def test_send_overdue_reminders(client, mock_templated_email):  # noqa
+def test_send_overdue_reminders(client, mock_templated_email):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     client.post("/create-test-application", json=application_with_lender_payload)
@@ -39,7 +33,7 @@ def test_send_overdue_reminders(client, mock_templated_email):  # noqa
     assert mock_templated_email.call_count == 2
 
 
-def test_send_overdue_reminders_empty(client, mock_templated_email):  # noqa
+def test_send_overdue_reminders_empty(client, mock_templated_email):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     client.post("/create-test-application", json=application_with_lender_payload)
