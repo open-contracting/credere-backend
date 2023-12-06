@@ -9,18 +9,18 @@ from tests.common.common_test_client import app, client  # isort:skip # noqa
 OCP_user = {
     "email": "OCP_test@noreply.open-contracting.org",
     "name": "OCP Test User",
-    "type": UserType.OCP.value,
+    "type": UserType.OCP,
 }
 FI_user = {
     "email": "fi_test@noreply.open-contracting.org",
     "name": "FI Test User",
-    "type": UserType.FI.value,
+    "type": UserType.FI,
 }
 
 test_user = {
     "email": "test@noreply.open-contracting.org",
     "name": "Test User",
-    "type": UserType.FI.value,
+    "type": UserType.FI,
 }
 
 

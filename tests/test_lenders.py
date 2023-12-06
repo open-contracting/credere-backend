@@ -34,7 +34,7 @@ lender_modified_not_valid = {
 }
 
 credit_product = {
-    "borrower_size": BorrowerSize.SMALL.value,
+    "borrower_size": BorrowerSize.SMALL,
     "lower_limit": 10000.00,
     "upper_limit": 50000.00,
     "interest_rate": 0.05,
@@ -43,7 +43,7 @@ credit_product = {
         "FINANCIAL_STATEMENT": True,
         "SUPPLIER_REGISTRATION_DOCUMENT": True,
     },
-    "type": CreditType.CREDIT_LINE.value,
+    "type": CreditType.CREDIT_LINE,
     "other_fees_total_amount": 100,
     "other_fees_description": "Processing fee",
     "more_info_url": "https://example.com",
@@ -51,7 +51,7 @@ credit_product = {
 }
 
 updated_credit_product = {
-    "borrower_size": BorrowerSize.SMALL.value,
+    "borrower_size": BorrowerSize.SMALL,
     "lower_limit": 100000.00,
     "upper_limit": 500000.00,
     "interest_rate": 0.05,
@@ -60,7 +60,7 @@ updated_credit_product = {
         "FINANCIAL_STATEMENT": True,
         "SUPPLIER_REGISTRATION_DOCUMENT": True,
     },
-    "type": CreditType.CREDIT_LINE.value,
+    "type": CreditType.CREDIT_LINE,
     "other_fees_total_amount": 100,
     "other_fees_description": "Processing fee",
     "more_info_url": "https://example.com",

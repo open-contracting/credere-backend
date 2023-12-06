@@ -26,7 +26,7 @@ def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tupl
     return sources.make_request_with_retry(award_url, HEADERS).json(), award_url
 
 
-def create_new_award(
+def get_award(
     source_contract_id: str,
     entry: dict[str, Any],
     borrower_id: int | None = None,

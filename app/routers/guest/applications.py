@@ -228,9 +228,9 @@ async def credit_product_options(
 
         filter = None
         if application.borrower.type.lower() == "persona natural colombiana":
-            filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON.value}')::boolean is True")
+            filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON}')::boolean is True")
         else:
-            filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON.value}')::boolean is True")
+            filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON}')::boolean is True")
 
         loans_query = (
             session.query(models.CreditProduct)
@@ -752,7 +752,7 @@ async def find_alternative_credit_option(
         if app_action:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=util.ERROR_CODES.APPLICATION_ALREADY_COPIED.value,
+                detail=util.ERROR_CODES.APPLICATION_ALREADY_COPIED,
             )
 
         # Copy the application, changing the uuid, status, and borrower_accepted_at.

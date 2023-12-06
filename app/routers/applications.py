@@ -170,19 +170,19 @@ async def approve_application(
             logger.error("Following fields were not validated: %s", not_validated_fields)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=util.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING.value,
+                detail=util.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING,
             )
 
         # Check all documents are verified.
         not_validated_documents = []
         for document in application.borrower_documents:
             if not document.verified:
-                not_validated_documents.append(document.type.name)
+                not_validated_documents.append(document.type)
         if not_validated_documents:
             logger.error("Following documents were not validated: %s", not_validated_documents)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING.value,
+                detail=util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING,
             )
 
         # Approve the application.

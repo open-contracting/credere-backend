@@ -7,8 +7,8 @@ from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
 from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
 from tests.common.common_test_client import app, client  # isort:skip # noqa
 
-application_payload = {"status": models.ApplicationStatus.PENDING.value}
-application_accepted_payload = {"status": models.ApplicationStatus.ACCEPTED.value}
+application_payload = {"status": models.ApplicationStatus.PENDING}
+application_accepted_payload = {"status": models.ApplicationStatus.ACCEPTED}
 
 
 def test_send_reminders_intro(client, mock_templated_email):  # noqa

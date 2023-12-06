@@ -76,7 +76,7 @@ def remove_dated_application_data() -> None:
                 for document in application.borrower_documents:
                     session.delete(document)
 
-                # Check if there are any other active borrowers with active applications
+                # Check if the borrower has other active applications
                 active_applications_with_same_borrower = (
                     models.Application.unarchived(session)
                     .filter(
