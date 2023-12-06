@@ -17,8 +17,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 @contextmanager
 def transaction_session(db: Session) -> Generator[Session, None, None]:
     """
-    Context manager for database transactions. It takes a Session instance, commits the transaction if it is successful, # noqa
-    and rolls back the transaction if any exception is raised.
+    Context manager for database transactions. It takes a Session instance, commits the transaction if it is
+    successful, and rolls back the transaction if any exception is raised.
 
     :param db: The database session where the transaction is to be performed.
     :raises Exception: Any exception that occurs during the transaction.
@@ -54,8 +54,8 @@ def get_db() -> Generator[Session, None, None]:
 
     :return: The database session instance.
     """
+    db = SessionLocal()
     try:
-        db = SessionLocal()
         yield db
     finally:
         db.close()

@@ -18,7 +18,7 @@ jobs:
         run: pytest -W error --cov app
       - env:
           TEST_SETTINGS: True
-        run: pytest -W error tests/test_settings.py
+        run: pytest -W error settings_tests/test_settings.py
       - env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: coveralls --service=github

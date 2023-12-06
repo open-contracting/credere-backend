@@ -1,70 +1,170 @@
+import json
+import os
 from contextlib import contextmanager
+from unittest.mock import MagicMock, patch
 
 from app import models
 from app.commands import fetch_awards
 from app.utils import background
-from tests.common import common_test_client, common_test_functions
-
-from tests.common.common_test_client import start_background_db  # isort:skip # noqa
-from tests.common.common_test_client import mock_templated_email  # isort:skip # noqa
-from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
-from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
-from tests.common.common_test_client import app, client  # isort:skip # noqa
+from tests import MockResponse, get_test_db
 
 
-contract = common_test_functions.load_json_file("mock_data/contract.json")
-contracts = common_test_functions.load_json_file("mock_data/contracts.json")
-award = common_test_functions.load_json_file("mock_data/award.json")
-borrower = common_test_functions.load_json_file("mock_data/borrower.json")
-borrower_declined = common_test_functions.load_json_file("mock_data/borrower_declined.json")
+def _load_json_file(filename):
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    filepath = os.path.join(__location__, filename)
 
-email = common_test_functions.load_json_file("mock_data/email.json")
-application_result = common_test_functions.load_json_file("mock_data/application_result.json")
+    with open(filepath, "r") as json_file:
+        data = json.load(json_file)
 
-award_result = common_test_functions.load_json_file("mock_data/award_result.json")
-borrower_result = common_test_functions.load_json_file("mock_data/borrower_result.json")
+    return data
 
 
-def test_fetch_previous_borrower_awards_empty(start_background_db, caplog):  # noqa
+contract = _load_json_file("mock_data/contract.json")
+contracts = _load_json_file("mock_data/contracts.json")
+award = _load_json_file("mock_data/award.json")
+borrower = _load_json_file("mock_data/borrower.json")
+borrower_declined = _load_json_file("mock_data/borrower_declined.json")
+
+email = _load_json_file("mock_data/email.json")
+application_result = _load_json_file("mock_data/application_result.json")
+
+award_result = _load_json_file("mock_data/award_result.json")
+borrower_result = _load_json_file("mock_data/borrower_result.json")
+
+
+@contextmanager
+def _mock_function_response(content: dict, function_path: str):
+    mock = MagicMock(return_value=content)
+    with patch(function_path, mock):
+        yield mock
+
+
+@contextmanager
+def _mock_response(status_code: int, content: dict, function_path: str):
+    mock = MagicMock(return_value=MockResponse(status_code, content))
+    with patch(function_path, mock):
+        yield mock
+
+
+@contextmanager
+def _mock_whole_process_once(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
+    # this will mock the whole process of the fetcher once responding to make_request_with_retry in order
+    mock = MagicMock(
+        side_effect=[
+            MockResponse(status_code, award),
+            MockResponse(status_code, borrower),
+            MockResponse(status_code, email),
+        ]
+    )
+
+    with patch(function_path, mock):
+        yield mock
+
+
+@contextmanager
+def _mock_whole_process(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
+    # this will mock the whole process of the fetcher responding to make_request_with_retry in order
+    #
+    mock = MagicMock(
+        side_effect=[
+            MockResponse(status_code, award),
+            MockResponse(status_code, borrower),
+            MockResponse(status_code, email),
+            MockResponse(status_code, award),
+            MockResponse(status_code, borrower),
+            MockResponse(status_code, email),
+        ]
+    )
+
+    with patch(function_path, mock):
+        yield mock
+
+
+@contextmanager
+def _mock_response_second_empty(status_code: int, content: dict, function_path: str):
+    mock = MagicMock(
+        side_effect=[
+            MockResponse(status_code, content),
+            MockResponse(200, []),
+        ]
+    )
+
+    with patch(function_path, mock):
+        yield mock
+
+
+def _compare_objects(
+    fetched_model,
+    expected_result,
+):
+    for key, value in fetched_model.__dict__.items():
+        if key in {
+            "created_at",
+            "updated_at",
+            "secop_data_verification",
+            "_sa_instance_state",
+            "expired_at",
+            "source_data_contracts",
+            "missing_data",
+            "source_data",
+        }:
+            continue
+
+        if key in {"award_date", "contractperiod_enddate", "expired_at"}:
+            formatted_dt = value.strftime("%Y-%m-%dT%H:%M:%S")
+            assert formatted_dt == expected_result[key]
+            continue
+
+        if key == "size":
+            assert models.BorrowerSize.NOT_INFORMED == value
+            continue
+        if key == "status":
+            assert models.BorrowerStatus.ACTIVE == value or models.ApplicationStatus.PENDING == value
+            continue
+
+        assert expected_result[key] == value
+
+
+def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database, caplog):
     with caplog.at_level("INFO"):
-        with common_test_functions.mock_response(
+        with _mock_response(
             200,
             [],
             "app.sources.colombia.get_previous_contracts",
         ):
-            background.fetch_previous_awards(models.Borrower(**borrower_result), common_test_client.get_test_db)
+            background.fetch_previous_awards(models.Borrower(**borrower_result), get_test_db(engine))
 
     assert "No previous contracts" in caplog.text
 
 
-def test_fetch_previous_borrower_awards(start_background_db, caplog):  # noqa
+def test_fetch_previous_borrower_awards(engine, create_and_drop_database, caplog):
     with caplog.at_level("INFO"):
-        with common_test_functions.mock_response(
+        with _mock_response(
             200,
             contracts,
             "app.sources.colombia.get_previous_contracts",
         ):
-            background.fetch_previous_awards(models.Borrower(**borrower_result), common_test_client.get_test_db)
+            background.fetch_previous_awards(models.Borrower(**borrower_result), get_test_db(engine))
 
     assert "Previous contracts for" in caplog.text
 
 
-def test_fetch_empty_contracts(start_background_db, caplog):  # noqa
+def test_fetch_empty_contracts(create_and_drop_database, caplog):
     with caplog.at_level("INFO"):
-        with common_test_functions.mock_response(200, [], "app.sources.colombia.get_new_contracts"):
+        with _mock_response(200, [], "app.sources.colombia.get_new_contracts"):
             fetch_awards()
 
     assert "No new contracts" in caplog.text
 
 
-def test_fetch_new_awards_borrower_declined(client, mock_templated_email):  # noqa
+def test_fetch_new_awards_borrower_declined(client):
     client.post("/borrowers-test", json=borrower_declined)
 
-    with common_test_functions.mock_response_second_empty(
+    with _mock_response_second_empty(
         200,
         contract,
         "app.sources.colombia.get_new_contracts",
-    ), common_test_functions.mock_whole_process_once(
+    ), _mock_whole_process_once(
         200,
         award,
         borrower,
@@ -74,15 +174,15 @@ def test_fetch_new_awards_borrower_declined(client, mock_templated_email):  # no
         fetch_awards()
 
 
-def test_fetch_new_awards_from_date(start_background_db, mock_templated_email):  # noqa
-    with common_test_functions.mock_response_second_empty(
+def test_fetch_new_awards_from_date(engine, create_and_drop_database):
+    with _mock_response_second_empty(
         200,
         contracts,
         "app.sources.colombia.get_new_contracts",
-    ), common_test_functions.mock_function_response(
+    ), _mock_function_response(
         "test_hash_12345678",
         "app.util.get_secret_hash",
-    ), common_test_functions.mock_whole_process(
+    ), _mock_whole_process(
         200,
         award,
         borrower,
@@ -91,12 +191,11 @@ def test_fetch_new_awards_from_date(start_background_db, mock_templated_email): 
     ):
         fetch_awards()
 
-        with contextmanager(common_test_client.get_test_db)() as session:
-            inserted_award = session.query(models.Award).first()
+        with contextmanager(get_test_db(engine))() as session:
+            inserted_award = session.query(models.Award).one()
+            inserted_borrower = session.query(models.Borrower).one()
+            inserted_application = session.query(models.Application).one()
 
-            inserted_borrower = session.query(models.Borrower).first()
-            inserted_application = session.query(models.Application).first()
-
-            common_test_functions.compare_objects(inserted_award, award_result)
-            common_test_functions.compare_objects(inserted_borrower, borrower_result)
-            common_test_functions.compare_objects(inserted_application, application_result)
+            _compare_objects(inserted_award, award_result)
+            _compare_objects(inserted_borrower, borrower_result)
+            _compare_objects(inserted_application, application_result)

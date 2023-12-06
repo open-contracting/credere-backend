@@ -1,13 +1,18 @@
 from fastapi import status
 
-from app.models import BorrowerSize, CreditType
-from tests.common.utils import FI_user, OCP_user
+from app.models import BorrowerSize, CreditType, UserType
 
-from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
+FI_user = {
+    "email": "FI_user@noreply.open-contracting.org",
+    "name": "Test FI",
+    "type": UserType.FI,
+}
 
-from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
-
-from tests.common.common_test_client import app, client  # isort:skip # noqa
+OCP_user = {
+    "email": "OCP_user@noreply.open-contracting.org",
+    "name": "OCP_user@example.com",
+    "type": UserType.OCP,
+}
 
 lender = {
     "name": "John Doe",
@@ -94,7 +99,7 @@ lender_with_credit_product = {
 }
 
 
-def test_create_credit_product(client):  # noqa
+def test_create_credit_product(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
@@ -124,7 +129,7 @@ def test_create_credit_product(client):  # noqa
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_create_lender(client):  # noqa
+def test_create_lender(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
@@ -139,7 +144,7 @@ def test_create_lender(client):  # noqa
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_create_lender_with_credit_product(client):  # noqa
+def test_create_lender_with_credit_product(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
@@ -151,7 +156,7 @@ def test_create_lender_with_credit_product(client):  # noqa
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_get_lender(client):  # noqa
+def test_get_lender(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
@@ -168,7 +173,7 @@ def test_get_lender(client):  # noqa
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_update_lender(client):  # noqa
+def test_update_lender(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 

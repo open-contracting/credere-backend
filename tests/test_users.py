@@ -2,10 +2,6 @@ from fastapi import status
 
 from app.models import UserType
 
-from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
-from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
-from tests.common.common_test_client import app, client  # isort:skip # noqa
-
 OCP_user = {
     "email": "OCP_test@noreply.open-contracting.org",
     "name": "OCP Test User",
@@ -24,7 +20,7 @@ test_user = {
 }
 
 
-def test_get_me(client):  # noqa
+def test_get_me(client):
     ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
 
     response = client.get("/users/me", headers=ocp_headers)
@@ -32,7 +28,7 @@ def test_get_me(client):  # noqa
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_create_and_get_user(client):  # noqa
+def test_create_and_get_user(client):
     ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     fi_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
@@ -61,7 +57,7 @@ def test_create_and_get_user(client):  # noqa
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_update_user(client):  # noqa
+def test_update_user(client):
     ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     fi_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
@@ -86,7 +82,7 @@ def test_update_user(client):  # noqa
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_duplicate_user(client):  # noqa
+def test_duplicate_user(client):
     ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
 
     response = client.post("/users", json=test_user, headers=ocp_headers)

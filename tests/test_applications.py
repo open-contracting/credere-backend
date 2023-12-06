@@ -4,12 +4,7 @@ from unittest.mock import patch
 from fastapi import status
 
 from app import models, util
-
-from tests.common.common_test_client import mock_cognito_client  # isort:skip # noqa
-from tests.common.common_test_client import mock_templated_email  # isort:skip # noqa
-from tests.common.common_test_client import mock_ses_client  # isort:skip # noqa
-from tests.common.common_test_client import app, client  # isort:skip # noqa
-from tests.common.common_test_client import MockResponse  # isort:skip # noqa
+from tests import MockResponse
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 file = os.path.join(__location__, "file.jpeg")
@@ -123,7 +118,7 @@ update_award = {"title": "new test title"}
 update_borrower = {"legal_name": "new_legal_name"}
 
 
-def test_reject_application(client, mock_templated_email):  # noqa
+def test_reject_application(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     FI_headers = client.post("/create-test-user-headers", json=FI_user_with_lender).json()
@@ -155,7 +150,7 @@ def test_reject_application(client, mock_templated_email):  # noqa
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_rollback_credit_product(client, mock_templated_email):  # noqa
+def test_rollback_credit_product(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     client.post("/create-test-credit-option", json=test_credit_option)
@@ -168,7 +163,7 @@ def test_rollback_credit_product(client, mock_templated_email):  # noqa
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_access_expired_application(client):  # noqa
+def test_access_expired_application(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     client.post("/create-test-credit-option", json=test_credit_option)
@@ -180,7 +175,7 @@ def test_access_expired_application(client):  # noqa
     assert response.status_code == status.HTTP_409_CONFLICT
 
 
-def test_approve_application_cicle(client, mock_templated_email):  # noqa
+def test_approve_application_cicle(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     FI_headers = client.post("/create-test-user-headers", json=FI_user_with_lender).json()
@@ -464,7 +459,7 @@ def test_approve_application_cicle(client, mock_templated_email):  # noqa
     assert response.json()["status"] == models.ApplicationStatus.COMPLETED
 
 
-def test_get_applications(client):  # noqa
+def test_get_applications(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     client.post("/lenders", json=lender, headers=OCP_headers)
     FI_headers = client.post("/create-test-user-headers", json=FI_user_with_lender).json()
@@ -514,7 +509,7 @@ def test_get_applications(client):  # noqa
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_application_declined(client, mock_templated_email):  # noqa
+def test_application_declined(client):
     client.post("/create-test-application", json=application_payload)
 
     response = client.post(
@@ -529,7 +524,7 @@ def test_application_declined(client, mock_templated_email):  # noqa
     assert response.status_code == status.HTTP_409_CONFLICT
 
 
-def test_application_rollback_declined(client):  # isort:skip # noqa
+def test_application_rollback_declined(client):
     client.post("/create-test-application", json=application_declined_payload)
     client.post("/change-test-borrower-status", json=borrower_declined_oportunity_payload)
 
@@ -543,7 +538,7 @@ def test_application_rollback_declined(client):  # isort:skip # noqa
     assert response.status_code == status.HTTP_409_CONFLICT
 
 
-def test_application_declined_feedback(client):  # isort:skip # noqa
+def test_application_declined_feedback(client):
     client.post(
         "/create-test-application",
         json={"status": models.ApplicationStatus.DECLINED},
