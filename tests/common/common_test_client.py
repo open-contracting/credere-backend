@@ -15,7 +15,6 @@ from app import aws, dependencies, models
 from app.db import get_db
 from app.routers import applications, downloads, guest, lenders, statistics, users
 from app.settings import app_settings
-from tests.common.utils import create_enums
 from tests.protected_routes import users_test  # noqa
 from tests.protected_routes import applications_test, borrowers_test  # noqa
 
@@ -34,8 +33,6 @@ class MockResponse:
 SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-create_enums(engine)
 
 
 def get_test_db() -> Session:
