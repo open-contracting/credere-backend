@@ -37,13 +37,13 @@ async def create_lender(
     with transaction_session(session):
         try:
             # Create a Lender instance without the credit_product data
-            db_lender = models.Lender(**payload.dict(exclude={"credit_products"}))
+            db_lender = models.Lender(**payload.model_dump(exclude={"credit_products"}))
             session.add(db_lender)
 
             # Create a CreditProduct instance for each credit product and add it to the lender
             if payload.credit_products:
                 for cp in payload.credit_products:
-                    credit_product = models.CreditProduct(**cp.dict(), lender=db_lender)
+                    credit_product = models.CreditProduct(**cp.model_dump(), lender=db_lender)
                     session.add(credit_product)
 
             session.flush()
@@ -77,7 +77,7 @@ async def create_credit_products(
     with transaction_session(session):
         lender = get_object_or_404(session, models.Lender, "id", lender_id)
 
-        return models.CreditProduct.create(session, **credit_product.dict(), lender=lender)
+        return models.CreditProduct.create(session, **credit_product.model_dump(), lender=lender)
 
 
 @router.get(
