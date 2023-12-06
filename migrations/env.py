@@ -2,7 +2,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.settings import app_settings
-from app.models import *  # necessarily to import something from file where your models are stored # noqa
+from app.models import *  # necessarily to import something from file where your models are stored # noqa: F403
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -16,7 +16,7 @@ config.set_section_option(section, "DATABASE_URL", app_settings.database_url)
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 # target_metadata = metadata
-target_metadata = SQLModel.metadata  # noqa
+target_metadata = SQLModel.metadata  # noqa: F405
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

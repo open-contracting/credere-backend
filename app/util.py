@@ -137,8 +137,8 @@ def create_or_update_borrower_document(
     Creates a new borrower document or updates an existing one.
 
     This function first checks if a document of the same type already exists for the application in the session.
-    If it does, it updates the existing document's file, name, verified status, and submission time with the provided values. # noqa
-    If it doesn't, it creates a new BorrowerDocument with the provided values and adds it to the session.
+    If it does, it updates the existing document's file, name, verified status, and submission time with the provided
+    values. If it doesn't, it creates a new BorrowerDocument with the provided values and adds it to the session.
 
     :param filename: The name of the file to be added or updated.
     :param application: The application associated with the document.
