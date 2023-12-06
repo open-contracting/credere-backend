@@ -13,8 +13,8 @@ router = APIRouter()
 
 class ApplicationTestPayload(BaseModel):
     status: models.ApplicationStatus
-    lender_id: int | None
-    credit_product_id: int | None
+    lender_id: int | None = None
+    credit_product_id: int | None = None
 
 
 class ApplicationActionTestPayload(BaseModel):

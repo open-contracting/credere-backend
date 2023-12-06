@@ -6,7 +6,7 @@ from typing import Any
 
 import sentry_sdk
 from dotenv import dotenv_values
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 VERSION: str = "0.1.1"
 
@@ -85,9 +85,7 @@ class Settings(BaseSettings):
     environment: str = config_env.get("ENVIRONMENT", "development")
     transifex_token: str = config_env.get("TRANSIFEX_TOKEN", "")
     transifex_secret: str = config_env.get("TRANSIFEX_SECRET", "")
-
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env")
 
 
 app_settings = Settings()

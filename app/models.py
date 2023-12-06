@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Optional, Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import DECIMAL, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
@@ -704,16 +704,14 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     created_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BasicUser(BaseModel):
     username: str
-    name: str | None
-    password: str | None
-    temp_password: str | None
+    name: str | None = None
+    password: str | None = None
+    temp_password: str | None = None
 
 
 class SetupMFA(BaseModel):
