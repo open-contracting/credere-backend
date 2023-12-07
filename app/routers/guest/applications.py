@@ -11,9 +11,10 @@ from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
-from app.db import get_db, transaction_session
+from app.db import get_db, rollback_on_error, transaction_session
 from app.dependencies import ApplicationScope
 from app.settings import app_settings
+from app.util import commit_and_refresh
 from app.utils import background
 from app.utils.statistics import update_statistics
 
@@ -70,7 +71,7 @@ async def decline(
     :return: The application response containing the updated application, borrower, and award.
     :raise: HTTPException with status code 400 if the application is not in the PENDING status.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         borrower_declined_data = vars(payload)
         borrower_declined_data.pop("uuid")
 
@@ -82,7 +83,11 @@ async def decline(
         if payload.decline_all:
             application.borrower.status = models.BorrowerStatus.DECLINE_OPPORTUNITIES
             application.borrower.declined_at = current_time
+
+        commit_and_refresh(session, application)
+
         background_tasks.add_task(update_statistics)
+
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -111,7 +116,7 @@ async def rollback_decline(
     :return: The application response containing the updated application, borrower, and award.
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         application.borrower_declined_data = {}
         application.status = models.ApplicationStatus.PENDING
         application.borrower_declined_at = None
@@ -119,7 +124,11 @@ async def rollback_decline(
         if application.borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
             application.borrower.status = models.BorrowerStatus.ACTIVE
             application.borrower.declined_at = None
+
+        commit_and_refresh(session, application)
+
         background_tasks.add_task(update_statistics)
+
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,

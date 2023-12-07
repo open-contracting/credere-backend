@@ -25,6 +25,12 @@ class ERROR_CODES(StrEnum):
     APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
+def commit_and_refresh(session, instance):
+    session.commit()
+    session.refresh(instance)
+    return instance
+
+
 def get_object_or_404(session: Session, model: type[models.ActiveRecordMixin], field: str, value: Any):
     obj = model.first_by(session, field, value)
     if not obj:

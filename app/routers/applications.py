@@ -11,7 +11,8 @@ from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
-from app.db import get_db, transaction_session
+from app.db import get_db, rollback_on_error, transaction_session
+from app.util import commit_and_refresh
 from app.utils.statistics import update_statistics
 
 logger = logging.getLogger(__name__)
@@ -318,7 +319,7 @@ async def update_application_award(
     :param payload: The award update payload.
     :return: The updated application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         if not application.award:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Award not found")
 
@@ -333,6 +334,8 @@ async def update_application_award(
             application_id=id,
             user_id=user.id,
         )
+
+        commit_and_refresh(session, application)
 
         return util.get_modified_data_fields(application, session)
 
@@ -360,7 +363,7 @@ async def update_application_borrower(
     :param payload: The borrower update payload.
     :return: The updated application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         if not application.borrower:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Borrower not found")
 
@@ -381,6 +384,8 @@ async def update_application_borrower(
             application_id=id,
             user_id=user.id,
         )
+
+        commit_and_refresh(session, application)
 
         return util.get_modified_data_fields(application, session)
 

@@ -15,6 +15,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
+def rollback_on_error(session: Session) -> Generator[Session, None, None]:
+    try:
+        yield
+    except Exception:
+        session.rollback()
+        raise
+
+
+@contextmanager
 def transaction_session(session: Session) -> Generator[Session, None, None]:
     """
     Context manager for database transactions. It takes a Session instance, commits the transaction if it is

@@ -7,8 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
-from app.db import get_db, transaction_session
-from app.util import get_object_or_404
+from app.db import get_db, rollback_on_error, transaction_session
+from app.util import commit_and_refresh, get_object_or_404
 
 router = APIRouter()
 
@@ -114,12 +114,13 @@ async def update_lender(
     :return: The updated lender.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             lender = get_object_or_404(session, models.Lender, "id", id)
-
             update_dict = jsonable_encoder(payload, exclude_unset=True)
-            return lender.update(session, **update_dict)
+            lender = lender.update(session, **update_dict)
+
+            return commit_and_refresh(session, lender)
         except IntegrityError as e:
             logger.exception(e)
             raise HTTPException(
@@ -203,8 +204,9 @@ async def update_credit_products(
     # Rename the query parameter.
     payload = credit_product
 
-    with transaction_session(session):
+    with rollback_on_error(session):
         db_credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
-
         update_dict = jsonable_encoder(payload, exclude_unset=True)
-        return db_credit_product.update(session, **update_dict)
+        credit_product = db_credit_product.update(session, **update_dict)
+
+        return commit_and_refresh(session, credit_product)

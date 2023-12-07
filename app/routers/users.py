@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
 from app.aws import CognitoClient
-from app.db import get_db, transaction_session
-from app.util import get_object_or_404
+from app.db import get_db, rollback_on_error, transaction_session
+from app.util import commit_and_refresh, get_object_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +35,13 @@ async def create_user(
     :param payload: The user data for creating the new user.
     :return: The created user.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             user = models.User.create(session, **payload.model_dump())
             cognito_response = client.admin_create_user(payload.email, payload.name)
             user.external_id = cognito_response["User"]["Username"]
 
-            return user
+            return commit_and_refresh(session, user)
         except (client.exceptions().UsernameExistsException, IntegrityError) as e:
             logger.exception(e)
             raise HTTPException(
@@ -355,7 +355,6 @@ async def update_user(
     with transaction_session(session):
         try:
             db_user = get_object_or_404(session, models.User, "id", id)
-
             update_dict = jsonable_encoder(payload, exclude_unset=True)
             return db_user.update(session, **update_dict)
         except IntegrityError as e:
