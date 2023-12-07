@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
@@ -38,9 +37,7 @@ async def create_user(
     """
     with transaction_session(session):
         try:
-            user = models.User(**payload.model_dump())
-            user.created_at = datetime.now()
-            session.add(user)
+            user = models.User.create(session, **payload.model_dump())
             cognito_response = client.admin_create_user(payload.email, payload.name)
             user.external_id = cognito_response["User"]["Username"]
 
