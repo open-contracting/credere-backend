@@ -3,10 +3,10 @@ on: [push, pull_request]
 jobs:
   build:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
@@ -15,10 +15,12 @@ jobs:
       - name: Run checks and tests
         env:
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
-        run: pytest -W error --cov app
+        # Need to upgrade to Pydantic 2.
+        run: pytest -W error -W ignore::DeprecationWarning --cov app
       - env:
           TEST_SETTINGS: True
-        run: pytest -W error settings_tests/test_settings.py
+        # Need to upgrade to Pydantic 2.
+        run: pytest -W error -W ignore::DeprecationWarning settings_tests/test_settings.py
       - env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: coveralls --service=github

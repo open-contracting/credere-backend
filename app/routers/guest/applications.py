@@ -523,7 +523,7 @@ async def update_apps_send_notifications(
             models.Message.create(
                 session,
                 application=application,
-                type=models.MessageType.SUBMITION_COMPLETE,
+                type=models.MessageType.SUBMISSION_COMPLETED,
                 external_message_id=message_id,
             )
             background_tasks.add_task(update_statistics)
@@ -623,7 +623,7 @@ async def complete_information_request(
         models.Message.create(
             session,
             application=application,
-            type=models.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            type=models.MessageType.BORROWER_DOCUMENT_UPDATED,
             external_message_id=message_id,
         )
         background_tasks.add_task(update_statistics)
