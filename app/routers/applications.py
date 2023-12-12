@@ -288,7 +288,7 @@ async def verify_document(
 
         models.ApplicationAction.create(
             session,
-            type=models.ApplicationActionType.BORROWER_DOCUMENT_UPDATE,
+            type=models.ApplicationActionType.BORROWER_DOCUMENT_VERIFIED,
             data=jsonable_encoder(payload, exclude_unset=True),
             application_id=document.application.id,
             user_id=user.id,
