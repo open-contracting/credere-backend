@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     environment: str = config_env.get("ENVIRONMENT", "development")
     transifex_token: str = config_env.get("TRANSIFEX_TOKEN", "")
     transifex_secret: str = config_env.get("TRANSIFEX_SECRET", "")
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 
 app_settings = Settings()
@@ -106,7 +106,7 @@ logging.config.dictConfig(
             },
         },
         "loggers": {
-            "": {
+            "logger": {
                 "handlers": ["console"],
                 "level": app_settings.log_level,
             },
