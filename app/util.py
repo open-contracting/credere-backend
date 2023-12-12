@@ -115,7 +115,7 @@ def get_modified_data_fields(application: models.Application, session: Session) 
                 }
 
     return models.ApplicationWithRelations(
-        **application.dict(),
+        **application.model_dump(),
         award=application.award,
         borrower=application.borrower,
         lender=application.lender,

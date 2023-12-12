@@ -18,7 +18,7 @@ async def create_test_user_headers(
     session: Session = Depends(get_db),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
 ):
-    user = User(**payload.dict())
+    user = User(**payload.model_dump())
 
     cognito_response = client.admin_create_user(payload.email, payload.name)
     user.external_id = cognito_response["User"]["Username"]

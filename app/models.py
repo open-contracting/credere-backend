@@ -90,7 +90,7 @@ class ActiveRecordMixin:
         for key, value in data.items():
             setattr(self, key, value)
         if hasattr(self, "missing_data"):
-            self.missing_data = _get_missing_data_keys(self.dict())
+            self.missing_data = _get_missing_data_keys(self.model_dump())
 
         session.add(self)
         session.flush()
