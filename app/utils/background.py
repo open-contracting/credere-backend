@@ -138,7 +138,7 @@ def fetch_new_awards_from_date(
                     message = models.Message.create(
                         session,
                         application=application,
-                        type=models.MessageType.BORROWER_INVITACION,
+                        type=models.MessageType.BORROWER_INVITATION,
                     )
 
                     message_id = mail.send_invitation_email(
