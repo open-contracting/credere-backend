@@ -109,9 +109,7 @@ python-dateutil==2.8.2
     #   botocore
     #   pandas
 python-dotenv==1.0.0
-    # via
-    #   -r requirements.in
-    #   pydantic-settings
+    # via pydantic-settings
 python-jose==3.3.0
     # via -r requirements.in
 python-multipart==0.0.6

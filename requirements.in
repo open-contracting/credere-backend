@@ -8,7 +8,6 @@ mypy-boto3-ses
 pandas
 pydantic
 pydantic-settings
-python-dotenv
 python-jose
 python-multipart
 reportlab
