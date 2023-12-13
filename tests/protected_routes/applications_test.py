@@ -56,7 +56,7 @@ async def set_test_application_as_lapsed(id: int, session: Session = Depends(get
 async def set_test_application_as_dated(id: int, session: Session = Depends(get_db)):
     application = session.query(models.Application).filter(models.Application.id == id).first()
     application.borrower_declined_at = datetime.now(application.created_at.tzinfo) - timedelta(
-        days=app_settings.days_to_erase_borrower_data + 1
+        days=app_settings.days_to_erase_borrowers_data + 1
     )
 
     session.commit()

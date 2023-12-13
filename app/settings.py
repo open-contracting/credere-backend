@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     application_expiration_days: int = 7
     secop_pagination_limit: int = 5
     secop_default_days_from_ultima_actualizacion: int = 365
-    days_to_erase_borrower_data: int = 7
+    days_to_erase_borrowers_data: int = 7
     days_to_change_to_lapsed: int = 14
     ocp_email_group: str = "credere@noreply.open-contracting.org"
     max_file_size_mb: int = 5
@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     transifex_token: str = ""
     transifex_secret: str = ""
-    model_config = SettingsConfigDict(env_file=".env", extra="allow")
+    model_config = SettingsConfigDict(env_file=".env")
 
 
 app_settings = Settings()
@@ -81,7 +81,7 @@ logging.config.dictConfig(
             },
         },
         "loggers": {
-            "logger": {
+            "": {
                 "handlers": ["console"],
                 "level": app_settings.log_level,
             },

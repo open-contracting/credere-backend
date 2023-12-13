@@ -430,7 +430,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def archivable(cls, session: Session) -> "Query[Self]":
-        delta = timedelta(days=app_settings.days_to_erase_borrower_data)
+        delta = timedelta(days=app_settings.days_to_erase_borrowers_data)
 
         return cls.unarchived(session).filter(
             or_(
