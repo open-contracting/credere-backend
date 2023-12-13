@@ -42,7 +42,7 @@ credit_product = {
     "borrower_size": BorrowerSize.SMALL,
     "lower_limit": 10000.00,
     "upper_limit": 50000.00,
-    "interest_rate": 0.05,
+    "interest_rate": "The interest rate of the credit lines is variable and is subject to...",
     "required_document_types": {
         "INCORPORATION_DOCUMENT": True,
         "FINANCIAL_STATEMENT": True,
@@ -59,7 +59,7 @@ updated_credit_product = {
     "borrower_size": BorrowerSize.SMALL,
     "lower_limit": 100000.00,
     "upper_limit": 500000.00,
-    "interest_rate": 0.05,
+    "interest_rate": "The interest rate of the credit lines is variable and is subject to...",
     "required_document_types": {
         "INCORPORATION_DOCUMENT": True,
         "FINANCIAL_STATEMENT": True,
@@ -83,7 +83,7 @@ lender_with_credit_product = {
             "borrower_size": "SMALL",
             "lower_limit": 10000.00,
             "upper_limit": 50000.00,
-            "interest_rate": 0.05,
+            "interest_rate": "The interest rate of the credit lines is variable and is subject to...",
             "required_document_types": {
                 "INCORPORATION_DOCUMENT": True,
                 "FINANCIAL_STATEMENT": True,
