@@ -17,4 +17,5 @@ sqlalchemy[postgresql]
 sqlmodel
 transifex-python
 typer[all]
+typing-extensions
 uvicorn==0.22.0
