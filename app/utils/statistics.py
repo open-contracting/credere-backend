@@ -70,7 +70,6 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
                 statistic_kpi_data = Statistic(
                     type=StatisticType.APPLICATION_KPIS,
                     data=statistic_kpis,
-                    created_at=datetime.now(),
                 )
                 session.add(statistic_kpi_data)
 
@@ -103,7 +102,6 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
                 statistic_opt_data = Statistic(
                     type=StatisticType.MSME_OPT_IN_STATISTICS,
                     data=statistics_msme_opt_in,
-                    created_at=datetime.now(),
                 )
                 session.add(statistic_opt_data)
 
@@ -133,7 +131,6 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
                         type=StatisticType.APPLICATION_KPIS,
                         data=statistic_kpis,
                         lender_id=lender_id,
-                        created_at=datetime.now(),
                     )
 
                 session.add(statistic_kpi_data)
