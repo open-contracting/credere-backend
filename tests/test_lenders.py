@@ -145,6 +145,7 @@ def test_create_lender(client):
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
     response = client.post("/lenders/", json=lender, headers=OCP_headers)
+    assert response.json()["id"] == 1
     assert response.status_code == status.HTTP_200_OK
 
     # tries to create same lender twice

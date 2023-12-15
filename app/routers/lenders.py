@@ -34,7 +34,7 @@ async def create_lender(
     # Rename the query parameter.
     payload = lender
 
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             # Create a Lender instance without the credit_product data
             db_lender = models.Lender(**payload.model_dump(exclude={"credit_products"}))
@@ -47,7 +47,7 @@ async def create_lender(
                     session.add(credit_product)
 
             session.flush()
-            return db_lender
+            return commit_and_refresh(session, db_lender)
         except IntegrityError as e:
             logger.exception(e)
             raise HTTPException(
