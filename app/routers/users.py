@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
 from app.aws import CognitoClient
-from app.db import get_db, rollback_on_error, transaction_session
+from app.db import get_db, rollback_on_error
 from app.util import commit_and_refresh, get_object_or_404
 
 logger = logging.getLogger(__name__)
@@ -352,11 +352,12 @@ async def update_user(
     # Rename the query parameter.
     payload = user
 
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             db_user = get_object_or_404(session, models.User, "id", id)
             update_dict = jsonable_encoder(payload, exclude_unset=True)
-            return db_user.update(session, **update_dict)
+            db_user = db_user.update(session, **update_dict)
+            return commit_and_refresh(session, db_user)
         except IntegrityError as e:
             logger.exception(e)
             raise HTTPException(

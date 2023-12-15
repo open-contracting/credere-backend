@@ -33,6 +33,7 @@ def test_create_and_get_user(client):
     fi_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
     response = client.post("/users", json=test_user, headers=ocp_headers)
+    assert response.json()["name"] == test_user["name"]
     assert response.status_code == status.HTTP_200_OK
 
     # fetch second user since the first one is the OCP user created for headers
