@@ -52,26 +52,16 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
         with transaction_session_logger(session, "Error saving statistics"):
             # Get general Kpis
             statistic_kpis = get_general_statistics(session, None, None, None)
-            # Try to get the existing row
-            statistic_kpi_data = (
-                session.query(Statistic)
-                .filter(
+
+            Statistic.create_or_update(
+                session,
+                [
                     cast(Statistic.created_at, Date) == datetime.today().date(),
                     Statistic.type == StatisticType.APPLICATION_KPIS,
-                )
-                .first()
+                ],
+                type=StatisticType.APPLICATION_KPIS,
+                data=statistic_kpis,
             )
-
-            # If it exists, update it
-            if statistic_kpi_data:
-                statistic_kpi_data.data = statistic_kpis
-            # If it doesn't exist, create a new one
-            else:
-                statistic_kpi_data = Statistic(
-                    type=StatisticType.APPLICATION_KPIS,
-                    data=statistic_kpis,
-                )
-                session.add(statistic_kpi_data)
 
             # Get Opt in statistics
             statistics_msme_opt_in = get_msme_opt_in_stats(session)
@@ -84,26 +74,16 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
             statistics_msme_opt_in["fis_choosen_by_msme"] = [
                 data.model_dump() for data in statistics_msme_opt_in["fis_choosen_by_msme"]
             ]
-            # Try to get the existing row
-            statistic_opt_data = (
-                session.query(Statistic)
-                .filter(
+
+            Statistic.create_or_update(
+                session,
+                [
                     cast(Statistic.created_at, Date) == datetime.today().date(),
                     Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
-                )
-                .first()
+                ],
+                type=StatisticType.MSME_OPT_IN_STATISTICS,
+                data=statistics_msme_opt_in,
             )
-
-            # If it exists, update it
-            if statistic_opt_data:
-                statistic_opt_data.data = statistics_msme_opt_in
-            # If it doesn't exist, create a new one
-            else:
-                statistic_opt_data = Statistic(
-                    type=StatisticType.MSME_OPT_IN_STATISTICS,
-                    data=statistics_msme_opt_in,
-                )
-                session.add(statistic_opt_data)
 
             # Get general Kpis for every lender
             lender_ids = [id[0] for id in session.query(Lender.id).all()]
@@ -111,29 +91,17 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
                 # Get statistics for each lender
                 statistic_kpis = get_general_statistics(session, None, None, lender_id)
 
-                # Try to get the existing row
-                statistic_kpi_data = (
-                    session.query(Statistic)
-                    .filter(
+                Statistic.create_or_update(
+                    session,
+                    [
                         cast(Statistic.created_at, Date) == datetime.today().date(),
                         Statistic.type == StatisticType.APPLICATION_KPIS,
                         Statistic.lender_id == lender_id,
-                    )
-                    .first()
+                    ],
+                    type=StatisticType.APPLICATION_KPIS,
+                    data=statistic_kpis,
+                    lender_id=lender_id,
                 )
-
-                # If it exists, update it
-                if statistic_kpi_data:
-                    statistic_kpi_data.data = statistic_kpis
-                # If it doesn't exist, create a new one
-                else:
-                    statistic_kpi_data = Statistic(
-                        type=StatisticType.APPLICATION_KPIS,
-                        data=statistic_kpis,
-                        lender_id=lender_id,
-                    )
-
-                session.add(statistic_kpi_data)
 
 
 def _get_base_query(

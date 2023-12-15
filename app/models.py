@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import Any, Optional, Self
 
 from pydantic import BaseModel, ConfigDict, PlainSerializer
-from sqlalchemy import DECIMAL, Column, DateTime, Enum, and_, desc, or_, select
+from sqlalchemy import DECIMAL, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import Select, func
@@ -98,6 +98,13 @@ class ActiveRecordMixin:
         session.add(self)
         session.flush()
         return self
+
+    @classmethod
+    def create_or_update(cls, session: Session, filters: list, **data: Any) -> Self:
+        obj = session.query(cls).filter(*filters).first()
+        if obj:
+            return obj.update(session, **data)
+        return cls.create(session, **data)
 
 
 class BorrowerDocumentType(StrEnum):
@@ -754,9 +761,9 @@ class StatisticData(BaseModel):
         return {"name": self.name, "value": self.value}
 
 
-class Statistic(SQLModel, table=True):
+class Statistic(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    type: StatisticType = Field(sa_column=Column(Enum(StatisticType, name="statistic_type")))
+    type: StatisticType = Field(nullable=True)
     data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     created_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
