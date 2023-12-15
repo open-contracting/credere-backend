@@ -6,6 +6,7 @@ Create Date: 2023-10-23 12:32:30.252552
 
 """
 from alembic import op
+from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = "385fb9a01efc"
@@ -17,7 +18,7 @@ depends_on = None
 def index_exists(name):
     connection = op.get_bind()
     result = connection.execute(
-        "SELECT exists(SELECT 1 from pg_indexes where indexname = '{}') as ix_exists;".format(name)
+        text("SELECT exists(SELECT 1 from pg_indexes where indexname = :indexname) as ix_exists"), {"indexname": name}
     ).first()
     return result.ix_exists
 
