@@ -116,6 +116,7 @@ def test_create_credit_product(client):
         warnings.filterwarnings("ignore")
 
         response = client.post("/lenders/1/credit-products", json=credit_product, headers=OCP_headers)
+        assert response.json()["lender_id"] == 1
         assert response.status_code == status.HTTP_200_OK
 
     # OCP user tries to create a credit product for a non existent lender

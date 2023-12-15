@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
-from app.db import get_db, rollback_on_error, transaction_session
+from app.db import get_db, rollback_on_error
 from app.util import commit_and_refresh, get_object_or_404
 
 router = APIRouter()
@@ -74,10 +74,11 @@ async def create_credit_products(
     :return: The created credit product.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         lender = get_object_or_404(session, models.Lender, "id", lender_id)
 
-        return models.CreditProduct.create(session, **credit_product.model_dump(), lender=lender)
+        db_credit_product = models.CreditProduct.create(session, **credit_product.model_dump(), lender=lender)
+        return commit_and_refresh(session, db_credit_product)
 
 
 @router.get(
