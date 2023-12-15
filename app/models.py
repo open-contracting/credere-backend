@@ -758,5 +758,7 @@ class Statistic(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: StatisticType = Field(sa_column=Column(Enum(StatisticType, name="statistic_type")))
     data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
-    created_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now()))
+    created_at: datetime | None = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
+    )
     lender_id: int | None = Field(foreign_key="lender.id", nullable=True)
