@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import Any, Optional, Self
 
 from pydantic import BaseModel, ConfigDict, PlainSerializer
-from sqlalchemy import DECIMAL, Column, DateTime, and_, desc, or_, select
+from sqlalchemy import DECIMAL, Column, DateTime, Enum, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import Select, func
@@ -756,7 +756,7 @@ class StatisticData(BaseModel):
 
 class Statistic(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    type: StatisticType = Field(nullable=True)
+    type: StatisticType = Field(sa_column=Column(Enum(StatisticType, name="statistic_type")))
     data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     created_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now()))
     lender_id: int | None = Field(foreign_key="lender.id", nullable=True)
