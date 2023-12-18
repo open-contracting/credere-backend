@@ -117,6 +117,75 @@ update_award = {"title": "new test title"}
 
 update_borrower = {"legal_name": "new_legal_name"}
 
+source_award = [
+    {
+        "nombre_entidad": "COLEGIO GABRIEL BETANCOURT MEJIA IED",
+        "nit_entidad": "900143276",
+        "departamento": "Distrito Capital de Bogotá",
+        "ciudad": "No Definido",
+        "localizaci_n": "Colombia, Bogotá, Bogotá",
+        "orden": "Territorial",
+        "sector": "Educación Nacional",
+        "rama": "Ejecutivo",
+        "entidad_centralizada": "Descentralizada",
+        "proceso_de_compra": "CO1.BDOS.4899402",
+        "id_contrato": "CO1.PCCNTR.5361557",
+        "referencia_del_contrato": "CO1.PCCNTR.5361557",
+        "estado_contrato": "Borrador",
+        "codigo_de_categoria_principal": "V1.60121200",
+        "descripcion_del_proceso": "COMPRA MATERIALES PROYECTO",
+        "tipo_de_contrato": "Decreto 092 de 2017",
+        "modalidad_de_contratacion": "Contratación régimen especial (con ofertas)",
+        "justificacion_modalidad_de": "Decreto 092 de 2017",
+        "fecha_de_fin_del_contrato": "2023-09-18T00:00:00.000",
+        "condiciones_de_entrega": "No Definido",
+        "tipodocproveedor": "No Definido",
+        "documento_proveedor": "901623692",
+        "proveedor_adjudicado": "SOLUCIONES M Y T SAS",
+        "es_grupo": "No",
+        "es_pyme": "Si",
+        "habilita_pago_adelantado": "No Definido",
+        "liquidaci_n": "No",
+        "obligaci_n_ambiental": "No",
+        "obligaciones_postconsumo": "No",
+        "reversion": "No",
+        "valor_del_contrato": "3080250",
+        "valor_de_pago_adelantado": "0",
+        "valor_facturado": "0",
+        "valor_pendiente_de_pago": "3080250",
+        "valor_pagado": "0",
+        "valor_amortizado": "0",
+        "valor_pendiente_de": "0",
+        "valor_pendiente_de_ejecucion": "3080250",
+        "estado_bpin": "Válido",
+        "c_digo_bpin": "No Definido",
+        "anno_bpin": "N/D",
+        "saldo_cdp": "0",
+        "saldo_vigencia": "0",
+        "espostconflicto": "No",
+        "urlproceso": {"url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail"},
+        "destino_gasto": "Funcionamiento",
+        "origen_de_los_recursos": "Distribuido",
+        "dias_adicionados": "0",
+        "puntos_del_acuerdo": "No aplica",
+        "pilares_del_acuerdo": "No aplica",
+        "nombre_representante_legal": "TATIANA ALEJANDRA BERNAL JIMENEZ",
+        "nacionalidad_representante_legal": "Colombiana",
+        "tipo_de_identificaci_n_representante_legal": "Cédula de Ciudadanía",
+        "identificaci_n_representante_legal": "1000375165",
+        "g_nero_representante_legal": "Otro",
+        "presupuesto_general_de_la_nacion_pgn": "0",
+        "sistema_general_de_participaciones": "0",
+        "sistema_general_de_regal_as": "0",
+        "recursos_propios_alcald_as_gobernaciones_y_resguardos_ind_genas_": "4000000",
+        "recursos_de_credito": "0",
+        "recursos_propios": "0",
+        "ultima_actualizacion": "2023-10-06T00:00:00.000",
+        "codigo_entidad": "703916536",
+        "codigo_proveedor": "718861537",
+    }
+]
+
 
 def test_reject_application(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
@@ -160,6 +229,8 @@ def test_rollback_credit_product(client):
         "/applications/rollback-select-credit-product",
         json=application_select_credit_option,
     )
+    for key in application_select_credit_option.keys():
+        assert response.json()[key] == application_select_credit_option[key]
     assert response.status_code == status.HTTP_200_OK
 
 
@@ -188,7 +259,7 @@ def test_approve_application_cicle(client):
     # this will mock the previous award get to return an empty array
     with patch(
         "app.sources.colombia.get_previous_contracts",
-        return_value=MockResponse(status.HTTP_200_OK, {}),
+        return_value=MockResponse(status.HTTP_200_OK, source_award),
     ):
         response = client.post("/applications/access-scheme", json=application_base)
         assert response.json()["application"]["status"] == models.ApplicationStatus.ACCEPTED
@@ -209,6 +280,9 @@ def test_approve_application_cicle(client):
 
     # FI user tries to fecth previous awards
     response = client.get("/applications/1/previous-awards", headers=FI_headers)
+    assert len(response.json()) == len(source_award)
+    print(response.json()[0])
+    assert response.json()[0]["entity_code"] == source_award[0]["nit_entidad"]
     assert response.status_code == status.HTTP_200_OK
 
     # diffrent FI user tries to fecth previous awards
