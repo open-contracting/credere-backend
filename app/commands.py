@@ -48,6 +48,16 @@ def fetch_all_awards_from_period(from_date: datetime, until_date: datetime) -> N
 
 
 @app.command()
+def fetch_award_by_contract_and_supplier(contract_id: str, supplier_id: str) -> None:
+    """
+    NOTE: For manual use only.
+    Fetch a specific award by contract_id and supplier_id.
+    Useful when want to directly invite a supplier who for some reason wasn't invited by Credere.
+    """
+    background.fetch_award_by_contract_and_supplier(contract_id, supplier_id, get_db)
+
+
+@app.command()
 def remove_dated_application_data() -> None:
     """
     Remove dated data from the database.
