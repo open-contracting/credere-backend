@@ -196,7 +196,7 @@ async def access_scheme(
     :return: The application response containing the updated application, borrower, and award.
     :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         current_time = datetime.now(application.created_at.tzinfo)
         application.borrower_accepted_at = current_time
         application.status = models.ApplicationStatus.ACCEPTED
@@ -204,7 +204,7 @@ async def access_scheme(
 
         background_tasks.add_task(background.fetch_previous_awards, application.borrower)
         background_tasks.add_task(update_statistics)
-
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -298,7 +298,7 @@ async def select_credit_product(
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
             calculator data is invalid.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         # Extract the necessary fields for a calculator from a payload.
         calculator_data = jsonable_encoder(payload, exclude_unset=True)
         calculator_data.pop("uuid")
@@ -319,6 +319,7 @@ async def select_credit_product(
             data=jsonable_encoder(payload, exclude_unset=True),
             application_id=application.id,
         )
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -350,7 +351,7 @@ async def rollback_select_credit_product(
     :raise: HTTPException with status code 400 if the credit product is not selected or if the lender is already
             assigned.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -365,6 +366,7 @@ async def rollback_select_credit_product(
 
         application.credit_product_id = None
         application.borrower_credit_product_selected_at = None
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -394,7 +396,7 @@ async def confirm_credit_product(
              credit product.
     :raise: HTTPException with status code 400 if the credit product is not selected or not found.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -452,7 +454,7 @@ async def confirm_credit_product(
                 }
                 new_borrower_document = models.BorrowerDocument.create(session, **data)
                 application.borrower_documents.append(new_borrower_document)
-
+        application = commit_and_refresh(session, application)
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
@@ -495,7 +497,7 @@ async def update_apps_send_notifications(
     :raises HTTPException: If credit product or lender is not selected, or if there's an error in submitting the
             application.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             if not application.credit_product_id:
                 raise HTTPException(
@@ -513,7 +515,7 @@ async def update_apps_send_notifications(
             current_time = datetime.now(application.created_at.tzinfo)
             application.borrower_submitted_at = current_time
             application.pending_documents = False
-
+            application = commit_and_refresh(session, application)
             client.send_notifications_of_new_applications(
                 ocp_email_group=app_settings.ocp_email_group,
                 lender_name=application.lender.name,
