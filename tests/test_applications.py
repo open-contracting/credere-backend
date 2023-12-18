@@ -481,6 +481,7 @@ def test_approve_application_cicle(client):
         json={"legal_name": True},
         headers=FI_headers,
     )
+    assert response.json()["secop_data_verification"] == {"legal_name": True}
     assert response.status_code == status.HTTP_200_OK
 
     # lender tries to approve the application without verifying INCORPORATION_DOCUMENT
@@ -497,6 +498,7 @@ def test_approve_application_cicle(client):
         json={"verified": True},
         headers=FI_headers,
     )
+    assert response.json()["verified"] is True
     assert response.status_code == status.HTTP_200_OK
 
     # lender approves application
