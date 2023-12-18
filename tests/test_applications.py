@@ -229,8 +229,9 @@ def test_rollback_credit_product(client):
         "/applications/rollback-select-credit-product",
         json=application_select_credit_option,
     )
-    for key in application_select_credit_option.keys():
-        assert response.json()[key] == application_select_credit_option[key]
+    assert response.json()["application"]["uuid"] == application_select_credit_option["uuid"]
+    assert response.json()["application"]["credit_product_id"] is None
+    assert response.json()["application"]["borrower_credit_product_selected_at"] is None
     assert response.status_code == status.HTTP_200_OK
 
 
@@ -281,7 +282,6 @@ def test_approve_application_cicle(client):
     # FI user tries to fecth previous awards
     response = client.get("/applications/1/previous-awards", headers=FI_headers)
     assert len(response.json()) == len(source_award)
-    print(response.json()[0])
     assert response.json()[0]["entity_code"] == source_award[0]["nit_entidad"]
     assert response.status_code == status.HTTP_200_OK
 
