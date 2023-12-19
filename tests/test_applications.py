@@ -1,10 +1,12 @@
 import os
+from contextlib import contextmanager
 from unittest.mock import patch
 
 from fastapi import status
 
 from app import models, util
-from tests import MockResponse
+from app.db import engine
+from tests import MockResponse, get_test_db
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 file = os.path.join(__location__, "file.jpeg")
@@ -482,7 +484,15 @@ def test_approve_application_cicle(client):
         json={"legal_name": True},
         headers=FI_headers,
     )
-    assert response.json()["secop_data_verification"] == {"legal_name": True}
+    assert response.json()["secop_data_verification"] == {
+        "legal_name": True,
+        "address": True,
+        "email": True,
+        "legal_identifier": True,
+        "sector": True,
+        "size": True,
+        "type": True,
+    }
     assert response.status_code == status.HTTP_200_OK
 
     # lender tries to approve the application without verifying INCORPORATION_DOCUMENT
@@ -499,7 +509,9 @@ def test_approve_application_cicle(client):
         json={"verified": True},
         headers=FI_headers,
     )
-    assert response.json()["verified"] is True
+    assert response.json()["id"] == 1
+    with contextmanager(get_test_db(engine))() as session:
+        assert session.query(models.BorrowerDocument).one().verified is True
     assert response.status_code == status.HTTP_200_OK
 
     # lender approves application
