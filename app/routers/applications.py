@@ -163,7 +163,7 @@ async def approve_application(
         # the application's `secop_data_verification`.
         not_validated_fields = []
         app_secop_dict = application.secop_data_verification.copy()
-        fields = list(parsers.UpdateDataField().dict().keys())
+        fields = list(parsers.UpdateDataField().model_dump().keys())
         for key in fields:
             if key not in app_secop_dict or not app_secop_dict[key]:
                 not_validated_fields.append(key)
@@ -623,5 +623,4 @@ async def previous_contracts(
     :return: A list of previous awards associated with the application.
     :raise: HTTPException with status code 401 if the user is not authorized to access the application.
     """
-    with transaction_session(session):
-        return application.previous_awards(session)
+    return application.previous_awards(session)
