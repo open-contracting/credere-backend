@@ -157,12 +157,13 @@ async def decline_feedback(
     :return: The application response containing the updated application, borrower, and award.
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         borrower_declined_preferences_data = vars(payload)
         borrower_declined_preferences_data.pop("uuid")
 
         application.borrower_declined_preferences_data = borrower_declined_preferences_data
         background_tasks.add_task(update_statistics)
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,

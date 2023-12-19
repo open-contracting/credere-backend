@@ -645,4 +645,6 @@ def test_application_declined_feedback(client):
 
     response = client.post("/applications/decline-feedback", json=declined_feedback)
     assert response.json()["application"]["status"] == models.ApplicationStatus.DECLINED
+    declined_feedback.pop("uuid")
+    assert response.json()["application"]["borrower_declined_preferences_data"] == declined_feedback
     assert response.status_code == status.HTTP_200_OK
