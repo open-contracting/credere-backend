@@ -11,7 +11,8 @@ from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
-from app.db import get_db, transaction_session
+from app.db import get_db, rollback_on_error, transaction_session
+from app.util import commit_and_refresh
 from app.utils.statistics import update_statistics
 
 logger = logging.getLogger(__name__)
@@ -162,7 +163,7 @@ async def approve_application(
         # the application's `secop_data_verification`.
         not_validated_fields = []
         app_secop_dict = application.secop_data_verification.copy()
-        fields = list(parsers.UpdateDataField().dict().keys())
+        fields = list(parsers.UpdateDataField().model_dump().keys())
         for key in fields:
             if key not in app_secop_dict or not app_secop_dict[key]:
                 not_validated_fields.append(key)
@@ -236,9 +237,9 @@ async def verify_data_field(
     :param payload: The data field update payload.
     :return: The updated application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         # Update a specific field in the application's `secop_data_verification` attribute.
-        payload_dict = {key: value for key, value in payload.dict().items() if value is not None}
+        payload_dict = {key: value for key, value in payload.model_dump().items() if value is not None}
         try:
             key, value = next(iter(payload_dict.items()))
             verified_data = application.secop_data_verification.copy()
@@ -252,7 +253,7 @@ async def verify_data_field(
                 application_id=application.id,
                 user_id=user.id,
             )
-            return application
+            return commit_and_refresh(session, application)
         except StopIteration:
             return application
 
@@ -275,7 +276,7 @@ async def verify_document(
     :param payload: The document verification payload.
     :return: The updated application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", document_id)
         dependencies.raise_if_unauthorized(
             document.application,
@@ -293,7 +294,7 @@ async def verify_document(
             application_id=document.application.id,
             user_id=user.id,
         )
-
+        document = commit_and_refresh(session, document)
         return document.application
 
 
@@ -320,7 +321,7 @@ async def update_application_award(
     :param payload: The award update payload.
     :return: The updated application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         if not application.award:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Award not found")
 
@@ -335,6 +336,8 @@ async def update_application_award(
             application_id=id,
             user_id=user.id,
         )
+
+        commit_and_refresh(session, application)
 
         return util.get_modified_data_fields(application, session)
 
@@ -362,7 +365,7 @@ async def update_application_borrower(
     :param payload: The borrower update payload.
     :return: The updated application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         if not application.borrower:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Borrower not found")
 
@@ -384,6 +387,8 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
+        commit_and_refresh(session, application)
+
         return util.get_modified_data_fields(application, session)
 
 
@@ -395,7 +400,7 @@ async def get_applications_list(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
@@ -495,7 +500,7 @@ async def get_applications(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
@@ -618,5 +623,4 @@ async def previous_contracts(
     :return: A list of previous awards associated with the application.
     :raise: HTTPException with status code 401 if the user is not authorized to access the application.
     """
-    with transaction_session(session):
-        return application.previous_awards(session)
+    return application.previous_awards(session)

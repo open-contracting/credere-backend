@@ -15,27 +15,36 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
-def transaction_session(db: Session) -> Generator[Session, None, None]:
+def rollback_on_error(session: Session) -> Generator[Session, None, None]:
+    try:
+        yield
+    except Exception:
+        session.rollback()
+        raise
+
+
+@contextmanager
+def transaction_session(session: Session) -> Generator[Session, None, None]:
     """
     Context manager for database transactions. It takes a Session instance, commits the transaction if it is
     successful, and rolls back the transaction if any exception is raised.
 
-    :param db: The database session where the transaction is to be performed.
+    :param session: The database session where the transaction is to be performed.
     :raises Exception: Any exception that occurs during the transaction.
     :yield: The same database session, for use in with-statement.
     """
     try:
-        yield db
-        db.commit()
+        yield
+        session.commit()
     except Exception:
-        db.rollback()
+        session.rollback()
         raise
 
 
 @contextmanager
 def transaction_session_logger(session: Session, msg: str, *args: str) -> Generator[Session, None, None]:
     try:
-        yield session
+        yield
         session.commit()
     # Don't display tracebacks in emails from cron jobs for anticipated errors.
     except SkippedAwardError as e:
@@ -47,6 +56,7 @@ def transaction_session_logger(session: Session, msg: str, *args: str) -> Genera
         session.rollback()
 
 
+# This is a FastAPI dependency.
 def get_db() -> Generator[Session, None, None]:
     """
     Generator function to get a new database session. Yields a database session instance and closes the session after

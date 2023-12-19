@@ -7,8 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
-from app.db import get_db, transaction_session
-from app.util import get_object_or_404
+from app.db import get_db, rollback_on_error
+from app.util import commit_and_refresh, get_object_or_404
 
 router = APIRouter()
 
@@ -34,7 +34,7 @@ async def create_lender(
     # Rename the query parameter.
     payload = lender
 
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             # Create a Lender instance without the credit_product data
             db_lender = models.Lender(**payload.model_dump(exclude={"credit_products"}))
@@ -47,7 +47,7 @@ async def create_lender(
                     session.add(credit_product)
 
             session.flush()
-            return db_lender
+            return commit_and_refresh(session, db_lender)
         except IntegrityError as e:
             logger.exception(e)
             raise HTTPException(
@@ -74,10 +74,11 @@ async def create_credit_products(
     :return: The created credit product.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         lender = get_object_or_404(session, models.Lender, "id", lender_id)
 
-        return models.CreditProduct.create(session, **credit_product.model_dump(), lender=lender)
+        db_credit_product = models.CreditProduct.create(session, **credit_product.model_dump(), lender=lender)
+        return commit_and_refresh(session, db_credit_product)
 
 
 @router.get(
@@ -114,12 +115,13 @@ async def update_lender(
     :return: The updated lender.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             lender = get_object_or_404(session, models.Lender, "id", id)
-
             update_dict = jsonable_encoder(payload, exclude_unset=True)
-            return lender.update(session, **update_dict)
+            lender = lender.update(session, **update_dict)
+
+            return commit_and_refresh(session, lender)
         except IntegrityError as e:
             logger.exception(e)
             raise HTTPException(
@@ -203,8 +205,9 @@ async def update_credit_products(
     # Rename the query parameter.
     payload = credit_product
 
-    with transaction_session(session):
+    with rollback_on_error(session):
         db_credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
-
         update_dict = jsonable_encoder(payload, exclude_unset=True)
-        return db_credit_product.update(session, **update_dict)
+        credit_product = db_credit_product.update(session, **update_dict)
+
+        return commit_and_refresh(session, credit_product)

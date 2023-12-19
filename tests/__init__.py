@@ -16,10 +16,10 @@ def get_test_db(engine):
     factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     def inner() -> Generator[Session, None, None]:
-        db = factory()
+        session = factory()
         try:
-            yield db
+            yield session
         finally:
-            db.close()
+            session.close()
 
     return inner

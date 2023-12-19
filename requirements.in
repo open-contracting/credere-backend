@@ -7,7 +7,7 @@ mypy-boto3-cognito-idp
 mypy-boto3-ses
 pandas
 pydantic
-python-dotenv
+pydantic-settings
 python-jose
 python-multipart
 reportlab
@@ -17,4 +17,5 @@ sqlalchemy[postgresql]
 sqlmodel
 transifex-python
 typer[all]
+typing-extensions
 uvicorn==0.22.0

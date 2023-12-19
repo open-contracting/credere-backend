@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
@@ -10,8 +9,8 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
 from app.aws import CognitoClient
-from app.db import get_db, transaction_session
-from app.util import get_object_or_404
+from app.db import get_db, rollback_on_error
+from app.util import commit_and_refresh, get_object_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +35,13 @@ async def create_user(
     :param payload: The user data for creating the new user.
     :return: The created user.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
-            user = models.User(**payload.model_dump())
-            user.created_at = datetime.now()
-            session.add(user)
+            user = models.User.create(session, **payload.model_dump())
             cognito_response = client.admin_create_user(payload.email, payload.name)
             user.external_id = cognito_response["User"]["Username"]
 
-            return user
+            return commit_and_refresh(session, user)
         except (client.exceptions().UsernameExistsException, IntegrityError) as e:
             logger.exception(e)
             raise HTTPException(
@@ -294,7 +291,7 @@ async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("created_at"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.UserListResponse:
@@ -355,12 +352,12 @@ async def update_user(
     # Rename the query parameter.
     payload = user
 
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             db_user = get_object_or_404(session, models.User, "id", id)
-
             update_dict = jsonable_encoder(payload, exclude_unset=True)
-            return db_user.update(session, **update_dict)
+            db_user = db_user.update(session, **update_dict)
+            return commit_and_refresh(session, db_user)
         except IntegrityError as e:
             logger.exception(e)
             raise HTTPException(

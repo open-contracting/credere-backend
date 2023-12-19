@@ -1,3 +1,5 @@
+import warnings
+
 from fastapi import status
 
 from app.models import BorrowerSize, CreditType, UserType
@@ -42,7 +44,7 @@ credit_product = {
     "borrower_size": BorrowerSize.SMALL,
     "lower_limit": 10000.00,
     "upper_limit": 50000.00,
-    "interest_rate": 0.05,
+    "interest_rate": "The interest rate of the credit lines is variable and is subject to...",
     "required_document_types": {
         "INCORPORATION_DOCUMENT": True,
         "FINANCIAL_STATEMENT": True,
@@ -59,7 +61,7 @@ updated_credit_product = {
     "borrower_size": BorrowerSize.SMALL,
     "lower_limit": 100000.00,
     "upper_limit": 500000.00,
-    "interest_rate": 0.05,
+    "interest_rate": "The interest rate of the credit lines is variable and is subject to...",
     "required_document_types": {
         "INCORPORATION_DOCUMENT": True,
         "FINANCIAL_STATEMENT": True,
@@ -83,7 +85,7 @@ lender_with_credit_product = {
             "borrower_size": "SMALL",
             "lower_limit": 10000.00,
             "upper_limit": 50000.00,
-            "interest_rate": 0.05,
+            "interest_rate": "The interest rate of the credit lines is variable and is subject to...",
             "required_document_types": {
                 "INCORPORATION_DOCUMENT": True,
                 "FINANCIAL_STATEMENT": True,
@@ -109,17 +111,27 @@ def test_create_credit_product(client):
     response = client.post("/lenders/1/credit-products", json=credit_product, headers=FI_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    response = client.post("/lenders/1/credit-products", json=credit_product, headers=OCP_headers)
-    assert response.status_code == status.HTTP_200_OK
+    with warnings.catch_warnings():
+        # "Pydantic serializer warnings" "Expected `decimal` but got `float` - serialized value may not be as expected"
+        warnings.filterwarnings("ignore")
+
+        response = client.post("/lenders/1/credit-products", json=credit_product, headers=OCP_headers)
+        assert response.json()["lender_id"] == 1
+        assert response.status_code == status.HTTP_200_OK
 
     # OCP user tries to create a credit product for a non existent lender
     response = client.post("/lenders/100/credit-products", json=credit_product, headers=OCP_headers)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    response = client.put("/credit-products/1", json=updated_credit_product, headers=OCP_headers)
-    assert response.json()["lower_limit"] == updated_credit_product["lower_limit"]
-    assert response.json()["upper_limit"] == updated_credit_product["upper_limit"]
-    assert response.status_code == status.HTTP_200_OK
+    with warnings.catch_warnings():
+        # "Pydantic serializer warnings" "Expected `decimal` but got `int` - serialized value may not be as expected"
+        warnings.filterwarnings("ignore")
+
+        response = client.put("/credit-products/1", json=updated_credit_product, headers=OCP_headers)
+        assert response.json()["lower_limit"] == updated_credit_product["lower_limit"]
+        assert response.json()["upper_limit"] == updated_credit_product["upper_limit"]
+        assert response.json()["other_fees_description"] == updated_credit_product["other_fees_description"]
+        assert response.status_code == status.HTTP_200_OK
 
     # tries to update a credit product that does not exist
     response = client.put("/credit-products/100", json=updated_credit_product, headers=OCP_headers)
@@ -134,6 +146,7 @@ def test_create_lender(client):
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
     response = client.post("/lenders/", json=lender, headers=OCP_headers)
+    assert response.json()["id"] == 1
     assert response.status_code == status.HTTP_200_OK
 
     # tries to create same lender twice
@@ -148,8 +161,12 @@ def test_create_lender_with_credit_product(client):
     OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
     FI_headers = client.post("/create-test-user-headers", json=FI_user).json()
 
-    response = client.post("/lenders/", json=lender_with_credit_product, headers=OCP_headers)
-    assert response.status_code == status.HTTP_200_OK
+    with warnings.catch_warnings():
+        # "Pydantic serializer warnings" "Expected `decimal` but got `float` - serialized value may not be as expected"
+        warnings.filterwarnings("ignore")
+
+        response = client.post("/lenders/", json=lender_with_credit_product, headers=OCP_headers)
+        assert response.status_code == status.HTTP_200_OK
 
     # fi user tries to create lender
     response = client.post("/lenders/", json=lender_with_credit_product, headers=FI_headers)

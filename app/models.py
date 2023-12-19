@@ -3,15 +3,18 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Optional, Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, PlainSerializer
 from sqlalchemy import DECIMAL, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import Select, func
 from sqlalchemy.sql.expression import true
 from sqlmodel import Field, Relationship, SQLModel, col
+from typing_extensions import Annotated
 
 from app.settings import app_settings
+
+FLOAT_DECIMAL = Annotated[Decimal, PlainSerializer(lambda x: float(x), return_type=float, when_used="json")]
 
 
 def _get_missing_data_keys(input_dict: dict[str, Any]) -> dict[str, bool]:
@@ -95,6 +98,13 @@ class ActiveRecordMixin:
         session.add(self)
         session.flush()
         return self
+
+    @classmethod
+    def create_or_update(cls, session: Session, filters: list, **data: Any) -> Self:
+        obj = session.query(cls).filter(*filters).first()
+        if obj:
+            return obj.update(session, **data)
+        return cls.create(session, **data)
 
 
 class BorrowerDocumentType(StrEnum):
@@ -239,8 +249,8 @@ class StatisticCustomRange(StrEnum):
 
 class CreditProductBase(SQLModel):
     borrower_size: BorrowerSize = Field(nullable=False)
-    lower_limit: Decimal = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
-    upper_limit: Decimal = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
+    lower_limit: FLOAT_DECIMAL = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
+    upper_limit: FLOAT_DECIMAL = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
     interest_rate: str = Field(default="", nullable=False)
     additional_information: str = Field(default="", nullable=False)
     type: CreditType = Field(nullable=False)
@@ -430,7 +440,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def archivable(cls, session: Session) -> "Query[Self]":
-        delta = timedelta(days=app_settings.days_to_erase_borrower_data)
+        delta = timedelta(days=app_settings.days_to_erase_borrowers_data)
 
         return cls.unarchived(session).filter(
             or_(
@@ -700,21 +710,19 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="actions")
-    user_id: int = Field(default=None, foreign_key="credere_user.id")
+    user_id: int | None = Field(default=None, foreign_key="credere_user.id")
     user: User | None = Relationship(back_populates="application_actions")
     created_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BasicUser(BaseModel):
     username: str
-    name: str | None
-    password: str | None
-    temp_password: str | None
+    name: str | None = None
+    password: str | None = None
+    temp_password: str | None = None
 
 
 class SetupMFA(BaseModel):
@@ -753,9 +761,11 @@ class StatisticData(BaseModel):
         return {"name": self.name, "value": self.value}
 
 
-class Statistic(SQLModel, table=True):
+class Statistic(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: StatisticType = Field(nullable=True)
     data: dict[str, Any] = Field(default={}, sa_column=Column(JSON))
-    created_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now()))
+    created_at: datetime | None = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
+    )
     lender_id: int | None = Field(foreign_key="lender.id", nullable=True)

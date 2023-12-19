@@ -6,8 +6,11 @@
 #
 alembic==1.11.1
     # via -r requirements.in
+annotated-types==0.6.0
+    # via pydantic
 anyio==3.7.1
     # via
+    #   fastapi
     #   httpcore
     #   starlette
 asttokens==2.2.1
@@ -36,7 +39,7 @@ colorama==0.4.6
     # via typer
 ecdsa==0.18.0
     # via python-jose
-fastapi==0.95.2
+fastapi==0.104.1
     # via
     #   -r requirements.in
     #   sentry-sdk
@@ -87,11 +90,16 @@ pyasn1==0.5.0
     # via
     #   python-jose
     #   rsa
-pydantic==1.10.13
+pydantic==2.5.2
     # via
     #   -r requirements.in
     #   fastapi
+    #   pydantic-settings
     #   sqlmodel
+pydantic-core==2.14.5
+    # via pydantic
+pydantic-settings==2.1.0
+    # via -r requirements.in
 pygments==2.15.1
     # via rich
 pyseeyou==1.0.2
@@ -101,7 +109,7 @@ python-dateutil==2.8.2
     #   botocore
     #   pandas
 python-dotenv==1.0.0
-    # via -r requirements.in
+    # via pydantic-settings
 python-jose==3.3.0
     # via -r requirements.in
 python-multipart==0.0.6
@@ -153,12 +161,15 @@ transifex-python==3.4.0
     # via -r requirements.in
 typer[all]==0.9.0
     # via -r requirements.in
-typing-extensions==4.5.0
+typing-extensions==4.8.0
     # via
+    #   -r requirements.in
     #   alembic
+    #   fastapi
     #   mypy-boto3-cognito-idp
     #   mypy-boto3-ses
     #   pydantic
+    #   pydantic-core
     #   sqlalchemy
     #   typer
 tzdata==2023.3
