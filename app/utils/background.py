@@ -98,6 +98,39 @@ def _create_award(
     return models.Award.create(session, **data)
 
 
+def _create_complete_application(contract_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
+    with contextmanager(db_provider)() as session:
+        with transaction_session_logger(session, "Error creating the application"):
+            award = _create_award(contract_response, session)
+            borrower = _get_or_create_borrower(contract_response, session)
+            award.borrower_id = borrower.id
+
+            application = _create_application(
+                award.id,
+                borrower.id,
+                borrower.email,
+                borrower.legal_identifier,
+                award.source_contract_id,
+                session,
+            )
+
+            message = models.Message.create(
+                session,
+                application=application,
+                type=models.MessageType.BORROWER_INVITATION,
+            )
+
+            message_id = mail.send_invitation_email(
+                sesClient,
+                application.uuid,
+                borrower.email,
+                borrower.legal_name,
+                award.buyer_name,
+                award.title,
+            )
+            message.external_message_id = message_id
+
+
 def fetch_new_awards_from_date(
     last_updated_award_date: datetime,
     db_provider: Callable[[], Generator[Session, None, None]],
@@ -120,40 +153,21 @@ def fetch_new_awards_from_date(
     while contracts_response.json():
         total += len(contracts_response_json)
         for entry in contracts_response_json:
-            with contextmanager(db_provider)() as session:
-                with transaction_session_logger(session, "Error creating the application"):
-                    award = _create_award(entry, session)
-                    borrower = _get_or_create_borrower(entry, session)
-                    award.borrower_id = borrower.id
-
-                    application = _create_application(
-                        award.id,
-                        borrower.id,
-                        borrower.email,
-                        borrower.legal_identifier,
-                        award.source_contract_id,
-                        session,
-                    )
-
-                    message = models.Message.create(
-                        session,
-                        application=application,
-                        type=models.MessageType.BORROWER_INVITATION,
-                    )
-
-                    message_id = mail.send_invitation_email(
-                        sesClient,
-                        application.uuid,
-                        borrower.email,
-                        borrower.legal_name,
-                        award.buyer_name,
-                        award.title,
-                    )
-                    message.external_message_id = message_id
+            _create_complete_application(entry, db_provider)
         index += 1
         contracts_response = data_access.get_new_contracts(index, last_updated_award_date, until_date)
         contracts_response_json = contracts_response.json()
     logger.info("Total fetched contracts: %d", total)
+
+
+def fetch_award_by_contract_and_supplier(
+    contract_id: str, supplier_id: str, db_provider: Callable[[], Generator[Session, None, None]]
+) -> None:
+    contract_response = data_access.get_contract_by_contract_and_supplier(contract_id, supplier_id).json()
+    if not contract_response:
+        logger.info(f"The contract with id {contract_id} and supplier id {supplier_id} was not found")
+        return
+    _create_complete_application(contract_response[0], db_provider)
 
 
 def fetch_previous_awards(

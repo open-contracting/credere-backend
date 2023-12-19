@@ -134,6 +134,12 @@ def get_new_contracts(index: int, from_date: datetime, until_date: datetime | No
     return sources.make_request_with_retry(url, HEADERS)
 
 
+def get_contract_by_contract_and_supplier(contract_id: str, supplier_id: str) -> httpx.Response:
+    url = f"{URLS['CONTRACTS']}?$where=documento_proveedor = '{supplier_id}' AND id_contrato = '{contract_id}'"
+
+    return sources.make_request_with_retry(url, HEADERS)
+
+
 def get_previous_contracts(documento_proveedor: str) -> httpx.Response:
     """
     Get previous contracts data for the given document provider from the source API.
