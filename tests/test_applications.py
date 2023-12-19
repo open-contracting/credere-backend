@@ -282,7 +282,8 @@ def test_approve_application_cicle(client):
     # FI user tries to fecth previous awards
     response = client.get("/applications/1/previous-awards", headers=FI_headers)
     assert len(response.json()) == len(source_award)
-    assert response.json()[0]["entity_code"] == source_award[0]["nit_entidad"]
+    assert response.json()[0]["previous"] is True
+    assert response.json()[0]["entity_code"] == source_award[0]["codigo_entidad"]
     assert response.status_code == status.HTTP_200_OK
 
     # diffrent FI user tries to fecth previous awards
