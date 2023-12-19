@@ -7,7 +7,7 @@ from sqlalchemy import Date, Integer, cast, distinct, func, text
 from sqlalchemy.orm import Query, Session
 from sqlmodel import col
 
-from app.db import get_db, transaction_session_logger
+from app.db import get_db, rollback_on_error
 from app.models import (
     Application,
     ApplicationStatus,
@@ -49,7 +49,7 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
     """
 
     with contextmanager(db_provider)() as session:
-        with transaction_session_logger(session, "Error saving statistics"):
+        with rollback_on_error(session):
             # Get general Kpis
             statistic_kpis = get_general_statistics(session, None, None, None)
 
@@ -102,6 +102,8 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
                     data=statistic_kpis,
                     lender_id=lender_id,
                 )
+
+            session.commit()
 
 
 def _get_base_query(

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import mail, models, util
 from app.aws import sesClient
-from app.db import get_db, transaction_session_logger
+from app.db import get_db, handle_skipped_award
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 from app.sources import colombia as data_access
@@ -100,7 +100,7 @@ def _create_award(
 
 def _create_complete_application(contract_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
     with contextmanager(db_provider)() as session:
-        with transaction_session_logger(session, "Error creating the application"):
+        with handle_skipped_award(session, "Error creating the application"):
             award = _create_award(contract_response, session)
             borrower = _get_or_create_borrower(contract_response, session)
             award.borrower_id = borrower.id
@@ -129,6 +129,8 @@ def _create_complete_application(contract_response, db_provider: Callable[[], Ge
                 award.title,
             )
             message.external_message_id = message_id
+
+            session.commit()
 
 
 def fetch_new_awards_from_date(
@@ -190,9 +192,7 @@ def fetch_previous_awards(
     )
     for entry in contracts_response_json:
         with contextmanager(db_provider)() as session:
-            with transaction_session_logger(
-                session,
-                "Error creating the previous award for %s",
-                borrower.legal_identifier,
-            ):
+            with handle_skipped_award(session, "Error creating the previous award for %s", borrower.legal_identifier):
                 _create_award(entry, session, borrower.id, True)
+
+                session.commit()
