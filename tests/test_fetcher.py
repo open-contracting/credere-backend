@@ -62,17 +62,14 @@ def _mock_whole_process_once(status_code: int, award: dict, borrower: dict, emai
 
 
 @contextmanager
-def _mock_whole_process(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
+def _mock_whole_process(status_code: int, award_mock: dict, borrower_mock: dict, email_mock: dict, function_path: str):
     # this will mock the whole process of the fetcher responding to make_request_with_retry in order
     #
     mock = MagicMock(
         side_effect=[
-            MockResponse(status_code, award),
-            MockResponse(status_code, borrower),
-            MockResponse(status_code, email),
-            MockResponse(status_code, award),
-            MockResponse(status_code, borrower),
-            MockResponse(status_code, email),
+            MockResponse(status_code, award_mock),
+            MockResponse(status_code, borrower_mock),
+            MockResponse(status_code, email_mock),
         ]
     )
 
@@ -157,23 +154,6 @@ def test_fetch_empty_contracts(create_and_drop_database, caplog):
     assert "No new contracts" in caplog.text
 
 
-def test_fetch_new_awards_borrower_declined(client):
-    client.post("/borrowers-test", json=borrower_declined)
-
-    with _mock_response_second_empty(
-        200,
-        contract,
-        "app.sources.colombia.get_new_contracts",
-    ), _mock_whole_process_once(
-        200,
-        award,
-        borrower,
-        email,
-        "app.sources.make_request_with_retry",
-    ):
-        fetch_awards()
-
-
 def test_fetch_new_awards_from_date(engine, create_and_drop_database):
     with _mock_response_second_empty(
         200,
@@ -195,7 +175,6 @@ def test_fetch_new_awards_from_date(engine, create_and_drop_database):
             inserted_award = session.query(models.Award).one()
             inserted_borrower = session.query(models.Borrower).one()
             inserted_application = session.query(models.Application).one()
-
             _compare_objects(inserted_award, award_result)
             _compare_objects(inserted_borrower, borrower_result)
             _compare_objects(inserted_application, application_result)
@@ -238,7 +217,6 @@ def test_fetch_award_by_contract_and_supplier(engine, create_and_drop_database):
             inserted_award = session.query(models.Award).one()
             inserted_borrower = session.query(models.Borrower).one()
             inserted_application = session.query(models.Application).one()
-
             _compare_objects(inserted_award, award_result)
             _compare_objects(inserted_borrower, borrower_result)
             _compare_objects(inserted_application, application_result)

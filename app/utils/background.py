@@ -152,7 +152,7 @@ def fetch_new_awards_from_date(
         logger.info("No new contracts")
         return
     total = 0
-    while contracts_response.json():
+    while contracts_response_json:
         total += len(contracts_response_json)
         for entry in contracts_response_json:
             _create_complete_application(entry, db_provider)

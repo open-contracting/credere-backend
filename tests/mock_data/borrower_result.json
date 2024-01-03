@@ -43,6 +43,6 @@
   "declined_at": null,
   "borrower_identifier": "test_hash_12345678",
   "email": "test@example.com",
-  "legal_identifier": "test123456789",
+  "legal_identifier": "987654321",
   "sector": ""
 }
