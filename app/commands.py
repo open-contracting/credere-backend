@@ -11,7 +11,7 @@ from sqlmodel import col
 import app.utils.statistics as statistics_utils
 from app import mail, models
 from app.aws import sesClient
-from app.db import get_db, transaction_session, transaction_session_logger
+from app.db import get_db, rollback_on_error
 from app.settings import app_settings
 from app.utils import background
 
@@ -78,7 +78,7 @@ def remove_dated_application_data() -> None:
             joinedload(models.Application.borrower),
             joinedload(models.Application.borrower_documents),
         ):
-            with transaction_session_logger(session, "Error deleting the data"):
+            with rollback_on_error(session):
                 application.award.previous = True
                 application.primary_email = ""
                 application.archived_at = datetime.utcnow()
@@ -103,6 +103,8 @@ def remove_dated_application_data() -> None:
                     application.borrower.legal_identifier = ""
                     application.borrower.source_data = {}
 
+                session.commit()
+
 
 @app.command()
 def update_applications_to_lapsed() -> None:
@@ -117,9 +119,11 @@ def update_applications_to_lapsed() -> None:
             joinedload(models.Application.borrower),
             joinedload(models.Application.borrower_documents),
         ):
-            with transaction_session_logger(session, "Error setting to lapsed"):
+            with rollback_on_error(session):
                 application.status = models.ApplicationStatus.LAPSED
                 application.application_lapsed_at = datetime.utcnow()
+
+                session.commit()
 
 
 @app.command()
@@ -152,7 +156,7 @@ def send_reminders() -> None:
     else:
         for application in applications_to_send_intro_reminder:
             with contextmanager(get_db)() as session:
-                with transaction_session_logger(session, "Error sending mail or updating the sent status"):
+                with rollback_on_error(session):
                     new_message = models.Message.create(
                         session,
                         application=application,
@@ -169,6 +173,8 @@ def send_reminders() -> None:
                     )
                     new_message.external_message_id = message_id
                     logger.info("Mail sent and status updated")
+
+                    session.commit()
 
     with contextmanager(get_db)() as session:
         applications_to_send_submit_reminder = (
@@ -187,7 +193,7 @@ def send_reminders() -> None:
     else:
         for application in applications_to_send_submit_reminder:
             with contextmanager(get_db)() as session:
-                with transaction_session_logger(session, "Error sending mail or updating the sent status"):
+                with rollback_on_error(session):
                     # Db message table update
                     new_message = models.Message.create(
                         session,
@@ -205,6 +211,8 @@ def send_reminders() -> None:
                     )
                     new_message.external_message_id = message_id
                     logger.info("Mail sent and status updated")
+
+                    session.commit()
 
 
 @app.command()
@@ -224,7 +232,7 @@ def SLA_overdue_applications() -> None:
                 [models.ApplicationStatus.CONTRACT_UPLOADED, models.ApplicationStatus.STARTED]
             )
         ):
-            with transaction_session(session):
+            with rollback_on_error(session):
                 days_passed = application.days_waiting_for_lender(session)
                 if days_passed > application.lender.sla_days * app_settings.progress_to_remind_started_applications:
                     if "email" not in overdue_lenders[application.lender.id]:
@@ -245,6 +253,8 @@ def SLA_overdue_applications() -> None:
                             type=models.MessageType.OVERDUE_APPLICATION,
                             external_message_id=message_id,
                         )
+
+                session.commit()
 
         for id, lender_data in overdue_lenders.items():
             name = lender_data["name"]

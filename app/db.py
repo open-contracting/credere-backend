@@ -42,18 +42,17 @@ def transaction_session(session: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def transaction_session_logger(session: Session, msg: str, *args: str) -> Generator[Session, None, None]:
+def handle_skipped_award(session: Session, msg: str, *args: str) -> Generator[Session, None, None]:
     try:
         yield
-        session.commit()
     # Don't display tracebacks in emails from cron jobs for anticipated errors.
     except SkippedAwardError as e:
         # msg can contain %s placeholders.
         logger.error(f"{msg}: {e}", *args)
         session.rollback()
     except Exception:
-        logger.exception(msg, *args)
         session.rollback()
+        raise
 
 
 # This is a FastAPI dependency.
