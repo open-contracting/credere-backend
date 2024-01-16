@@ -38,7 +38,7 @@ async def get_borrower_document(
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", id)
         dependencies.raise_if_unauthorized(document.application, user, roles=(models.UserType.OCP, models.UserType.FI))
 
-        if user.is_OCP():
+        if user.is_ocp():
             models.ApplicationAction.create(
                 session,
                 type=models.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
@@ -124,7 +124,7 @@ async def download_application(
 
         application_action_type = (
             models.ApplicationActionType.OCP_DOWNLOAD_APPLICATION
-            if user.is_OCP()
+            if user.is_ocp()
             else models.ApplicationActionType.FI_DOWNLOAD_APPLICATION
         )
         models.ApplicationAction.create(

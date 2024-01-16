@@ -688,7 +688,7 @@ class UserBase(SQLModel):
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
 
-    def is_OCP(self) -> bool:
+    def is_ocp(self) -> bool:
         return self.type == UserType.OCP
 
 

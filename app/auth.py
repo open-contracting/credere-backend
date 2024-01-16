@@ -24,7 +24,7 @@ class JWTAuthorizationCredentials(BaseModel):
     message: str
 
 
-class verifyTokeClass(HTTPBearer):
+class JWTAuthorization(HTTPBearer):
     """
     An extension of HTTPBearer authentication to verify JWT (JSON Web Tokens) with public keys.
     This class loads and keeps track of public keys from an external source and verifies incoming tokens.
@@ -103,24 +103,24 @@ class verifyTokeClass(HTTPBearer):
             )
 
 
-JsonPublicKeys = None
+public_keys = None
 
 
 def _get_public_keys() -> JWKS:
     """
     Retrieves the public keys from the well-known JWKS (JSON Web Key Set) endpoint of AWS Cognito.
 
-    The function caches the fetched keys in a global variable `JsonPublicKeys` to avoid repetitive calls
+    The function caches the fetched keys in a global variable `public_keys` to avoid repetitive calls
     to the endpoint.
 
     :return: The parsed JWKS, an object which holds a list of keys.
     """
-    global JsonPublicKeys
-    if JsonPublicKeys is None:
-        JsonPublicKeys = JWKS.model_validate(
+    global public_keys
+    if public_keys is None:
+        public_keys = JWKS.model_validate(
             requests.get(
                 f"https://cognito-idp.{app_settings.aws_region}.amazonaws.com/"
                 f"{app_settings.cognito_pool_id}/.well-known/jwks.json"
             ).json()
         )
-    return JsonPublicKeys
+    return public_keys
