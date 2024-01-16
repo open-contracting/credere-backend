@@ -221,7 +221,7 @@ def update_statistics() -> None:
 
 
 @app.command()
-def SLA_overdue_applications() -> None:
+def sla_overdue_applications() -> None:
     """
     Send SLA (Service Level Agreement) overdue reminders to borrowers.
     """
@@ -242,7 +242,7 @@ def SLA_overdue_applications() -> None:
                     if days_passed > application.lender.sla_days:
                         current_dt = datetime.now(application.created_at.tzinfo)
                         application.overdued_at = current_dt
-                        message_id = mail.send_overdue_application_email_to_OCP(
+                        message_id = mail.send_overdue_application_email_to_ocp(
                             sesClient,
                             application.lender.name,
                         )
@@ -256,11 +256,11 @@ def SLA_overdue_applications() -> None:
 
                 session.commit()
 
-        for id, lender_data in overdue_lenders.items():
+        for lender_id, lender_data in overdue_lenders.items():
             name = lender_data["name"]
             count = lender_data["count"]
             email = lender_data["email"]
-            message_id = mail.send_overdue_application_email_to_FI(sesClient, name, email, count)
+            message_id = mail.send_overdue_application_email_to_fi(sesClient, name, email, count)
 
             models.Message.create(
                 session,

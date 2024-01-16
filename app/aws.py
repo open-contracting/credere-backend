@@ -409,7 +409,7 @@ class CognitoClient:
         :return: The message ids of the sent notifications: (FI_message_id, SME_message_id)
         :raises boto3.exceptions: Any exceptions that occur when sending the notifications.
         """
-        FI_message_id = mail.send_upload_contract_notification_to_FI(
+        FI_message_id = mail.send_upload_contract_notification_to_fi(
             self.ses,
             application,
         )
@@ -428,7 +428,7 @@ class CognitoClient:
         :return: The message id of the sent notification.
         :raises boto3.exceptions: Any exceptions that occur when sending the notification.
         """
-        message_id = mail.send_upload_documents_notifications_to_FI(
+        message_id = mail.send_upload_documents_notifications_to_fi(
             self.ses,
             email,
         )

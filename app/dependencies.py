@@ -25,7 +25,7 @@ def get_cognito_client() -> Generator[CognitoClient, None, None]:
 
 
 async def get_auth_credentials(request: Request) -> auth.JWTAuthorizationCredentials | None:
-    return await auth.verifyTokeClass().__call__(request)
+    return await auth.JWTAuthorization().__call__(request)
 
 
 async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials)) -> str:
@@ -46,6 +46,7 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
     """
     Retrieves the user from the database using the username extracted from the provided JWT credentials.
 
+    :param username
     :param session: Database session to execute the query. Defaults to Depends(get_db).
     :raises HTTPException: If the user does not exist in the database.
     :return: The user object retrieved from the database.
@@ -57,7 +58,7 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
 
 
 async def get_admin_user(user: models.User = Depends(get_user)) -> models.User:
-    if not user.is_OCP():
+    if not user.is_ocp():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Insufficient permissions",
@@ -78,7 +79,7 @@ def raise_if_unauthorized(
         for role in roles:
             match role:
                 case models.UserType.OCP:
-                    if user.is_OCP():
+                    if user.is_ocp():
                         break
                 case models.UserType.FI:
                     if user.lender_id == application.lender_id:

@@ -4,7 +4,7 @@ from app import models
 from app.utils.statistics import update_statistics
 from tests import get_test_db
 
-OCP_user = {
+ocp_user = {
     "email": "OCP_user@example.com",
     "name": "OCP_user@example.com",
     "type": models.UserType.OCP,
@@ -17,7 +17,7 @@ lender = {
     "type": "Some Type",
     "sla_days": 7,
 }
-FI_user_with_lender = {
+fi_user_with_lender = {
     "id": 2,
     "email": "FI_user_with_lender@example.com",
     "name": "Test FI with lender",
@@ -31,14 +31,14 @@ def test_update_statistic(engine, create_and_drop_database):
 
 
 def test_statistics(client):
-    OCP_headers = client.post("/create-test-user-headers", json=OCP_user).json()
-    client.post("/lenders", json=lender, headers=OCP_headers)
-    FI_headers = client.post("/create-test-user-headers", json=FI_user_with_lender).json()
-    response = client.get("/statistics-ocp", headers=OCP_headers)
+    ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
+    client.post("/lenders", json=lender, headers=ocp_headers)
+    fi_headers = client.post("/create-test-user-headers", json=fi_user_with_lender).json()
+    response = client.get("/statistics-ocp", headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.get("/statistics-ocp/opt-in", headers=OCP_headers)
+    response = client.get("/statistics-ocp/opt-in", headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.get("/statistics-fi", headers=FI_headers)
+    response = client.get("/statistics-fi", headers=fi_headers)
     assert response.status_code == status.HTTP_200_OK

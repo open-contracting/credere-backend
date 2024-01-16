@@ -107,7 +107,7 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
 
 
 def _get_base_query(
-    sessionBase: "Query[Application]",
+    session_base: "Query[Application]",
     start_date: datetime | str | None,
     end_date: datetime | str | None,
     lender_id: int | None,
@@ -118,25 +118,24 @@ def _get_base_query(
     This function creates the base query for filtering applications from the database. The filtering is based on
     the provided start_date, end_date, and lender_id (if available).
 
-    :param sessionBase: The base query representing the Application model.
+    :param session_base: The base query representing the Application model.
     :param start_date: The start date for filtering applications. (default: None)
     :param end_date: The end date for filtering applications. (default: None)
     :param lender_id: The ID of the lender for filtering applications. (default: None)
     :return: The base query for filtering applications.
     """
 
-    base_query = None
     if start_date is not None and end_date is not None:
-        base_query = sessionBase.filter(
+        base_query = session_base.filter(
             col(Application.created_at) >= start_date,
             col(Application.created_at) <= end_date,
         )
     elif start_date is not None:
-        base_query = sessionBase.filter(col(Application.created_at) >= start_date)
+        base_query = session_base.filter(col(Application.created_at) >= start_date)
     elif end_date is not None:
-        base_query = sessionBase.filter(col(Application.created_at) <= end_date)
+        base_query = session_base.filter(col(Application.created_at) <= end_date)
     else:
-        base_query = sessionBase
+        base_query = session_base
 
     if lender_id is not None:
         base_query = base_query.filter(Application.lender_id == lender_id)

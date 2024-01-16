@@ -172,16 +172,16 @@ async def get_credit_product(
     :return: The credit product with the specified ID and its associated lender information.
     :raise: HTTPException with status code 404 if the credit product is not found.
     """
-    creditProduct = (
+    credit_product = (
         models.CreditProduct.filter_by(session, "id", credit_product_id)
         .join(models.Lender)
         .options(joinedload(models.CreditProduct.lender))
         .first()
     )
-    if not creditProduct:
+    if not credit_product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
 
-    return creditProduct
+    return credit_product
 
 
 @router.put(

@@ -2,12 +2,12 @@ from fastapi import status
 
 from app.models import UserType
 
-OCP_user = {
+ocp_user = {
     "email": "OCP_test@noreply.open-contracting.org",
     "name": "OCP Test User",
     "type": UserType.OCP,
 }
-FI_user = {
+fi_user = {
     "email": "fi_test@noreply.open-contracting.org",
     "name": "FI Test User",
     "type": UserType.FI,
@@ -21,16 +21,16 @@ test_user = {
 
 
 def test_get_me(client):
-    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
 
     response = client.get("/users/me", headers=ocp_headers)
-    assert response.json()["user"]["name"] == OCP_user["name"]
+    assert response.json()["user"]["name"] == ocp_user["name"]
     assert response.status_code == status.HTTP_200_OK
 
 
 def test_create_and_get_user(client):
-    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=FI_user).json()
+    ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
+    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
 
     response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.json()["name"] == test_user["name"]
@@ -59,8 +59,8 @@ def test_create_and_get_user(client):
 
 
 def test_update_user(client):
-    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=FI_user).json()
+    ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
+    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
 
     response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.json()["name"] == test_user["name"]
@@ -84,7 +84,7 @@ def test_update_user(client):
 
 
 def test_duplicate_user(client):
-    ocp_headers = client.post("/create-test-user-headers", json=OCP_user).json()
+    ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
 
     response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK

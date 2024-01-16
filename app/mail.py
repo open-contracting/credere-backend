@@ -286,7 +286,7 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_passwor
     return send_email(ses, username, prepare_html("New_Account_Created", html_data), False)
 
 
-def send_upload_contract_notification_to_FI(ses: SESClient, application: Application) -> str:
+def send_upload_contract_notification_to_fi(ses: SESClient, application: Application) -> str:
     """
     Sends an email to the Financial Institution (FI) to notify them of a new contract submission.
 
@@ -562,7 +562,7 @@ def send_mail_request_to_sme(ses: SESClient, uuid: str, lender_name: str, email_
     return send_email(ses, sme_email, prepare_html("Request_data_to_SME", html_data))
 
 
-def send_overdue_application_email_to_FI(ses: SESClient, name: str, email: str, amount: int) -> str:
+def send_overdue_application_email_to_fi(ses: SESClient, name: str, email: str, amount: int) -> str:
     """
     Sends an email notification to the Financial Institution (FI) about overdue applications.
 
@@ -583,7 +583,7 @@ def send_overdue_application_email_to_FI(ses: SESClient, name: str, email: str, 
     return send_email(ses, email, prepare_html("Overdue_application_FI", html_data), False)
 
 
-def send_overdue_application_email_to_OCP(ses: SESClient, name: str) -> str:
+def send_overdue_application_email_to_ocp(ses: SESClient, name: str) -> str:
     """
     Sends an email notification to the Open Contracting Partnership (OCP) about overdue applications.
 
@@ -670,7 +670,7 @@ def send_copied_application_notification_to_sme(ses: SESClient, application: App
     )
 
 
-def send_upload_documents_notifications_to_FI(ses: SESClient, email: str) -> str:
+def send_upload_documents_notifications_to_fi(ses: SESClient, email: str) -> str:
     """
     Sends an email notification to the Financial Institution (FI) to notify them that new
     documents have been uploaded and are ready for their review.
