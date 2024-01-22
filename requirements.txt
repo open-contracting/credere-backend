@@ -82,7 +82,7 @@ pandas==2.1.0
     # via -r requirements.in
 parsimonious==0.10.0
     # via pyseeyou
-pillow==10.0.1
+pillow==10.2.0
     # via reportlab
 psycopg2==2.9.6
     # via sqlalchemy
