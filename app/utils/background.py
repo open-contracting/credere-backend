@@ -14,8 +14,6 @@ from app.sources import colombia as data_access
 
 logger = logging.getLogger(__name__)
 
-ApplicationStatus = models.ApplicationStatus
-
 
 def _create_application(
     award_id: int | None,
