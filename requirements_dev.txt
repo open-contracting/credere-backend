@@ -13,7 +13,6 @@ annotated-types==0.6.0
 anyio==3.7.1
     # via
     #   -r requirements.txt
-    #   fastapi
     #   httpcore
     #   starlette
 asttokens==2.2.1
@@ -84,7 +83,7 @@ ecdsa==0.18.0
     #   -r requirements.txt
     #   moto
     #   python-jose
-fastapi==0.104.1
+fastapi==0.109.1
     # via
     #   -r requirements.txt
     #   sentry-sdk
@@ -97,7 +96,9 @@ future==0.18.3
     #   -r requirements.txt
     #   pyseeyou
 greenlet==3.0.0
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -291,7 +292,9 @@ s3transfer==0.6.1
     #   -r requirements.txt
     #   boto3
 sentry-sdk[fastapi]==1.23.1
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   sentry-sdk
 shellingham==1.5.0.post1
     # via
     #   -r requirements.txt
@@ -312,10 +315,11 @@ sqlalchemy[postgresql]==2.0.23
     # via
     #   -r requirements.txt
     #   alembic
+    #   sqlalchemy
     #   sqlmodel
 sqlmodel==0.0.14
     # via -r requirements.txt
-starlette==0.27.0
+starlette==0.35.1
     # via
     #   -r requirements.txt
     #   fastapi
@@ -326,7 +330,9 @@ toolz==0.12.0
 transifex-python==3.4.0
     # via -r requirements.txt
 typer[all]==0.9.0
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   typer
 types-awscrt==0.19.17
     # via botocore-stubs
 types-pyyaml==6.0.12.10
