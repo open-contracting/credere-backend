@@ -1,7 +1,5 @@
-Background tasks
-================
-
-To run the list of commands available use
+Commands
+========
 
 .. code-block:: bash
 
@@ -72,35 +70,15 @@ Statistics updates
 
 This process is automatically run every time a user or MSME action adds new data that affects the statistics. The enpoints that update statistics are:
 
--  post “/applications/access-scheme”
--  post “/applications/{id}/reject-application”,
--  post “/applications/{id}/complete-application”,
--  post “/applications/{id}/approve-application”,
--  post “/applications/{id}/start”
--  post “/applications/confirm-credit-product”,
--  post “/applications/submit”
--  post “/applications/email-sme/”
--  post “/applications/complete-information-request”
--  post “/applications/decline”
--  post “/applications/rollback-decline”,
--  post “/applications/decline-feedback”
-
-Cron
-----
-
-The background processes are set to run as cron jobs in the server. You can configure this using:
-
-.. code-block:: bash
-
-   crontab -e
-
-Sample crontab configuration:
-
-.. code-block:: none
-
-   0 4 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands fetch-awards >> /dev/null 2>&1
-   0 5 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands remove-dated-application-data >> /dev/null 2>&1
-   0 6 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands update-applications-to-lapsed >> /dev/null 2>&1
-   0 7 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands send-reminders >> /dev/null 2>&1
-   0 8 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands sla-overdue-applications >> /dev/null 2>&1
-   0 6 * * * /usr/bin/docker exec credere-backend-1 python -m app.commands update-statistics >> /dev/null 2>&1
+-  ``POST /applications/access-scheme``
+-  ``POST /applications/{id}/reject-application``
+-  ``POST /applications/{id}/complete-application``
+-  ``POST /applications/{id}/approve-application``
+-  ``POST /applications/{id}/start``
+-  ``POST /applications/confirm-credit-product``
+-  ``POST /applications/submit``
+-  ``POST /applications/email-sme/``
+-  ``POST /applications/complete-information-request``
+-  ``POST /applications/decline``
+-  ``POST /applications/rollback-decline``
+-  ``POST /applications/decline-feedback``

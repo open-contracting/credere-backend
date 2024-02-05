@@ -3,9 +3,8 @@ import os
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
-from app import models
-from app.commands import fetch_awards
-from app.utils import background
+from app import models, util
+from app.commands import fetch_award_by_contract_and_supplier, fetch_awards
 from tests import MockResponse, get_test_db
 
 
@@ -129,7 +128,7 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database, 
             [],
             "app.sources.colombia.get_previous_contracts",
         ):
-            background.fetch_previous_awards(models.Borrower(**borrower_result), get_test_db(engine))
+            util.get_previous_awards_from_data_source(models.Borrower(**borrower_result), get_test_db(engine))
 
     assert "No previous contracts" in caplog.text
 
@@ -141,7 +140,7 @@ def test_fetch_previous_borrower_awards(engine, create_and_drop_database, caplog
             contracts,
             "app.sources.colombia.get_previous_contracts",
         ):
-            background.fetch_previous_awards(models.Borrower(**borrower_result), get_test_db(engine))
+            util.get_previous_awards_from_data_source(models.Borrower(**borrower_result), get_test_db(engine))
 
     assert "Previous contracts for" in caplog.text
 
@@ -189,7 +188,7 @@ def test_fetch_award_by_contract_and_supplier_empty(engine, create_and_drop_data
             [],
             "app.sources.colombia.get_contract_by_contract_and_supplier",
         ):
-            background.fetch_award_by_contract_and_supplier(contract_id, supplier_id, get_test_db(engine))
+            fetch_award_by_contract_and_supplier(contract_id, supplier_id, get_test_db(engine))
 
     assert f"The contract with id {contract_id} and supplier id {supplier_id} was not found" in caplog.text
 
@@ -211,7 +210,7 @@ def test_fetch_award_by_contract_and_supplier(engine, create_and_drop_database):
         email,
         "app.sources.make_request_with_retry",
     ):
-        background.fetch_award_by_contract_and_supplier(contract_id, supplier_id, get_test_db(engine))
+        fetch_award_by_contract_and_supplier(contract_id, supplier_id, get_test_db(engine))
 
         with contextmanager(get_test_db(engine))() as session:
             inserted_award = session.query(models.Award).one()
