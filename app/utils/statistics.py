@@ -23,6 +23,7 @@ from app.models import (
 logger = logging.getLogger(__name__)
 
 
+# A background task.
 def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] = get_db) -> None:
     """
     Update and store various statistics related to applications and lenders in the database.

@@ -1,23 +1,146 @@
 import logging
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import datetime
-from typing import Any
+from datetime import datetime, timedelta
+from typing import Any, Callable, Generator
 
 import typer
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
 import app.utils.statistics as statistics_utils
-from app import mail, models
+from app import mail, models, util
 from app.aws import sesClient
-from app.db import get_db, rollback_on_error
+from app.db import get_db, handle_skipped_award, rollback_on_error
+from app.exceptions import SkippedAwardError
 from app.settings import app_settings
-from app.utils import background
+from app.sources import colombia as data_access
 
 logger = logging.getLogger(__name__)
 
 app = typer.Typer()
+
+
+def _create_or_update_borrower_from_data_source(entry: dict[str, Any], session: Session) -> models.Borrower:
+    """
+    Create a new borrower or update an existing borrower based on the entry data.
+
+    :param entry: The dictionary containing the borrower data.
+    :return: The borrower.
+    """
+
+    documento_proveedor = data_access.get_documento_proveedor(entry)
+    borrower_identifier = util.get_secret_hash(documento_proveedor)
+    data = data_access.get_borrower(borrower_identifier, documento_proveedor, entry)
+
+    borrower = models.Borrower.first_by(session, "borrower_identifier", borrower_identifier)
+    if borrower:
+        if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
+            raise ValueError("Skipping Award - Borrower chose to not receive any new opportunity")
+        return borrower.update(session, **data)
+
+    return models.Borrower.create(session, **data)
+
+
+def _create_application(
+    award_id: int | None,
+    borrower_id: int | None,
+    email: str,
+    legal_identifier: str,
+    source_contract_id: str,
+    session: Session,
+) -> models.Application:
+    """
+    Create a new application and insert it into the database.
+
+    :param award_id: The ID of the award associated with the application.
+    :param borrower_id: The ID of the borrower associated with the application.
+    :param email: The email of the borrower.
+    :param legal_identifier: The legal identifier of the borrower.
+    :param source_contract_id: The ID of the source contract.
+    :return: The created application.
+    """
+    award_borrower_identifier: str = util.get_secret_hash(f"{legal_identifier}{source_contract_id}")
+
+    application = models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
+    if application:
+        raise SkippedAwardError(f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}")
+
+    new_uuid: str = util.generate_uuid(award_borrower_identifier)
+    data = {
+        "award_id": award_id,
+        "borrower_id": borrower_id,
+        "primary_email": email,
+        "award_borrower_identifier": award_borrower_identifier,
+        "uuid": new_uuid,
+        "expired_at": datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
+    }
+
+    return models.Application.create(session, **data)
+
+
+def _create_complete_application(contract_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
+    with contextmanager(db_provider)() as session:
+        with handle_skipped_award(session, "Error creating the application"):
+            award = util.create_award_from_data_source(contract_response, session)
+            borrower = _create_or_update_borrower_from_data_source(contract_response, session)
+            award.borrower_id = borrower.id
+
+            application = _create_application(
+                award.id,
+                borrower.id,
+                borrower.email,
+                borrower.legal_identifier,
+                award.source_contract_id,
+                session,
+            )
+
+            message = models.Message.create(
+                session,
+                application=application,
+                type=models.MessageType.BORROWER_INVITATION,
+            )
+
+            message_id = mail.send_invitation_email(
+                sesClient,
+                application.uuid,
+                borrower.email,
+                borrower.legal_name,
+                award.buyer_name,
+                award.title,
+            )
+            message.external_message_id = message_id
+
+            session.commit()
+
+
+def _get_awards_from_data_source(
+    last_updated_award_date: datetime,
+    db_provider: Callable[[], Generator[Session, None, None]],
+    until_date: datetime | None = None,
+) -> None:
+    """
+    Fetch new awards from the given date and process them.
+
+    :param last_updated_award_date: Date string in the format 'YYYY-MM-DD'.
+    :type last_updated_award_date: datetime
+    """
+    index = 0
+    contracts_response = data_access.get_new_contracts(index, last_updated_award_date, until_date)
+    contracts_response_json = contracts_response.json()
+
+    if not contracts_response_json:
+        logger.info("No new contracts")
+        return
+    total = 0
+    while contracts_response_json:
+        total += len(contracts_response_json)
+        for entry in contracts_response_json:
+            _create_complete_application(entry, db_provider)
+        index += 1
+        contracts_response = data_access.get_new_contracts(index, last_updated_award_date, until_date)
+        contracts_response_json = contracts_response.json()
+    logger.info("Total fetched contracts: %d", total)
 
 
 @app.command()
@@ -34,7 +157,7 @@ def fetch_awards() -> None:
     """
     with contextmanager(get_db)() as session:
         last_updated_award_date = models.Award.last_updated(session)
-    background.fetch_new_awards_from_date(last_updated_award_date, get_db)
+    _get_awards_from_data_source(last_updated_award_date, get_db)
 
 
 @app.command()
@@ -44,7 +167,7 @@ def fetch_all_awards_from_period(from_date: datetime, until_date: datetime) -> N
     Fetch all awards, regardless of their status, from the from_date, until_date period.
     Useful when want to force send invitations for awards made in the past.
     """
-    background.fetch_new_awards_from_date(from_date, get_db, until_date)
+    _get_awards_from_data_source(from_date, get_db, until_date)
 
 
 @app.command()
@@ -54,7 +177,11 @@ def fetch_award_by_contract_and_supplier(contract_id: str, supplier_id: str) -> 
     Fetch a specific award by contract_id and supplier_id.
     Useful when want to directly invite a supplier who for some reason wasn't invited by Credere.
     """
-    background.fetch_award_by_contract_and_supplier(contract_id, supplier_id, get_db)
+    contract_response = data_access.get_contract_by_contract_and_supplier(contract_id, supplier_id).json()
+    if not contract_response:
+        logger.info(f"The contract with id {contract_id} and supplier id {supplier_id} was not found")
+        return
+    _create_complete_application(contract_response[0], get_db)
 
 
 @app.command()

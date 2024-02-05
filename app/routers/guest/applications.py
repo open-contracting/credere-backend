@@ -15,7 +15,6 @@ from app.db import get_db, rollback_on_error, transaction_session
 from app.dependencies import ApplicationScope
 from app.settings import app_settings
 from app.util import commit_and_refresh
-from app.utils import background
 from app.utils.statistics import update_statistics
 
 logger = logging.getLogger(__name__)
@@ -203,7 +202,7 @@ async def access_scheme(
         application.status = models.ApplicationStatus.ACCEPTED
         application.expired_at = None
 
-        background_tasks.add_task(background.fetch_previous_awards, application.borrower)
+        background_tasks.add_task(util.get_previous_awards_from_data_source, application.borrower)
         background_tasks.add_task(update_statistics)
         application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
