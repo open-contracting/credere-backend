@@ -14,8 +14,6 @@ from app.sources import colombia as data_access
 
 logger = logging.getLogger(__name__)
 
-DAYS_UNTIL_EXPIRED = 7
-
 ApplicationStatus = models.ApplicationStatus
 
 
