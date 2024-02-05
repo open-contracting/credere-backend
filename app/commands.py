@@ -28,7 +28,6 @@ def _create_or_update_borrower_from_data_source(entry: dict[str, Any], session: 
     :param entry: The dictionary containing the borrower data.
     :return: The borrower.
     """
-
     documento_proveedor = data_access.get_documento_proveedor(entry)
     borrower_identifier = util.get_secret_hash(documento_proveedor)
     data = data_access.get_borrower(borrower_identifier, documento_proveedor, entry)
