@@ -183,12 +183,15 @@ def test_fetch_award_by_contract_and_supplier_empty(engine, create_and_drop_data
     contract_id = "CO1.test.123456"
     supplier_id = "987654321"
     with caplog.at_level("INFO"):
-        with _mock_response(
+        with _mock_function_response(
+            get_test_db(engine)(),
+            "app.db.get_db",
+        ), _mock_response(
             200,
             [],
             "app.sources.colombia.get_contract_by_contract_and_supplier",
         ):
-            fetch_award_by_contract_and_supplier(contract_id, supplier_id, get_test_db(engine))
+            fetch_award_by_contract_and_supplier(contract_id, supplier_id)
 
     assert f"The contract with id {contract_id} and supplier id {supplier_id} was not found" in caplog.text
 
@@ -196,7 +199,10 @@ def test_fetch_award_by_contract_and_supplier_empty(engine, create_and_drop_data
 def test_fetch_award_by_contract_and_supplier(engine, create_and_drop_database):
     contract_id = "CO1.test.123456"
     supplier_id = "987654321"
-    with _mock_response(
+    with _mock_function_response(
+        get_test_db(engine)(),
+        "app.db.get_db",
+    ), _mock_response(
         200,
         contract,
         "app.sources.colombia.get_contract_by_contract_and_supplier",
@@ -210,7 +216,7 @@ def test_fetch_award_by_contract_and_supplier(engine, create_and_drop_database):
         email,
         "app.sources.make_request_with_retry",
     ):
-        fetch_award_by_contract_and_supplier(contract_id, supplier_id, get_test_db(engine))
+        fetch_award_by_contract_and_supplier(contract_id, supplier_id)
 
         with contextmanager(get_test_db(engine))() as session:
             inserted_award = session.query(models.Award).one()
