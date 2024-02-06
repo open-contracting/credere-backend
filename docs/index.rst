@@ -7,7 +7,7 @@ Credere backend
    :caption: contents
    :maxdepth: 1
 
-   background_tasks
+   commands
    email_templates
    contributing/index
 
@@ -22,7 +22,7 @@ Repository structure
    ├── __init__.py
    ├── auth.py              # Permissions and JWT token verification
    ├── aws.py               # Amazon Web Services API clients
-   ├── commands.py          # Typer commands to run background processes
+   ├── commands.py          # Typer commands
    ├── db.py                # SQLAlchemy database operations and session management
    ├── dependencies.py      # FastAPI dependencies
    ├── exceptions.py        # Definitions of exceptions raised by this application
@@ -42,11 +42,10 @@ Repository structure
    │   ├── __init__.py
    │   ├── util.py
    │   └── colombia.py
-   ├── util.py              # Utilities used by both routers and background tasks
+   ├── util.py              # Utilities used by routers, background tasks and commands
    └── utils
        ├── __init__.py
-       ├── background.py    # Functions used by background tasks only
-       ├── statistics.py    # Statistics functions used by statistics routers and background tasks
+       ├── statistics.py    # Statistics functions used by statistics routers, background tasks and commands
        └── tables.py        # Functions for generating tables in downloadable documents
 
 Environment variables

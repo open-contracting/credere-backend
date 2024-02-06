@@ -1,21 +1,28 @@
 import base64
 import hashlib
 import hmac
+import logging
 import os.path
 import uuid
+from contextlib import contextmanager
 from datetime import datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Callable, Generator
 
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlmodel import col
 
 from app import models
+from app.db import get_db, handle_skipped_award
+from app.exceptions import SkippedAwardError
 from app.settings import app_settings
+from app.sources import colombia as data_access
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg"}
+
+logger = logging.getLogger(__name__)
 
 
 class ERROR_CODES(StrEnum):
@@ -129,6 +136,54 @@ def get_modified_data_fields(application: models.Application, session: Session) 
         borrower_documents=application.borrower_documents,
         modified_data_fields=modified_data_fields,
     )
+
+
+def create_award_from_data_source(
+    entry: dict[str, Any], session: Session, borrower_id: int | None = None, previous: bool = False
+) -> models.Award:
+    """
+    Create a new award and insert it into the database.
+
+    :param entry: The dictionary containing the award data.
+    :param borrower_id: The ID of the borrower associated with the award. (default: None)
+    :param previous: Whether the award is a previous award or not. (default: False)
+    :return: The inserted award.
+    """
+    source_contract_id = data_access.get_source_contract_id(entry)
+
+    if models.Award.first_by(session, "source_contract_id", source_contract_id):
+        raise SkippedAwardError(f"[{previous=}] Award already exists with {source_contract_id=} ({entry=})")
+
+    data = data_access.get_award(source_contract_id, entry, borrower_id, previous)
+
+    return models.Award.create(session, **data)
+
+
+# A background task.
+def get_previous_awards_from_data_source(
+    borrower: models.Borrower, db_provider: Callable[[], Generator[Session, None, None]] = get_db
+) -> None:
+    """
+    Fetch previous awards for a borrower that accepted an application. This wont generate an application,
+    it will just insert the awards in our database
+
+    :param borrower: The borrower for whom to fetch and process previous awards.
+    """
+    contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
+    contracts_response_json = contracts_response.json()
+    if not contracts_response_json:
+        logger.info("No previous contracts for %s", borrower.legal_identifier)
+        return
+
+    logger.info(
+        "Previous contracts for %s response length: %s", borrower.legal_identifier, len(contracts_response_json)
+    )
+    for entry in contracts_response_json:
+        with contextmanager(db_provider)() as session:
+            with handle_skipped_award(session, "Error creating the previous award for %s", borrower.legal_identifier):
+                create_award_from_data_source(entry, session, borrower.id, True)
+
+                session.commit()
 
 
 def create_or_update_borrower_document(
