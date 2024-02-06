@@ -161,14 +161,17 @@ def create_award_from_data_source(
 
 # A background task.
 def get_previous_awards_from_data_source(
-    borrower: models.Borrower, db_provider: Callable[[], Generator[Session, None, None]] = get_db
+    borrower_id: int, db_provider: Callable[[], Generator[Session, None, None]] = get_db
 ) -> None:
     """
     Fetch previous awards for a borrower that accepted an application. This wont generate an application,
     it will just insert the awards in our database
 
-    :param borrower: The borrower for whom to fetch and process previous awards.
+    :param borrower_id: The ID of the borrower for whom to fetch and process previous awards.
     """
+    with contextmanager(db_provider)() as session:
+        borrower = models.Borrower.get(session, borrower_id)
+
     contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
     if not contracts_response_json:

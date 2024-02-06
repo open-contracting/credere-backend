@@ -66,6 +66,17 @@ class ActiveRecordMixin:
         return cls.filter_by(session, field, value).first()
 
     @classmethod
+    def get(cls, session: Session, id: int) -> Self:
+        """
+        Get an existing instance by its ID. Raise an exception if not found.
+
+        :param session: The database session.
+        :param id: The ID.
+        :return: The existing instance if found.
+        """
+        return cls.filter_by(session, "id", id).one()
+
+    @classmethod
     def create(cls, session: Session, **data: Any) -> Self:
         """
         Insert a new instance into the database.
