@@ -189,7 +189,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     borrower_response_json = borrower_response.json()
     len_borrower_response_json = len(borrower_response_json)
 
-    if len_borrower_response_json > 1 or len_borrower_response_json < 1:
+    if len_borrower_response_json != 1:
         raise SkippedAwardError(
             f"{len_borrower_response_json} borrowers for {documento_proveedor=} "
             f"({entry=} response={borrower_response_json})"
