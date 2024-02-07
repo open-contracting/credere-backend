@@ -263,6 +263,9 @@ def test_approve_application_cicle(client):
     with patch(
         "app.sources.colombia.get_previous_contracts",
         return_value=MockResponse(status.HTTP_200_OK, source_award),
+    ), patch(
+        "app.sources.colombia._get_remote_award",
+        return_value=(source_award, "url"),
     ):
         response = client.post("/applications/access-scheme", json=application_base)
         assert response.json()["application"]["status"] == models.ApplicationStatus.ACCEPTED

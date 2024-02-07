@@ -135,10 +135,12 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database, 
 
 def test_fetch_previous_borrower_awards(engine, create_and_drop_database, caplog):
     with caplog.at_level("INFO"):
-        with _mock_response(
+        with _mock_whole_process(
             200,
-            contracts,
-            "app.sources.colombia.get_previous_contracts",
+            award,
+            borrower,
+            email,
+            "app.sources.make_request_with_retry",
         ):
             util.get_previous_awards_from_data_source(models.Borrower(**borrower_result), get_test_db(engine))
 
