@@ -134,9 +134,6 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database, 
             200,
             contract,
             "app.sources.colombia.get_contract_by_contract_and_supplier",
-        ), _mock_function_response(
-            "test_hash_12345678",
-            "app.util.get_secret_hash",
         ), _mock_whole_process(
             200,
             award,
@@ -152,7 +149,15 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database, 
 
 def test_fetch_previous_borrower_awards(engine, create_and_drop_database, caplog):
     with caplog.at_level("INFO"):
-        with _mock_whole_process(
+        with _mock_response(
+            200,
+            [{"key": "value"}],
+            "app.sources.colombia.get_previous_contracts",
+        ), _mock_response(
+            200,
+            contract,
+            "app.sources.colombia.get_contract_by_contract_and_supplier",
+        ), _mock_whole_process(
             200,
             award,
             borrower,
