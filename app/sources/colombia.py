@@ -1,7 +1,7 @@
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any
-from urllib import parse
+from urllib.parse import quote_plus
 
 import httpx
 
@@ -20,8 +20,7 @@ HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 
 
 def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, str]], str]:
-    # To avoid '&' been taken as a query parameter
-    params = parse.quote(f"id_del_portafolio='{proceso_de_compra}' AND nombre_del_proveedor='{proveedor_adjudicado}'")
+    params = quote_plus(f"id_del_portafolio='{proceso_de_compra}' AND nombre_del_proveedor='{proveedor_adjudicado}'")
     award_url = f"{URLS['AWARDS']}?$where={params}"
     return sources.make_request_with_retry(award_url, HEADERS).json(), award_url
 
