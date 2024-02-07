@@ -1,10 +1,9 @@
 import io
 import zipfile
-from typing import Any, Generator
+from typing import Any
 
 import pandas as pd
-from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, Response
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from sqlalchemy.orm import Session, joinedload
@@ -27,7 +26,7 @@ async def get_borrower_document(
     id: int,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-) -> StreamingResponse:
+) -> Response:
     """
     Retrieve a borrower document by its ID and stream the file content as a response.
 
@@ -53,14 +52,11 @@ async def get_borrower_document(
                 application_id=document.application.id,
             )
 
-        def file_generator() -> Generator[bytes, None, None]:
-            yield document.file
-
-        headers = {
-            "Content-Disposition": f'attachment; filename="{document.name}"',
-            "Content-Type": "application/octet-stream",
-        }
-        return StreamingResponse(file_generator(), headers=headers)
+        return Response(
+            content=document.file,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{document.name}"'},
+        )
 
 
 @router.get(
@@ -76,7 +72,7 @@ async def download_application(
             roles=(models.UserType.OCP, models.UserType.FI), scopes=(ApplicationScope.UNEXPIRED,)
         )
     ),
-) -> StreamingResponse:
+) -> Response:
     """
     Retrieve all documents related to an application and stream them as a zip file.
 
@@ -134,24 +130,22 @@ async def download_application(
             user_id=user.id,
         )
 
-        headers = {
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Type": "application/zip",
-        }
-
-        return StreamingResponse(io.BytesIO(in_memory_zip.getvalue()), headers=headers)
+        return Response(
+            content=in_memory_zip.getvalue(),
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
 
 @router.get(
     "/applications/export/{lang}",
     tags=["applications"],
-    response_class=StreamingResponse,
 )
 async def export_applications(
     lang: str,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
-) -> StreamingResponse:
+) -> Response:
     applications_query = (
         models.Application.submitted_to_lender(session, user.lender_id)
         .join(models.Borrower)
@@ -174,6 +168,9 @@ async def export_applications(
     df = pd.DataFrame(applicants_list)
     stream = io.StringIO()
     df.to_csv(stream, index=False)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers["Content-Disposition"] = "attachment; filename=export.csv"
-    return response
+
+    return Response(
+        content=stream.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=export.csv"},
+    )
