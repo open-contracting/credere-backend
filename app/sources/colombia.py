@@ -1,6 +1,7 @@
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any
+from urllib import parse
 
 import httpx
 
@@ -19,6 +20,8 @@ HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 
 
 def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, str]], str]:
+    # To avoid '&' been taken as a query parameter
+    proveedor_adjudicado = parse.quote(proveedor_adjudicado)
     award_url = (
         f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
         f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
