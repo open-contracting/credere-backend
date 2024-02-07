@@ -1,7 +1,6 @@
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any
-from urllib import parse
 
 import httpx
 
@@ -21,7 +20,7 @@ HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 
 def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, str]], str]:
     # To avoid '&' been taken as a query parameter
-    proveedor_adjudicado = parse.quote(proveedor_adjudicado)
+    proveedor_adjudicado = proveedor_adjudicado.replace("&", "%26")
     award_url = (
         f"{URLS['AWARDS']}?$where=id_del_portafolio='{proceso_de_compra}'"
         f" AND nombre_del_proveedor='{proveedor_adjudicado}'"
@@ -75,7 +74,7 @@ def get_award(
 
     if not award_response_json:
         # Retry with nombre_del_proveedor="No Adjudicado", in case award data is available, but not the supplier name.
-        award_response_json, _ = _get_remote_award(proceso_de_compra, "No Adjudicado")
+        award_response_json, award_url = _get_remote_award(proceso_de_compra, "No Adjudicado")
         if not award_response_json:
             raise SkippedAwardError(f"[{previous=}] 0 awards from {award_url}")
 
@@ -189,7 +188,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     borrower_response_json = borrower_response.json()
     len_borrower_response_json = len(borrower_response_json)
 
-    if len_borrower_response_json > 1:
+    if len_borrower_response_json > 1 or len_borrower_response_json < 1:
         raise SkippedAwardError(
             f"{len_borrower_response_json} borrowers for {documento_proveedor=} "
             f"({entry=} response={borrower_response_json})"
