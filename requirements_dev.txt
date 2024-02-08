@@ -13,7 +13,6 @@ annotated-types==0.6.0
 anyio==3.7.1
     # via
     #   -r requirements.txt
-    #   fastapi
     #   httpcore
     #   starlette
 asttokens==2.2.1
@@ -84,7 +83,7 @@ ecdsa==0.18.0
     #   -r requirements.txt
     #   moto
     #   python-jose
-fastapi==0.104.1
+fastapi==0.109.1
     # via
     #   -r requirements.txt
     #   sentry-sdk
@@ -320,7 +319,7 @@ sqlalchemy[postgresql]==2.0.23
     #   sqlmodel
 sqlmodel==0.0.14
     # via -r requirements.txt
-starlette==0.27.0
+starlette==0.35.1
     # via
     #   -r requirements.txt
     #   fastapi

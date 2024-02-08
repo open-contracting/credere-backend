@@ -86,7 +86,6 @@ async def decline(
         commit_and_refresh(session, application)
 
         background_tasks.add_task(update_statistics)
-
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -127,7 +126,6 @@ async def rollback_decline(
         commit_and_refresh(session, application)
 
         background_tasks.add_task(update_statistics)
-
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -161,8 +159,10 @@ async def decline_feedback(
         borrower_declined_preferences_data.pop("uuid")
 
         application.borrower_declined_preferences_data = borrower_declined_preferences_data
-        background_tasks.add_task(update_statistics)
+
         application = commit_and_refresh(session, application)
+
+        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -202,9 +202,10 @@ async def access_scheme(
         application.status = models.ApplicationStatus.ACCEPTED
         application.expired_at = None
 
-        background_tasks.add_task(util.get_previous_awards_from_data_source, application.borrower)
-        background_tasks.add_task(update_statistics)
         application = commit_and_refresh(session, application)
+
+        background_tasks.add_task(util.get_previous_awards_from_data_source, application.borrower_id)
+        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -460,6 +461,7 @@ async def confirm_credit_product(
             type=models.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
             application_id=application.id,
         )
+
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
@@ -528,6 +530,7 @@ async def update_apps_send_notifications(
                 type=models.MessageType.SUBMISSION_COMPLETED,
                 external_message_id=message_id,
             )
+
             background_tasks.add_task(update_statistics)
             return serializers.ApplicationResponse(
                 application=cast(models.ApplicationRead, application),
@@ -628,6 +631,7 @@ async def complete_information_request(
             type=models.MessageType.BORROWER_DOCUMENT_UPDATED,
             external_message_id=message_id,
         )
+
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),

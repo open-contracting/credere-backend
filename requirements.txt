@@ -10,7 +10,6 @@ annotated-types==0.6.0
     # via pydantic
 anyio==3.7.1
     # via
-    #   fastapi
     #   httpcore
     #   starlette
 asttokens==2.2.1
@@ -39,7 +38,7 @@ colorama==0.4.6
     # via typer
 ecdsa==0.18.0
     # via python-jose
-fastapi==0.104.1
+fastapi==0.109.1
     # via
     #   -r requirements.in
     #   sentry-sdk
@@ -153,7 +152,7 @@ sqlalchemy[postgresql]==2.0.23
     #   sqlmodel
 sqlmodel==0.0.14
     # via -r requirements.in
-starlette==0.27.0
+starlette==0.35.1
     # via fastapi
 toolz==0.12.0
     # via pyseeyou
