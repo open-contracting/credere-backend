@@ -474,6 +474,66 @@ async def confirm_credit_product(
 
 
 @router.post(
+    "/applications/rollback-confirm-credit-product",
+    tags=["applications"],
+)
+async def rollback_confirm_credit_product(
+    payload: parsers.ApplicationBase,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_as_guest_via_payload(
+            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
+        )
+    ),
+) -> serializers.ApplicationResponse:
+    """
+    Rollbascks the confirmation of the selected credit product for an application.
+
+    :param payload: The application data.
+    :return: The application response containing the updated application, borrower, award, lender, documents, and
+             credit product.
+    :raise: HTTPException with status code 400 if the credit product is not selected or not found.
+    """
+    with rollback_on_error(session):
+        if not application.credit_product_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Credit product not selected",
+            )
+
+        credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
+        if not credit_product:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Credit product not found",
+            )
+
+        application.lender_id = None
+        application.amount_requested = None
+        application.repayment_years = None
+        application.repayment_months = None
+        application.payment_start_date = None
+        application.pending_documents = False
+
+        # Delete the documents
+        for document in application.borrower_documents:
+            session.delete(document)
+
+        application = commit_and_refresh(session, application)
+
+        background_tasks.add_task(update_statistics)
+        return serializers.ApplicationResponse(
+            application=cast(models.ApplicationRead, application),
+            borrower=application.borrower,
+            award=application.award,
+            lender=application.lender,
+            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
+            creditProduct=application.credit_product,
+        )
+
+
+@router.post(
     "/applications/submit",
     tags=["applications"],
 )
