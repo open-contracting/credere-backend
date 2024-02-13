@@ -201,6 +201,7 @@ async def create_test_application(payload: ApplicationTestPayload, session: Sess
         "proveedores_que_manifestaron": "0",
         "respuestas_al_procedimiento": "1",
         "respuestas_externas": "0",
+        "g_nero_representante_legal": "Otro",
         "conteo_de_respuestas_a_ofertas": "0",
         "proveedores_unicos_con": "1",
         "numero_de_lotes": "0",

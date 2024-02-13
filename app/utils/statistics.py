@@ -13,6 +13,7 @@ from app.models import (
     ApplicationStatus,
     Award,
     Borrower,
+    BorrowerSize,
     CreditProduct,
     CreditType,
     Lender,
@@ -22,6 +23,24 @@ from app.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+keys_to_serialize = [
+    "sector_statistics",
+    "rejected_reasons_count_by_reason",
+    "fis_choosen_by_msme",
+    "received_count_by_gender",
+    "submitted_count_by_gender",
+    "approved_count_by_gender",
+    "received_count_by_size",
+    "submitted_count_by_size",
+    "approved_count_by_size",
+    "received_count_distinct_by_gender",
+    "submitted_count_distinct_by_gender",
+    "approved_count_distinct_by_gender",
+    "received_count_distinct_by_size",
+    "submitted_count_distinct_by_size",
+    "approved_count_distinct_by_size",
+]
 
 
 # A background task.
@@ -67,15 +86,8 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
 
             # Get Opt in statistics
             statistics_msme_opt_in = get_msme_opt_in_stats(session)
-            statistics_msme_opt_in["sector_statistics"] = [
-                data.model_dump() for data in statistics_msme_opt_in["sector_statistics"]
-            ]
-            statistics_msme_opt_in["rejected_reasons_count_by_reason"] = [
-                data.model_dump() for data in statistics_msme_opt_in["rejected_reasons_count_by_reason"]
-            ]
-            statistics_msme_opt_in["fis_choosen_by_msme"] = [
-                data.model_dump() for data in statistics_msme_opt_in["fis_choosen_by_msme"]
-            ]
+            for key in keys_to_serialize:
+                statistics_msme_opt_in[key] = [data.model_dump() for data in statistics_msme_opt_in[key]]
 
             Statistic.create_or_update(
                 session,
@@ -290,6 +302,9 @@ def get_general_statistics(
     return general_statistics
 
 
+DEFAULT_MISSING_GENDER = "No definido"
+
+
 # Group of Stat only for OCP USER (msme opt in stats)
 def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     """
@@ -389,10 +404,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.borrower_accepted_at.isnot(None))
         .group_by("gender")
+        .all()
     )
 
     received_count_by_gender = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in received_count_by_gender_query
+        StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
+        for row in received_count_by_gender_query
     ]
 
     submitted_count_by_gender_query = (
@@ -403,10 +420,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.borrower_submitted_at.isnot(None))
         .group_by("gender")
+        .all()
     )
 
     submitted_count_by_gender = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in submitted_count_by_gender_query
+        StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
+        for row in submitted_count_by_gender_query
     ]
 
     approved_count_by_gender_query = (
@@ -417,24 +436,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.lender_completed_at.isnot(None))
         .group_by("gender")
+        .all()
     )
 
     approved_count_by_gender = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in approved_count_by_gender_query
-    ]
-
-    approved_count_by_gender_query = (
-        session.query(
-            cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
-            func.count(Application.id).label("count"),
-        )
-        .join(Award, Application.award_id == Award.id)
-        .filter(Application.lender_completed_at.isnot(None))
-        .group_by("gender")
-    )
-
-    approved_count_by_gender = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in approved_count_by_gender_query
+        StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
+        for row in approved_count_by_gender_query
     ]
 
     received_count_by_size_query = (
@@ -445,10 +452,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Borrower, Application.borrower_id == Borrower.id)
         .filter(Application.borrower_accepted_at.isnot(None))
         .group_by("size")
+        .all()
     )
 
     received_count_by_size = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in received_count_by_size_query
+        StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
+        for row in received_count_by_size_query
     ]
 
     submitted_count_by_size_query = (
@@ -459,10 +468,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Borrower, Application.borrower_id == Borrower.id)
         .filter(Application.borrower_submitted_at.isnot(None))
         .group_by("size")
+        .all()
     )
 
     submitted_count_by_size = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in submitted_count_by_size_query
+        StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
+        for row in submitted_count_by_size_query
     ]
 
     approved_count_by_size_query = (
@@ -473,10 +484,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Borrower, Application.borrower_id == Borrower.id)
         .filter(Application.lender_completed_at.isnot(None))
         .group_by("size")
+        .all()
     )
 
     approved_count_by_size = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in approved_count_by_size_query
+        StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
+        for row in approved_count_by_size_query
     ]
 
     # Bars graph by gender and size (distinct)
@@ -490,10 +503,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.borrower_accepted_at.isnot(None))
         .group_by("gender")
+        .all()
     )
 
     received_count_distinct_by_gender = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in received_count_distinct_by_gender_query
+        StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
+        for row in received_count_distinct_by_gender_query
     ]
 
     submitted_count_distinct_by_gender_query = (
@@ -505,10 +520,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.borrower_submitted_at.isnot(None))
         .group_by("gender")
+        .all()
     )
 
     submitted_count_distinct_by_gender = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in submitted_count_distinct_by_gender_query
+        StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
+        for row in submitted_count_distinct_by_gender_query
     ]
 
     approved_count_distinct_by_gender_query = (
@@ -520,10 +537,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.lender_completed_at.isnot(None))
         .group_by("gender")
+        .all()
     )
 
     approved_count_distinct_by_gender = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in approved_count_distinct_by_gender_query
+        StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
+        for row in approved_count_distinct_by_gender_query
     ]
 
     received_count_distinct_by_size_query = (
@@ -535,10 +554,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.borrower_accepted_at.isnot(None))
         .group_by("size")
+        .all()
     )
 
     received_count_distinct_by_size = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in received_count_distinct_by_size_query
+        StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
+        for row in received_count_distinct_by_size_query
     ]
 
     submitted_count_distinct_by_size_query = (
@@ -550,10 +571,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.borrower_submitted_at.isnot(None))
         .group_by("size")
+        .all()
     )
 
     submitted_count_distinct_by_size = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in submitted_count_distinct_by_size_query
+        StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
+        for row in submitted_count_distinct_by_size_query
     ]
 
     approved_count_distinct_by_size_query = (
@@ -565,10 +588,12 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
         .filter(Application.lender_completed_at.isnot(None))
         .group_by("size")
+        .all()
     )
 
     approved_count_distinct_by_size = [
-        StatisticData(name=row[0].strip('"'), value=row[1]) for row in approved_count_distinct_by_size_query
+        StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
+        for row in approved_count_distinct_by_size_query
     ]
 
     # Average credit disbursed
@@ -576,6 +601,10 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         col(Application.lender_completed_at).isnot(None)
     )
     average_credit_disbursed = average_credit_disbursed_query.scalar() or 0
+    average_credit_disbursed = round(average_credit_disbursed, 2)
+    average_credit_disbursed = (
+        float(average_credit_disbursed) if average_credit_disbursed % 1 else int(average_credit_disbursed)
+    )
 
     # Unique number of SMEs who accessed
     received_count_distinct_query = (
@@ -613,6 +642,11 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
 
     if number_of_days > 0:
         average_applications_per_day = round(total_count / number_of_days, 2)
+        average_applications_per_day = (
+            float(average_applications_per_day)
+            if average_applications_per_day % 1
+            else int(average_applications_per_day)
+        )
     else:
         average_applications_per_day = 0
 
@@ -634,7 +668,7 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         "received_count_distinct_by_size": received_count_distinct_by_size,
         "submitted_count_distinct_by_size": submitted_count_distinct_by_size,
         "approved_count_distinct_by_size": approved_count_distinct_by_size,
-        "average_credit_disbursed": round(average_credit_disbursed, 2),
+        "average_credit_disbursed": average_credit_disbursed,
         "received_count_distinct": received_count_distinct,
         "submitted_count_distinct": submitted_count_distinct,
         "approved_count_distinct": approved_count_distinct,
