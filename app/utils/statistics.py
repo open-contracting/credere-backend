@@ -575,7 +575,7 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     average_credit_disbursed_query = session.query(func.avg(Application.disbursed_final_amount)).filter(
         col(Application.lender_completed_at).isnot(None)
     )
-    average_credit_disbursed = round(average_credit_disbursed_query.scalar(), 2) or 0
+    average_credit_disbursed = average_credit_disbursed_query.scalar() or 0
 
     # Unique number of SMEs who accessed
     received_count_distinct_query = (
@@ -634,7 +634,7 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         "received_count_distinct_by_size": received_count_distinct_by_size,
         "submitted_count_distinct_by_size": submitted_count_distinct_by_size,
         "approved_count_distinct_by_size": approved_count_distinct_by_size,
-        "average_credit_disbursed": average_credit_disbursed,
+        "average_credit_disbursed": round(average_credit_disbursed, 2),
         "received_count_distinct": received_count_distinct,
         "submitted_count_distinct": submitted_count_distinct,
         "approved_count_distinct": approved_count_distinct,
