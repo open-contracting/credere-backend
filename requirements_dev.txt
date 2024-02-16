@@ -95,10 +95,6 @@ future==0.18.3
     # via
     #   -r requirements.txt
     #   pyseeyou
-greenlet==3.0.0
-    # via
-    #   -r requirements.txt
-    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -292,9 +288,7 @@ s3transfer==0.6.1
     #   -r requirements.txt
     #   boto3
 sentry-sdk[fastapi]==1.23.1
-    # via
-    #   -r requirements.txt
-    #   sentry-sdk
+    # via -r requirements.txt
 shellingham==1.5.0.post1
     # via
     #   -r requirements.txt
@@ -315,7 +309,6 @@ sqlalchemy[postgresql]==2.0.23
     # via
     #   -r requirements.txt
     #   alembic
-    #   sqlalchemy
     #   sqlmodel
 sqlmodel==0.0.14
     # via -r requirements.txt
@@ -330,9 +323,7 @@ toolz==0.12.0
 transifex-python==3.4.0
     # via -r requirements.txt
 typer[all]==0.9.0
-    # via
-    #   -r requirements.txt
-    #   typer
+    # via -r requirements.txt
 types-awscrt==0.19.17
     # via botocore-stubs
 types-pyyaml==6.0.12.10
