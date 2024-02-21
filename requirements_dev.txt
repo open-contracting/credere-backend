@@ -70,7 +70,7 @@ coverage[toml]==6.5.0
     #   pytest-cov
 coveralls==3.3.1
     # via -r requirements_dev.in
-cryptography==42.0.0
+cryptography==42.0.4
     # via
     #   moto
     #   python-jose
@@ -83,7 +83,7 @@ ecdsa==0.18.0
     #   -r requirements.txt
     #   moto
     #   python-jose
-fastapi==0.109.1
+fastapi==0.109.2
     # via
     #   -r requirements.txt
     #   sentry-sdk
@@ -312,7 +312,7 @@ sqlalchemy[postgresql]==2.0.23
     #   sqlmodel
 sqlmodel==0.0.14
     # via -r requirements.txt
-starlette==0.35.1
+starlette==0.36.3
     # via
     #   -r requirements.txt
     #   fastapi
