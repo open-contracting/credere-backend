@@ -9,6 +9,7 @@ Credere backend
 
    commands
    email_templates
+   aws
    contributing/index
 
 Repository structure
