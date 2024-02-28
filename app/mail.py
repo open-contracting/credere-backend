@@ -8,7 +8,7 @@ from urllib.parse import quote
 from mypy_boto3_ses.client import SESClient
 
 from app.models import Application
-from app.settings import FATHOM_UTM_PARAMETERS, app_settings
+from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -406,14 +406,15 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: st
 def get_invitation_email_parameters(borrower_name, tender_title, buyer_name, uuid):
     images_base_url = get_images_base_url()
     base_application_url = f"{app_settings.frontend_url}/application/{quote(uuid)}"
+    base_fathom_url = "?utm_source=credere-intro&utm_medium=email&utm_campaign="
     return {
         "AWARD_SUPPLIER_NAME": borrower_name,
         "TENDER_TITLE": tender_title,
         "BUYER_NAME": buyer_name,
         "FIND_OUT_MORE_IMAGE_LINK": f"{images_base_url}/findoutmore.png",
         "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
-        "FIND_OUT_MORE_URL": f"{base_application_url}/intro{FATHOM_UTM_PARAMETERS.format('intro')}",
-        "REMOVE_ME_URL": f"{base_application_url}/decline{FATHOM_UTM_PARAMETERS.format('decline')}",
+        "FIND_OUT_MORE_URL": f"{base_application_url}/intro{base_fathom_url}intro",
+        "REMOVE_ME_URL": f"{base_application_url}/decline{base_fathom_url}decline",
     }
 
 
