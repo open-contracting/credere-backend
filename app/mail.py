@@ -8,7 +8,7 @@ from urllib.parse import quote
 from mypy_boto3_ses.client import SESClient
 
 from app.models import Application
-from app.settings import app_settings
+from app.settings import FATHOM_UTM_PARAMETERS, app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -403,6 +403,20 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: st
     return send_email(ses, username, prepare_html("Reset_password", html_data), False)
 
 
+def get_invitation_email_parameters(borrower_name, tender_title, buyer_name, uuid):
+    images_base_url = get_images_base_url()
+    base_application_url = f"{app_settings.frontend_url}/application/{quote(uuid)}"
+    return {
+        "AWARD_SUPPLIER_NAME": borrower_name,
+        "TENDER_TITLE": tender_title,
+        "BUYER_NAME": buyer_name,
+        "FIND_OUT_MORE_IMAGE_LINK": f"{images_base_url}/findoutmore.png",
+        "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
+        "FIND_OUT_MORE_URL": f"{base_application_url}/intro{FATHOM_UTM_PARAMETERS.format('intro')}",
+        "REMOVE_ME_URL": f"{base_application_url}/decline{FATHOM_UTM_PARAMETERS.format('decline')}",
+    }
+
+
 def send_invitation_email(
     ses: SESClient, uuid: str, email: str, borrower_name: str, buyer_name: str, tender_title: str
 ) -> str:
@@ -420,18 +434,15 @@ def send_invitation_email(
     :param tender_title: The title of the tender.
     :return: The MessageId of the sent email.
     """
-    images_base_url = get_images_base_url()
-    html_data = {
-        "AWARD_SUPPLIER_NAME": borrower_name,
-        "TENDER_TITLE": tender_title,
-        "BUYER_NAME": buyer_name,
-        "FIND_OUT_MORE_IMAGE_LINK": f"{images_base_url}/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
-        "FIND_OUT_MORE_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/intro",
-        "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
-    }
 
-    return send_email(ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data))
+    return send_email(
+        ses,
+        email,
+        prepare_html(
+            "Access_to_credit_scheme_for_MSMEs",
+            get_invitation_email_parameters(borrower_name, tender_title, buyer_name, uuid),
+        ),
+    )
 
 
 def send_mail_intro_reminder(
@@ -451,18 +462,15 @@ def send_mail_intro_reminder(
     :param tender_title: The title of the tender.
     :return: The MessageId of the sent email.
     """
-    images_base_url = get_images_base_url()
-    html_data = {
-        "AWARD_SUPPLIER_NAME": borrower_name,
-        "TENDER_TITLE": tender_title,
-        "BUYER_NAME": buyer_name,
-        "FIND_OUT_MORE_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/intro",
-        "FIND_OUT_MORE_IMAGE_LINK": f"{images_base_url}/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": f"{images_base_url}/removeme.png",
-        "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(uuid)}/decline",
-    }
 
-    return send_email(ses, email, prepare_html("Access_to_credit_scheme_for_MSMEs", html_data))
+    return send_email(
+        ses,
+        email,
+        prepare_html(
+            "Access_to_credit_scheme_for_MSMEs",
+            get_invitation_email_parameters(borrower_name, tender_title, buyer_name, uuid),
+        ),
+    )
 
 
 def send_mail_submit_reminder(

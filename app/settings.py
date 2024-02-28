@@ -103,3 +103,7 @@ RESET_PASSWORD_TEMPLATE_NAME = "credere-ResetPassword"
 ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME = "credere-AccessToCreditSchemeForMSMEs"
 INTRO_REMINDER_TEMPLATE_NAME = "credere-AccessToCreditSchemeReminder"
 APPLICATION_REMINDER_TEMPLATE_NAME = "credere-ApplicationReminder"
+
+# https://usefathom.com/utm-builder
+# Fathom UTM builder parameters
+FATHOM_UTM_PARAMETERS = "?utm_source=credere-intro&utm_medium=email&utm_campaign={}"
