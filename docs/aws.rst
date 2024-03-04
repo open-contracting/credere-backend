@@ -78,12 +78,6 @@ This follows `Monitor email sending using Amazon SES event publishing <https://d
    -  ses:UpdateConfigurationSetEventDestination
    -  ses:DeleteConfigurationSetEventDestination
 
--  Other
-
-   -  ses:PutConfigurationSetDeliveryOption
-   -  ses:UpdateConfigurationSetReputationMetricsEnabled
-   -  ses:UpdateConfigurationSetSendingEnabled
-
 Safe permissions
 ~~~~~~~~~~~~~~~~
 
