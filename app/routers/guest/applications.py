@@ -367,6 +367,14 @@ async def rollback_select_credit_product(
 
         application.credit_product_id = None
         application.borrower_credit_product_selected_at = None
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.APPLICATION_ROLLBACK_SELECT_PRODUCT,
+            data={},
+            application_id=application.id,
+        )
+
         application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
@@ -520,8 +528,14 @@ async def rollback_confirm_credit_product(
         for document in application.borrower_documents:
             session.delete(document)
 
-        application = commit_and_refresh(session, application)
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.APPLICATION_ROLLBACK_CONFIRM_CREDIT_PRODUCT,
+            data={},
+            application_id=application.id,
+        )
 
+        application = commit_and_refresh(session, application)
         background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
