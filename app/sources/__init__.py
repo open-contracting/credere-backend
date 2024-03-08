@@ -28,10 +28,10 @@ def make_request_with_retry(url: str, headers: dict[str, str]) -> httpx.Response
     """
 
     transport = httpx.HTTPTransport(retries=3, verify=False)
-    client = httpx.Client(transport=transport, timeout=60, headers=headers)
+    client = httpx.Client(transport=transport, timeout=60, headers=headers, params={})
 
     try:
-        response = client.get(url)
+        response = client.get(url, params={})
         response.raise_for_status()
         return response
     finally:
