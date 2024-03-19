@@ -126,7 +126,7 @@ def get_new_contracts(index: int, from_date: datetime, until_date: datetime | No
         else:
             converted_date = datetime.now() - timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
         url = (
-            f"{base_url} AND estado_contrato = 'Borrador' "
+            f"{base_url} AND caseless_not_one_of( `estado_contrato`, 'Cancelado', 'Cerrado', 'cedido') "
             f"AND ultima_actualizacion >= '{converted_date.strftime(date_format)}'"
         )
 
