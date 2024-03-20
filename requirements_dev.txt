@@ -19,7 +19,7 @@ asttokens==2.2.1
     # via
     #   -r requirements.txt
     #   transifex-python
-black==22.6.0
+black==24.3.0
     # via -r requirements_dev.in
 boto3==1.26.136
     # via
@@ -95,6 +95,8 @@ future==0.18.3
     # via
     #   -r requirements.txt
     #   pyseeyou
+greenlet==3.0.3
+    # via sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -161,6 +163,7 @@ numpy==1.26.0
     #   pandas
 packaging==23.1
     # via
+    #   black
     #   build
     #   pytest
 pandas==2.1.0
