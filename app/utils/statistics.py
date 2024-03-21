@@ -27,17 +27,17 @@ logger = logging.getLogger(__name__)
 keys_to_serialize = [
     "sector_statistics",
     "rejected_reasons_count_by_reason",
-    "fis_choosen_by_msme",
-    "received_count_by_gender",
+    "fis_chosen_by_msme",
+    "accepted_count_by_gender",
     "submitted_count_by_gender",
     "approved_count_by_gender",
-    "received_count_by_size",
+    "accepted_count_by_size",
     "submitted_count_by_size",
     "approved_count_by_size",
-    "received_count_distinct_by_gender",
+    "accepted_count_distinct_by_gender",
     "submitted_count_distinct_by_gender",
     "approved_count_distinct_by_gender",
-    "received_count_distinct_by_size",
+    "accepted_count_distinct_by_size",
     "submitted_count_distinct_by_size",
     "approved_count_distinct_by_size",
 ]
@@ -317,25 +317,17 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     :return: A dictionary containing the statistics specific to MSME opt-in applications.
     """
 
-    logger.info("calculating msme opt in stas for lender ")
+    WOMAN_VALUES = ("Femenino", "Mujer")
+    logger.info("calculating msme opt in stats for OCP ")
 
-    # opt in--------
-    opt_in_query = session.query(Application).filter(col(Application.borrower_accepted_at).isnot(None))
-    opt_in_query_count = opt_in_query.count()
+    unique_smes_contacted_by_credere = session.query(Borrower).count()
 
-    # opt in %--------
+    accepted_query = session.query(Application).filter(col(Application.borrower_accepted_at).isnot(None))
+    accepted_query_count = accepted_query.count()
+
     total_applications = session.query(Application).count()
-    if total_applications != 0:
-        opt_in_percentage = (
-            session.query(Application).filter(col(Application.borrower_accepted_at).isnot(None)).count()
-            / total_applications
-        ) * 100
-        opt_in_percentage = round(opt_in_percentage, 2)
-    else:
-        opt_in_percentage = 0
+    accepted_percentage = round(((accepted_query_count / total_applications) * 100), 2) if total_applications else 0
 
-    # opt proportion by sector %--------
-    # Calculate total submitted application count
     sectors_count_query = (
         session.query(Borrower.sector, func.count(distinct(Application.id)).label("count"))
         .join(Application, Borrower.id == Application.borrower_id)
@@ -386,41 +378,51 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         StatisticData(name="other", value=other_count),
     ]
     # Bars graph
-    fis_choosen_by_msme_query = (
+    fis_chosen_by_msme_query = (
         session.query(Lender.name, func.count(Application.id))
         .join(Lender, Application.lender_id == Lender.id)
         .filter(col(Application.borrower_submitted_at).isnot(None))
         .group_by(Lender.name)
         .all()
     )
-    fis_choosen_by_msme = [StatisticData(name=row[0], value=row[1]) for row in fis_choosen_by_msme_query]
+    fis_chosen_by_msme = [StatisticData(name=row[0], value=row[1]) for row in fis_chosen_by_msme_query]
 
-    # Bars graph by gender and size
-    received_count_by_gender_query = (
-        session.query(
-            cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
-            func.count(Application.id).label("count"),
-        )
-        .join(Award, Application.award_id == Award.id)
+    accepted_count_woman_unique = (
+        session.query(Borrower.id)
+        .join(Award, Award.borrower_id == Borrower.id)
+        .join(Application, Application.borrower_id == Borrower.id)
         .filter(Application.borrower_accepted_at.isnot(None))
-        .group_by("gender")
-        .all()
+        .filter(Award.source_data_contracts["g_nero_representante_legal"].astext.in_(WOMAN_VALUES))
+        .group_by(Borrower.id)
+        .count()
     )
 
-    received_count_by_gender = [
+    approved_count_woman = (
+        session.query(Application.id)
+        .join(Award, Award.id == Application.award_id)
+        .filter(Application.lender_completed_at.isnot(None))
+        .filter(Award.source_data_contracts["g_nero_representante_legal"].astext.in_(WOMAN_VALUES))
+        .group_by(Application.id)
+        .count()
+    )
+
+    base_count_by_gender_query = session.query(
+        cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
+        func.count(Application.id).label("count"),
+    ).join(Award, Application.award_id == Award.id)
+
+    # Bars graph by gender and size
+    accepted_count_by_gender_query = (
+        base_count_by_gender_query.filter(Application.borrower_accepted_at.isnot(None)).group_by("gender").all()
+    )
+
+    accepted_count_by_gender = [
         StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
-        for row in received_count_by_gender_query
+        for row in accepted_count_by_gender_query
     ]
 
     submitted_count_by_gender_query = (
-        session.query(
-            cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
-            func.count(Application.id).label("count"),
-        )
-        .join(Award, Application.award_id == Award.id)
-        .filter(Application.borrower_submitted_at.isnot(None))
-        .group_by("gender")
-        .all()
+        base_count_by_gender_query.filter(Application.borrower_submitted_at.isnot(None)).group_by("gender").all()
     )
 
     submitted_count_by_gender = [
@@ -428,15 +430,10 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         for row in submitted_count_by_gender_query
     ]
 
+    approved_count = session.query(Application.id).filter(Application.lender_completed_at.isnot(None)).count()
+
     approved_count_by_gender_query = (
-        session.query(
-            cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
-            func.count(Application.id).label("count"),
-        )
-        .join(Award, Application.award_id == Award.id)
-        .filter(Application.lender_completed_at.isnot(None))
-        .group_by("gender")
-        .all()
+        base_count_by_gender_query.filter(Application.lender_completed_at.isnot(None)).group_by("gender").all()
     )
 
     approved_count_by_gender = [
@@ -444,31 +441,22 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         for row in approved_count_by_gender_query
     ]
 
-    received_count_by_size_query = (
-        session.query(
-            Borrower.size.label("size"),
-            func.count(Application.id).label("count"),
-        )
-        .join(Borrower, Application.borrower_id == Borrower.id)
-        .filter(Application.borrower_accepted_at.isnot(None))
-        .group_by("size")
-        .all()
+    base_count_by_size_query = session.query(
+        Borrower.size.label("size"),
+        func.count(Application.id).label("count"),
+    ).join(Borrower, Application.borrower_id == Borrower.id)
+
+    accepted_count_by_size_query = (
+        base_count_by_size_query.filter(Application.borrower_accepted_at.isnot(None)).group_by("size").all()
     )
 
-    received_count_by_size = [
+    accepted_count_by_size = [
         StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
-        for row in received_count_by_size_query
+        for row in accepted_count_by_size_query
     ]
 
     submitted_count_by_size_query = (
-        session.query(
-            Borrower.size.label("size"),
-            func.count(Application.id).label("count"),
-        )
-        .join(Borrower, Application.borrower_id == Borrower.id)
-        .filter(Application.borrower_submitted_at.isnot(None))
-        .group_by("size")
-        .all()
+        base_count_by_size_query.filter(Application.borrower_submitted_at.isnot(None)).group_by("size").all()
     )
 
     submitted_count_by_size = [
@@ -477,14 +465,7 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     ]
 
     approved_count_by_size_query = (
-        session.query(
-            Borrower.size.label("size"),
-            func.count(Application.id).label("count"),
-        )
-        .join(Borrower, Application.borrower_id == Borrower.id)
-        .filter(Application.lender_completed_at.isnot(None))
-        .group_by("size")
-        .all()
+        base_count_by_size_query.filter(Application.lender_completed_at.isnot(None)).group_by("size").all()
     )
 
     approved_count_by_size = [
@@ -493,32 +474,28 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     ]
 
     # Bars graph by gender and size (distinct)
-
-    received_count_distinct_by_gender_query = (
+    base_count_distinct_by_gender_query = (
         session.query(
             cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
             func.count(distinct(Borrower.id)).label("count"),
         )
         .join(Application, Application.borrower_id == Borrower.id)
         .join(Award, Application.award_id == Award.id)
-        .filter(Application.borrower_accepted_at.isnot(None))
+    )
+
+    accepted_count_distinct_by_gender_query = (
+        base_count_distinct_by_gender_query.filter(Application.borrower_accepted_at.isnot(None))
         .group_by("gender")
         .all()
     )
 
-    received_count_distinct_by_gender = [
+    accepted_count_distinct_by_gender = [
         StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
-        for row in received_count_distinct_by_gender_query
+        for row in accepted_count_distinct_by_gender_query
     ]
 
     submitted_count_distinct_by_gender_query = (
-        session.query(
-            cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
-            func.count(distinct(Borrower.id)).label("count"),
-        )
-        .join(Application, Application.borrower_id == Borrower.id)
-        .join(Award, Application.award_id == Award.id)
-        .filter(Application.borrower_submitted_at.isnot(None))
+        base_count_distinct_by_gender_query.filter(Application.borrower_submitted_at.isnot(None))
         .group_by("gender")
         .all()
     )
@@ -529,13 +506,7 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     ]
 
     approved_count_distinct_by_gender_query = (
-        session.query(
-            cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
-            func.count(distinct(Borrower.id)).label("count"),
-        )
-        .join(Application, Application.borrower_id == Borrower.id)
-        .join(Award, Application.award_id == Award.id)
-        .filter(Application.lender_completed_at.isnot(None))
+        base_count_distinct_by_gender_query.filter(Application.lender_completed_at.isnot(None))
         .group_by("gender")
         .all()
     )
@@ -545,33 +516,26 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         for row in approved_count_distinct_by_gender_query
     ]
 
-    received_count_distinct_by_size_query = (
+    base_count_distinct_by_size_query = (
         session.query(
             Borrower.size.label("size"),
             func.count(distinct(Borrower.id)).label("count"),
         )
         .join(Application, Application.borrower_id == Borrower.id)
         .join(Award, Application.award_id == Award.id)
-        .filter(Application.borrower_accepted_at.isnot(None))
-        .group_by("size")
-        .all()
     )
 
-    received_count_distinct_by_size = [
+    accepted_count_distinct_by_size_query = (
+        base_count_distinct_by_size_query.filter(Application.borrower_accepted_at.isnot(None)).group_by("size").all()
+    )
+
+    accepted_count_distinct_by_size = [
         StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
-        for row in received_count_distinct_by_size_query
+        for row in accepted_count_distinct_by_size_query
     ]
 
     submitted_count_distinct_by_size_query = (
-        session.query(
-            Borrower.size.label("size"),
-            func.count(distinct(Borrower.id)).label("count"),
-        )
-        .join(Application, Application.borrower_id == Borrower.id)
-        .join(Award, Application.award_id == Award.id)
-        .filter(Application.borrower_submitted_at.isnot(None))
-        .group_by("size")
-        .all()
+        base_count_distinct_by_size_query.filter(Application.borrower_submitted_at.isnot(None)).group_by("size").all()
     )
 
     submitted_count_distinct_by_size = [
@@ -579,16 +543,28 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
         for row in submitted_count_distinct_by_size_query
     ]
 
-    approved_count_distinct_by_size_query = (
-        session.query(
-            Borrower.size.label("size"),
-            func.count(distinct(Borrower.id)).label("count"),
-        )
+    approved_count_distinct_micro = (
+        session.query(Borrower.id)
         .join(Application, Application.borrower_id == Borrower.id)
-        .join(Award, Application.award_id == Award.id)
         .filter(Application.lender_completed_at.isnot(None))
-        .group_by("size")
-        .all()
+        .filter(Borrower.size == BorrowerSize.MICRO)
+        .group_by(Borrower.id)
+        .count()
+    )
+
+    approved_count_distinct_micro_woman = (
+        session.query(Borrower.id)
+        .join(Application, Application.borrower_id == Borrower.id)
+        .join(Award, Award.id == Application.award_id)
+        .filter(Application.lender_completed_at.isnot(None))
+        .filter(Award.source_data_contracts["g_nero_representante_legal"].astext.in_(WOMAN_VALUES))
+        .filter(Borrower.size == BorrowerSize.MICRO)
+        .group_by(Borrower.id)
+        .count()
+    )
+
+    approved_count_distinct_by_size_query = (
+        base_count_distinct_by_size_query.filter(Application.lender_completed_at.isnot(None)).group_by("size").all()
     )
 
     approved_count_distinct_by_size = [
@@ -597,46 +573,55 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     ]
 
     # Average credit disbursed
+    total_credit_disbursed = (
+        session.query(func.sum(Application.disbursed_final_amount))
+        .filter(col(Application.lender_completed_at).isnot(None))
+        .scalar()
+    )
+
+    total_credit_disbursed_micro = (
+        session.query(func.sum(Application.disbursed_final_amount))
+        .join(Borrower, Borrower.id == Application.borrower_id)
+        .filter(col(Application.lender_completed_at).isnot(None))
+        .filter(Borrower.size == BorrowerSize.MICRO)
+        .scalar()
+    )
+
     average_credit_disbursed_query = session.query(func.avg(Application.disbursed_final_amount)).filter(
         col(Application.lender_completed_at).isnot(None)
     )
-    average_credit_disbursed = average_credit_disbursed_query.scalar() or 0
-    average_credit_disbursed = round(average_credit_disbursed, 2)
+    average_credit_disbursed = round((average_credit_disbursed_query.scalar() or 0), 2)
     average_credit_disbursed = (
         float(average_credit_disbursed) if average_credit_disbursed % 1 else int(average_credit_disbursed)
     )
 
     # Unique number of SMEs who accessed
-    received_count_distinct_query = (
+    accepted_count_distinct = (
         session.query(func.count(distinct(Borrower.id)))
         .join(Application, Application.borrower_id == Borrower.id)
         .filter(col(Application.borrower_accepted_at).isnot(None))
-    )
-    received_count_distinct = received_count_distinct_query.scalar() or 0
+    ).scalar() or 0
 
-    submitted_count_distinct_query = (
+    submitted_count_distinct = (
         session.query(func.count(distinct(Borrower.id)))
         .join(Application, Application.borrower_id == Borrower.id)
         .filter(col(Application.borrower_submitted_at).isnot(None))
-    )
-    submitted_count_distinct = submitted_count_distinct_query.scalar() or 0
+    ).scalar() or 0
 
-    approved_count_distinct_query = (
+    approved_count_distinct = (
         session.query(func.count(distinct(Borrower.id)))
         .join(Application, Application.borrower_id == Borrower.id)
         .filter(col(Application.lender_completed_at).isnot(None))
-    )
-    approved_count_distinct = approved_count_distinct_query.scalar() or 0
+    ).scalar() or 0
 
     # Average applications created per day
 
-    average_applications_per_day_query = session.query(
+    results_application_per_day = session.query(
         select(func.date_trunc("day", Application.created_at).label("day"), func.count().label("count_per_day"))
         .group_by(func.date_trunc("day", Application.created_at))
         .alias("daily_counts")
-    )
+    ).all()
 
-    results_application_per_day = average_applications_per_day_query.all()
     total_count = sum(result.count_per_day for result in results_application_per_day)
     number_of_days = len(results_application_per_day)
 
@@ -650,29 +635,37 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     else:
         average_applications_per_day = 0
 
-    opt_in_statistics = {
-        "opt_in_query_count": opt_in_query_count,
-        "opt_in_percentage": opt_in_percentage,
+    return {
+        # Mastercard reporting related statistics
+        "unique_smes_contacted_by_credere": unique_smes_contacted_by_credere,
+        "applications_created": total_applications,
+        "accepted_count_woman": accepted_count_woman_unique,
+        "approved_count": approved_count,
+        "approved_count_woman": approved_count_woman,
+        "total_credit_disbursed": total_credit_disbursed,
+        "approved_count_distinct_micro": approved_count_distinct_micro,
+        "approved_count_distinct_micro_woman": approved_count_distinct_micro_woman,
+        "total_credit_disbursed_micro": total_credit_disbursed_micro,
+        "accepted_count": accepted_query_count,
+        "accepted_percentage": accepted_percentage,
         "sector_statistics": sectors_count,
         "rejected_reasons_count_by_reason": rejected_reasons_count_by_reason,
-        "fis_choosen_by_msme": fis_choosen_by_msme,
-        "received_count_by_gender": received_count_by_gender,
+        "fis_chosen_by_msme": fis_chosen_by_msme,
+        "accepted_count_by_gender": accepted_count_by_gender,
         "submitted_count_by_gender": submitted_count_by_gender,
         "approved_count_by_gender": approved_count_by_gender,
-        "received_count_by_size": received_count_by_size,
+        "accepted_count_by_size": accepted_count_by_size,
         "submitted_count_by_size": submitted_count_by_size,
         "approved_count_by_size": approved_count_by_size,
-        "received_count_distinct_by_gender": received_count_distinct_by_gender,
+        "accepted_count_distinct_by_gender": accepted_count_distinct_by_gender,
         "submitted_count_distinct_by_gender": submitted_count_distinct_by_gender,
         "approved_count_distinct_by_gender": approved_count_distinct_by_gender,
-        "received_count_distinct_by_size": received_count_distinct_by_size,
+        "accepted_count_distinct_by_size": accepted_count_distinct_by_size,
         "submitted_count_distinct_by_size": submitted_count_distinct_by_size,
         "approved_count_distinct_by_size": approved_count_distinct_by_size,
         "average_credit_disbursed": average_credit_disbursed,
-        "received_count_distinct": received_count_distinct,
+        "accepted_count_distinct": accepted_count_distinct,
         "submitted_count_distinct": submitted_count_distinct,
         "approved_count_distinct": approved_count_distinct,
         "average_applications_per_day": average_applications_per_day,
     }
-
-    return opt_in_statistics
