@@ -573,18 +573,20 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     ]
 
     # Average credit disbursed
-    total_credit_disbursed = (
+    total_credit_disbursed = int(
         session.query(func.sum(Application.disbursed_final_amount))
         .filter(col(Application.lender_completed_at).isnot(None))
         .scalar()
+        or 0
     )
 
-    total_credit_disbursed_micro = (
+    total_credit_disbursed_micro = int(
         session.query(func.sum(Application.disbursed_final_amount))
         .join(Borrower, Borrower.id == Application.borrower_id)
         .filter(col(Application.lender_completed_at).isnot(None))
         .filter(Borrower.size == BorrowerSize.MICRO)
         .scalar()
+        or 0
     )
 
     average_credit_disbursed_query = session.query(func.avg(Application.disbursed_final_amount)).filter(
