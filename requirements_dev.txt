@@ -44,8 +44,10 @@ certifi==2023.7.22
     #   httpx
     #   requests
     #   sentry-sdk
-cffi==1.15.1
-    # via cryptography
+cffi==1.16.0
+    # via
+    #   -r requirements.txt
+    #   cryptography
 cfgv==3.3.1
     # via pre-commit
 charset-normalizer==3.1.0
@@ -70,9 +72,11 @@ coverage[toml]==6.5.0
     #   pytest-cov
 coveralls==3.3.1
     # via -r requirements_dev.in
-cryptography==42.0.4
+cryptography==42.0.5
     # via
+    #   -r requirements.txt
     #   moto
+    #   pyjwt
     #   python-jose
 distlib==0.3.6
     # via virtualenv
@@ -80,7 +84,6 @@ docopt==0.6.2
     # via coveralls
 ecdsa==0.18.0
     # via
-    #   -r requirements.txt
     #   moto
     #   python-jose
 fastapi==0.109.2
@@ -194,13 +197,14 @@ psycopg2==2.9.6
     #   sqlalchemy
 pyasn1==0.5.0
     # via
-    #   -r requirements.txt
     #   python-jose
     #   rsa
 pycodestyle==2.10.0
     # via flake8
 pycparser==2.21
-    # via cffi
+    # via
+    #   -r requirements.txt
+    #   cffi
 pydantic==2.5.2
     # via
     #   -r requirements.txt
@@ -219,6 +223,8 @@ pygments==2.15.1
     # via
     #   -r requirements.txt
     #   rich
+pyjwt[crypto]==2.8.0
+    # via -r requirements.txt
 pyproject-hooks==1.0.0
     # via build
 pyseeyou==1.0.2
@@ -245,9 +251,7 @@ python-dotenv==1.0.0
     #   -r requirements.txt
     #   pydantic-settings
 python-jose[cryptography]==3.3.0
-    # via
-    #   -r requirements.txt
-    #   moto
+    # via moto
 python-multipart==0.0.7
     # via -r requirements.txt
 pytz==2023.3
@@ -283,9 +287,7 @@ rich==13.4.2
     #   -r requirements.txt
     #   typer
 rsa==4.9
-    # via
-    #   -r requirements.txt
-    #   python-jose
+    # via python-jose
 s3transfer==0.6.1
     # via
     #   -r requirements.txt
