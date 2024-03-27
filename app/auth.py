@@ -1,10 +1,10 @@
 from typing import Any
 
+import jwt
 import requests
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPBearer
-from jose import JWTError, jwk, jwt
-from jose.utils import base64url_decode
+from jwt.utils import base64url_decode
 from pydantic import BaseModel
 
 from app.settings import app_settings
@@ -55,10 +55,14 @@ class JWTAuthorization(HTTPBearer):
         except KeyError:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="JWK public key not found")
 
-        key = jwk.construct(public_key)
-        decoded_signature = base64url_decode(jwt_credentials.signature.encode())
+        msg = jwt_credentials.message.encode()
+        sig = base64url_decode(jwt_credentials.signature.encode())
 
-        return key.verify(jwt_credentials.message.encode(), decoded_signature)
+        obj = jwt.PyJWK(public_key)
+        alg_obj = obj.Algorithm
+        prepared_key = alg_obj.prepare_key(obj.key)
+
+        return alg_obj.verify(msg, prepared_key, sig)
 
     async def __call__(self, request: Request) -> JWTAuthorizationCredentials | None:
         """
@@ -85,11 +89,11 @@ class JWTAuthorization(HTTPBearer):
                 jwt_credentials = JWTAuthorizationCredentials(
                     jwt_token=jwt_token,
                     header=jwt.get_unverified_header(jwt_token),
-                    claims=jwt.get_unverified_claims(jwt_token),
+                    claims=jwt.decode(jwt_token, options={"verify_signature": False}),
                     signature=signature,
                     message=message,
                 )
-            except JWTError:
+            except jwt.InvalidTokenError:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid")
 
             if not self.verify_jwk_token(jwt_credentials):
