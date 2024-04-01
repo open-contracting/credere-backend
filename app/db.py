@@ -5,6 +5,7 @@ from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app import models
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 
@@ -47,9 +48,16 @@ def handle_skipped_award(session: Session, msg: str, *args: str) -> Generator[Se
         yield
     # Don't display tracebacks in emails from cron jobs for anticipated errors.
     except SkippedAwardError as e:
-        # msg can contain %s placeholders.
-        logger.error(f"{msg}: {e}", *args)
         session.rollback()
+        models.EventLog.create(
+            session,
+            category=e.category,
+            # msg can contain %s placeholders.
+            message=f"{msg}: {e}",
+            data=e.data,
+            url=e.url,
+        )
+        session.commit()
     except Exception:
         session.rollback()
         raise

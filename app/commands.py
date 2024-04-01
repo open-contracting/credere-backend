@@ -63,7 +63,10 @@ def _create_application(
 
     application = models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
     if application:
-        raise SkippedAwardError(f"{application.id=} already exists for {legal_identifier=} {source_contract_id=}")
+        raise SkippedAwardError(
+            f"{application.id=} already exists",
+            data={"legal_identifier": legal_identifier, "sources_contract_id": source_contract_id},
+        )
 
     new_uuid: str = util.generate_uuid(award_borrower_identifier)
     data = {

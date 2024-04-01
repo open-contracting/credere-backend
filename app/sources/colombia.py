@@ -73,7 +73,7 @@ def get_award(
         # Retry with nombre_del_proveedor="No Adjudicado", in case award data is available, but not the supplier name.
         award_response_json, award_url = _get_remote_award(proceso_de_compra, "No Adjudicado")
         if not award_response_json:
-            raise SkippedAwardError(f"[{previous=}] 0 awards from {award_url}")
+            raise SkippedAwardError(f"[{previous=}] 0 awards found", url=award_url)
 
     # It's okay if there are many awards, as long as the award data is consistent.
     remote_awards = set()
@@ -88,8 +88,9 @@ def get_award(
         )
     if len(remote_awards) > 1:
         raise SkippedAwardError(
-            f"[{previous=}] {len(award_response_json)} awards ({len(remote_awards)} unique) from {award_url} "
-            f"(response={award_response_json})"
+            f"[{previous=}] {len(award_response_json)} awards ({len(remote_awards)} unique)",
+            data=award_response_json,
+            url=award_url,
         )
 
     remote_award = remote_awards.pop()
@@ -164,7 +165,7 @@ def get_source_contract_id(entry: dict[str, str]) -> str:
     source_contract_id = entry.get("id_contrato", "")
 
     if not source_contract_id:
-        raise SkippedAwardError(f"No id_contrato in {entry=}")
+        raise SkippedAwardError("No id_contrato in source data", data=entry)
 
     return source_contract_id
 
@@ -188,8 +189,9 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
 
     if len_borrower_response_json != 1:
         raise SkippedAwardError(
-            f"{len_borrower_response_json} borrowers for {documento_proveedor=} "
-            f"({entry=} response={borrower_response_json})"
+            f"{len_borrower_response_json} borrowers for the given borrower",
+            data=borrower_response_json,
+            url=borrower_url,
         )
 
     remote_borrower = borrower_response_json[0]
@@ -228,9 +230,7 @@ def get_email(documento_proveedor: str, entry: dict[str, str]) -> str:
     len_borrower_response_email_json = len(borrower_response_email_json)
 
     if len_borrower_response_email_json == 0:
-        raise SkippedAwardError(
-            f"0 borrower emails from {borrower_email_url} (response={borrower_response_email_json})"
-        )
+        raise SkippedAwardError("0 borrower emails found for the given borrower", url=borrower_email_url)
 
     remote_email: dict[str, str] = borrower_response_email_json[0]
     email = remote_email.get("correo_entidad", "")
@@ -241,7 +241,7 @@ def get_email(documento_proveedor: str, entry: dict[str, str]) -> str:
         ).most_common(1)[0][0]
 
     if not sources.is_valid_email(email):
-        raise SkippedAwardError(f"Invalid borrower email ({email=} {entry=})")
+        raise SkippedAwardError("Invalid borrower email", data=borrower_response_email_json, url=borrower_email_url)
 
     return email
 
