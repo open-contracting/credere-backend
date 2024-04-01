@@ -1,6 +1,7 @@
 """
 This file is required, because reportlab/__init__.py runs `import reportlab_mods`.
 """
+
 from typing import Any
 
 from reportlab.lib.enums import TA_CENTER, TA_LEFT

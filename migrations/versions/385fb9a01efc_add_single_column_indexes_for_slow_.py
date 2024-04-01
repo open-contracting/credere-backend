@@ -5,6 +5,7 @@ Revises: 55ef2bbbfcba
 Create Date: 2023-10-23 12:32:30.252552
 
 """
+
 from alembic import op
 from sqlalchemy import text
 
