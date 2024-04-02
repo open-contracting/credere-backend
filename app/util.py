@@ -97,7 +97,7 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     return new_file, filename
 
 
-def get_modified_data_fields(application: models.Application, session: Session) -> models.ApplicationWithRelations:
+def get_modified_data_fields(session: Session, application: models.Application) -> models.ApplicationWithRelations:
     application_actions = (
         session.query(models.ApplicationAction)
         .join(models.Application)
@@ -139,7 +139,7 @@ def get_modified_data_fields(application: models.Application, session: Session) 
 
 
 def create_award_from_data_source(
-    entry: dict[str, Any], session: Session, borrower_id: int | None = None, previous: bool = False
+    session: Session, entry: dict[str, Any], borrower_id: int | None = None, previous: bool = False
 ) -> models.Award:
     """
     Create a new award and insert it into the database.
@@ -183,17 +183,17 @@ def get_previous_awards_from_data_source(
     )
     for entry in contracts_response_json:
         with contextmanager(db_provider)() as session:
-            with handle_skipped_award(session, "Error creating the previous award for %s", borrower.legal_identifier):
-                create_award_from_data_source(entry, session, borrower.id, True)
+            with handle_skipped_award(session, f"Error creating the previous award for {borrower.legal_identifier}"):
+                create_award_from_data_source(session, entry, borrower.id, True)
 
                 session.commit()
 
 
 def create_or_update_borrower_document(
+    session: Session,
     filename: str | None,
     application: models.Application,
     type: models.BorrowerDocumentType,
-    session: Session,
     file: bytes,
     verified: bool | None = False,
 ) -> models.BorrowerDocument:

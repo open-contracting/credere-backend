@@ -339,7 +339,7 @@ async def update_application_award(
 
         commit_and_refresh(session, application)
 
-        return util.get_modified_data_fields(application, session)
+        return util.get_modified_data_fields(session, application)
 
 
 @router.put(
@@ -389,7 +389,7 @@ async def update_application_borrower(
 
         commit_and_refresh(session, application)
 
-        return util.get_modified_data_fields(application, session)
+        return util.get_modified_data_fields(session, application)
 
 
 @router.get(
@@ -457,7 +457,7 @@ async def get_application(
     :return: The application with the specified ID and its associated relations.
     :raise: HTTPException with status code 401 if the user is not authorized to view the application.
     """
-    return util.get_modified_data_fields(application, session)
+    return util.get_modified_data_fields(session, application)
 
 
 @router.post(

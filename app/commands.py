@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
-def _create_or_update_borrower_from_data_source(entry: dict[str, Any], session: Session) -> models.Borrower:
+def _create_or_update_borrower_from_data_source(session: Session, entry: dict[str, Any]) -> models.Borrower:
     """
     Create a new borrower or update an existing borrower based on the entry data.
 
@@ -42,12 +42,12 @@ def _create_or_update_borrower_from_data_source(entry: dict[str, Any], session: 
 
 
 def _create_application(
+    session: Session,
     award_id: int | None,
     borrower_id: int | None,
     email: str,
     legal_identifier: str,
     source_contract_id: str,
-    session: Session,
 ) -> models.Application:
     """
     Create a new application and insert it into the database.
@@ -84,17 +84,17 @@ def _create_application(
 def _create_complete_application(contract_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
     with contextmanager(db_provider)() as session:
         with handle_skipped_award(session, "Error creating the application"):
-            award = util.create_award_from_data_source(contract_response, session)
-            borrower = _create_or_update_borrower_from_data_source(contract_response, session)
+            award = util.create_award_from_data_source(session, contract_response)
+            borrower = _create_or_update_borrower_from_data_source(session, contract_response)
             award.borrower_id = borrower.id
 
             application = _create_application(
+                session,
                 award.id,
                 borrower.id,
                 borrower.email,
                 borrower.legal_identifier,
                 award.source_contract_id,
-                session,
             )
 
             message = models.Message.create(
