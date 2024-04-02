@@ -22,7 +22,6 @@ CONTRACT_ID = "CO1.test.123456"
 SUPPLIER_ID = "987654321"
 
 contract = _load_json_file("mock_data/contract.json")
-contracts = _load_json_file("mock_data/contracts.json")
 award = _load_json_file("mock_data/award.json")
 borrower = _load_json_file("mock_data/borrower.json")
 borrower_declined = _load_json_file("mock_data/borrower_declined.json")
@@ -181,7 +180,7 @@ def test_fetch_empty_contracts(create_and_drop_database, caplog):
 def test_fetch_new_awards_from_date(engine, create_and_drop_database):
     with _mock_response_second_empty(
         200,
-        contracts,
+        contract,
         "app.sources.colombia.get_new_contracts",
     ), _mock_function_response(
         "test_hash_12345678",
