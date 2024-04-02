@@ -65,8 +65,8 @@ class CognitoClient:
         :param username: The username
         :return: A base64 encoded string containing the generated secret hash.
         """
-        message = bytes(f"{username}{app_settings.cognito_client_id}", "utf-8")
-        key = bytes(app_settings.cognito_client_secret, "utf-8")
+        message = f"{username}{app_settings.cognito_client_id}".encode()
+        key = app_settings.cognito_client_secret.encode()
         return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
     def admin_create_user(self, username: str, name: str) -> type_defs.AdminCreateUserResponseTypeDef:

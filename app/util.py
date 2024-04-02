@@ -53,8 +53,7 @@ def generate_uuid(string: str) -> str:
     :return: The generated UUID.
     """
 
-    generated_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, string)
-    return str(generated_uuid)
+    return str(uuid.uuid5(uuid.NAMESPACE_DNS, string))
 
 
 def get_secret_hash(nit_entidad: str) -> str:
@@ -65,8 +64,8 @@ def get_secret_hash(nit_entidad: str) -> str:
     :return: The secret hash generated from the NIT.
     """
 
-    message = bytes(nit_entidad, "utf-8")
-    key = bytes(app_settings.hash_key, "utf-8")
+    message = nit_entidad.encode()
+    key = app_settings.hash_key.encode()
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
 
