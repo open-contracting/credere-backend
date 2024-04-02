@@ -693,9 +693,9 @@ class EventLog(SQLModel, ActiveRecordMixin, table=True):
     __tablename__ = "event_log"
     id: int | None = Field(default=None, primary_key=True)
     category: str = Field(nullable=False)
-    data: dict[str, Any] = Field(default={}, sa_type=JSON, nullable=True)
-    url: str = Field(default="", nullable=True)
-    message: str = Field(nullable=False, default="")
+    message: str = Field(nullable=False)
+    url: str = Field(default="", nullable=False)
+    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=False)
     created_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
