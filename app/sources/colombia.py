@@ -195,7 +195,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
         )
 
     remote_borrower = borrower_response_json[0]
-    email = get_email(documento_proveedor, entry)
+    email = get_email(documento_proveedor)
 
     new_borrower = {
         "borrower_identifier": borrower_identifier,
@@ -215,12 +215,11 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     return new_borrower
 
 
-def get_email(documento_proveedor: str, entry: dict[str, str]) -> str:
+def get_email(documento_proveedor: str) -> str:
     """
-    Get the email address for the borrower based on the given document provider and entry data.
+    Get the email address for the borrower based on the given document provider.
 
     :param documento_proveedor: The document provider for the borrower.
-    :param entry: The dictionary containing the borrower data.
     :return: The email address of the borrower.
     """
 
