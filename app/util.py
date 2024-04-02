@@ -147,8 +147,16 @@ def create_award_from_data_source(
     """
     source_contract_id = data_access.get_source_contract_id(entry)
 
-    if models.Award.first_by(session, "source_contract_id", source_contract_id):
-        raise SkippedAwardError(f"[{previous=}] Award already exists", data=entry)
+    award = models.Award.first_by(session, "source_contract_id", source_contract_id)
+    if award:
+        raise SkippedAwardError(
+            "Award already exists",
+            data={
+                "found": award.id,
+                "lookup": {"source_contract_id": source_contract_id},
+                "create": {"entry": entry, "borrower_id": borrower_id, "previous": previous},
+            },
+        )
 
     data = data_access.get_award(source_contract_id, entry, borrower_id, previous)
 
@@ -175,7 +183,7 @@ def get_previous_awards_from_data_source(
 
     for entry in contracts_response_json:
         with contextmanager(db_provider)() as session:
-            with handle_skipped_award(session, f"Error creating the previous award for {borrower.legal_identifier}"):
+            with handle_skipped_award(session, "Error creating award"):
                 create_award_from_data_source(session, entry, borrower.id, True)
 
                 session.commit()

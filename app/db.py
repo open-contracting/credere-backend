@@ -1,4 +1,5 @@
 import logging
+import traceback
 from contextlib import contextmanager
 from typing import Generator
 
@@ -43,19 +44,18 @@ def transaction_session(session: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def handle_skipped_award(session: Session, msg: str, *args: str) -> Generator[Session, None, None]:
+def handle_skipped_award(session: Session, msg: str) -> Generator[Session, None, None]:
     try:
         yield
-    # Don't display tracebacks in emails from cron jobs for anticipated errors.
     except SkippedAwardError as e:
         session.rollback()
         models.EventLog.create(
             session,
             category=e.category,
-            # msg can contain %s placeholders.
-            message=f"{msg}: {e}",
-            data=e.data,
+            message=f"{msg}: {e.message}",
             url=e.url,
+            data=e.data,
+            traceback=traceback.format_exc(),
         )
         session.commit()
     except Exception:
