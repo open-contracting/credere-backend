@@ -1,7 +1,6 @@
 import base64
 import hashlib
 import hmac
-import logging
 import os.path
 import uuid
 from contextlib import contextmanager
@@ -21,8 +20,6 @@ from app.sources import colombia as data_access
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg"}
-
-logger = logging.getLogger(__name__)
 
 
 class ERROR_CODES(StrEnum):
@@ -174,12 +171,8 @@ def get_previous_awards_from_data_source(
     contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
     if not contracts_response_json:
-        logger.info("No previous contracts for %s", borrower.legal_identifier)
         return
 
-    logger.info(
-        "Previous contracts for %s response length: %s", borrower.legal_identifier, len(contracts_response_json)
-    )
     for entry in contracts_response_json:
         with contextmanager(db_provider)() as session:
             with handle_skipped_award(session, f"Error creating the previous award for {borrower.legal_identifier}"):
