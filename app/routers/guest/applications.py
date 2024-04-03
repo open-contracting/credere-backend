@@ -647,7 +647,7 @@ async def upload_document(
             )
 
         document = util.create_or_update_borrower_document(
-            filename, application, models.BorrowerDocumentType(type), session, new_file
+            session, filename, application, models.BorrowerDocumentType(type), new_file
         )
 
         models.ApplicationAction.create(
@@ -738,10 +738,10 @@ async def upload_contract(
         new_file, filename = util.validate_file(file)
 
         document = util.create_or_update_borrower_document(
+            session,
             filename,
             application,
             models.BorrowerDocumentType.SIGNED_CONTRACT,
-            session,
             new_file,
         )
 

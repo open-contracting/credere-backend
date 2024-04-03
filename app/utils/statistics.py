@@ -1,4 +1,3 @@
-import logging
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Any, Callable, Generator
@@ -21,8 +20,6 @@ from app.models import (
     StatisticData,
     StatisticType,
 )
-
-logger = logging.getLogger(__name__)
 
 keys_to_serialize = [
     "sector_statistics",
@@ -50,20 +47,12 @@ def update_statistics(db_provider: Callable[[], Generator[Session, None, None]] 
 
     This function retrieves and logs different types of statistics related to applications
     and lenders. It uses the `get_general_statistics` and `get_msme_opt_in_stats` functions
-    to fetch the respective statistics. The retrieved statistics are then logged using
-    the `logger.info()` function.
+    to fetch the respective statistics.
 
     After fetching the general statistics, this function attempts to store them in the database
     as an instance of the `Statistic` model. The statistics are stored with the type set to
     `StatisticType.APPLICATION_KPIS`. The `Statistic` model contains a JSON field to store
     the actual statistical data.
-
-    If an error occurs during the process, it is caught and logged using `logger.exception()`.
-    The database session is rolled back in case of an exception to prevent any changes from
-    being committed to the database.
-
-    Note:
-    - The function utilizes the `get_db()` context manager to open a database session.
 
     Example usage:
     >>> update_statistics()
@@ -318,7 +307,6 @@ def get_msme_opt_in_stats(session: Session) -> dict[str, Any]:
     """
 
     WOMAN_VALUES = ("Femenino", "Mujer")
-    logger.info("calculating msme opt in stats for OCP ")
 
     unique_smes_contacted_by_credere = session.query(Borrower).count()
 

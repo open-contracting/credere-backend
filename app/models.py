@@ -689,6 +689,19 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
         return select(cls.application_id).filter(cls.type == message_type)
 
 
+class EventLog(SQLModel, ActiveRecordMixin, table=True):
+    __tablename__ = "event_log"
+    id: int | None = Field(default=None, primary_key=True)
+    category: str = Field(nullable=False)
+    message: str = Field(nullable=False)
+    url: str = Field(default="", nullable=False)
+    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=False)
+    traceback: str = Field(nullable=False)
+    created_at: datetime | None = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
+    )
+
+
 class UserBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     type: UserType = Field(default=UserType.FI, nullable=True)

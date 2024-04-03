@@ -22,7 +22,6 @@ CONTRACT_ID = "CO1.test.123456"
 SUPPLIER_ID = "987654321"
 
 contract = _load_json_file("mock_data/contract.json")
-contracts = _load_json_file("mock_data/contracts.json")
 award = _load_json_file("mock_data/award.json")
 borrower = _load_json_file("mock_data/borrower.json")
 borrower_declined = _load_json_file("mock_data/borrower_declined.json")
@@ -72,6 +71,7 @@ def _mock_whole_process(status_code: int, award_mock: dict, borrower_mock: dict,
             MockResponse(status_code, award_mock),
             MockResponse(status_code, borrower_mock),
             MockResponse(status_code, email_mock),
+            MockResponse(status_code, award_mock),
         ]
     )
 
@@ -124,50 +124,54 @@ def _compare_objects(
         assert expected_result[key] == value
 
 
-def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database, caplog):
-    with caplog.at_level("INFO"):
-        with _mock_response(
-            200,
-            [],
-            "app.sources.colombia.get_previous_contracts",
-        ), _mock_response(
-            200,
-            contract,
-            "app.sources.colombia.get_contract_by_contract_and_supplier",
-        ), _mock_whole_process(
-            200,
-            award,
-            borrower,
-            email,
-            "app.sources.make_request_with_retry",
-        ):
-            fetch_award_by_contract_and_supplier(CONTRACT_ID, SUPPLIER_ID)
-            util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
+def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database):
+    with contextmanager(get_test_db(engine))() as session, _mock_response(
+        200,
+        [],  # changed
+        "app.sources.colombia.get_previous_contracts",
+    ), _mock_response(
+        200,
+        contract,
+        "app.sources.colombia.get_contract_by_contract_and_supplier",
+    ), _mock_whole_process(
+        200,
+        award,
+        borrower,
+        email,
+        "app.sources.make_request_with_retry",
+    ):
+        fetch_award_by_contract_and_supplier(CONTRACT_ID, SUPPLIER_ID)
+        util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
 
-    assert "No previous contracts" in caplog.text
+        assert session.query(models.Award).count() == 1
+        assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
 
-def test_fetch_previous_borrower_awards(engine, create_and_drop_database, caplog):
-    with caplog.at_level("INFO"):
-        with _mock_response(
-            200,
-            [{"key": "value"}],
-            "app.sources.colombia.get_previous_contracts",
-        ), _mock_response(
-            200,
-            contract,
-            "app.sources.colombia.get_contract_by_contract_and_supplier",
-        ), _mock_whole_process(
-            200,
-            award,
-            borrower,
-            email,
-            "app.sources.make_request_with_retry",
-        ):
-            fetch_award_by_contract_and_supplier(CONTRACT_ID, SUPPLIER_ID)
-            util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
+def test_fetch_previous_borrower_awards(engine, create_and_drop_database):
+    # We can make a shallow copy, as we change `id_contrato` only, to make `source_contract_id` different.
+    previous_contract = contract[0].copy()
+    previous_contract["id_contrato"] = "CO1.test.123456.previous"
 
-    assert "Previous contracts for" in caplog.text
+    with contextmanager(get_test_db(engine))() as session, _mock_response(
+        200,
+        [previous_contract],  # changed
+        "app.sources.colombia.get_previous_contracts",
+    ), _mock_response(
+        200,
+        contract,
+        "app.sources.colombia.get_contract_by_contract_and_supplier",
+    ), _mock_whole_process(
+        200,
+        award,
+        borrower,
+        email,
+        "app.sources.make_request_with_retry",
+    ):
+        fetch_award_by_contract_and_supplier(CONTRACT_ID, SUPPLIER_ID)
+        util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
+
+        assert session.query(models.Award).count() == 2
+        assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
 
 def test_fetch_empty_contracts(create_and_drop_database, caplog):
@@ -181,7 +185,7 @@ def test_fetch_empty_contracts(create_and_drop_database, caplog):
 def test_fetch_new_awards_from_date(engine, create_and_drop_database):
     with _mock_response_second_empty(
         200,
-        contracts,
+        contract,
         "app.sources.colombia.get_new_contracts",
     ), _mock_function_response(
         "test_hash_12345678",

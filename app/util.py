@@ -1,7 +1,6 @@
 import base64
 import hashlib
 import hmac
-import logging
 import os.path
 import uuid
 from contextlib import contextmanager
@@ -21,8 +20,6 @@ from app.sources import colombia as data_access
 
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg"}
-
-logger = logging.getLogger(__name__)
 
 
 class ERROR_CODES(StrEnum):
@@ -53,8 +50,7 @@ def generate_uuid(string: str) -> str:
     :return: The generated UUID.
     """
 
-    generated_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, string)
-    return str(generated_uuid)
+    return str(uuid.uuid5(uuid.NAMESPACE_DNS, string))
 
 
 def get_secret_hash(nit_entidad: str) -> str:
@@ -65,8 +61,8 @@ def get_secret_hash(nit_entidad: str) -> str:
     :return: The secret hash generated from the NIT.
     """
 
-    message = bytes(nit_entidad, "utf-8")
-    key = bytes(app_settings.hash_key, "utf-8")
+    message = nit_entidad.encode()
+    key = app_settings.hash_key.encode()
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
 
@@ -97,7 +93,7 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     return new_file, filename
 
 
-def get_modified_data_fields(application: models.Application, session: Session) -> models.ApplicationWithRelations:
+def get_modified_data_fields(session: Session, application: models.Application) -> models.ApplicationWithRelations:
     application_actions = (
         session.query(models.ApplicationAction)
         .join(models.Application)
@@ -139,7 +135,7 @@ def get_modified_data_fields(application: models.Application, session: Session) 
 
 
 def create_award_from_data_source(
-    entry: dict[str, Any], session: Session, borrower_id: int | None = None, previous: bool = False
+    session: Session, entry: dict[str, Any], borrower_id: int | None = None, previous: bool = False
 ) -> models.Award:
     """
     Create a new award and insert it into the database.
@@ -151,8 +147,16 @@ def create_award_from_data_source(
     """
     source_contract_id = data_access.get_source_contract_id(entry)
 
-    if models.Award.first_by(session, "source_contract_id", source_contract_id):
-        raise SkippedAwardError(f"[{previous=}] Award already exists with {source_contract_id=} ({entry=})")
+    award = models.Award.first_by(session, "source_contract_id", source_contract_id)
+    if award:
+        raise SkippedAwardError(
+            "Award already exists",
+            data={
+                "found": award.id,
+                "lookup": {"source_contract_id": source_contract_id},
+                "create": {"entry": entry, "borrower_id": borrower_id, "previous": previous},
+            },
+        )
 
     data = data_access.get_award(source_contract_id, entry, borrower_id, previous)
 
@@ -175,25 +179,21 @@ def get_previous_awards_from_data_source(
     contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
     contracts_response_json = contracts_response.json()
     if not contracts_response_json:
-        logger.info("No previous contracts for %s", borrower.legal_identifier)
         return
 
-    logger.info(
-        "Previous contracts for %s response length: %s", borrower.legal_identifier, len(contracts_response_json)
-    )
     for entry in contracts_response_json:
         with contextmanager(db_provider)() as session:
-            with handle_skipped_award(session, "Error creating the previous award for %s", borrower.legal_identifier):
-                create_award_from_data_source(entry, session, borrower.id, True)
+            with handle_skipped_award(session, "Error creating award"):
+                create_award_from_data_source(session, entry, borrower.id, True)
 
                 session.commit()
 
 
 def create_or_update_borrower_document(
+    session: Session,
     filename: str | None,
     application: models.Application,
     type: models.BorrowerDocumentType,
-    session: Session,
     file: bytes,
     verified: bool | None = False,
 ) -> models.BorrowerDocument:

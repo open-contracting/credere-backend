@@ -1,10 +1,12 @@
 import logging
+import traceback
 from contextlib import contextmanager
 from typing import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app import models
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 
@@ -42,14 +44,20 @@ def transaction_session(session: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def handle_skipped_award(session: Session, msg: str, *args: str) -> Generator[Session, None, None]:
+def handle_skipped_award(session: Session, msg: str) -> Generator[Session, None, None]:
     try:
         yield
-    # Don't display tracebacks in emails from cron jobs for anticipated errors.
     except SkippedAwardError as e:
-        # msg can contain %s placeholders.
-        logger.error(f"{msg}: {e}", *args)
         session.rollback()
+        models.EventLog.create(
+            session,
+            category=e.category,
+            message=f"{msg}: {e.message}",
+            url=e.url,
+            data=e.data,
+            traceback=traceback.format_exc(),
+        )
+        session.commit()
     except Exception:
         session.rollback()
         raise
