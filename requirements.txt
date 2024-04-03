@@ -46,6 +46,8 @@ fastapi==0.109.2
     #   sentry-sdk
 future==0.18.3
     # via pyseeyou
+greenlet==3.0.3
+    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -81,7 +83,7 @@ pandas==2.1.0
     # via -r requirements.in
 parsimonious==0.10.0
     # via pyseeyou
-pillow==10.2.0
+pillow==10.3.0
     # via reportlab
 psycopg2==2.9.6
     # via sqlalchemy

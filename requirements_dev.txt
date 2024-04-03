@@ -99,7 +99,9 @@ future==0.18.3
     #   -r requirements.txt
     #   pyseeyou
 greenlet==3.0.3
-    # via sqlalchemy
+    # via
+    #   -r requirements.txt
+    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -177,7 +179,7 @@ parsimonious==0.10.0
     #   pyseeyou
 pathspec==0.11.1
     # via black
-pillow==10.2.0
+pillow==10.3.0
     # via
     #   -r requirements.txt
     #   reportlab
