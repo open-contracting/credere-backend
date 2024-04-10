@@ -6,6 +6,12 @@ There are two users:
 -  An operational user, used by the application 
 -  An administrative user, used by consultants
 
+CloudWatch
+----------
+
+-  cloudwatch:ListMetrics
+-  cloudwatch:GetMetricData
+
 CloudWatch Logs
 ---------------
 
@@ -69,11 +75,15 @@ This follows `Monitor email sending using Amazon SES event publishing <https://d
 
 -  Configuration sets (`Step 1 <https://docs.aws.amazon.com/ses/latest/dg/event-publishing-create-configuration-set.html>`__)
 
+   -  ses:ListConfigurationSets (*added*)
+   -  ses:GetConfigurationSet (*added*)
    -  ses:CreateConfigurationSet
-   -  ses:DeleteConfigurationSet
+   -  ses:DeleteConfigurationSet (*added*)
+   -  ses:TagResource (required to create configuration set)
 
 -  Destinations (`Step 2 <https://docs.aws.amazon.com/ses/latest/dg/event-publishing-add-event-destination-cloudwatch.html>`__, linking to `permissions <https://docs.aws.amazon.com/ses/latest/dg/event-destinations-manage.html>`__)
 
+   -  ses:GetConfigurationSetEventDestinations (*added*)
    -  ses:CreateConfigurationSetEventDestination
    -  ses:UpdateConfigurationSetEventDestination
    -  ses:DeleteConfigurationSetEventDestination
