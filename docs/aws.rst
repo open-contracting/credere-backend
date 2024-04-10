@@ -10,7 +10,7 @@ CloudWatch
 ----------
 
 Safe permissions
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 
 Only the administrative user has these.
 
@@ -145,12 +145,12 @@ Simple Storage Services (S3)
 Both users have these, which are contrained to the ``ocp-credere`` bucket and its resources.
 
 Safe permissions
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 
 -  s3:ListBucket
 
 Unsafe permissions
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 -  s3:PutObject
 -  s3:GetObject
