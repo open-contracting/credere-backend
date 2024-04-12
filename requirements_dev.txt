@@ -115,7 +115,7 @@ httpx==0.24.1
     # via -r requirements.txt
 identify==2.5.24
     # via pre-commit
-idna==3.4
+idna==3.7
     # via
     #   -r requirements.txt
     #   anyio
