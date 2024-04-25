@@ -141,6 +141,12 @@ def _get_awards_from_data_source(
     while contracts_response_json:
         total += len(contracts_response_json)
         for entry in contracts_response_json:
+            if not all(key in entry for key in ("proceso_de_compra", "proveedor_adjudicado")):
+                raise SkippedAwardError(
+                    "Source contract is missing required fields",
+                    url=contracts_response.url,
+                    data={"response": contracts_response_json},
+                )
             _create_complete_application(entry, db_provider)
         index += 1
         contracts_response = data_access.get_new_contracts(index, last_updated_award_date, until_date)
