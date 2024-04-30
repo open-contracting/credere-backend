@@ -3,11 +3,11 @@ from typing import Any, Generator
 from unittest.mock import MagicMock, patch
 
 import boto3
+import moto
 import pytest
 from botocore.config import Config
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from moto import mock_cognitoidp, mock_ses
 from sqlalchemy import create_engine
 
 from app import aws, dependencies, models
@@ -20,13 +20,13 @@ from tests.protected_routes import applications_test, borrowers_test, users_test
 
 @pytest.fixture(autouse=True)
 def mock_cognito_client():
-    with mock_cognitoidp():
+    with moto.mock_aws():
         yield
 
 
 @pytest.fixture(autouse=True)
 def mock_ses_client():
-    with mock_ses():
+    with moto.mock_aws():
         yield
 
 
