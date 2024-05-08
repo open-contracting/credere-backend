@@ -29,7 +29,7 @@ TEMPLATE_FILES = {
         "es": "Opción de crédito alternativa",
     },
     "Application_approved": {
-        "en": "Your credit application has been pre-approved",
+        "en": "Your credit application has been prequalified",
         "es": "Revisión de tu aplicación completada exitosamente",
     },
     "Application_credit_disbursed": {
