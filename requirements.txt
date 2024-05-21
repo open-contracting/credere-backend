@@ -121,7 +121,7 @@ regex==2023.6.3
     # via parsimonious
 reportlab==4.0.4
     # via -r requirements.in
-requests==2.31.0
+requests==2.32.0
     # via
     #   -r requirements.in
     #   transifex-python
