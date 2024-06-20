@@ -18,6 +18,8 @@ URLS = {
 
 HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 
+SUPPLIER_TYPE_TO_EXCLUDE = "persona natural colombiana"
+
 
 def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, str]], str]:
     params = quote_plus(f"id_del_portafolio='{proceso_de_compra}' AND nombre_del_proveedor='{proveedor_adjudicado}'")
@@ -113,7 +115,7 @@ def get_new_contracts(index: int, from_date: datetime, until_date: datetime | No
     base_url = (
         f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
         "&$order=ultima_actualizacion desc null last&$where=es_pyme = 'Si' "
-        f"AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
+        "AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
     )
 
     if from_date and until_date:
@@ -196,6 +198,13 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
 
     remote_borrower = borrower_response_json[0]
     email = get_email(documento_proveedor)
+
+    if remote_borrower.get("tipo_organizacion", "").lower() == SUPPLIER_TYPE_TO_EXCLUDE:
+        raise SkippedAwardError(
+            "Borrower is a natural person",
+            url=borrower_url,
+            data={"response": borrower_response_json},
+        )
 
     new_borrower = {
         "borrower_identifier": borrower_identifier,

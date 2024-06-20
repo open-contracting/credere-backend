@@ -14,6 +14,7 @@ from app.aws import CognitoClient
 from app.db import get_db, rollback_on_error, transaction_session
 from app.dependencies import ApplicationScope
 from app.settings import app_settings
+from app.sources.colombia import SUPPLIER_TYPE_TO_EXCLUDE
 from app.util import commit_and_refresh
 from app.utils.statistics import update_statistics
 
@@ -238,7 +239,7 @@ async def credit_product_options(
         rejecter_lenders = application.rejecter_lenders(session)
 
         filter = None
-        if application.borrower.type.lower() == "persona natural colombiana":
+        if application.borrower.type.lower() == SUPPLIER_TYPE_TO_EXCLUDE:
             filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON}')::boolean is True")
         else:
             filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON}')::boolean is True")
