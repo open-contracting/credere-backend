@@ -261,10 +261,10 @@ def test_approve_application_cicle(client):
 
     # this will mock the previous award get to return an empty array
     with patch(
-        "app.sources.colombia.get_previous_contracts",
+        "app.sources.colombia.get_previous_awards",
         return_value=MockResponse(status.HTTP_200_OK, source_award),
     ), patch(
-        "app.sources.colombia._get_remote_award",
+        "app.sources.colombia._get_remote_contract",
         return_value=(source_award, "url"),
     ):
         response = client.post("/applications/access-scheme", json=application_base)

@@ -21,14 +21,17 @@ HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 SUPPLIER_TYPE_TO_EXCLUDE = "persona natural colombiana"
 
 
-def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, str]], str]:
-    params = quote_plus(f"id_del_portafolio='{proceso_de_compra}' AND nombre_del_proveedor='{proveedor_adjudicado}'")
-    award_url = f"{URLS['AWARDS']}?$where={params}"
-    return sources.make_request_with_retry(award_url, HEADERS).json(), award_url
+def _get_remote_contract(
+    proceso_de_compra: str, proveedor_adjudicado: str, previous=False
+) -> tuple[list[dict[str, str]], str]:
+    params = quote_plus(f"proceso_de_compra='{proceso_de_compra}' AND documento_proveedor='{proveedor_adjudicado}'")
+    contract_url = f"{URLS['CONTRACTS']}?$where={params}"
+    if previous:
+        contract_url = f"{contract_url} AND fecha_de_firma IS NOT NULL"
+    return sources.make_request_with_retry(contract_url, HEADERS).json(), contract_url
 
 
 def get_award(
-    source_contract_id: str,
     entry: dict[str, Any],
     borrower_id: int | None = None,
     previous: bool = False,
@@ -43,64 +46,49 @@ def get_award(
     :return: The newly created award data as a dictionary.
     """
 
-    proceso_de_compra = entry["proceso_de_compra"]
-    proveedor_adjudicado = entry["proveedor_adjudicado"]
+    proceso_de_compra = entry["id_del_portafolio"]
+    proveedor_adjudicado = entry["nit_del_proveedor_adjudicado"]
 
     new_award = {
-        "source_contract_id": source_contract_id,
         "source_url": entry.get("urlproceso", {}).get("url", ""),
-        "entity_code": entry.get("codigo_entidad", ""),
-        "source_last_updated_at": entry.get("ultima_actualizacion", None),
-        "award_amount": entry.get("valor_del_contrato", ""),
-        "contractperiod_startdate": entry.get("fecha_de_inicio_del_contrato", None),
-        "contractperiod_enddate": entry.get("fecha_de_fin_del_contrato", None),
+        "entity_code": entry.get("nit_entidad", ""),
+        "source_last_updated_at": entry.get("fecha_de_ultima_publicaci", None),
+        "award_amount": entry.get("valor_total_adjudicacion", ""),
         "procurement_method": entry.get("modalidad_de_contratacion", ""),
-        "buyer_name": entry.get("nombre_entidad", ""),
+        "buyer_name": entry.get("entidad", ""),
         "contracting_process_id": proceso_de_compra,
         "procurement_category": entry.get("tipo_de_contrato", ""),
         "previous": previous,
-        "payment_method": {
-            "habilita_pago_adelantado": entry.get("habilita_pago_adelantado", ""),
-            "valor_de_pago_adelantado": entry.get("valor_de_pago_adelantado", ""),
-            "valor_facturado": entry.get("valor_facturado", ""),
-            "valor_pendiente_de_pago": entry.get("valor_pendiente_de_pago", ""),
-            "valor_pagado": entry.get("valor_pagado", ""),
-        },
-        "source_data_contracts": entry,
+        "source_data_awards": entry,
+        "description": entry.get("descripci_n_del_procedimiento", ""),
+        "award_date": entry.get("fecha_adjudicacion", None),
+        "contract_status": entry.get("estado_del_procedimiento", ""),
+        "title": entry.get("nombre_del_procedimiento", ""),
     }
 
-    award_response_json, award_url = _get_remote_award(proceso_de_compra, proveedor_adjudicado)
+    contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, proveedor_adjudicado, previous)
 
-    if not award_response_json:
+    if not contract_response_json:
         # Retry with nombre_del_proveedor="No Adjudicado", in case award data is available, but not the supplier name.
-        award_response_json, award_url = _get_remote_award(proceso_de_compra, "No Adjudicado")
-        if not award_response_json:
-            raise SkippedAwardError("No remote awards found", url=award_url, data={"previous": previous})
+        contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, "No Adjudicado")
+        if not contract_response_json:
+            raise SkippedAwardError("No remote contracts found", url=contract_url, data={"previous": previous})
 
-    # It's okay if there are many awards, as long as the award data is consistent.
-    remote_awards = set()
-    for award in award_response_json:
-        remote_awards.add(
-            (
-                award.get("descripci_n_del_procedimiento", ""),
-                award.get("fecha_adjudicacion", None),
-                award.get("estado_del_procedimiento", ""),
-                award.get("nombre_del_procedimiento", ""),
-            )
-        )
-    if len(remote_awards) > 1:
-        raise SkippedAwardError(
-            "Multiple remote awards found",
-            url=award_url,
-            data={"response": award_response_json, "unique_count": len(remote_awards), "previous": previous},
-        )
+    remote_contract = contract_response_json.pop()
+    new_award["payment_method"] = {
+        "habilita_pago_adelantado": remote_contract.get("habilita_pago_adelantado", ""),
+        "valor_de_pago_adelantado": remote_contract.get("valor_de_pago_adelantado", ""),
+        "valor_facturado": remote_contract.get("valor_facturado", ""),
+        "valor_pendiente_de_pago": remote_contract.get("valor_pendiente_de_pago", ""),
+        "valor_pagado": remote_contract.get("valor_pagado", ""),
+    }
+    new_award["contractperiod_startdate"] = (remote_contract.get("fecha_de_inicio_del_contrato", None),)
+    new_award["contractperiod_enddate"] = (remote_contract.get("fecha_de_fin_del_contrato", None),)
+    new_award["source_data_contracts"] = remote_contract
+    new_award["source_contract_id"] = remote_contract.get("id_contrato", "")
 
-    remote_award = remote_awards.pop()
-    new_award["description"] = remote_award[0]
-    new_award["award_date"] = remote_award[1]
-    new_award["contract_status"] = remote_award[2]
-    new_award["title"] = remote_award[3]
-    new_award["source_data_awards"] = award_response_json[0]
+    if not new_award["source_contract_id"]:
+        raise SkippedAwardError("Missing id_contrato", data=remote_contract)
 
     if borrower_id:
         new_award["borrower_id"] = borrower_id
@@ -108,20 +96,24 @@ def get_award(
     return new_award
 
 
-def get_new_contracts(index: int, from_date: datetime, until_date: datetime | None = None) -> httpx.Response:
+def get_new_awards(index: int, from_date: datetime, until_date: datetime | None = None) -> httpx.Response:
     offset = index * app_settings.secop_pagination_limit
     date_format = "%Y-%m-%dT%H:%M:%S.000"
 
     base_url = (
-        f"{URLS['CONTRACTS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
-        "&$order=ultima_actualizacion desc null last&$where=es_pyme = 'Si' "
-        "AND localizaci_n = 'Colombia, Bogotá, Bogotá'"
+        f"{URLS['AWARDS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
+        "&$order=fecha_de_ultima_publicaci desc null last&$where="
+        " caseless_eq(`adjudicado`, 'Si')"
+        " AND caseless_eq(`ciudad_proveedor`, 'Bogotá')"
+        " AND caseless_ne(`tipo_de_contrato`,'Acuerdo Marco de Precios')"
     )
 
     if from_date and until_date:
         url = (
-            f"{base_url} AND ultima_actualizacion >= '{from_date.strftime(date_format)}' "
-            f"AND ultima_actualizacion < '{until_date.strftime(date_format)}' "
+            f"{base_url} AND ((fecha_de_ultima_publicaci >= '{from_date.strftime(date_format)}' "
+            f"AND fecha_de_ultima_publicaci < '{until_date.strftime(date_format)}') OR "
+            f"(fecha_adjudicacion >= '{from_date.strftime(date_format)}' "
+            f"AND fecha_adjudicacion < '{until_date.strftime(date_format)}'))"
         )
     else:
         if from_date:
@@ -129,47 +121,30 @@ def get_new_contracts(index: int, from_date: datetime, until_date: datetime | No
         else:
             converted_date = datetime.now() - timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
         url = (
-            f"{base_url} AND caseless_not_one_of( `estado_contrato`, 'Cancelado', 'Cerrado', 'cedido', "
-            f"'Suspendido', 'terminado') "
-            f"AND ultima_actualizacion >= '{converted_date.strftime(date_format)}'"
+            f"{base_url} AND (fecha_de_ultima_publicaci >= '{converted_date.strftime(date_format)}' "
+            f"OR fecha_adjudicacion >= '{converted_date.strftime(date_format)}')"
         )
 
     return sources.make_request_with_retry(url, HEADERS)
 
 
-def get_contract_by_contract_and_supplier(contract_id: str, supplier_id: str) -> httpx.Response:
-    url = f"{URLS['CONTRACTS']}?$where=documento_proveedor = '{supplier_id}' AND id_contrato = '{contract_id}'"
+def get_award_by_id_and_supplier(award_id: str, supplier_id: str) -> httpx.Response:
+    url = f"{URLS['AWARDS']}?$where=nit_del_proveedor_adjudicado = '{supplier_id}' AND id_adjudicacion = '{award_id}'"
 
     return sources.make_request_with_retry(url, HEADERS)
 
 
-def get_previous_contracts(documento_proveedor: str) -> httpx.Response:
+def get_previous_awards(documento_proveedor: str) -> httpx.Response:
     """
     Get previous contracts data for the given document provider from the source API.
 
     :param documento_proveedor: The document provider to get previous contracts data for.
-    :return: The response object containing the previous contracts data.
+    :return: The response object containing the previous awards data.
     """
 
-    url = f"{URLS['CONTRACTS']}?$where=documento_proveedor = '{documento_proveedor}' AND fecha_de_firma IS NOT NULL"
+    url = f"{URLS['AWARDS']}?$where=nit_del_proveedor_adjudicado = '{documento_proveedor}'"
 
     return sources.make_request_with_retry(url, HEADERS)
-
-
-def get_source_contract_id(entry: dict[str, str]) -> str:
-    """
-    Get the source contract ID from the given entry data.
-
-    :param entry: The dictionary containing the award data.
-    :return: The source contract ID.
-    """
-
-    source_contract_id = entry.get("id_contrato", "")
-
-    if not source_contract_id:
-        raise SkippedAwardError("Missing id_contrato", data=entry)
-
-    return source_contract_id
 
 
 def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict[str, str]) -> dict[str, str]:
@@ -183,7 +158,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     """
 
     borrower_url = (
-        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}&codigo_entidad={entry.get('codigo_proveedor', '')}"
+        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}&codigo_entidad={entry.get('codigoproveedor', '')}"
     )
     borrower_response = sources.make_request_with_retry(borrower_url, HEADERS)
     borrower_response_json = borrower_response.json()
@@ -266,7 +241,7 @@ def get_documento_proveedor(entry: dict[str, str]) -> str:
     :return: The document provider for the borrower.
     """
 
-    documento_proveedor = entry.get("documento_proveedor", None)
+    documento_proveedor = entry.get("nit_del_proveedor_adjudicado", None)
     if not documento_proveedor or documento_proveedor == "No Definido":
         raise SkippedAwardError("Missing documento_proveedor", data=entry)
 
