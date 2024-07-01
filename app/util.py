@@ -175,11 +175,11 @@ def get_previous_awards_from_data_source(
         borrower = models.Borrower.get(session, borrower_id)
 
     awards_response = data_access.get_previous_awards(borrower.legal_identifier)
-    contracts_response_json = awards_response.json()
-    if not contracts_response_json:
+    awards_response_json = awards_response.json()
+    if not awards_response_json:
         return
 
-    for entry in contracts_response_json:
+    for entry in awards_response_json:
         with contextmanager(db_provider)() as session:
             with handle_skipped_award(session, "Error creating award"):
                 create_award_from_data_source(session, entry, borrower.id, True)

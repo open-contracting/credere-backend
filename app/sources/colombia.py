@@ -74,7 +74,7 @@ def get_award(
         if not contract_response_json:
             raise SkippedAwardError("No remote contracts found", url=contract_url, data={"previous": previous})
 
-    remote_contract = contract_response_json.pop()
+    remote_contract = contract_response_json[0]
     new_award["payment_method"] = {
         "habilita_pago_adelantado": remote_contract.get("habilita_pago_adelantado", ""),
         "valor_de_pago_adelantado": remote_contract.get("valor_de_pago_adelantado", ""),
@@ -92,7 +92,6 @@ def get_award(
 
     if borrower_id:
         new_award["borrower_id"] = borrower_id
-
     return new_award
 
 
