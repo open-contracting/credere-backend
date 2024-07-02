@@ -45,6 +45,7 @@ borrower_size_dict = {
     BorrowerSize.MICRO: "0 to 10",
     BorrowerSize.SMALL: "11 to 50",
     BorrowerSize.MEDIUM: "51 to 200",
+    BorrowerSize.BIG: "+200",
 }
 
 # Keep in sync with SECTOR_TYPES in credere-frontend

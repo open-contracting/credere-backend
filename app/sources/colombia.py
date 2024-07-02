@@ -1,7 +1,6 @@
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any
-from urllib.parse import quote_plus
 
 import httpx
 
@@ -24,7 +23,7 @@ SUPPLIER_TYPE_TO_EXCLUDE = "persona natural colombiana"
 def _get_remote_contract(
     proceso_de_compra: str, proveedor_adjudicado: str, previous=False
 ) -> tuple[list[dict[str, str]], str]:
-    params = quote_plus(f"proceso_de_compra='{proceso_de_compra}' AND documento_proveedor='{proveedor_adjudicado}'")
+    params = f"proceso_de_compra='{proceso_de_compra}' AND documento_proveedor='{proveedor_adjudicado}'"
     contract_url = f"{URLS['CONTRACTS']}?$where={params}"
     if previous:
         contract_url = f"{contract_url} AND fecha_de_firma IS NOT NULL"
@@ -53,7 +52,6 @@ def get_award(
         "source_url": entry.get("urlproceso", {}).get("url", ""),
         "entity_code": entry.get("nit_entidad", ""),
         "source_last_updated_at": entry.get("fecha_de_ultima_publicaci", None),
-        "award_amount": entry.get("valor_total_adjudicacion", ""),
         "procurement_method": entry.get("modalidad_de_contratacion", ""),
         "buyer_name": entry.get("entidad", ""),
         "contracting_process_id": proceso_de_compra,
@@ -84,6 +82,7 @@ def get_award(
     }
     new_award["contractperiod_startdate"] = (remote_contract.get("fecha_de_inicio_del_contrato", None),)
     new_award["contractperiod_enddate"] = (remote_contract.get("fecha_de_fin_del_contrato", None),)
+    new_award["award_amount"] = remote_contract.get("valor_del_contrato", "")
     new_award["source_data_contracts"] = remote_contract
     new_award["source_contract_id"] = remote_contract.get("id_contrato", "")
 

@@ -238,6 +238,7 @@ class BorrowerSize(StrEnum):
     MICRO = "MICRO"
     SMALL = "SMALL"
     MEDIUM = "MEDIUM"
+    BIG = "BIG"
 
 
 class CreditType(StrEnum):
