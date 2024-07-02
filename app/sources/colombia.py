@@ -103,7 +103,6 @@ def get_new_awards(index: int, from_date: datetime, until_date: datetime | None 
         "&$order=fecha_de_ultima_publicaci desc null last&$where="
         " caseless_eq(`adjudicado`, 'Si')"
         " AND caseless_eq(`ciudad_proveedor`, 'Bogotá')"
-        " AND caseless_ne(`tipo_de_contrato`,'Acuerdo Marco de Precios')"
     )
 
     if from_date and until_date:
