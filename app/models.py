@@ -268,6 +268,7 @@ class CreditProductBase(SQLModel):
     additional_information: str = Field(default="", nullable=False)
     type: CreditType = Field(nullable=False)
     borrower_types: dict[str, bool] = Field(default={}, sa_column=Column(JSON, nullable=False))
+    procurement_category_to_exclude: str = Field(default="", nullable=False)
     required_document_types: dict[str, bool] = Field(default={}, sa_column=Column(JSON))
     other_fees_total_amount: Decimal = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
     other_fees_description: str = Field(default="", nullable=False)

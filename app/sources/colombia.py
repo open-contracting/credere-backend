@@ -21,6 +21,37 @@ HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 SUPPLIER_TYPE_TO_EXCLUDE = "persona natural colombiana"
 
 
+def get_procurement_categories():
+    # from https://www.datos.gov.co/resource/p6dx-8zbt.json?$query=SELECT distinct `tipo_de_contrato`
+    return [
+        "Comodato",
+        "Empréstito",
+        "Venta inmuebles",
+        "Seguros",
+        "Interventoría",
+        "Arrendamiento de muebles",
+        "Negocio fiduciario",
+        "Concesión",
+        "No",
+        "Asociación Público Privada",
+        "No Especificado",
+        "Otro",
+        "Acuerdo Marco de Precios",
+        "Arrendamiento de inmuebles",
+        "Compraventa",
+        "Comisión",
+        "Prestación de servicios",
+        "Decreto 092 de 2017",
+        "Venta muebles",
+        "Operaciones de Crédito Público",
+        "Suministros",
+        "Obra",
+        "Servicios financieros",
+        "Acuerdo de cooperación",
+        "Consultoría",
+    ]
+
+
 def _get_remote_award(proceso_de_compra: str, proveedor_adjudicado: str) -> tuple[list[dict[str, str]], str]:
     params = quote_plus(f"id_del_portafolio='{proceso_de_compra}' AND nombre_del_proveedor='{proveedor_adjudicado}'")
     award_url = f"{URLS['AWARDS']}?$where={params}"
