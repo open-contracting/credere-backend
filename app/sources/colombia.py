@@ -12,7 +12,7 @@ URLS = {
     "CONTRACTS": "https://www.datos.gov.co/resource/jbjy-vk9h.json",
     "AWARDS": "https://www.datos.gov.co/resource/p6dx-8zbt.json",
     "BORROWER_EMAIL": "https://www.datos.gov.co/resource/vzyx-b5wf.json",
-    "BORROWER": "https://www.datos.gov.co/resource/4ex9-j3n8.json?&es_pyme=SI",
+    "BORROWER": "https://www.datos.gov.co/resource/4ex9-j3n8.json",
 }
 
 HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
@@ -186,7 +186,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     """
 
     borrower_url = (
-        f"{URLS['BORROWER']}&nit_entidad={documento_proveedor}&codigo_entidad={entry.get('codigoproveedor', '')}"
+        f"{URLS['BORROWER']}?nit_entidad={documento_proveedor}&codigo_entidad={entry.get('codigoproveedor', '')}"
     )
     borrower_response = sources.make_request_with_retry(borrower_url, HEADERS)
     borrower_response_json = borrower_response.json()
