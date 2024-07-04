@@ -30,6 +30,37 @@ def _get_remote_contract(
     return sources.make_request_with_retry(contract_url, HEADERS).json(), contract_url
 
 
+def get_procurement_categories():
+    # from https://www.datos.gov.co/resource/p6dx-8zbt.json?$query=SELECT distinct `tipo_de_contrato`
+    return [
+        "Comodato",
+        "Empréstito",
+        "Venta inmuebles",
+        "Seguros",
+        "Interventoría",
+        "Arrendamiento de muebles",
+        "Negocio fiduciario",
+        "Concesión",
+        "No",
+        "Asociación Público Privada",
+        "No Especificado",
+        "Otro",
+        "Acuerdo Marco de Precios",
+        "Arrendamiento de inmuebles",
+        "Compraventa",
+        "Comisión",
+        "Prestación de servicios",
+        "Decreto 092 de 2017",
+        "Venta muebles",
+        "Operaciones de Crédito Público",
+        "Suministros",
+        "Obra",
+        "Servicios financieros",
+        "Acuerdo de cooperación",
+        "Consultoría",
+    ]
+
+
 def get_award(
     entry: dict[str, Any],
     borrower_id: int | None = None,

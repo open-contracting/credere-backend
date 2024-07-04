@@ -253,6 +253,7 @@ async def credit_product_options(
                 models.CreditProduct.borrower_size == payload.borrower_size,
                 models.CreditProduct.lower_limit <= payload.amount_requested,
                 models.CreditProduct.upper_limit >= payload.amount_requested,
+                models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
                 col(models.Lender.id).notin_(rejecter_lenders),
                 filter,
             )
@@ -267,6 +268,7 @@ async def credit_product_options(
                 models.CreditProduct.borrower_size == payload.borrower_size,
                 models.CreditProduct.lower_limit <= payload.amount_requested,
                 models.CreditProduct.upper_limit >= payload.amount_requested,
+                models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
                 col(models.Lender.id).notin_(rejecter_lenders),
                 filter,
             )
