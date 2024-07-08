@@ -597,6 +597,7 @@ class LenderBase(SQLModel):
     type: str = Field(default="")
     sla_days: int | None
     logo_filename: str = Field(default="", nullable=True)
+    default_pre_approval_message: str = Field(default="", nullable=True)
 
 
 class Lender(LenderBase, ActiveRecordMixin, table=True):
