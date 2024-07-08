@@ -211,13 +211,15 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
         "UPLOAD_CONTRACT_IMAGE_LINK": f"{images_base_url}/uploadContract.png",
     }
 
-    if (
+    if application.lender.default_pre_approval_message:
+        html_data["ADDITIONAL_COMMENTS"] = application.lender.default_pre_approval_message
+    elif (
         "additional_comments" in application.lender_approved_data
         and application.lender_approved_data["additional_comments"]
     ):
         html_data["ADDITIONAL_COMMENTS"] = application.lender_approved_data["additional_comments"]
     else:
-        html_data["ADDITIONAL_COMMENTS"] = ""
+        html_data["ADDITIONAL_COMMENTS"] = "Ninguno"
 
     return send_email(ses, application.primary_email, prepare_html("Application_approved", html_data))
 
