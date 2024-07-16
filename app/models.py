@@ -499,12 +499,13 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         """
         :return: The IDs of lenders who rejected applications from the application's borrower for the same award.
         """
+        cls = type(self)
         return (
             session.query(Application.lender_id)
             .filter(
-                self.__class__.award_borrower_identifier == self.award_borrower_identifier,
-                self.__class__.status == ApplicationStatus.REJECTED,
-                col(self.__class__.lender_id).isnot(None),
+                cls.award_borrower_identifier == self.award_borrower_identifier,
+                cls.status == ApplicationStatus.REJECTED,
+                col(cls.lender_id).isnot(None),
             )
             .distinct()
             .all()
