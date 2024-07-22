@@ -204,7 +204,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
 
     if remote_borrower.get("tipo_organizacion", "").lower() == SUPPLIER_TYPE_TO_EXCLUDE:
         raise SkippedAwardError(
-            "Borrower is a natural person",
+            f"Borrower is {SUPPLIER_TYPE_TO_EXCLUDE}",
             url=borrower_url,
             data={"response": borrower_response_json},
         )
@@ -222,6 +222,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
         "legal_identifier": remote_borrower.get("nit_entidad", ""),
         "type": remote_borrower.get("tipo_organizacion", ""),
         "source_data": remote_borrower,
+        "is_msme": remote_borrower.get("es_pyme", "").lower() == "si",
     }
 
     return new_borrower
