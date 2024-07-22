@@ -105,7 +105,7 @@ async def get_ocp_statistics_opt_in(
     if opt_in_stats is not None:
         opt_in_stats = opt_in_stats.data
     else:
-        opt_in_stats = statistics_utils.get_msme_opt_in_stats(session)
+        opt_in_stats = statistics_utils.get_borrower_opt_in_stats(session)
 
     return serializers.StatisticOptInResponse(
         opt_in_stat=opt_in_stats,
