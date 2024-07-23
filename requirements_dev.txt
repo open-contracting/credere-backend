@@ -94,10 +94,6 @@ future==0.18.3
     # via
     #   -r requirements.txt
     #   pyseeyou
-greenlet==3.0.3
-    # via
-    #   -r requirements.txt
-    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -284,7 +280,7 @@ s3transfer==0.6.1
     # via
     #   -r requirements.txt
     #   boto3
-sentry-sdk[fastapi]==1.23.1
+sentry-sdk[fastapi]==2.10.0
     # via -r requirements.txt
 shellingham==1.5.0.post1
     # via

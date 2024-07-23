@@ -46,8 +46,6 @@ fastapi==0.109.2
     #   sentry-sdk
 future==0.18.3
     # via pyseeyou
-greenlet==3.0.3
-    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -129,7 +127,7 @@ rich==13.4.2
     # via typer
 s3transfer==0.6.1
     # via boto3
-sentry-sdk[fastapi]==1.23.1
+sentry-sdk[fastapi]==2.10.0
     # via -r requirements.in
 shellingham==1.5.0.post1
     # via typer
