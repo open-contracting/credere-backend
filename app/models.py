@@ -238,6 +238,7 @@ class BorrowerSize(StrEnum):
     MICRO = "MICRO"
     SMALL = "SMALL"
     MEDIUM = "MEDIUM"
+    BIG = "BIG"
 
 
 class CreditType(StrEnum):
@@ -574,7 +575,10 @@ class BorrowerBase(SQLModel):
     legal_identifier: str = Field(default="")
     type: str = Field(default="")
     sector: str = Field(default="")
+    # Self-reported
     size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED, nullable=True)
+    # From source
+    is_msme: bool = Field(default=True, nullable=False)
     missing_data: dict[str, bool] = Field(default={}, sa_column=Column(JSON))
     created_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())

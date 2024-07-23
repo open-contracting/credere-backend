@@ -145,20 +145,18 @@ def create_award_from_data_source(
     :param previous: Whether the award is a previous award or not. (default: False)
     :return: The inserted award.
     """
-    source_contract_id = data_access.get_source_contract_id(entry)
 
-    award = models.Award.first_by(session, "source_contract_id", source_contract_id)
+    data = data_access.get_award(entry, borrower_id, previous)
+    award = models.Award.first_by(session, "source_contract_id", data["source_contract_id"])
     if award:
         raise SkippedAwardError(
             "Award already exists",
             data={
                 "found": award.id,
-                "lookup": {"source_contract_id": source_contract_id},
+                "lookup": {"source_contract_id": data["source_contract_id"]},
                 "create": {"entry": entry, "borrower_id": borrower_id, "previous": previous},
             },
         )
-
-    data = data_access.get_award(source_contract_id, entry, borrower_id, previous)
 
     return models.Award.create(session, **data)
 
@@ -168,7 +166,7 @@ def get_previous_awards_from_data_source(
     borrower_id: int, db_provider: Callable[[], Generator[Session, None, None]] = get_db
 ) -> None:
     """
-    Fetch previous awards for a borrower that accepted an application. This wont generate an application,
+    Fetch previous awards for a borrower that accepted an application. This won't generate an application,
     it will just insert the awards in our database
 
     :param borrower_id: The ID of the borrower for whom to fetch and process previous awards.
@@ -176,12 +174,12 @@ def get_previous_awards_from_data_source(
     with contextmanager(db_provider)() as session:
         borrower = models.Borrower.get(session, borrower_id)
 
-    contracts_response = data_access.get_previous_contracts(borrower.legal_identifier)
-    contracts_response_json = contracts_response.json()
-    if not contracts_response_json:
+    awards_response = data_access.get_previous_awards(borrower.legal_identifier)
+    awards_response_json = awards_response.json()
+    if not awards_response_json:
         return
 
-    for entry in contracts_response_json:
+    for entry in awards_response_json:
         with contextmanager(db_provider)() as session:
             with handle_skipped_award(session, "Error creating award"):
                 create_award_from_data_source(session, entry, borrower.id, True)

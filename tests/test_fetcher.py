@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 from app import models, util
-from app.commands import fetch_award_by_contract_and_supplier, fetch_awards
+from app.commands import fetch_award_by_id_and_supplier, fetch_awards
 from tests import MockResponse, get_test_db
 
 
@@ -18,7 +18,7 @@ def _load_json_file(filename):
     return data
 
 
-CONTRACT_ID = "CO1.test.123456"
+AWARD_ID = "TEST_AWARD_ID"
 SUPPLIER_ID = "987654321"
 
 contract = _load_json_file("mock_data/contract.json")
@@ -109,7 +109,7 @@ def _compare_objects(
         }:
             continue
 
-        if key in {"award_date", "contractperiod_enddate", "expired_at"}:
+        if key in {"award_date", "contractperiod_enddate", "expired_at", "source_last_updated_at"}:
             formatted_dt = value.strftime("%Y-%m-%dT%H:%M:%S")
             assert formatted_dt == expected_result[key]
             continue
@@ -128,19 +128,19 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database):
     with contextmanager(get_test_db(engine))() as session, _mock_response(
         200,
         [],  # changed
-        "app.sources.colombia.get_previous_contracts",
+        "app.sources.colombia.get_previous_awards",
     ), _mock_response(
         200,
-        contract,
-        "app.sources.colombia.get_contract_by_contract_and_supplier",
+        award,
+        "app.sources.colombia.get_award_by_id_and_supplier",
     ), _mock_whole_process(
         200,
-        award,
+        contract,
         borrower,
         email,
         "app.sources.make_request_with_retry",
     ):
-        fetch_award_by_contract_and_supplier(CONTRACT_ID, SUPPLIER_ID)
+        fetch_award_by_id_and_supplier(AWARD_ID, SUPPLIER_ID)
         util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
 
         assert session.query(models.Award).count() == 1
@@ -154,29 +154,34 @@ def test_fetch_previous_borrower_awards(engine, create_and_drop_database):
 
     with contextmanager(get_test_db(engine))() as session, _mock_response(
         200,
-        [previous_contract],  # changed
-        "app.sources.colombia.get_previous_contracts",
+        award,  # changed
+        "app.sources.colombia.get_previous_awards",
     ), _mock_response(
         200,
-        contract,
-        "app.sources.colombia.get_contract_by_contract_and_supplier",
+        award,
+        "app.sources.colombia.get_award_by_id_and_supplier",
+    ), patch(
+        "app.sources.colombia._get_remote_contract",
+        return_value=([previous_contract], "url"),
     ), _mock_whole_process(
         200,
-        award,
+        [previous_contract],
         borrower,
         email,
         "app.sources.make_request_with_retry",
     ):
-        fetch_award_by_contract_and_supplier(CONTRACT_ID, SUPPLIER_ID)
+        models.Borrower.create(session, **borrower_result)
+        session.commit()
         util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
 
-        assert session.query(models.Award).count() == 2
+        assert session.query(models.Award).count() == 1
+        assert session.query(models.Award).one().previous is True
         assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
 
 def test_fetch_empty_contracts(create_and_drop_database, caplog):
     with caplog.at_level("INFO"):
-        with _mock_response(200, [], "app.sources.colombia.get_new_contracts"):
+        with _mock_response(200, [], "app.sources.colombia.get_new_awards"):
             fetch_awards()
 
     assert "No new contracts" in caplog.text
@@ -185,14 +190,14 @@ def test_fetch_empty_contracts(create_and_drop_database, caplog):
 def test_fetch_new_awards_from_date(engine, create_and_drop_database):
     with _mock_response_second_empty(
         200,
-        contract,
-        "app.sources.colombia.get_new_contracts",
+        award,
+        "app.sources.colombia.get_new_awards",
     ), _mock_function_response(
         "test_hash_12345678",
         "app.util.get_secret_hash",
     ), _mock_whole_process(
         200,
-        award,
+        contract,
         borrower,
         email,
         "app.sources.make_request_with_retry",
@@ -216,32 +221,32 @@ def test_fetch_award_by_contract_and_supplier_empty(engine, create_and_drop_data
         ), _mock_response(
             200,
             [],
-            "app.sources.colombia.get_contract_by_contract_and_supplier",
+            "app.sources.colombia.get_award_by_id_and_supplier",
         ):
-            fetch_award_by_contract_and_supplier(CONTRACT_ID, SUPPLIER_ID)
+            fetch_award_by_id_and_supplier(AWARD_ID, SUPPLIER_ID)
 
-    assert f"The contract with id {CONTRACT_ID} and supplier id {SUPPLIER_ID} was not found" in caplog.text
+    assert f"The award with id {AWARD_ID} and supplier id {SUPPLIER_ID} was not found" in caplog.text
 
 
-def test_fetch_award_by_contract_and_supplier(engine, create_and_drop_database):
+def test_fetch_award_by_id_and_supplier(engine, create_and_drop_database):
     with _mock_function_response(
         get_test_db(engine)(),
         "app.db.get_db",
     ), _mock_response(
         200,
-        contract,
-        "app.sources.colombia.get_contract_by_contract_and_supplier",
+        award,
+        "app.sources.colombia.get_award_by_id_and_supplier",
     ), _mock_function_response(
         "test_hash_12345678",
         "app.util.get_secret_hash",
     ), _mock_whole_process(
         200,
-        award,
+        contract,
         borrower,
         email,
         "app.sources.make_request_with_retry",
     ):
-        fetch_award_by_contract_and_supplier(CONTRACT_ID, SUPPLIER_ID)
+        fetch_award_by_id_and_supplier(AWARD_ID, SUPPLIER_ID)
 
         with contextmanager(get_test_db(engine))() as session:
             inserted_award = session.query(models.Award).one()

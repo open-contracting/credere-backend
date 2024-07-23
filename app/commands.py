@@ -84,11 +84,11 @@ def _create_application(
     return models.Application.create(session, **data)
 
 
-def _create_complete_application(contract_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
+def _create_complete_application(award_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
     with contextmanager(db_provider)() as session:
         with handle_skipped_award(session, "Error creating application"):
-            award = util.create_award_from_data_source(session, contract_response)
-            borrower = _create_or_update_borrower_from_data_source(session, contract_response)
+            award = util.create_award_from_data_source(session, award_response)
+            borrower = _create_or_update_borrower_from_data_source(session, award_response)
             award.borrower_id = borrower.id
 
             application = _create_application(
@@ -131,26 +131,26 @@ def _get_awards_from_data_source(
     :type last_updated_award_date: datetime
     """
     index = 0
-    contracts_response = data_access.get_new_contracts(index, last_updated_award_date, until_date)
-    contracts_response_json = contracts_response.json()
+    awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
+    awards_response_json = awards_response.json()
 
-    if not contracts_response_json:
+    if not awards_response_json:
         logger.info("No new contracts")
         return
     total = 0
-    while contracts_response_json:
-        total += len(contracts_response_json)
-        for entry in contracts_response_json:
-            if not all(key in entry for key in ("proceso_de_compra", "proveedor_adjudicado")):
+    while awards_response_json:
+        total += len(awards_response_json)
+        for entry in awards_response_json:
+            if not all(key in entry for key in ("id_del_portafolio", "nit_del_proveedor_adjudicado")):
                 raise SkippedAwardError(
                     "Source contract is missing required fields",
-                    url=contracts_response.url,
-                    data={"response": contracts_response_json},
+                    url=awards_response.url,
+                    data={"response": awards_response_json},
                 )
             _create_complete_application(entry, db_provider)
         index += 1
-        contracts_response = data_access.get_new_contracts(index, last_updated_award_date, until_date)
-        contracts_response_json = contracts_response.json()
+        awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
+        awards_response_json = awards_response.json()
     logger.info("Total fetched contracts: %d", total)
 
 
@@ -182,17 +182,17 @@ def fetch_all_awards_from_period(from_date: datetime, until_date: datetime) -> N
 
 
 @app.command()
-def fetch_award_by_contract_and_supplier(contract_id: str, supplier_id: str) -> None:
+def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
     """
     NOTE: For manual use only.
-    Fetch a specific award by contract_id and supplier_id.
+    Fetch a specific award by award_id and supplier_id.
     Useful when want to directly invite a supplier who for some reason wasn't invited by Credere.
     """
-    contract_response = data_access.get_contract_by_contract_and_supplier(contract_id, supplier_id).json()
-    if not contract_response:
-        logger.info(f"The contract with id {contract_id} and supplier id {supplier_id} was not found")
+    award_response = data_access.get_award_by_id_and_supplier(award_id, supplier_id).json()
+    if not award_response:
+        logger.info(f"The award with id {award_id} and supplier id {supplier_id} was not found")
         return
-    _create_complete_application(contract_response[0], get_db)
+    _create_complete_application(award_response[0], get_db)
 
 
 @app.command()
