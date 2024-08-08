@@ -35,7 +35,10 @@ def _create_or_update_borrower_from_data_source(session: Session, entry: dict[st
     borrower = models.Borrower.first_by(session, "borrower_identifier", borrower_identifier)
     if borrower:
         if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
-            raise ValueError("Skipping Award - Borrower chose to not receive any new opportunity")
+            raise SkippedAwardError(
+                "Skipping Award - Borrower chose to not receive any new opportunity",
+                data={"borrower_identifier": borrower_identifier},
+            )
         return borrower.update(session, **data)
 
     return models.Borrower.create(session, **data)
