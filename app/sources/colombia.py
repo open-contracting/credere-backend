@@ -245,11 +245,11 @@ def get_email(documento_proveedor: str) -> str:
         raise SkippedAwardError("No remote borrower emails found", url=borrower_email_url)
 
     remote_email: dict[str, str] = borrower_response_email_json[0]
-    email = remote_email.get("correo_entidad", "")
+    email = remote_email.get("correo_electr_nico", "")
 
     if len_borrower_response_email_json > 1:
         email = Counter(
-            borrower_email["correo_entidad"] for borrower_email in borrower_response_email_json
+            borrower_email["correo_electr_nico"] for borrower_email in borrower_response_email_json
         ).most_common(1)[0][0]
 
     if not sources.is_valid_email(email):
