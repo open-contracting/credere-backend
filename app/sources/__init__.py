@@ -1,7 +1,7 @@
 import logging
 
 import httpx
-from email_validator import EmailSyntaxError, EmailUndeliverableError, validate_email
+from email_validator import EmailNotValidError, validate_email
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ def is_valid_email(email: str) -> bool:
     """
     try:
         return bool(validate_email(email, allow_smtputf8=False))
-    except (EmailSyntaxError, EmailUndeliverableError):
+    except EmailNotValidError:
         return False
 
 
