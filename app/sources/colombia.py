@@ -152,6 +152,8 @@ def get_new_awards(index: int, from_date: datetime, until_date: datetime | None 
             f"OR fecha_adjudicacion >= '{converted_date.strftime(date_format)}')"
         )
 
+    print(url)
+
     return sources.make_request_with_retry(url, HEADERS)
 
 
