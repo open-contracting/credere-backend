@@ -42,7 +42,7 @@
   "created_at": "2023-06-22T17:48:06.152807",
   "declined_at": null,
   "borrower_identifier": "test_hash_12345678",
-  "email": "test@example.com",
+  "email": "test@gmail.com",
   "legal_identifier": "987654321",
   "sector": "",
   "is_msme": true
