@@ -228,6 +228,14 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     return new_borrower
 
 
+def _get_email(borrower_response: dict):
+    return (
+        borrower_response.get("correo_entidad")
+        if "correo_entidad" in borrower_response
+        else borrower_response.get("correo_electr_nico", "")
+    )
+
+
 def get_email(documento_proveedor: str) -> str:
     """
     Get the email address for the borrower based on the given document provider.
@@ -245,12 +253,12 @@ def get_email(documento_proveedor: str) -> str:
         raise SkippedAwardError("No remote borrower emails found", url=borrower_email_url)
 
     remote_email: dict[str, str] = borrower_response_email_json[0]
-    email = remote_email.get("correo_electr_nico", "")
+    email = _get_email(remote_email)
 
     if len_borrower_response_email_json > 1:
-        email = Counter(
-            borrower_email["correo_electr_nico"] for borrower_email in borrower_response_email_json
-        ).most_common(1)[0][0]
+        email = Counter(_get_email(borrower_email) for borrower_email in borrower_response_email_json).most_common(1)[
+            0
+        ][0]
 
     if not sources.is_valid_email(email):
         raise SkippedAwardError(
