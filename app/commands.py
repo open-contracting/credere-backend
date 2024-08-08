@@ -36,7 +36,7 @@ def _create_or_update_borrower_from_data_source(session: Session, entry: dict[st
     if borrower:
         if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
             raise SkippedAwardError(
-                "Skipping Award - Borrower chose to not receive any new opportunity",
+                "Borrower opted to not receive any new opportunity",
                 data={"borrower_identifier": borrower_identifier},
             )
         return borrower.update(session, **data)
