@@ -1,6 +1,7 @@
 alembic
 boto3
 botocore
+email_validator
 fastapi
 httpx
 mypy-boto3-cognito-idp

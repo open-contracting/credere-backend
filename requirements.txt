@@ -40,12 +40,18 @@ colorama==0.4.6
     # via typer
 cryptography==42.0.5
     # via pyjwt
+dnspython==2.6.1
+    # via email-validator
+email-validator==2.2.0
+    # via -r requirements.in
 fastapi==0.109.2
     # via
     #   -r requirements.in
     #   sentry-sdk
 future==0.18.3
     # via pyseeyou
+greenlet==3.0.3
+    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -57,6 +63,7 @@ httpx==0.24.1
 idna==3.7
     # via
     #   anyio
+    #   email-validator
     #   httpx
     #   requests
 jmespath==1.0.1

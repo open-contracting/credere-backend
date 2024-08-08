@@ -80,8 +80,14 @@ cryptography==42.0.5
     #   pyjwt
 distlib==0.3.6
     # via virtualenv
+dnspython==2.6.1
+    # via
+    #   -r requirements.txt
+    #   email-validator
 docopt==0.6.2
     # via coveralls
+email-validator==2.2.0
+    # via -r requirements.txt
 fastapi==0.109.2
     # via
     #   -r requirements.txt
@@ -94,6 +100,10 @@ future==0.18.3
     # via
     #   -r requirements.txt
     #   pyseeyou
+greenlet==3.0.3
+    # via
+    #   -r requirements.txt
+    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -111,6 +121,7 @@ idna==3.7
     # via
     #   -r requirements.txt
     #   anyio
+    #   email-validator
     #   httpx
     #   requests
 iniconfig==2.0.0

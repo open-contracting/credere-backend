@@ -1,11 +1,9 @@
 import logging
-import re
 
 import httpx
+from email_validator import EmailSyntaxError, validate_email
 
 logger = logging.getLogger(__name__)
-
-VALID_EMAIL = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
 
 def is_valid_email(email: str) -> bool:
@@ -15,7 +13,10 @@ def is_valid_email(email: str) -> bool:
     :param email: The email address to validate.
     :return: True if the email is valid, False otherwise.
     """
-    return bool(re.search(VALID_EMAIL, email))
+    try:
+        return bool(validate_email(email, allow_smtputf8=False))
+    except EmailSyntaxError:
+        return False
 
 
 def make_request_with_retry(url: str, headers: dict[str, str]) -> httpx.Response:
