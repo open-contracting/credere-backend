@@ -133,7 +133,6 @@ def get_new_awards(index: int, from_date: datetime, until_date: datetime | None 
         f"{URLS['AWARDS']}?$limit={app_settings.secop_pagination_limit}&$offset={offset}"
         "&$order=fecha_de_ultima_publicaci desc null last&$where="
         " caseless_eq(`adjudicado`, 'Si')"
-        " AND caseless_eq(`ciudad_proveedor`, 'Bogotá')"
     )
 
     if from_date and until_date:
@@ -152,6 +151,8 @@ def get_new_awards(index: int, from_date: datetime, until_date: datetime | None 
             f"{base_url} AND (fecha_de_ultima_publicaci >= '{converted_date.strftime(date_format)}' "
             f"OR fecha_adjudicacion >= '{converted_date.strftime(date_format)}')"
         )
+
+    print(url)
 
     return sources.make_request_with_retry(url, HEADERS)
 
