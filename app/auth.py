@@ -72,9 +72,8 @@ class JWTAuthorization(HTTPBearer):
         :return: JWT credentials if the token is verified.
         """
         self.load_keys()
-        credentials = await super().__call__(request)
 
-        if credentials:
+        if credentials := await super().__call__(request):
             if not credentials.scheme == "Bearer":
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,

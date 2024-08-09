@@ -153,8 +153,7 @@ def create_award_from_data_source(
     """
 
     data = data_access.get_award(entry, borrower_id, previous)
-    award = models.Award.first_by(session, "source_contract_id", data["source_contract_id"])
-    if award:
+    if award := models.Award.first_by(session, "source_contract_id", data["source_contract_id"]):
         raise SkippedAwardError(
             "Award already exists",
             data={

@@ -32,8 +32,7 @@ def _create_or_update_borrower_from_data_source(session: Session, entry: dict[st
     borrower_identifier = util.get_secret_hash(documento_proveedor)
     data = data_access.get_borrower(borrower_identifier, documento_proveedor, entry)
 
-    borrower = models.Borrower.first_by(session, "borrower_identifier", borrower_identifier)
-    if borrower:
+    if borrower := models.Borrower.first_by(session, "borrower_identifier", borrower_identifier):
         if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
             raise SkippedAwardError(
                 "Borrower opted to not receive any new opportunity",
@@ -64,8 +63,7 @@ def _create_application(
     """
     award_borrower_identifier: str = util.get_secret_hash(f"{legal_identifier}{source_contract_id}")
 
-    application = models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
-    if application:
+    if application := models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier):
         raise SkippedAwardError(
             "Application already exists",
             data={
