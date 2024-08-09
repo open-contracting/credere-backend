@@ -74,17 +74,15 @@ def _create_application(
             },
         )
 
-    new_uuid: str = util.generate_uuid(award_borrower_identifier)
-    data = {
-        "award_id": award_id,
-        "borrower_id": borrower_id,
-        "primary_email": email,
-        "award_borrower_identifier": award_borrower_identifier,
-        "uuid": new_uuid,
-        "expired_at": datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
-    }
-
-    return models.Application.create(session, **data)
+    return models.Application.create(
+        session,
+        award_id=award_id,
+        borrower_id=borrower_id,
+        primary_email=email,
+        award_borrower_identifier=award_borrower_identifier,
+        uuid=util.generate_uuid(award_borrower_identifier),
+        expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
+    )
 
 
 def _create_complete_application(award_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:

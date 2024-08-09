@@ -233,11 +233,11 @@ def create_or_update_borrower_document(
             submitted_at=datetime.utcnow(),
         )
     else:
-        new_document = {
-            "application_id": application.id,
-            "type": type,
-            "file": file,
-            "name": filename,
-            "verified": verified,
-        }
-        return models.BorrowerDocument.create(session, **new_document)
+        return models.BorrowerDocument.create(
+            session,
+            application_id=application.id,
+            type=type,
+            file=file,
+            name=filename,
+            verified=verified,
+        )
