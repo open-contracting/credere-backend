@@ -135,7 +135,7 @@ def _get_awards_from_data_source(
     """
     index = 0
     awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
-    awards_response_json = awards_response.json()
+    awards_response_json = util.loads(awards_response)
 
     if not awards_response_json:
         logger.info("No new contracts")
@@ -156,7 +156,7 @@ def _get_awards_from_data_source(
 
         index += 1
         awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
-        awards_response_json = awards_response.json()
+        awards_response_json = util.loads(awards_response)
 
     logger.info("Total fetched contracts: %d", total)
 
@@ -195,7 +195,7 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
     Fetch a specific award by award_id and supplier_id.
     Useful when want to directly invite a supplier who for some reason wasn't invited by Credere.
     """
-    award_response_json = data_access.get_award_by_id_and_supplier(award_id, supplier_id).json()
+    award_response_json = util.loads(data_access.get_award_by_id_and_supplier(award_id, supplier_id))
     if not award_response_json:
         logger.info(f"The award with id {award_id} and supplier id {supplier_id} was not found")
         return

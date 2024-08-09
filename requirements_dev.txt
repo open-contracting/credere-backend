@@ -274,7 +274,7 @@ reportlab==4.0.4
     #   reportlab-stubs
 reportlab-stubs==3.6.9.post0
     # via -r requirements_dev.in
-requests==2.32.0
+requests==2.32.3
     # via
     #   -r requirements.txt
     #   coveralls

@@ -8,6 +8,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any, Callable, Generator
 
+import orjson
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlmodel import col
@@ -27,6 +28,11 @@ class ERROR_CODES(StrEnum):
     DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
     APPLICATION_LAPSED = "APPLICATION_LAPSED"
     APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
+
+
+# In future, httpx.Client might allow custom decoders. https://github.com/encode/httpx/issues/717
+def loads(response):
+    return orjson.loads(response.text)
 
 
 def commit_and_refresh(session, instance):
@@ -174,7 +180,7 @@ def get_previous_awards_from_data_source(
     with contextmanager(db_provider)() as session:
         borrower = models.Borrower.get(session, borrower_id)
 
-    awards_response_json = data_access.get_previous_awards(borrower.legal_identifier).json()
+    awards_response_json = loads(data_access.get_previous_awards(borrower.legal_identifier))
     if not awards_response_json:
         return
 

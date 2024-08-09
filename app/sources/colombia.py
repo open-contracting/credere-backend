@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from app import sources
+from app import sources, util
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 
@@ -27,7 +27,7 @@ def _get_remote_contract(
     contract_url = f"{URLS['CONTRACTS']}?$where={params}"
     if previous:
         contract_url = f"{contract_url} AND fecha_de_firma IS NOT NULL"
-    return sources.make_request_with_retry(contract_url, HEADERS).json(), contract_url
+    return util.loads(sources.make_request_with_retry(contract_url, HEADERS)), contract_url
 
 
 def get_procurement_categories():
@@ -187,7 +187,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     borrower_url = (
         f"{URLS['BORROWER']}?nit_entidad={documento_proveedor}&codigo_entidad={entry.get('codigoproveedor', '')}"
     )
-    borrower_response_json = sources.make_request_with_retry(borrower_url, HEADERS).json()
+    borrower_response_json = util.loads(sources.make_request_with_retry(borrower_url, HEADERS))
     len_borrower_response_json = len(borrower_response_json)
 
     if len_borrower_response_json != 1:
@@ -243,7 +243,7 @@ def get_email(documento_proveedor: str) -> str:
     """
 
     borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
-    borrower_response_email_json = sources.make_request_with_retry(borrower_email_url, HEADERS).json()
+    borrower_response_email_json = util.loads(sources.make_request_with_retry(borrower_email_url, HEADERS))
     len_borrower_response_email_json = len(borrower_response_email_json)
 
     if len_borrower_response_email_json == 0:
