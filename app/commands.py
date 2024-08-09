@@ -140,9 +140,11 @@ def _get_awards_from_data_source(
     if not awards_response_json:
         logger.info("No new contracts")
         return
+
     total = 0
     while awards_response_json:
         total += len(awards_response_json)
+
         for entry in awards_response_json:
             if not all(key in entry for key in ("id_del_portafolio", "nit_del_proveedor_adjudicado")):
                 raise SkippedAwardError(
@@ -151,9 +153,11 @@ def _get_awards_from_data_source(
                     data={"response": awards_response_json},
                 )
             _create_complete_application(entry, db_provider)
+
         index += 1
         awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
         awards_response_json = awards_response.json()
+
     logger.info("Total fetched contracts: %d", total)
 
 
@@ -191,11 +195,11 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
     Fetch a specific award by award_id and supplier_id.
     Useful when want to directly invite a supplier who for some reason wasn't invited by Credere.
     """
-    award_response = data_access.get_award_by_id_and_supplier(award_id, supplier_id).json()
-    if not award_response:
+    award_response_json = data_access.get_award_by_id_and_supplier(award_id, supplier_id).json()
+    if not award_response_json:
         logger.info(f"The award with id {award_id} and supplier id {supplier_id} was not found")
         return
-    _create_complete_application(award_response[0], get_db)
+    _create_complete_application(award_response_json[0], get_db)
 
 
 @app.command()

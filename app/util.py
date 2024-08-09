@@ -174,8 +174,7 @@ def get_previous_awards_from_data_source(
     with contextmanager(db_provider)() as session:
         borrower = models.Borrower.get(session, borrower_id)
 
-    awards_response = data_access.get_previous_awards(borrower.legal_identifier)
-    awards_response_json = awards_response.json()
+    awards_response_json = data_access.get_previous_awards(borrower.legal_identifier).json()
     if not awards_response_json:
         return
 
