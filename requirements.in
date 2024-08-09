@@ -17,6 +17,6 @@ sentry-sdk[fastapi]
 sqlalchemy[postgresql]
 sqlmodel
 transifex-python
-typer[all]
+typer-slim
 typing-extensions
 uvicorn==0.22.0
