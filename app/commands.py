@@ -21,82 +21,52 @@ logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
-def _create_or_update_borrower_from_data_source(session: Session, entry: dict[str, Any]) -> models.Borrower:
-    """
-    Create a new borrower or update an existing borrower based on the entry data.
-
-    :param entry: The dictionary containing the borrower data.
-    :return: The borrower.
-    """
-    documento_proveedor = data_access.get_documento_proveedor(entry)
-    borrower_identifier = util.get_secret_hash(documento_proveedor)
-    data = data_access.get_borrower(borrower_identifier, documento_proveedor, entry)
-
-    if borrower := models.Borrower.first_by(session, "borrower_identifier", borrower_identifier):
-        if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
-            raise SkippedAwardError(
-                "Borrower opted to not receive any new opportunity",
-                data={"borrower_identifier": borrower_identifier},
-            )
-        return borrower.update(session, **data)
-
-    return models.Borrower.create(session, **data)
-
-
-def _create_application(
-    session: Session,
-    award_id: int | None,
-    borrower_id: int | None,
-    email: str,
-    legal_identifier: str,
-    source_contract_id: str,
-) -> models.Application:
-    """
-    Create a new application and insert it into the database.
-
-    :param award_id: The ID of the award associated with the application.
-    :param borrower_id: The ID of the borrower associated with the application.
-    :param email: The email of the borrower.
-    :param legal_identifier: The legal identifier of the borrower.
-    :param source_contract_id: The ID of the source contract.
-    :return: The created application.
-    """
-    award_borrower_identifier: str = util.get_secret_hash(f"{legal_identifier}{source_contract_id}")
-
-    if application := models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier):
-        raise SkippedAwardError(
-            "Application already exists",
-            data={
-                "found": application.id,
-                "lookup": {"legal_identifier": legal_identifier, "sources_contract_id": source_contract_id},
-            },
-        )
-
-    return models.Application.create(
-        session,
-        award_id=award_id,
-        borrower_id=borrower_id,
-        primary_email=email,
-        award_borrower_identifier=award_borrower_identifier,
-        uuid=util.generate_uuid(award_borrower_identifier),
-        expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
-    )
-
-
 def _create_complete_application(award_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
     with contextmanager(db_provider)() as session:
         with handle_skipped_award(session, "Error creating application"):
             award = util.create_award_from_data_source(session, award_response)
-            borrower = _create_or_update_borrower_from_data_source(session, award_response)
+
+            # Create a new borrower or update an existing borrower based on the entry data.
+            documento_proveedor = data_access.get_documento_proveedor(award_response)
+            borrower_identifier = util.get_secret_hash(documento_proveedor)
+            data = data_access.get_borrower(borrower_identifier, documento_proveedor, award_response)
+            if borrower := models.Borrower.first_by(session, "borrower_identifier", borrower_identifier):
+                if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
+                    raise SkippedAwardError(
+                        "Borrower opted to not receive any new opportunity",
+                        data={"borrower_identifier": borrower_identifier},
+                    )
+                borrower = borrower.update(session, **data)
+            else:
+                borrower = models.Borrower.create(session, **data)
+
             award.borrower_id = borrower.id
 
-            application = _create_application(
+            # Create a new application and insert it into the database.
+            award_borrower_identifier: str = util.get_secret_hash(
+                f"{borrower.legal_identifier}{award.source_contract_id}"
+            )
+            if application := models.Application.first_by(
+                session, "award_borrower_identifier", award_borrower_identifier
+            ):
+                raise SkippedAwardError(
+                    "Application already exists",
+                    data={
+                        "found": application.id,
+                        "lookup": {
+                            "legal_identifier": borrower.legal_identifier,
+                            "sources_contract_id": award.source_contract_id,
+                        },
+                    },
+                )
+            application = models.Application.create(
                 session,
-                award.id,
-                borrower.id,
-                borrower.email,
-                borrower.legal_identifier,
-                award.source_contract_id,
+                award_id=award.id,
+                borrower_id=borrower.id,
+                primary_email=borrower.email,
+                award_borrower_identifier=award_borrower_identifier,
+                uuid=util.generate_uuid(award_borrower_identifier),
+                expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
             )
 
             message = models.Message.create(
