@@ -6,8 +6,9 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Callable, Generator
+from typing import Any, Callable, Generator, TypeVar
 
+import httpx
 import orjson
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -19,6 +20,7 @@ from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 from app.sources import colombia as data_access
 
+T = TypeVar("T")
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg"}
 
@@ -31,17 +33,17 @@ class ERROR_CODES(StrEnum):
 
 
 # In future, httpx.Client might allow custom decoders. https://github.com/encode/httpx/issues/717
-def loads(response):
+def loads(response: httpx.Response) -> Any:
     return orjson.loads(response.text)
 
 
-def commit_and_refresh(session, instance):
+def commit_and_refresh(session: Session, instance: T) -> T:
     session.commit()
     session.refresh(instance)
     return instance
 
 
-def get_object_or_404(session: Session, model: type[models.ActiveRecordMixin], field: str, value: Any):
+def get_object_or_404(session: Session, model: type[T], field: str, value: Any) -> T:
     obj = model.first_by(session, field, value)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{model.__name__} not found")

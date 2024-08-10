@@ -405,7 +405,9 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: st
     return send_email(ses, username, prepare_html("Reset_password", html_data), False)
 
 
-def get_invitation_email_parameters(borrower_name, tender_title, buyer_name, uuid):
+def get_invitation_email_parameters(
+    borrower_name: str, tender_title: str, buyer_name: str, uuid: str
+) -> dict[str, str]:
     images_base_url = get_images_base_url()
     base_application_url = f"{app_settings.frontend_url}/application/{quote(uuid)}"
     base_fathom_url = "?utm_source=credere-intro&utm_medium=email&utm_campaign="

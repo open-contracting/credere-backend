@@ -4,10 +4,10 @@ from enum import StrEnum
 from typing import Any, Optional, Self
 
 from pydantic import BaseModel, ConfigDict, PlainSerializer
-from sqlalchemy import DECIMAL, Column, DateTime, and_, desc, or_, select
+from sqlalchemy import DECIMAL, Boolean, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
-from sqlalchemy.sql import Select, func
+from sqlalchemy.sql import ColumnElement, Select, func
 from sqlalchemy.sql.expression import nulls_last, true
 from sqlmodel import Field, Relationship, SQLModel, col
 from typing_extensions import Annotated
@@ -111,7 +111,7 @@ class ActiveRecordMixin:
         return self
 
     @classmethod
-    def create_or_update(cls, session: Session, filters: list, **data: Any) -> Self:
+    def create_or_update(cls, session: Session, filters: list[bool | ColumnElement[Boolean]], **data: Any) -> Self:
         if obj := session.query(cls).filter(*filters).first():
             return obj.update(session, **data)
         return cls.create(session, **data)

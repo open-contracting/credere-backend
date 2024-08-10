@@ -21,7 +21,7 @@ SUPPLIER_TYPE_TO_EXCLUDE = "persona natural colombiana"
 
 
 def _get_remote_contract(
-    proceso_de_compra: str, proveedor_adjudicado: str, previous=False
+    proceso_de_compra: str, proveedor_adjudicado: str, previous: bool = False
 ) -> tuple[list[dict[str, str]], str]:
     params = f"proceso_de_compra='{proceso_de_compra}' AND documento_proveedor='{proveedor_adjudicado}'"
     contract_url = f"{URLS['CONTRACTS']}?$where={params}"
@@ -222,7 +222,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     }
 
 
-def _get_email(borrower_response: dict):
+def _get_email(borrower_response: dict[str, str]) -> str:
     if "correo_entidad" in borrower_response:
         return borrower_response["correo_entidad"]
     return borrower_response.get("correo_electr_nico", "")

@@ -21,15 +21,17 @@ logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
-def _create_complete_application(award_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
+def _create_complete_application(
+    award_entry: dict[str, str], db_provider: Callable[[], Generator[Session, None, None]]
+) -> None:
     with contextmanager(db_provider)() as session:
         with handle_skipped_award(session, "Error creating application"):
-            award = util.create_award_from_data_source(session, award_response)
+            award = util.create_award_from_data_source(session, award_entry)
 
             # Create a new borrower or update an existing borrower based on the entry data.
-            documento_proveedor = data_access.get_documento_proveedor(award_response)
+            documento_proveedor = data_access.get_documento_proveedor(award_entry)
             borrower_identifier = util.get_secret_hash(documento_proveedor)
-            data = data_access.get_borrower(borrower_identifier, documento_proveedor, award_response)
+            data = data_access.get_borrower(borrower_identifier, documento_proveedor, award_entry)
             if borrower := models.Borrower.first_by(session, "borrower_identifier", borrower_identifier):
                 if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
                     raise SkippedAwardError(

@@ -18,7 +18,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
-def rollback_on_error(session: Session) -> Generator[Session, None, None]:
+def rollback_on_error(session: Session) -> Generator[None, None, None]:
     try:
         yield
     except Exception:
@@ -27,7 +27,7 @@ def rollback_on_error(session: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def transaction_session(session: Session) -> Generator[Session, None, None]:
+def transaction_session(session: Session) -> Generator[None, None, None]:
     """
     Context manager for database transactions. It takes a Session instance, commits the transaction if it is
     successful, and rolls back the transaction if any exception is raised.
@@ -45,7 +45,7 @@ def transaction_session(session: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def handle_skipped_award(session: Session, msg: str) -> Generator[Session, None, None]:
+def handle_skipped_award(session: Session, msg: str) -> Generator[None, None, None]:
     try:
         yield
     except SkippedAwardError as e:
