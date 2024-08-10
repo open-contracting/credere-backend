@@ -79,6 +79,19 @@ def get_award(
     proceso_de_compra = entry["id_del_portafolio"]
     proveedor_adjudicado = entry["nit_del_proveedor_adjudicado"]
 
+    contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, proveedor_adjudicado, previous)
+    if not contract_response_json:
+        # Retry with nombre_del_proveedor="No Adjudicado", in case award data is available, but not the supplier name.
+        contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, "No Adjudicado")
+        if not contract_response_json:
+            raise SkippedAwardError("No remote contracts found", url=contract_url, data={"previous": previous})
+
+    remote_contract = contract_response_json[0]
+
+    source_contract_id = remote_contract.get("id_contrato", "")
+    if not source_contract_id:
+        raise SkippedAwardError("Missing id_contrato", data=remote_contract)
+
     new_award = {
         "source_url": entry.get("urlproceso", {}).get("url", ""),
         "entity_code": entry.get("nit_entidad", ""),
@@ -93,35 +106,23 @@ def get_award(
         "award_date": entry.get("fecha_adjudicacion", None),
         "contract_status": entry.get("estado_del_procedimiento", ""),
         "title": entry.get("nombre_del_procedimiento", ""),
+        "payment_method": {
+            "habilita_pago_adelantado": remote_contract.get("habilita_pago_adelantado", ""),
+            "valor_de_pago_adelantado": remote_contract.get("valor_de_pago_adelantado", ""),
+            "valor_facturado": remote_contract.get("valor_facturado", ""),
+            "valor_pendiente_de_pago": remote_contract.get("valor_pendiente_de_pago", ""),
+            "valor_pagado": remote_contract.get("valor_pagado", ""),
+        },
+        "contractperiod_startdate": remote_contract.get("fecha_de_inicio_del_contrato", None),
+        "contractperiod_enddate": remote_contract.get("fecha_de_fin_del_contrato", None),
+        "award_amount": remote_contract.get("valor_del_contrato", ""),
+        "source_data_contracts": remote_contract,
+        "source_contract_id": source_contract_id,
     }
-
-    contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, proveedor_adjudicado, previous)
-
-    if not contract_response_json:
-        # Retry with nombre_del_proveedor="No Adjudicado", in case award data is available, but not the supplier name.
-        contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, "No Adjudicado")
-        if not contract_response_json:
-            raise SkippedAwardError("No remote contracts found", url=contract_url, data={"previous": previous})
-
-    remote_contract = contract_response_json[0]
-    new_award["payment_method"] = {
-        "habilita_pago_adelantado": remote_contract.get("habilita_pago_adelantado", ""),
-        "valor_de_pago_adelantado": remote_contract.get("valor_de_pago_adelantado", ""),
-        "valor_facturado": remote_contract.get("valor_facturado", ""),
-        "valor_pendiente_de_pago": remote_contract.get("valor_pendiente_de_pago", ""),
-        "valor_pagado": remote_contract.get("valor_pagado", ""),
-    }
-    new_award["contractperiod_startdate"] = (remote_contract.get("fecha_de_inicio_del_contrato", None),)
-    new_award["contractperiod_enddate"] = (remote_contract.get("fecha_de_fin_del_contrato", None),)
-    new_award["award_amount"] = remote_contract.get("valor_del_contrato", "")
-    new_award["source_data_contracts"] = remote_contract
-    new_award["source_contract_id"] = remote_contract.get("id_contrato", "")
-
-    if not new_award["source_contract_id"]:
-        raise SkippedAwardError("Missing id_contrato", data=remote_contract)
 
     if borrower_id:
         new_award["borrower_id"] = borrower_id
+
     return new_award
 
 
