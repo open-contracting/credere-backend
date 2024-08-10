@@ -3,14 +3,13 @@ import logging
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import asc, desc, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
 from app.aws import CognitoClient
 from app.db import get_db, rollback_on_error
-from app.util import commit_and_refresh, get_object_or_404
+from app.util import SortOrder, commit_and_refresh, get_object_or_404, get_order_by
 
 logger = logging.getLogger(__name__)
 
@@ -291,7 +290,7 @@ async def get_all_users(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("created_at"),
-    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
+    sort_order: SortOrder = Query("asc"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.UserListResponse:
@@ -306,15 +305,13 @@ async def get_all_users(
     :param sort_order: The sort order. Must be either "asc" or "desc". Defaults to "asc".
     :return: The paginated and sorted list of users.
     """
-    sort_direction = desc if sort_order.lower() == "desc" else asc
-
     list_query = (
         session.query(models.User)
         .outerjoin(models.Lender)
         .options(
             joinedload(models.User.lender),
         )
-        .order_by(text(f"{sort_field} {sort_direction.__name__}"), models.User.id)
+        .order_by(get_order_by(sort_field, sort_order, model=models.User), models.User.id)
     )
 
     total_count = list_query.count()

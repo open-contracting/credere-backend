@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
 from app.db import get_db, rollback_on_error
-from app.sources.colombia import get_procurement_categories
+from app.sources import colombia as data_access
 from app.util import commit_and_refresh, get_object_or_404
 
 router = APIRouter()
@@ -168,7 +168,7 @@ async def get_procurement_categories_from_source() -> list[str]:
     :return: The list of existing procurement categories.
     """
 
-    return get_procurement_categories()
+    return data_access.PROCUREMENT_CATEGORIES
 
 
 @router.get(
