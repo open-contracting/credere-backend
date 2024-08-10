@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Generator
 
 import typer
+from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
@@ -12,7 +13,7 @@ import app.utils.statistics as statistics_utils
 from app import mail, models, util
 from app.aws import sesClient
 from app.db import get_db, handle_skipped_award, rollback_on_error
-from app.exceptions import SkippedAwardError
+from app.exceptions import SkippedAwardError, SourceFormatError
 from app.settings import app_settings
 from app.sources import colombia as data_access
 
@@ -115,7 +116,7 @@ def _get_awards_from_data_source(
 
         for entry in awards_response_json:
             if not all(key in entry for key in ("id_del_portafolio", "nit_del_proveedor_adjudicado")):
-                raise SkippedAwardError(
+                raise SourceFormatError(
                     "Source contract is missing required fields",
                     url=awards_response.url,
                     data={"response": awards_response_json},
@@ -330,7 +331,76 @@ def send_reminders() -> None:
 
 @app.command()
 def update_statistics() -> None:
-    statistics_utils.update_statistics()
+    """
+    Update and store various statistics related to applications and lenders in the database.
+    """
+    keys_to_serialize = [
+        "sector_statistics",
+        "rejected_reasons_count_by_reason",
+        "fis_chosen_by_supplier",
+        "accepted_count_by_gender",
+        "submitted_count_by_gender",
+        "approved_count_by_gender",
+        "accepted_count_by_size",
+        "submitted_count_by_size",
+        "approved_count_by_size",
+        "msme_accepted_count_distinct_by_gender",
+        "msme_submitted_count_distinct_by_gender",
+        "msme_approved_count_distinct_by_gender",
+        "accepted_count_distinct_by_size",
+        "submitted_count_distinct_by_size",
+        "approved_count_distinct_by_size",
+    ]
+
+    with contextmanager(get_db)() as session:
+        with rollback_on_error(session):
+            # Get general Kpis
+            statistic_kpis = statistics_utils.get_general_statistics(session, None, None, None)
+
+            models.Statistic.create_or_update(
+                session,
+                [
+                    cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
+                    models.Statistic.type == models.StatisticType.APPLICATION_KPIS,
+                ],
+                type=models.StatisticType.APPLICATION_KPIS,
+                data=statistic_kpis,
+            )
+
+            # Get Opt in statistics
+            statistics_msme_opt_in = statistics_utils.get_borrower_opt_in_stats(session)
+            for key in keys_to_serialize:
+                statistics_msme_opt_in[key] = [data.model_dump() for data in statistics_msme_opt_in[key]]
+
+            models.Statistic.create_or_update(
+                session,
+                [
+                    cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
+                    models.Statistic.type == models.StatisticType.MSME_OPT_IN_STATISTICS,
+                ],
+                type=models.StatisticType.MSME_OPT_IN_STATISTICS,
+                data=statistics_msme_opt_in,
+            )
+
+            # Get general Kpis for every lender
+            lender_ids = [id[0] for id in session.query(models.Lender.id).all()]
+            for lender_id in lender_ids:
+                # Get statistics for each lender
+                statistic_kpis = statistics_utils.get_general_statistics(session, None, None, lender_id)
+
+                models.Statistic.create_or_update(
+                    session,
+                    [
+                        cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
+                        models.Statistic.type == models.StatisticType.APPLICATION_KPIS,
+                        models.Statistic.lender_id == lender_id,
+                    ],
+                    type=models.StatisticType.APPLICATION_KPIS,
+                    data=statistic_kpis,
+                    lender_id=lender_id,
+                )
+
+            session.commit()
 
 
 @app.command()

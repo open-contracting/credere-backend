@@ -12,7 +12,6 @@ from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
 from app.db import get_db, rollback_on_error, transaction_session
 from app.util import SortOrder, commit_and_refresh, get_order_by
-from app.utils.statistics import update_statistics
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,6 @@ async def reject_application(
             type=models.MessageType.REJECTED_APPLICATION,
             external_message_id=message_id,
         )
-        background_tasks.add_task(update_statistics)
         return application
 
 
@@ -126,7 +124,7 @@ async def complete_application(
             type=models.MessageType.CREDIT_DISBURSED,
             external_message_id=message_id,
         )
-        background_tasks.add_task(update_statistics)
+
         return application
 
 
@@ -207,7 +205,7 @@ async def approve_application(
             type=models.MessageType.APPROVED_APPLICATION,
             external_message_id=message_id,
         )
-        background_tasks.add_task(update_statistics)
+
         return application
 
 
@@ -491,7 +489,6 @@ async def start_application(
     with transaction_session(session):
         application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
-        background_tasks.add_task(update_statistics)
         return application
 
 
@@ -603,7 +600,6 @@ async def email_sme(
             )
 
             session.commit()
-            background_tasks.add_task(update_statistics)
             return application
         except ClientError as e:
             logger.exception(e)

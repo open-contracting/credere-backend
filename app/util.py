@@ -32,14 +32,14 @@ class ERROR_CODES(StrEnum):
     APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
 
 
-# In future, httpx.Client might allow custom decoders. https://github.com/encode/httpx/issues/717
-def loads(response: httpx.Response) -> Any:
-    return orjson.loads(response.text)
-
-
 class SortOrder(StrEnum):
     ASC = "asc"
     DESC = "desc"
+
+
+# In future, httpx.Client might allow custom decoders. https://github.com/encode/httpx/issues/717
+def loads(response: httpx.Response) -> Any:
+    return orjson.loads(response.text)
 
 
 def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None = None) -> Any:
