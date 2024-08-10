@@ -5,14 +5,13 @@ from typing import Any, cast
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import asc, desc, text
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
 from app.db import get_db, rollback_on_error, transaction_session
-from app.util import commit_and_refresh
+from app.util import SortOrder, commit_and_refresh, get_order_by
 from app.utils.statistics import update_statistics
 
 logger = logging.getLogger(__name__)
@@ -400,7 +399,7 @@ async def get_applications_list(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
-    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
+    sort_order: SortOrder = Query("asc"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
@@ -414,17 +413,21 @@ async def get_applications_list(
     :return: The paginated list of applications.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
-    sort_direction = desc if sort_order.lower() == "desc" else asc
-
     applications_query = (
         models.Application.submitted(session)
         .join(models.Award)
         .join(models.Borrower)
+        .join(models.BorrowerDocument)
+        .join(models.CreditProduct)
+        .join(models.Lender)
         .options(
             joinedload(models.Application.award),
             joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
+            joinedload(models.Application.credit_product),
+            joinedload(models.Application.lender),
         )
-        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+        .order_by(get_order_by(sort_field, sort_order, model=models.Application))
     )
 
     total_count = applications_query.count()
@@ -500,7 +503,7 @@ async def get_applications(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.created_at"),
-    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
+    sort_order: SortOrder = Query("asc"),
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
@@ -513,17 +516,21 @@ async def get_applications(
     :param sort_order: The sort order of the applications ("asc" or "desc", default: "asc").
     :return: The paginated list of applications for the specific user.
     """
-    sort_direction = desc if sort_order.lower() == "desc" else asc
-
     applications_query = (
         models.Application.submitted_to_lender(session, user.lender_id)
         .join(models.Award)
         .join(models.Borrower)
+        .join(models.BorrowerDocument)
+        .join(models.CreditProduct)
+        .join(models.Lender)
         .options(
             joinedload(models.Application.award),
             joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
+            joinedload(models.Application.credit_product),
+            joinedload(models.Application.lender),
         )
-        .order_by(text(f"{sort_field} {sort_direction.__name__}"))
+        .order_by(get_order_by(sort_field, sort_order, model=models.Application))
     )
     total_count = applications_query.count()
 
