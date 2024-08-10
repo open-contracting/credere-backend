@@ -1,17 +1,14 @@
 import logging.config
 import re
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import sentry_sdk
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-if TYPE_CHECKING:
-    from sentry_sdk._types import Event
-
 VERSION: str = "0.1.1"
 
 
-def sentry_filter_transactions(event: Event, hint: dict[str, Any]) -> Event | None:
+def sentry_filter_transactions(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
     """
     Filter transactions to be sent to Sentry.
     This function prevents transactions that interact with AWS Cognito from being sent to Sentry.
