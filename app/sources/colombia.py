@@ -19,6 +19,35 @@ HEADERS = {"X-App-Token": app_settings.colombia_secop_app_token}
 
 SUPPLIER_TYPE_TO_EXCLUDE = "persona natural colombiana"
 
+# https://www.datos.gov.co/resource/p6dx-8zbt.json?$query=SELECT distinct `tipo_de_contrato`
+PROCUREMENT_CATEGORIES = [
+    "Comodato",
+    "Empréstito",
+    "Venta inmuebles",
+    "Seguros",
+    "Interventoría",
+    "Arrendamiento de muebles",
+    "Negocio fiduciario",
+    "Concesión",
+    "No",
+    "Asociación Público Privada",
+    "No Especificado",
+    "Otro",
+    "Acuerdo Marco de Precios",
+    "Arrendamiento de inmuebles",
+    "Compraventa",
+    "Comisión",
+    "Prestación de servicios",
+    "Decreto 092 de 2017",
+    "Venta muebles",
+    "Operaciones de Crédito Público",
+    "Suministros",
+    "Obra",
+    "Servicios financieros",
+    "Acuerdo de cooperación",
+    "Consultoría",
+]
+
 
 def _get_remote_contract(
     proceso_de_compra: str, proveedor_adjudicado: str, previous=False
@@ -28,37 +57,6 @@ def _get_remote_contract(
     if previous:
         contract_url = f"{contract_url} AND fecha_de_firma IS NOT NULL"
     return sources.make_request_with_retry(contract_url, HEADERS).json(), contract_url
-
-
-def get_procurement_categories():
-    # from https://www.datos.gov.co/resource/p6dx-8zbt.json?$query=SELECT distinct `tipo_de_contrato`
-    return [
-        "Comodato",
-        "Empréstito",
-        "Venta inmuebles",
-        "Seguros",
-        "Interventoría",
-        "Arrendamiento de muebles",
-        "Negocio fiduciario",
-        "Concesión",
-        "No",
-        "Asociación Público Privada",
-        "No Especificado",
-        "Otro",
-        "Acuerdo Marco de Precios",
-        "Arrendamiento de inmuebles",
-        "Compraventa",
-        "Comisión",
-        "Prestación de servicios",
-        "Decreto 092 de 2017",
-        "Venta muebles",
-        "Operaciones de Crédito Público",
-        "Suministros",
-        "Obra",
-        "Servicios financieros",
-        "Acuerdo de cooperación",
-        "Consultoría",
-    ]
 
 
 def get_award(
