@@ -12,7 +12,7 @@ import app.utils.statistics as statistics_utils
 from app import mail, models, util
 from app.aws import sesClient
 from app.db import get_db, handle_skipped_award, rollback_on_error
-from app.exceptions import SkippedAwardError
+from app.exceptions import SkippedAwardError, SourceFormatError
 from app.settings import app_settings
 from app.sources import colombia as data_access
 
@@ -115,7 +115,7 @@ def _get_awards_from_data_source(
 
         for entry in awards_response_json:
             if not all(key in entry for key in ("id_del_portafolio", "nit_del_proveedor_adjudicado")):
-                raise SkippedAwardError(
+                raise SourceFormatError(
                     "Source contract is missing required fields",
                     url=awards_response.url,
                     data={"response": awards_response_json},

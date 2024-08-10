@@ -16,7 +16,6 @@ from app.dependencies import ApplicationScope
 from app.settings import app_settings
 from app.sources import colombia as data_access
 from app.util import commit_and_refresh
-from app.utils.statistics import update_statistics
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +85,6 @@ async def decline(
 
         commit_and_refresh(session, application)
 
-        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -126,7 +124,6 @@ async def rollback_decline(
 
         commit_and_refresh(session, application)
 
-        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -163,7 +160,6 @@ async def decline_feedback(
 
         application = commit_and_refresh(session, application)
 
-        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -206,7 +202,6 @@ async def access_scheme(
         application = commit_and_refresh(session, application)
 
         background_tasks.add_task(util.get_previous_awards_from_data_source, application.borrower_id)
-        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -473,7 +468,6 @@ async def confirm_credit_product(
             application_id=application.id,
         )
 
-        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -539,7 +533,6 @@ async def rollback_confirm_credit_product(
         )
 
         application = commit_and_refresh(session, application)
-        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -608,7 +601,6 @@ async def update_apps_send_notifications(
                 external_message_id=message_id,
             )
 
-            background_tasks.add_task(update_statistics)
             return serializers.ApplicationResponse(
                 application=cast(models.ApplicationRead, application),
                 borrower=application.borrower,
@@ -709,7 +701,6 @@ async def complete_information_request(
             external_message_id=message_id,
         )
 
-        background_tasks.add_task(update_statistics)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
