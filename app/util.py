@@ -10,7 +10,7 @@ from typing import Any, Callable, Generator
 
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
-from sqlmodel import col
+from sqlmodel import SQLModel, col
 
 from app import models
 from app.db import get_db, handle_skipped_award
@@ -27,6 +27,21 @@ class ERROR_CODES(StrEnum):
     DOCUMENT_VERIFICATION_MISSING = "DOCUMENT_VERIFICATION_MISSING"
     APPLICATION_LAPSED = "APPLICATION_LAPSED"
     APPLICATION_ALREADY_COPIED = "APPLICATION_ALREADY_COPIED"
+
+
+class SortOrder(StrEnum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None = None) -> Any:
+    if "." in sort_field:
+        model_name, field_name = sort_field.split(".", 1)
+        # credere-frontend doesn't use any camelcase models.
+        column = getattr(getattr(models, model_name.capitalize()), field_name)
+    else:
+        column = getattr(model, sort_field)
+    return getattr(col(column), sort_order)()
 
 
 def commit_and_refresh(session, instance):
