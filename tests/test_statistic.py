@@ -1,8 +1,7 @@
 from fastapi import status
 
 from app import models
-from app.utils.statistics import update_statistics
-from tests import get_test_db
+from app.commands import update_statistics
 
 ocp_user = {
     "email": "OCP_user@example.com",
@@ -27,7 +26,7 @@ fi_user_with_lender = {
 
 
 def test_update_statistic(engine, create_and_drop_database):
-    update_statistics(get_test_db(engine))
+    update_statistics()
 
 
 def test_statistics(client):

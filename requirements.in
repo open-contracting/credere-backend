@@ -6,6 +6,7 @@ fastapi
 httpx
 mypy-boto3-cognito-idp
 mypy-boto3-ses
+orjson
 pandas
 pydantic
 pydantic-settings
@@ -17,6 +18,6 @@ sentry-sdk[fastapi]
 sqlalchemy[postgresql]
 sqlmodel
 transifex-python
-typer[all]
+typer-slim
 typing-extensions
 uvicorn==0.22.0

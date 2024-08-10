@@ -6,8 +6,10 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Callable, Generator
+from typing import Any, Callable, Generator, TypeVar
 
+import httpx
+import orjson
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlmodel import SQLModel, col
@@ -18,6 +20,7 @@ from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 from app.sources import colombia as data_access
 
+T = TypeVar("T")
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg"}
 
@@ -34,6 +37,11 @@ class SortOrder(StrEnum):
     DESC = "desc"
 
 
+# In future, httpx.Client might allow custom decoders. https://github.com/encode/httpx/issues/717
+def loads(response: httpx.Response) -> Any:
+    return orjson.loads(response.text)
+
+
 def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None = None) -> Any:
     if "." in sort_field:
         model_name, field_name = sort_field.split(".", 1)
@@ -44,13 +52,13 @@ def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None 
     return getattr(col(column), sort_order)()
 
 
-def commit_and_refresh(session, instance):
+def commit_and_refresh(session: Session, instance: T) -> T:
     session.commit()
     session.refresh(instance)
     return instance
 
 
-def get_object_or_404(session: Session, model: type[models.ActiveRecordMixin], field: str, value: Any):
+def get_object_or_404(session: Session, model: type[T], field: str, value: Any) -> T:
     obj = model.first_by(session, field, value)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{model.__name__} not found")
@@ -162,8 +170,7 @@ def create_award_from_data_source(
     """
 
     data = data_access.get_award(entry, borrower_id, previous)
-    award = models.Award.first_by(session, "source_contract_id", data["source_contract_id"])
-    if award:
+    if award := models.Award.first_by(session, "source_contract_id", data["source_contract_id"]):
         raise SkippedAwardError(
             "Award already exists",
             data={
@@ -189,7 +196,7 @@ def get_previous_awards_from_data_source(
     with contextmanager(db_provider)() as session:
         borrower = models.Borrower.get(session, borrower_id)
 
-    awards_response_json = data_access.get_previous_awards(borrower.legal_identifier).json()
+    awards_response_json = loads(data_access.get_previous_awards(borrower.legal_identifier))
     if not awards_response_json:
         return
 
@@ -242,11 +249,11 @@ def create_or_update_borrower_document(
             submitted_at=datetime.utcnow(),
         )
     else:
-        new_document = {
-            "application_id": application.id,
-            "type": type,
-            "file": file,
-            "name": filename,
-            "verified": verified,
-        }
-        return models.BorrowerDocument.create(session, **new_document)
+        return models.BorrowerDocument.create(
+            session,
+            application_id=application.id,
+            type=type,
+            file=file,
+            name=filename,
+            verified=verified,
+        )

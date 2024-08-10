@@ -5,7 +5,7 @@ from urllib.parse import quote_plus
 
 import httpx
 
-from app import sources
+from app import sources, util
 from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 
@@ -51,13 +51,13 @@ PROCUREMENT_CATEGORIES = [
 
 
 def _get_remote_contract(
-    proceso_de_compra: str, proveedor_adjudicado: str, previous=False
+    proceso_de_compra: str, proveedor_adjudicado: str, previous: bool = False
 ) -> tuple[list[dict[str, str]], str]:
     params = f"proceso_de_compra='{proceso_de_compra}' AND documento_proveedor='{proveedor_adjudicado}'"
     if previous:
         params = f"{params} AND fecha_de_firma IS NOT NULL"
     contract_url = f"{URLS['CONTRACTS']}?$where={quote_plus(params)}"
-    return sources.make_request_with_retry(contract_url, HEADERS).json(), contract_url
+    return util.loads(sources.make_request_with_retry(contract_url, HEADERS)), contract_url
 
 
 def get_award(
@@ -79,8 +79,7 @@ def get_award(
 
     contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, proveedor_adjudicado, previous)
     if not contract_response_json:
-        # Retry with nombre_del_proveedor="No Adjudicado", in case contract data is available, but not the supplier
-        # name.
+        # Retry without proveedor_adjudicado, in case contract data is available, but not the supplier name.
         contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, "No Adjudicado", previous)
         if not contract_response_json:
             raise SkippedAwardError("No remote contracts found", url=contract_url, data={"previous": previous})
@@ -157,7 +156,6 @@ def get_new_awards(index: int, from_date: datetime, until_date: datetime | None 
 
 def get_award_by_id_and_supplier(award_id: str, supplier_id: str) -> httpx.Response:
     url = f"{URLS['AWARDS']}?$where=nit_del_proveedor_adjudicado = '{supplier_id}' AND id_adjudicacion = '{award_id}'"
-
     return sources.make_request_with_retry(url, HEADERS)
 
 
@@ -170,7 +168,6 @@ def get_previous_awards(documento_proveedor: str) -> httpx.Response:
     """
 
     url = f"{URLS['AWARDS']}?$where=nit_del_proveedor_adjudicado = '{documento_proveedor}'"
-
     return sources.make_request_with_retry(url, HEADERS)
 
 
@@ -187,7 +184,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
     borrower_url = (
         f"{URLS['BORROWER']}?nit_entidad={documento_proveedor}&codigo_entidad={entry.get('codigoproveedor', '')}"
     )
-    borrower_response_json = sources.make_request_with_retry(borrower_url, HEADERS).json()
+    borrower_response_json = util.loads(sources.make_request_with_retry(borrower_url, HEADERS))
     len_borrower_response_json = len(borrower_response_json)
 
     if len_borrower_response_json != 1:
@@ -207,7 +204,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
             data={"response": borrower_response_json},
         )
 
-    new_borrower = {
+    return {
         "borrower_identifier": borrower_identifier,
         "legal_name": remote_borrower.get("nombre_entidad", ""),
         "email": email,
@@ -223,15 +220,11 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
         "is_msme": remote_borrower.get("es_pyme", "").lower() == "si",
     }
 
-    return new_borrower
 
-
-def _get_email(borrower_response: dict):
-    return (
-        borrower_response.get("correo_entidad")
-        if "correo_entidad" in borrower_response
-        else borrower_response.get("correo_electr_nico", "")
-    )
+def _get_email(borrower_response: dict[str, str]) -> str:
+    if "correo_entidad" in borrower_response:
+        return borrower_response["correo_entidad"]
+    return borrower_response.get("correo_electr_nico", "")
 
 
 def get_email(documento_proveedor: str) -> str:
@@ -242,26 +235,24 @@ def get_email(documento_proveedor: str) -> str:
     :return: The email address of the borrower.
     """
 
-    borrower_email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
-    borrower_response_email_json = sources.make_request_with_retry(borrower_email_url, HEADERS).json()
-    len_borrower_response_email_json = len(borrower_response_email_json)
+    email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
+    email_response_json = util.loads(sources.make_request_with_retry(email_url, HEADERS))
+    len_email_response_json = len(email_response_json)
 
-    if len_borrower_response_email_json == 0:
-        raise SkippedAwardError("No remote borrower emails found", url=borrower_email_url)
+    if len_email_response_json == 0:
+        raise SkippedAwardError("No remote borrower emails found", url=email_url)
 
-    remote_email: dict[str, str] = borrower_response_email_json[0]
+    remote_email: dict[str, str] = email_response_json[0]
     email = _get_email(remote_email)
 
-    if len_borrower_response_email_json > 1:
-        email = Counter(_get_email(borrower_email) for borrower_email in borrower_response_email_json).most_common(1)[
-            0
-        ][0]
+    if len_email_response_json > 1:
+        email = Counter(_get_email(email) for email in email_response_json).most_common(1)[0][0]
 
     if not sources.is_valid_email(email):
         raise SkippedAwardError(
             "Invalid remote borrower email",
-            url=borrower_email_url,
-            data={"response": borrower_response_email_json, "email": email},
+            url=email_url,
+            data={"response": email_response_json, "email": email},
         )
 
     return email

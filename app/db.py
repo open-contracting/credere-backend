@@ -12,12 +12,13 @@ from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
+# https://docs.sqlalchemy.org/en/20/orm/session_basics.html#using-a-sessionmaker
 engine = create_engine(app_settings.test_database_url if app_settings.test_database_url else app_settings.database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
-def rollback_on_error(session: Session) -> Generator[Session, None, None]:
+def rollback_on_error(session: Session) -> Generator[None, None, None]:
     try:
         yield
     except Exception:
@@ -26,7 +27,7 @@ def rollback_on_error(session: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def transaction_session(session: Session) -> Generator[Session, None, None]:
+def transaction_session(session: Session) -> Generator[None, None, None]:
     """
     Context manager for database transactions. It takes a Session instance, commits the transaction if it is
     successful, and rolls back the transaction if any exception is raised.
@@ -44,7 +45,7 @@ def transaction_session(session: Session) -> Generator[Session, None, None]:
 
 
 @contextmanager
-def handle_skipped_award(session: Session, msg: str) -> Generator[Session, None, None]:
+def handle_skipped_award(session: Session, msg: str) -> Generator[None, None, None]:
     try:
         yield
     except SkippedAwardError as e:
@@ -71,8 +72,5 @@ def get_db() -> Generator[Session, None, None]:
 
     :return: The database session instance.
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    with SessionLocal() as session:
+        yield session

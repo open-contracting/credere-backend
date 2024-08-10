@@ -1,3 +1,4 @@
+import json
 from typing import Generator
 
 from sqlalchemy.orm import Session, sessionmaker
@@ -7,6 +8,10 @@ class MockResponse:
     def __init__(self, status_code, json_data):
         self.status_code = status_code
         self.json_data = json_data
+
+    @property
+    def text(self):
+        return json.dumps(self.json_data)
 
     def json(self):
         return self.json_data

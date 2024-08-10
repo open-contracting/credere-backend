@@ -8,6 +8,7 @@ from typing import Any, Callable
 
 import boto3
 from mypy_boto3_cognito_idp import CognitoIdentityProviderClient, literals, type_defs
+from mypy_boto3_cognito_idp.client import Exceptions
 from mypy_boto3_ses.client import SESClient
 
 from app import mail
@@ -55,7 +56,7 @@ class CognitoClient:
         #: A function reference that generates a password
         self.generate_password = generate_password_fn
 
-    def exceptions(self):
+    def exceptions(self) -> Exceptions:
         return self.client.exceptions
 
     def get_secret_hash(self, username: str) -> str:

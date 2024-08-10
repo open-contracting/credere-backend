@@ -84,7 +84,7 @@ Templates are in HTML. To introduce a parameter you can add **{{PARAMETER_NAME}}
 
 In the code, when using the **send_templated_email** method from the SES client, add the **PARAMETER_NAME** as key in the dict passed as **TemplateData** parameter of the method.
 
-If the parameter is an URL for an image, you can follow the URL structure use in the function **generate_common_data** where the ENV variable **app_settings.images_base_url** is used to create the full URL.
+If the parameter is an URL for an image, you can follow the URL structure used in **COMMON_DATA** where the ENV variable **app_settings.images_base_url** is used to create the full URL.
 
 Sending emails for testing
 --------------------------

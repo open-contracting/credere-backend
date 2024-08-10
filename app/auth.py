@@ -1,7 +1,7 @@
 from typing import Any
 
 import jwt
-import requests
+import requests  # moto intercepts only requests, not httpx: https://github.com/getmoto/moto/issues/4197
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from jwt.utils import base64url_decode
@@ -72,9 +72,8 @@ class JWTAuthorization(HTTPBearer):
         :return: JWT credentials if the token is verified.
         """
         self.load_keys()
-        credentials = await super().__call__(request)
 
-        if credentials:
+        if credentials := await super().__call__(request):
             if not credentials.scheme == "Bearer":
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,

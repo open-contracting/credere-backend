@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Generator
 
 import typer
+from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
@@ -21,86 +22,54 @@ logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
-def _create_or_update_borrower_from_data_source(session: Session, entry: dict[str, Any]) -> models.Borrower:
-    """
-    Create a new borrower or update an existing borrower based on the entry data.
-
-    :param entry: The dictionary containing the borrower data.
-    :return: The borrower.
-    """
-    documento_proveedor = data_access.get_documento_proveedor(entry)
-    borrower_identifier = util.get_secret_hash(documento_proveedor)
-    data = data_access.get_borrower(borrower_identifier, documento_proveedor, entry)
-
-    borrower = models.Borrower.first_by(session, "borrower_identifier", borrower_identifier)
-    if borrower:
-        if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
-            raise SkippedAwardError(
-                "Borrower opted to not receive any new opportunity",
-                data={"borrower_identifier": borrower_identifier},
-            )
-        return borrower.update(session, **data)
-
-    return models.Borrower.create(session, **data)
-
-
-def _create_application(
-    session: Session,
-    award_id: int | None,
-    borrower_id: int | None,
-    email: str,
-    legal_identifier: str,
-    source_contract_id: str,
-) -> models.Application:
-    """
-    Create a new application and insert it into the database.
-
-    :param award_id: The ID of the award associated with the application.
-    :param borrower_id: The ID of the borrower associated with the application.
-    :param email: The email of the borrower.
-    :param legal_identifier: The legal identifier of the borrower.
-    :param source_contract_id: The ID of the source contract.
-    :return: The created application.
-    """
-    award_borrower_identifier: str = util.get_secret_hash(f"{legal_identifier}{source_contract_id}")
-
-    application = models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier)
-    if application:
-        raise SkippedAwardError(
-            "Application already exists",
-            data={
-                "found": application.id,
-                "lookup": {"legal_identifier": legal_identifier, "sources_contract_id": source_contract_id},
-            },
-        )
-
-    new_uuid: str = util.generate_uuid(award_borrower_identifier)
-    data = {
-        "award_id": award_id,
-        "borrower_id": borrower_id,
-        "primary_email": email,
-        "award_borrower_identifier": award_borrower_identifier,
-        "uuid": new_uuid,
-        "expired_at": datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
-    }
-
-    return models.Application.create(session, **data)
-
-
-def _create_complete_application(award_response, db_provider: Callable[[], Generator[Session, None, None]]) -> None:
+def _create_complete_application(
+    award_entry: dict[str, str], db_provider: Callable[[], Generator[Session, None, None]]
+) -> None:
     with contextmanager(db_provider)() as session:
         with handle_skipped_award(session, "Error creating application"):
-            award = util.create_award_from_data_source(session, award_response)
-            borrower = _create_or_update_borrower_from_data_source(session, award_response)
+            award = util.create_award_from_data_source(session, award_entry)
+
+            # Create a new borrower or update an existing borrower based on the entry data.
+            documento_proveedor = data_access.get_documento_proveedor(award_entry)
+            borrower_identifier = util.get_secret_hash(documento_proveedor)
+            data = data_access.get_borrower(borrower_identifier, documento_proveedor, award_entry)
+            if borrower := models.Borrower.first_by(session, "borrower_identifier", borrower_identifier):
+                if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
+                    raise SkippedAwardError(
+                        "Borrower opted to not receive any new opportunity",
+                        data={"borrower_identifier": borrower_identifier},
+                    )
+                borrower = borrower.update(session, **data)
+            else:
+                borrower = models.Borrower.create(session, **data)
+
             award.borrower_id = borrower.id
 
-            application = _create_application(
+            # Create a new application and insert it into the database.
+            award_borrower_identifier: str = util.get_secret_hash(
+                f"{borrower.legal_identifier}{award.source_contract_id}"
+            )
+            if application := models.Application.first_by(
+                session, "award_borrower_identifier", award_borrower_identifier
+            ):
+                raise SkippedAwardError(
+                    "Application already exists",
+                    data={
+                        "found": application.id,
+                        "lookup": {
+                            "legal_identifier": borrower.legal_identifier,
+                            "sources_contract_id": award.source_contract_id,
+                        },
+                    },
+                )
+            application = models.Application.create(
                 session,
-                award.id,
-                borrower.id,
-                borrower.email,
-                borrower.legal_identifier,
-                award.source_contract_id,
+                award_id=award.id,
+                borrower_id=borrower.id,
+                primary_email=borrower.email,
+                award_borrower_identifier=award_borrower_identifier,
+                uuid=util.generate_uuid(award_borrower_identifier),
+                expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
             )
 
             message = models.Message.create(
@@ -135,7 +104,7 @@ def _get_awards_from_data_source(
     """
     index = 0
     awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
-    awards_response_json = awards_response.json()
+    awards_response_json = util.loads(awards_response)
 
     if not awards_response_json:
         logger.info("No new contracts")
@@ -156,7 +125,7 @@ def _get_awards_from_data_source(
 
         index += 1
         awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
-        awards_response_json = awards_response.json()
+        awards_response_json = util.loads(awards_response)
 
     logger.info("Total fetched contracts: %d", total)
 
@@ -195,7 +164,7 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
     Fetch a specific award by award_id and supplier_id.
     Useful when want to directly invite a supplier who for some reason wasn't invited by Credere.
     """
-    award_response_json = data_access.get_award_by_id_and_supplier(award_id, supplier_id).json()
+    award_response_json = util.loads(data_access.get_award_by_id_and_supplier(award_id, supplier_id))
     if not award_response_json:
         logger.info(f"The award with id {award_id} and supplier id {supplier_id} was not found")
         return
@@ -362,7 +331,76 @@ def send_reminders() -> None:
 
 @app.command()
 def update_statistics() -> None:
-    statistics_utils.update_statistics()
+    """
+    Update and store various statistics related to applications and lenders in the database.
+    """
+    keys_to_serialize = [
+        "sector_statistics",
+        "rejected_reasons_count_by_reason",
+        "fis_chosen_by_supplier",
+        "accepted_count_by_gender",
+        "submitted_count_by_gender",
+        "approved_count_by_gender",
+        "accepted_count_by_size",
+        "submitted_count_by_size",
+        "approved_count_by_size",
+        "msme_accepted_count_distinct_by_gender",
+        "msme_submitted_count_distinct_by_gender",
+        "msme_approved_count_distinct_by_gender",
+        "accepted_count_distinct_by_size",
+        "submitted_count_distinct_by_size",
+        "approved_count_distinct_by_size",
+    ]
+
+    with contextmanager(get_db)() as session:
+        with rollback_on_error(session):
+            # Get general Kpis
+            statistic_kpis = statistics_utils.get_general_statistics(session, None, None, None)
+
+            models.Statistic.create_or_update(
+                session,
+                [
+                    cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
+                    models.Statistic.type == models.StatisticType.APPLICATION_KPIS,
+                ],
+                type=models.StatisticType.APPLICATION_KPIS,
+                data=statistic_kpis,
+            )
+
+            # Get Opt in statistics
+            statistics_msme_opt_in = statistics_utils.get_borrower_opt_in_stats(session)
+            for key in keys_to_serialize:
+                statistics_msme_opt_in[key] = [data.model_dump() for data in statistics_msme_opt_in[key]]
+
+            models.Statistic.create_or_update(
+                session,
+                [
+                    cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
+                    models.Statistic.type == models.StatisticType.MSME_OPT_IN_STATISTICS,
+                ],
+                type=models.StatisticType.MSME_OPT_IN_STATISTICS,
+                data=statistics_msme_opt_in,
+            )
+
+            # Get general Kpis for every lender
+            lender_ids = [id[0] for id in session.query(models.Lender.id).all()]
+            for lender_id in lender_ids:
+                # Get statistics for each lender
+                statistic_kpis = statistics_utils.get_general_statistics(session, None, None, lender_id)
+
+                models.Statistic.create_or_update(
+                    session,
+                    [
+                        cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
+                        models.Statistic.type == models.StatisticType.APPLICATION_KPIS,
+                        models.Statistic.lender_id == lender_id,
+                    ],
+                    type=models.StatisticType.APPLICATION_KPIS,
+                    data=statistic_kpis,
+                    lender_id=lender_id,
+                )
+
+            session.commit()
 
 
 @app.command()

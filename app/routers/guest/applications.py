@@ -452,14 +452,14 @@ async def confirm_credit_product(
 
             # Copy the documents into the database for the provided application.
             for document in documents:
-                data = {
-                    "application_id": application.id,
-                    "type": document.type,
-                    "name": document.name,
-                    "file": document.file,
-                    "verified": False,
-                }
-                new_borrower_document = models.BorrowerDocument.create(session, **data)
+                new_borrower_document = models.BorrowerDocument.create(
+                    session,
+                    application_id=application.id,
+                    type=document.type,
+                    name=document.name,
+                    file=document.file,
+                    verified=False,
+                )
                 application.borrower_documents.append(new_borrower_document)
         application = commit_and_refresh(session, application)
         models.ApplicationAction.create(
@@ -847,17 +847,17 @@ async def find_alternative_credit_option(
 
         # Copy the application, changing the uuid, status, and borrower_accepted_at.
         try:
-            data = {
-                "award_id": application.award_id,
-                "uuid": util.generate_uuid(application.uuid),
-                "primary_email": application.primary_email,
-                "status": models.ApplicationStatus.ACCEPTED,
-                "award_borrower_identifier": application.award_borrower_identifier,
-                "borrower_id": application.borrower.id,
-                "calculator_data": application.calculator_data,
-                "borrower_accepted_at": datetime.now(application.created_at.tzinfo),
-            }
-            new_application = models.Application.create(session, **data)
+            new_application = models.Application.create(
+                session,
+                award_id=application.award_id,
+                uuid=util.generate_uuid(application.uuid),
+                primary_email=application.primary_email,
+                status=models.ApplicationStatus.ACCEPTED,
+                award_borrower_identifier=application.award_borrower_identifier,
+                borrower_id=application.borrower.id,
+                calculator_data=application.calculator_data,
+                borrower_accepted_at=datetime.now(application.created_at.tzinfo),
+            )
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
