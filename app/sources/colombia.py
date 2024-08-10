@@ -57,7 +57,7 @@ def _get_remote_contract(
     if previous:
         params = f"{params} AND fecha_de_firma IS NOT NULL"
     contract_url = f"{URLS['CONTRACTS']}?$where={quote_plus(params)}"
-    return sources.make_request_with_retry(contract_url, HEADERS).json(), contract_url
+    return util.loads(sources.make_request_with_retry(contract_url, HEADERS)), contract_url
 
 
 def get_award(
@@ -79,8 +79,8 @@ def get_award(
 
     contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, proveedor_adjudicado, previous)
     if not contract_response_json:
-        # Retry with nombre_del_proveedor="No Adjudicado", in case award data is available, but not the supplier name.
-        contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, "No Adjudicado")
+        # Retry without proveedor_adjudicado, in case contract data is available, but not the supplier name.
+        contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, "No Adjudicado", previous)
         if not contract_response_json:
             raise SkippedAwardError("No remote contracts found", url=contract_url, data={"previous": previous})
 

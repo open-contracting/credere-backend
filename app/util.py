@@ -52,7 +52,7 @@ def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None 
     return getattr(col(column), sort_order)()
 
 
-def commit_and_refresh(session, instance):
+def commit_and_refresh(session: Session, instance: T) -> T:
     session.commit()
     session.refresh(instance)
     return instance
