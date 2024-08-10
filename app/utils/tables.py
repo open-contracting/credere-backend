@@ -111,21 +111,16 @@ def create_award_table(award: models.Award, lang: str) -> Table:
     """
 
     payment_method_text = f"""Habilita Pago Adelantado: {
-    _format_currency(award.payment_method.get("habilita_pago_adelantado", ""), award.award_currency)
-}
-Valor De Pago Adelantado: {
-    _format_currency(award.payment_method.get("valor_de_pago_adelantado", ""), award.award_currency)
-}
-Valor Facturado: {
-    _format_currency(award.payment_method.get("valor_facturado", ""), award.award_currency)
-}
-Valor Pendiente De Pago: {
-    _format_currency(award.payment_method.get("valor_pendiente_de_pago", ""), award.award_currency)
-}
-Valor Pagado: {
-    _format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
-}
-"""
+        _format_currency(award.payment_method.get("habilita_pago_adelantado", ""), award.award_currency)
+    }\nValor De Pago Adelantado: {
+        _format_currency(award.payment_method.get("valor_de_pago_adelantado", ""), award.award_currency)
+    }\nValor Facturado: {
+        _format_currency(award.payment_method.get("valor_facturado", ""), award.award_currency)
+    }\nValor Pendiente De Pago: {
+        _format_currency(award.payment_method.get("valor_pendiente_de_pago", ""), award.award_currency)
+    }\nValor Pagado: {
+        _format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
+    }\n"""
     secop_link = f"""<link href="{award.source_url}">{award.source_url}</link>"""
 
     data = [
