@@ -1,7 +1,7 @@
 from typing import Any
 
 import jwt
-import requests
+import requests  # moto intercepts only requests, not httpx: https://github.com/getmoto/moto/issues/4197
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from jwt.utils import base64url_decode

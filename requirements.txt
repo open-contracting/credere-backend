@@ -121,7 +121,9 @@ regex==2023.6.3
 reportlab==4.0.4
     # via -r requirements.in
 requests==2.32.3
-    # via transifex-python
+    # via
+    #   -r requirements.in
+    #   transifex-python
 s3transfer==0.6.1
     # via boto3
 sentry-sdk[fastapi]==2.10.0
