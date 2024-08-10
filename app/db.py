@@ -12,6 +12,7 @@ from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
+# https://docs.sqlalchemy.org/en/20/orm/session_basics.html#using-a-sessionmaker
 engine = create_engine(app_settings.test_database_url if app_settings.test_database_url else app_settings.database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -71,8 +72,5 @@ def get_db() -> Generator[Session, None, None]:
 
     :return: The database session instance.
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    with SessionLocal() as session:
+        yield session
