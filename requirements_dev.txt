@@ -273,7 +273,7 @@ s3transfer==0.6.1
     # via
     #   -r requirements.txt
     #   boto3
-sentry-sdk[fastapi]==2.10.0
+sentry-sdk[fastapi]==2.12.0
     # via -r requirements.txt
 six==1.16.0
     # via
