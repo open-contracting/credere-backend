@@ -1,6 +1,7 @@
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any
+from urllib.parse import quote_plus
 
 import httpx
 
@@ -53,9 +54,9 @@ def _get_remote_contract(
     proceso_de_compra: str, proveedor_adjudicado: str, previous=False
 ) -> tuple[list[dict[str, str]], str]:
     params = f"proceso_de_compra='{proceso_de_compra}' AND documento_proveedor='{proveedor_adjudicado}'"
-    contract_url = f"{URLS['CONTRACTS']}?$where={params}"
     if previous:
-        contract_url = f"{contract_url} AND fecha_de_firma IS NOT NULL"
+        params = f"{params} AND fecha_de_firma IS NOT NULL"
+    contract_url = f"{URLS['CONTRACTS']}?$where={quote_plus(params)}"
     return sources.make_request_with_retry(contract_url, HEADERS).json(), contract_url
 
 
@@ -67,7 +68,6 @@ def get_award(
     """
     Create a new award and insert it into the database.
 
-    :param source_contract_id: The unique identifier for the award's source contract.
     :param entry: The dictionary containing the award data.
     :param borrower_id: The ID of the borrower associated with the award. (default: None)
     :param previous: Whether the award is a previous award or not. (default: False)
