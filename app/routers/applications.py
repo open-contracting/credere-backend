@@ -398,7 +398,7 @@ async def update_application_borrower(
 async def get_applications_list(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
-    sort_field: str = Query("application.created_at"),
+    sort_field: str = Query("application.submitted_at"),
     sort_order: SortOrder = Query("asc"),
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
@@ -502,7 +502,7 @@ async def start_application(
 async def get_applications(
     page: int = Query(0, ge=0),
     page_size: int = Query(10, gt=0),
-    sort_field: str = Query("application.created_at"),
+    sort_field: str = Query("application.submitted_at"),
     sort_order: SortOrder = Query("asc"),
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
