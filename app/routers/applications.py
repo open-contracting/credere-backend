@@ -420,6 +420,7 @@ async def get_applications_list(
         .options(
             joinedload(models.Application.award),
             joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
             joinedload(models.Application.credit_product),
             joinedload(models.Application.lender),
         )
