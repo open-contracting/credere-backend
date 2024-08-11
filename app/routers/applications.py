@@ -415,13 +415,11 @@ async def get_applications_list(
         models.Application.submitted(session)
         .join(models.Award)
         .join(models.Borrower)
-        .join(models.BorrowerDocument)
         .join(models.CreditProduct)
         .join(models.Lender)
         .options(
             joinedload(models.Application.award),
             joinedload(models.Application.borrower),
-            joinedload(models.Application.borrower_documents),
             joinedload(models.Application.credit_product),
             joinedload(models.Application.lender),
         )
@@ -517,13 +515,11 @@ async def get_applications(
         models.Application.submitted_to_lender(session, user.lender_id)
         .join(models.Award)
         .join(models.Borrower)
-        .join(models.BorrowerDocument)
         .join(models.CreditProduct)
         .join(models.Lender)
         .options(
             joinedload(models.Application.award),
             joinedload(models.Application.borrower),
-            joinedload(models.Application.borrower_documents),
             joinedload(models.Application.credit_product),
             joinedload(models.Application.lender),
         )
