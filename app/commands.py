@@ -117,9 +117,8 @@ def _get_awards_from_data_source(
         for entry in awards_response_json:
             if not all(key in entry for key in ("id_del_portafolio", "nit_del_proveedor_adjudicado")):
                 raise SourceFormatError(
-                    "Source contract is missing required fields",
-                    url=awards_response.url,
-                    data={"response": awards_response_json},
+                    "Source contract is missing required fields:"
+                    f" url={awards_response.url}, data={awards_response_json}"
                 )
             _create_complete_application(entry, db_provider)
 
