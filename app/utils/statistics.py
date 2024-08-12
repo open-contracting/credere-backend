@@ -78,122 +78,84 @@ def get_general_statistics(
 
     base_query = _get_base_query(session.query(Application), start_date, end_date, lender_id)
 
-    # received
-    applications_received_query = base_query.filter(col(Application.borrower_submitted_at).isnot(None))
-    applications_received_count = applications_received_query.count()
-
-    # approved
-    applications_approved_query = base_query.filter(
+    applications_approved_count = base_query.filter(
         col(Application.status).in_(
             [ApplicationStatus.APPROVED, ApplicationStatus.CONTRACT_UPLOADED, ApplicationStatus.COMPLETED]
         )
-    )
-    applications_approved_count = applications_approved_query.count()
+    ).count()
 
-    # rejected
-    applications_rejected_query = base_query.filter(Application.status == ApplicationStatus.REJECTED)
-    applications_rejected_count = applications_rejected_query.count()
+    applications_with_credit_disbursed_count = base_query.filter(
+        Application.status == ApplicationStatus.COMPLETED
+    ).count()
 
-    # waiting
-    applications_waiting_query = base_query.filter(Application.status == ApplicationStatus.INFORMATION_REQUESTED)
-    applications_waiting_count = applications_waiting_query.count()
-
-    # in progress
-    applications_in_progress_query = base_query.filter(
-        col(Application.status).in_([ApplicationStatus.STARTED, ApplicationStatus.INFORMATION_REQUESTED])
-    )
-    applications_in_progress_count = applications_in_progress_query.count()
-
-    # credit disbursed
-    applications_with_credit_disbursed = base_query.filter(Application.status == ApplicationStatus.COMPLETED)
-    applications_with_credit_disbursed_count = applications_with_credit_disbursed.count()
-
-    # credit disbursed %
-    if applications_approved_count == 0 or applications_with_credit_disbursed_count == 0:
-        proportion_of_disbursed = 0
-    else:
+    if applications_approved_count and applications_with_credit_disbursed_count:
         proportion_of_disbursed = int(applications_with_credit_disbursed_count / applications_approved_count * 100)
+    else:
+        proportion_of_disbursed = 0
 
-    # Average amount requested
-    average_amount_requested_query = _get_base_query(
-        session.query(func.avg(Application.amount_requested)),
-        start_date,
-        end_date,
-        lender_id,
-    ).filter(
-        col(Application.amount_requested).isnot(None),
-    )
-
-    average_amount_requested_result = average_amount_requested_query.scalar()
-    average_amount_requested = (
-        int(average_amount_requested_result) if average_amount_requested_result is not None else 0
-    )
-
-    # Average Repayment Period
-    average_repayment_period_query = (
-        _get_base_query(
-            session.query(
-                func.avg(col(Application.repayment_years) * 12 + col(Application.repayment_months)).cast(Integer)
-            ),
-            start_date,
-            end_date,
-            lender_id,
-        )
-        .join(CreditProduct, Application.credit_product_id == CreditProduct.id)
-        .filter(
-            col(Application.borrower_submitted_at).isnot(None),
-            CreditProduct.type == CreditType.LOAN,
-        )
-    )
-
-    average_repayment_period = average_repayment_period_query.scalar() or 0
-
-    # Overdue Application
-    applications_overdue_query = base_query.filter(col(Application.overdued_at).isnot(None))
-    applications_overdue_count = applications_overdue_query.count()
-
-    # average time to process application
-    average_processing_time_query = _get_base_query(
-        session.query(func.avg(Application.completed_in_days)),
-        start_date,
-        end_date,
-        lender_id,
-    ).filter(
-        Application.status == ApplicationStatus.COMPLETED,
-    )
-
-    average_processing_time_result = average_processing_time_query.scalar()
-    average_processing_time = int(average_processing_time_result) if average_processing_time_result is not None else 0
-    #  get_proportion_of_submited_out_of_opt_in
-    application_accepted_query = base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count()
-
-    if lender_id is not None:
-        application_divisor = (
-            session.query(Application).filter(col(Application.borrower_submitted_at).isnot(None)).count()
+    if application_accepted_count := base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count():
+        if lender_id is None:
+            column = Application.borrower_accepted_at
+        else:
+            column = Application.borrower_submitted_at
+        proportion_of_submitted_out_of_opt_in = round(
+            (application_accepted_count / session.query(Application).filter(col(column).isnot(None)).count()) * 100, 2
         )
     else:
-        application_divisor = (
-            session.query(Application).filter(col(Application.borrower_accepted_at).isnot(None)).count()
-        )
-
-    # Calculate the proportion
-    if application_accepted_query == 0:
         proportion_of_submitted_out_of_opt_in = 0.0
-    else:
-        proportion_of_submitted_out_of_opt_in = round((application_accepted_query / application_divisor) * 100, 2)
 
     general_statistics = {
-        "applications_received_count": applications_received_count,
+        "applications_received_count": base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count(),
         "applications_approved_count": applications_approved_count,
-        "applications_rejected_count": applications_rejected_count,
-        "applications_waiting_for_information_count": applications_waiting_count,
-        "applications_in_progress_count": applications_in_progress_count,
+        "applications_rejected_count": base_query.filter(Application.status == ApplicationStatus.REJECTED).count(),
+        "applications_waiting_for_information_count": base_query.filter(
+            Application.status == ApplicationStatus.INFORMATION_REQUESTED
+        ).count(),
+        "applications_in_progress_count": base_query.filter(
+            col(Application.status).in_([ApplicationStatus.STARTED, ApplicationStatus.INFORMATION_REQUESTED])
+        ).count(),
         "applications_with_credit_disbursed_count": applications_with_credit_disbursed_count,
         "proportion_of_disbursed": proportion_of_disbursed,
-        "average_amount_requested": average_amount_requested,
-        "average_repayment_period": average_repayment_period,
-        "applications_overdue_count": applications_overdue_count,
-        "average_processing_time": average_processing_time,
+        "average_amount_requested": int(
+            _get_base_query(
+                session.query(func.avg(Application.amount_requested)),
+                start_date,
+                end_date,
+                lender_id,
+            )
+            .filter(col(Application.amount_requested).isnot(None))
+            .scalar()
+            or 0
+        ),
+        "average_repayment_period": (
+            _get_base_query(
+                session.query(
+                    func.avg(col(Application.repayment_years) * 12 + col(Application.repayment_months)).cast(Integer)
+                ),
+                start_date,
+                end_date,
+                lender_id,
+            )
+            .join(CreditProduct, Application.credit_product_id == CreditProduct.id)
+            .filter(
+                col(Application.borrower_submitted_at).isnot(None),
+                CreditProduct.type == CreditType.LOAN,
+            )
+            .scalar()
+            or 0
+        ),
+        "applications_overdue_count": base_query.filter(col(Application.overdued_at).isnot(None)).count(),
+        "average_processing_time": int(
+            _get_base_query(
+                session.query(func.avg(Application.completed_in_days)),
+                start_date,
+                end_date,
+                lender_id,
+            )
+            .filter(Application.status == ApplicationStatus.COMPLETED)
+            .scalar()
+            or 0
+        ),
         "proportion_of_submitted_out_of_opt_in": proportion_of_submitted_out_of_opt_in,
     }
 
