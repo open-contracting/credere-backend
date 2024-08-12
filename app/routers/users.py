@@ -70,11 +70,17 @@ def change_password(
         response = client.initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             session = response["Session"]
-            response = client.respond_to_auth_challenge(user.username, session, "NEW_PASSWORD_REQUIRED", user.password)
+            response = client.respond_to_auth_challenge(
+                username=user.username,
+                session=session,
+                challenge_name="NEW_PASSWORD_REQUIRED",
+                new_password=user.password,
+            )
 
         client.verified_email(user.username)
         if response.get("ChallengeName") is not None and response["ChallengeName"] == "MFA_SETUP":
             mfa_setup_response = client.mfa_setup(response["Session"])
+
             return serializers.ChangePasswordResponse(
                 detail="Password changed with MFA setup required",
                 secret_code=mfa_setup_response["secret_code"],
@@ -159,12 +165,10 @@ def login(
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
-            auth_session = response["Session"]
             mfa_login_response = client.respond_to_auth_challenge(
-                user.username,
-                auth_session,
-                response["ChallengeName"],
-                "",
+                username=user.username,
+                session=response["Session"],
+                challenge_name=response["ChallengeName"],
                 mfa_code=user.temp_password,
             )
 
@@ -175,7 +179,6 @@ def login(
             )
         else:
             raise NotImplementedError
-
     except ClientError as e:
         logger.exception(e)
         # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#parsing-error-responses-and-catching-exceptions-from-aws-services
@@ -211,8 +214,7 @@ def logout(
     :return: The response indicating successful logout.
     """
     try:
-        access_token = authorization.split(" ")[1]
-        client.logout_user(access_token)
+        client.logout_user(authorization.split(" ")[1])
     except ClientError as e:
         logger.exception(e)
 
@@ -352,8 +354,8 @@ async def update_user(
     with rollback_on_error(session):
         try:
             db_user = get_object_or_404(session, models.User, "id", id)
-            update_dict = jsonable_encoder(payload, exclude_unset=True)
-            db_user = db_user.update(session, **update_dict)
+            db_user = db_user.update(session, **jsonable_encoder(payload, exclude_unset=True))
+
             return commit_and_refresh(session, db_user)
         except IntegrityError as e:
             logger.exception(e)

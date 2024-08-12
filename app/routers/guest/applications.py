@@ -74,17 +74,18 @@ async def decline(
         borrower_declined_data = vars(payload)
         borrower_declined_data.pop("uuid")
 
+        # Update application.
         application.borrower_declined_data = borrower_declined_data
         application.status = models.ApplicationStatus.DECLINED
         current_time = datetime.now(application.created_at.tzinfo)
         application.borrower_declined_at = current_time
 
+        # Update application's borrower.
         if payload.decline_all:
             application.borrower.status = models.BorrowerStatus.DECLINE_OPPORTUNITIES
             application.borrower.declined_at = current_time
 
         commit_and_refresh(session, application)
-
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -114,16 +115,17 @@ async def rollback_decline(
     :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
     """
     with rollback_on_error(session):
+        # Update application.
         application.borrower_declined_data = {}
         application.status = models.ApplicationStatus.PENDING
         application.borrower_declined_at = None
 
+        # Update application's borrower.
         if application.borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
             application.borrower.status = models.BorrowerStatus.ACTIVE
             application.borrower.declined_at = None
 
         commit_and_refresh(session, application)
-
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -159,7 +161,6 @@ async def decline_feedback(
         application.borrower_declined_preferences_data = borrower_declined_preferences_data
 
         application = commit_and_refresh(session, application)
-
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -194,14 +195,14 @@ async def access_scheme(
     :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
     """
     with rollback_on_error(session):
-        current_time = datetime.now(application.created_at.tzinfo)
-        application.borrower_accepted_at = current_time
+        application.borrower_accepted_at = datetime.now(application.created_at.tzinfo)
         application.status = models.ApplicationStatus.ACCEPTED
         application.expired_at = None
 
         application = commit_and_refresh(session, application)
 
         background_tasks.add_task(util.get_previous_awards_from_data_source, application.borrower_id)
+
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -230,14 +231,12 @@ async def credit_product_options(
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
             previous lenders are not found.
     """
-    rejecter_lenders = application.rejecter_lenders(session)
-
     if application.borrower.type.lower() == data_access.SUPPLIER_TYPE_TO_EXCLUDE:
-        credit_product_filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON}')::boolean is True")
+        borrower_type = models.BorrowerType.NATURAL_PERSON
     else:
-        credit_product_filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON}')::boolean is True")
+        borrower_type = models.BorrowerType.LEGAL_PERSON
 
-    credit_products_base_query = (
+    base_query = (
         session.query(models.CreditProduct)
         .join(models.Lender)
         .options(joinedload(models.CreditProduct.lender))
@@ -246,19 +245,15 @@ async def credit_product_options(
             models.CreditProduct.lower_limit <= payload.amount_requested,
             models.CreditProduct.upper_limit >= payload.amount_requested,
             models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
-            col(models.Lender.id).notin_(rejecter_lenders),
-            credit_product_filter,
+            col(models.Lender.id).notin_(application.rejecter_lenders(session)),
+            text(f"(borrower_types->>'{borrower_type}')::boolean is True"),
         )
     )
 
-    loans_query = credit_products_base_query.filter(models.CreditProduct.type == models.CreditType.LOAN)
-
-    credit_lines_query = credit_products_base_query.filter(models.CreditProduct.type == models.CreditType.CREDIT_LINE)
-
-    loans = loans_query.all()
-    credit_lines = credit_lines_query.all()
-
-    return serializers.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
+    return serializers.CreditProductListResponse(
+        loans=base_query.filter(models.CreditProduct.type == models.CreditType.LOAN).all(),
+        credit_lines=base_query.filter(models.CreditProduct.type == models.CreditType.CREDIT_LINE).all(),
+    )
 
 
 @router.post(
@@ -290,11 +285,12 @@ async def select_credit_product(
         calculator_data.pop("credit_product_id")
         calculator_data.pop("sector")
 
+        # Update application.
         application.calculator_data = calculator_data
         application.credit_product_id = payload.credit_product_id
-        current_time = datetime.now(application.created_at.tzinfo)
-        application.borrower_credit_product_selected_at = current_time
+        application.borrower_credit_product_selected_at = datetime.now(application.created_at.tzinfo)
 
+        # Update application's borrower.
         application.borrower.size = payload.borrower_size
         application.borrower.sector = payload.sector
 
@@ -304,6 +300,7 @@ async def select_credit_product(
             data=jsonable_encoder(payload, exclude_unset=True),
             application_id=application.id,
         )
+
         application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
@@ -408,16 +405,13 @@ async def confirm_credit_product(
         application.repayment_years = application.calculator_data.get("repayment_years", None)
         application.repayment_months = application.calculator_data.get("repayment_months", None)
         application.payment_start_date = application.calculator_data.get("payment_start_date", None)
-
         application.pending_documents = True
 
         # Retrieve and copy the borrower documents from the most recent rejected application
         # that shares the same award borrower identifier as the application. The documents
         # to be copied are only those whose types are required by the credit product of the
         # application.
-        document_types = application.credit_product.required_document_types
-        document_types_list = [key for key, value in document_types.items() if value]
-        lastest_application_id = (
+        if lastest_application_id := (
             session.query(models.Application.id)
             .filter(
                 models.Application.status == models.ApplicationStatus.REJECTED,
@@ -425,29 +419,30 @@ async def confirm_credit_product(
             )
             .order_by(col(models.Application.created_at).desc())
             .first()
-        )
-        if lastest_application_id:
-            documents = (
+        ):
+            # Copy the documents into the database for the provided application.
+            for document in (
                 session.query(models.BorrowerDocument)
                 .filter(
                     models.BorrowerDocument.application_id == lastest_application_id[0],
-                    col(models.BorrowerDocument.type).in_(document_types_list),
+                    col(models.BorrowerDocument.type).in_(
+                        [key for key, value in application.credit_product.required_document_types.items() if value]
+                    ),
                 )
                 .all()
-            )
-
-            # Copy the documents into the database for the provided application.
-            for document in documents:
-                new_borrower_document = models.BorrowerDocument.create(
-                    session,
-                    application_id=application.id,
-                    type=document.type,
-                    name=document.name,
-                    file=document.file,
-                    verified=False,
+            ):
+                application.borrower_documents.append(
+                    models.BorrowerDocument.create(
+                        session,
+                        application_id=application.id,
+                        type=document.type,
+                        name=document.name,
+                        file=document.file,
+                        verified=False,
+                    )
                 )
-                application.borrower_documents.append(new_borrower_document)
         application = commit_and_refresh(session, application)
+
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPLICATION_CONFIRM_CREDIT_PRODUCT,
@@ -680,7 +675,6 @@ async def complete_information_request(
         )
 
         message_id = client.send_upload_documents_notifications(application.lender.email_group)
-
         models.Message.create(
             session,
             application=application,

@@ -365,9 +365,9 @@ def send_new_email_confirmation(
         },
     )
 
-    response = send_email(ses, set_destinations(new_email), data)
+    message_id = send_email(ses, set_destinations(new_email), data)
     send_email(ses, set_destinations(old_email), data)
-    return response
+    return message_id
 
 
 def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: str) -> str:

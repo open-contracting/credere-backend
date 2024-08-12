@@ -82,7 +82,7 @@ class CognitoClient:
         """
         temp_password = self.generate_password()
 
-        responseCreateUser = self.client.admin_create_user(
+        response = self.client.admin_create_user(
             UserPoolId=app_settings.cognito_pool_id,
             Username=username,
             TemporaryPassword=temp_password,
@@ -92,7 +92,7 @@ class CognitoClient:
 
         mail.send_mail_to_new_user(self.ses, name, username, temp_password)
 
-        return responseCreateUser
+        return response
 
     def verified_email(self, username: str) -> dict[str, Any]:
         """
@@ -102,15 +102,13 @@ class CognitoClient:
         :return: The response from the Cognito 'admin_update_user_attributes' method.
         :raises boto3.exceptions: Any exceptions that occur when making the Cognito request.
         """
-        response = self.client.admin_update_user_attributes(
+        return self.client.admin_update_user_attributes(
             UserPoolId=app_settings.cognito_pool_id,
             Username=username,
             UserAttributes=[
                 {"Name": "email_verified", "Value": "true"},
             ],
         )
-
-        return response
 
     def initiate_auth(self, username: str, password: str) -> type_defs.InitiateAuthResponseTypeDef:
         """
@@ -126,14 +124,13 @@ class CognitoClient:
             The 'initiate_auth' method uses 'USER_PASSWORD_AUTH' as the authentication flow, which requires a USERNAME,
             PASSWORD, and SECRET_HASH. The SECRET_HASH is generated using the 'get_secret_hash' method of this class.
         """
-        secret_hash = self.get_secret_hash(username)
         response = self.client.initiate_auth(
             ClientId=app_settings.cognito_client_id,
             AuthFlow="USER_PASSWORD_AUTH",
             AuthParameters={
                 "USERNAME": username,
                 "PASSWORD": password,
-                "SECRET_HASH": secret_hash,
+                "SECRET_HASH": self.get_secret_hash(username),
             },
         )
 
@@ -160,10 +157,7 @@ class CognitoClient:
         """
         response = self.client.associate_software_token(Session=session)
         # Use this code in cmd to associate google authenticator with you account
-        secret_code = response["SecretCode"]
-        session = response["Session"]
-
-        return {"secret_code": secret_code, "session": session}
+        return {"secret_code": response["SecretCode"], "session": response["Session"]}
 
     def verify_software_token(
         self, access_token: str, session: str, mfa_code: str
@@ -209,6 +203,7 @@ class CognitoClient:
             authentication challenges issued by AWS Cognito.
         """
         secret_hash = self.get_secret_hash(username)
+
         match challenge_name:
             case "NEW_PASSWORD_REQUIRED":
                 return self.client.respond_to_auth_challenge(
@@ -223,13 +218,13 @@ class CognitoClient:
                 )
             case "MFA_SETUP":
                 associate_response = self.client.associate_software_token(Session=session)
-                access_token = associate_response["SecretCode"]
-                session = associate_response["Session"]
 
                 verify_response = self.client.verify_software_token(
-                    AccessToken=access_token, Session=session, UserCode=mfa_code
+                    AccessToken=associate_response["SecretCode"],
+                    Session=associate_response["Session"],
+                    UserCode=mfa_code,
                 )
-                session = verify_response["Session"]
+
                 return self.client.respond_to_auth_challenge(
                     ClientId=app_settings.cognito_client_id,
                     ChallengeName=challenge_name,
@@ -238,7 +233,7 @@ class CognitoClient:
                         "NEW_PASSWORD": new_password,
                         "SECRET_HASH": secret_hash,
                     },
-                    Session=session,
+                    Session=verify_response["Session"],
                 )
             case "SOFTWARE_TOKEN_MFA":
                 challenge_response = self.client.respond_to_auth_challenge(
@@ -289,15 +284,16 @@ class CognitoClient:
         """
         temp_password = self.generate_password()
 
-        responseSetPassword = self.client.admin_set_user_password(
+        response = self.client.admin_set_user_password(
             UserPoolId=app_settings.cognito_pool_id,
             Username=username,
             Password=temp_password,
             Permanent=False,
         )
+
         mail.send_mail_to_reset_password(self.ses, username, temp_password)
 
-        return responseSetPassword
+        return response
 
     def send_notifications_of_new_applications(
         self,
@@ -394,12 +390,7 @@ class CognitoClient:
         :raises boto3.exceptions: Any exceptions that occur when sending the email.
         """
         return mail.send_new_email_confirmation(
-            self.ses,
-            borrower_name,
-            new_email,
-            old_email,
-            confirmation_email_token,
-            application_uuid,
+            self.ses, borrower_name, new_email, old_email, confirmation_email_token, application_uuid
         )
 
     def send_upload_contract_notifications(self, application: Application) -> tuple[str, str]:
@@ -410,16 +401,10 @@ class CognitoClient:
         :return: The message ids of the sent notifications: (FI_message_id, SME_message_id)
         :raises boto3.exceptions: Any exceptions that occur when sending the notifications.
         """
-        FI_message_id = mail.send_upload_contract_notification_to_fi(
-            self.ses,
-            application,
+        return (
+            mail.send_upload_contract_notification_to_fi(self.ses, application),
+            mail.send_upload_contract_confirmation(self.ses, application),
         )
-        SME_message_id = mail.send_upload_contract_confirmation(
-            self.ses,
-            application,
-        )
-
-        return FI_message_id, SME_message_id
 
     def send_upload_documents_notifications(self, email: str) -> str:
         """
@@ -429,11 +414,7 @@ class CognitoClient:
         :return: The message id of the sent notification.
         :raises boto3.exceptions: Any exceptions that occur when sending the notification.
         """
-        message_id = mail.send_upload_documents_notifications_to_fi(
-            self.ses,
-            email,
-        )
-        return message_id
+        return mail.send_upload_documents_notifications_to_fi(self.ses, email)
 
     def send_copied_application_notifications(self, application: Application) -> str:
         """
@@ -443,10 +424,7 @@ class CognitoClient:
         :return: The message id of the sent notification.
         :raises boto3.exceptions: Any exceptions that occur when sending the notification.
         """
-        return mail.send_copied_application_notification_to_sme(
-            self.ses,
-            application,
-        )
+        return mail.send_copied_application_notification_to_sme(self.ses, application)
 
 
 cognito = boto3.client(

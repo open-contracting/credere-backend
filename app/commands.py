@@ -422,8 +422,7 @@ def sla_overdue_applications() -> None:
                         overdue_lenders[application.lender.id]["name"] = application.lender.name
                     overdue_lenders[application.lender.id]["count"] += 1
                     if days_passed > application.lender.sla_days:
-                        current_dt = datetime.now(application.created_at.tzinfo)
-                        application.overdued_at = current_dt
+                        application.overdued_at = datetime.now(application.created_at.tzinfo)
                         message_id = mail.send_overdue_application_email_to_ocp(
                             sesClient,
                             application.lender.name,

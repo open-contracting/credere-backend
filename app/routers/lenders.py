@@ -43,9 +43,8 @@ async def create_lender(
 
             # Create a CreditProduct instance for each credit product and add it to the lender
             if payload.credit_products:
-                for cp in payload.credit_products:
-                    credit_product = models.CreditProduct(**cp.model_dump(), lender=db_lender)
-                    session.add(credit_product)
+                for credit_product in payload.credit_products:
+                    session.add(models.CreditProduct(**credit_product.model_dump(), lender=db_lender))
 
             session.flush()
             return commit_and_refresh(session, db_lender)
@@ -77,8 +76,8 @@ async def create_credit_products(
     """
     with rollback_on_error(session):
         lender = get_object_or_404(session, models.Lender, "id", lender_id)
-
         db_credit_product = models.CreditProduct.create(session, **credit_product.model_dump(), lender=lender)
+
         return commit_and_refresh(session, db_credit_product)
 
 
@@ -119,8 +118,7 @@ async def update_lender(
     with rollback_on_error(session):
         try:
             lender = get_object_or_404(session, models.Lender, "id", id)
-            update_dict = jsonable_encoder(payload, exclude_unset=True)
-            lender = lender.update(session, **update_dict)
+            lender = lender.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
             return commit_and_refresh(session, lender)
         except IntegrityError as e:
@@ -143,11 +141,8 @@ async def get_lenders_list(
 
     :return: The list of all lenders.
     """
-    lenders_query = session.query(models.Lender)
-
-    total_count = lenders_query.count()
-
-    lenders = lenders_query.all()
+    lenders = session.query(models.Lender).all()
+    total_count = len(lenders)
 
     return serializers.LenderListResponse(
         items=lenders,
@@ -222,7 +217,6 @@ async def update_credit_products(
 
     with rollback_on_error(session):
         db_credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
-        update_dict = jsonable_encoder(payload, exclude_unset=True)
-        credit_product = db_credit_product.update(session, **update_dict)
+        credit_product = db_credit_product.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
         return commit_and_refresh(session, credit_product)

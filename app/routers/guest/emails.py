@@ -57,7 +57,6 @@ async def change_email(
             confirmation_email_token,
             application.uuid,
         )
-
         models.Message.create(
             session,
             application=application,

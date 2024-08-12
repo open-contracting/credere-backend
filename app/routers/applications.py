@@ -69,6 +69,7 @@ async def reject_application(
             )
             .all()
         )
+
         message_id = client.send_rejected_email_to_sme(application, options)
         models.Message.create(
             session,
@@ -190,8 +191,7 @@ async def approve_application(
         payload_dict = jsonable_encoder(payload, exclude_unset=True)
         application.lender_approved_data = payload_dict
         application.status = models.ApplicationStatus.APPROVED
-        current_time = datetime.now(application.created_at.tzinfo)
-        application.lender_approved_at = current_time
+        application.lender_approved_at = datetime.now(application.created_at.tzinfo)
 
         models.ApplicationAction.create(
             session,
@@ -327,8 +327,7 @@ async def update_application_award(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Award not found")
 
         # Update the award.
-        update_dict = jsonable_encoder(payload, exclude_unset=True)
-        application.award.update(session, **update_dict)
+        application.award.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
         models.ApplicationAction.create(
             session,

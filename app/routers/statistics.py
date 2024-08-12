@@ -41,33 +41,30 @@ async def get_ocp_statistics_by_lender(
     :param lender_id: The lender ID to filter the statistics for a specific lender (optional).
     :return: Response containing the OCP statistics.
     """
+
     if initial_date is None and final_date is None and custom_range is None:
-        # If no dates provided, query the database
-        current_date = datetime.now().date()
-        statistics_kpis = (
+        if result := (
             session.query(Statistic)
             .filter(
                 Statistic.type == StatisticType.APPLICATION_KPIS,
                 Statistic.lender_id == lender_id,
-                func.date(Statistic.created_at) == current_date,
+                func.date(Statistic.created_at) == datetime.now().date(),
             )
             .first()
-        )
-        if statistics_kpis is not None:
-            statistics_kpis = statistics_kpis.data
+        ):
+            statistics_kpis = result.data
         # If no record for the current date, calculate the statistics
         else:
             statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
     else:
-        # If customRange is provided, calculate the statistics based on it
         if custom_range is not None:
             custom_range = custom_range.upper()
             current_date = datetime.now().date()
+
             if custom_range == StatisticCustomRange.LAST_WEEK:
                 initial_date = (current_date - timedelta(days=7)).isoformat()
             elif custom_range == StatisticCustomRange.LAST_MONTH:
                 initial_date = (current_date - timedelta(days=30)).isoformat()
-
             final_date = current_date.isoformat()
 
         statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
@@ -93,17 +90,15 @@ async def get_ocp_statistics_opt_in(
 
     :return: Response containing the OCP statistics for MSME opt-in.
     """
-    current_date = datetime.now().date()
-    opt_in_stats = (
+    if result := (
         session.query(Statistic)
         .filter(
             Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
-            func.date(Statistic.created_at) == current_date,
+            func.date(Statistic.created_at) == datetime.now().date(),
         )
         .first()
-    )
-    if opt_in_stats is not None:
-        opt_in_stats = opt_in_stats.data
+    ):
+        opt_in_stats = result.data
     else:
         opt_in_stats = statistics_utils.get_borrower_opt_in_stats(session)
 
@@ -128,19 +123,16 @@ async def get_fi_statistics(
 
     :return: Response containing the statistics for the Financial Institution.
     """
-    current_date = datetime.now().date()
-
-    statistics_kpis = (
+    if result := (
         session.query(Statistic)
         .filter(
             Statistic.type == StatisticType.APPLICATION_KPIS,
             Statistic.lender_id == user.lender_id,
-            func.date(Statistic.created_at) == current_date,
+            func.date(Statistic.created_at) == datetime.now().date(),
         )
         .first()
-    )
-    if statistics_kpis is not None:
-        statistics_kpis = statistics_kpis.data
+    ):
+        statistics_kpis = result.data
     else:
         statistics_kpis = statistics_utils.get_general_statistics(session, None, None, user.lender_id)
 
