@@ -148,16 +148,8 @@ async def export_applications(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ) -> Response:
-    applications_query = (
-        models.Application.submitted_to_lender(session, user.lender_id)
-        .join(models.Borrower)
-        .options(
-            joinedload(models.Application.borrower),
-        )
-    )
-    applicants_list = []
-    for application in applications_query.all():
-        applicants_list.append(
+    df = pd.DataFrame(
+        [
             {
                 get_translated_string("National Tax ID", lang): application.borrower.legal_identifier,
                 get_translated_string("Legal Name", lang): application.borrower.legal_name,
@@ -165,9 +157,13 @@ async def export_applications(
                 get_translated_string("Submission Date", lang): application.borrower_submitted_at,
                 get_translated_string("Stage", lang): get_translated_string(application.status.capitalize(), lang),
             }
-        )
-
-    df = pd.DataFrame(applicants_list)
+            for application in (
+                models.Application.submitted_to_lender(session, user.lender_id)
+                .join(models.Borrower)
+                .options(joinedload(models.Application.borrower))
+            )
+        ]
+    )
     stream = io.StringIO()
     df.to_csv(stream, index=False)
 

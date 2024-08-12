@@ -310,9 +310,7 @@ async def get_all_users(
     list_query = (
         session.query(models.User)
         .outerjoin(models.Lender)
-        .options(
-            joinedload(models.User.lender),
-        )
+        .options(joinedload(models.User.lender))
         .order_by(get_order_by(sort_field, sort_order, model=models.User), models.User.id)
     )
 

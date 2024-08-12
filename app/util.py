@@ -117,7 +117,9 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
 
 
 def get_modified_data_fields(session: Session, application: models.Application) -> models.ApplicationWithRelations:
-    application_actions = (
+    modified_data_fields: dict[str, Any] = {"award_updates": {}, "borrower_updates": {}}
+
+    for action in (
         session.query(models.ApplicationAction)
         .join(models.Application)
         .filter(
@@ -126,11 +128,7 @@ def get_modified_data_fields(session: Session, application: models.Application) 
                 [models.ApplicationActionType.AWARD_UPDATE, models.ApplicationActionType.BORROWER_UPDATE]
             ),
         )
-        .all()
-    )
-    modified_data_fields: dict[str, Any] = {"award_updates": {}, "borrower_updates": {}}
-
-    for action in application_actions:
+    ):
         action_data = action.data
         key_prefix = (
             "award_updates" if action.type == models.ApplicationActionType.AWARD_UPDATE else "borrower_updates"
