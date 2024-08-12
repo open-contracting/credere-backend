@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import dependencies, models, parsers, util
 from app.aws import CognitoClient
-from app.db import get_db, transaction_session
+from app.db import get_db, rollback_on_error
 
 router = APIRouter()
 
@@ -29,7 +29,7 @@ async def change_email(
     :param payload: The data for changing the email address.
     :return: The data for changing the email address.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         old_email = application.primary_email
 
         # Update the primary email of an application.
@@ -65,6 +65,7 @@ async def change_email(
             external_message_id=external_message_id,
         )
 
+        session.commit()
         return payload
 
 
@@ -83,7 +84,7 @@ async def confirm_email(
     :param payload: The data for confirming the email address change.
     :return: The data for confirming the email address change.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         if not application.pending_email_confirmation:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -108,4 +109,5 @@ async def confirm_email(
             application_id=application.id,
         )
 
+        session.commit()
         return parsers.ChangeEmail(new_email=application.primary_email, uuid=application.uuid)

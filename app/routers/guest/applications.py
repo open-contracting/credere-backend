@@ -11,7 +11,7 @@ from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
-from app.db import get_db, rollback_on_error, transaction_session
+from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
 from app.settings import app_settings
 from app.sources import colombia as data_access
@@ -230,49 +230,35 @@ async def credit_product_options(
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
             previous lenders are not found.
     """
-    with transaction_session(session):
-        rejecter_lenders = application.rejecter_lenders(session)
+    rejecter_lenders = application.rejecter_lenders(session)
 
-        filter = None
-        if application.borrower.type.lower() == data_access.SUPPLIER_TYPE_TO_EXCLUDE:
-            filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON}')::boolean is True")
-        else:
-            filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON}')::boolean is True")
+    if application.borrower.type.lower() == data_access.SUPPLIER_TYPE_TO_EXCLUDE:
+        credit_product_filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON}')::boolean is True")
+    else:
+        credit_product_filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON}')::boolean is True")
 
-        loans_query = (
-            session.query(models.CreditProduct)
-            .join(models.Lender)
-            .options(joinedload(models.CreditProduct.lender))
-            .filter(
-                models.CreditProduct.type == models.CreditType.LOAN,
-                models.CreditProduct.borrower_size == payload.borrower_size,
-                models.CreditProduct.lower_limit <= payload.amount_requested,
-                models.CreditProduct.upper_limit >= payload.amount_requested,
-                models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
-                col(models.Lender.id).notin_(rejecter_lenders),
-                filter,
-            )
+    credit_products_base_query = (
+        session.query(models.CreditProduct)
+        .join(models.Lender)
+        .options(joinedload(models.CreditProduct.lender))
+        .filter(
+            models.CreditProduct.borrower_size == payload.borrower_size,
+            models.CreditProduct.lower_limit <= payload.amount_requested,
+            models.CreditProduct.upper_limit >= payload.amount_requested,
+            models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
+            col(models.Lender.id).notin_(rejecter_lenders),
+            credit_product_filter,
         )
+    )
 
-        credit_lines_query = (
-            session.query(models.CreditProduct)
-            .join(models.Lender)
-            .options(joinedload(models.CreditProduct.lender))
-            .filter(
-                models.CreditProduct.type == models.CreditType.CREDIT_LINE,
-                models.CreditProduct.borrower_size == payload.borrower_size,
-                models.CreditProduct.lower_limit <= payload.amount_requested,
-                models.CreditProduct.upper_limit >= payload.amount_requested,
-                models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
-                col(models.Lender.id).notin_(rejecter_lenders),
-                filter,
-            )
-        )
+    loans_query = credit_products_base_query.filter(models.CreditProduct.type == models.CreditType.LOAN)
 
-        loans = loans_query.all()
-        credit_lines = credit_lines_query.all()
+    credit_lines_query = credit_products_base_query.filter(models.CreditProduct.type == models.CreditType.CREDIT_LINE)
 
-        return serializers.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
+    loans = loans_query.all()
+    credit_lines = credit_lines_query.all()
+
+    return serializers.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
 
 
 @router.post(
@@ -633,7 +619,7 @@ async def upload_document(
     :param type: The type of the document.
     :return: The created or updated borrower document.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         new_file, filename = util.validate_file(file)
         if not application.pending_documents:
             raise HTTPException(
@@ -652,6 +638,7 @@ async def upload_document(
             application_id=application.id,
         )
 
+        session.commit()
         return document
 
 
@@ -681,7 +668,7 @@ async def complete_information_request(
     :return: The updated application with borrower, award, lender, and documents details.
     """
 
-    with transaction_session(session):
+    with rollback_on_error(session):
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
@@ -701,6 +688,7 @@ async def complete_information_request(
             external_message_id=message_id,
         )
 
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -728,7 +716,7 @@ async def upload_contract(
     :param file: The uploaded file.
     :return: The created or updated borrower document representing the contract.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         new_file, filename = util.validate_file(file)
 
         document = util.create_or_update_borrower_document(
@@ -739,6 +727,7 @@ async def upload_contract(
             new_file,
         )
 
+        session.commit()
         return document
 
 
@@ -764,7 +753,7 @@ async def confirm_upload_contract(
     :param payload: The confirmation data for the uploaded contract.
     :return: The application response containing the updated application and related entities.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         FI_message_id, SME_message_id = client.send_upload_contract_notifications(application)
 
         application.contract_amount_submitted = payload.contract_amount_submitted
@@ -793,6 +782,7 @@ async def confirm_upload_contract(
             application_id=application.id,
         )
 
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -824,7 +814,7 @@ async def find_alternative_credit_option(
     :raise: HTTPException with status code 400 if the application has already been copied.
     :raise: HTTPException with status code 400 if the application is not in the rejected status.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         # Check if the application has already been copied.
         app_action = (
             session.query(models.ApplicationAction)
@@ -886,6 +876,7 @@ async def find_alternative_credit_option(
             application_id=new_application.id,
         )
 
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, new_application),
             borrower=new_application.borrower,

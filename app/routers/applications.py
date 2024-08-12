@@ -10,7 +10,7 @@ from sqlmodel import col
 
 from app import dependencies, models, parsers, serializers, util
 from app.aws import CognitoClient
-from app.db import get_db, rollback_on_error, transaction_session
+from app.db import get_db, rollback_on_error
 from app.util import SortOrder, commit_and_refresh, get_order_by
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ async def reject_application(
     :param payload: The rejected application data.
     :return: The rejected application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         payload_dict = jsonable_encoder(payload, exclude_unset=True)
         application.stage_as_rejected(payload_dict)
         # This next call performs the `session.flush()`.
@@ -76,6 +76,8 @@ async def reject_application(
             type=models.MessageType.REJECTED_APPLICATION,
             external_message_id=message_id,
         )
+
+        session.commit()
         return application
 
 
@@ -104,7 +106,7 @@ async def complete_application(
     :param payload: The completed application data.
     :return: The completed application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         application.stage_as_completed(payload.disbursed_final_amount)
         application.completed_in_days = application.days_waiting_for_lender(session)
         # This next call performs the `session.flush()`.
@@ -125,6 +127,7 @@ async def complete_application(
             external_message_id=message_id,
         )
 
+        session.commit()
         return application
 
 
@@ -155,7 +158,7 @@ async def approve_application(
     :param payload: The approved application data.
     :return: The approved application with its associated relations.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
         # the application's `secop_data_verification`.
         not_validated_fields = []
@@ -206,6 +209,7 @@ async def approve_application(
             external_message_id=message_id,
         )
 
+        session.commit()
         return application
 
 
@@ -485,9 +489,11 @@ async def start_application(
     :return: The started application with its associated relations.
     :raise: HTTPException with status code 401 if the user is not authorized to start the application.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
+
+        session.commit()
         return application
 
 
@@ -566,7 +572,7 @@ async def email_sme(
     :raises HTTPException: If there's an error in sending the email to SME.
     """
 
-    with transaction_session(session):
+    with rollback_on_error(session):
         try:
             application.status = models.ApplicationStatus.INFORMATION_REQUESTED
             current_time = datetime.now(application.created_at.tzinfo)

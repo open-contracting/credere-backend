@@ -156,8 +156,8 @@ async def update_test_application_status(
 ):
     application = session.query(models.Application).filter(models.Application.id == id).first()
     application.status = payload.status
-    session.commit()
 
+    session.commit()
     return application
 
 
@@ -356,8 +356,8 @@ async def create_test_application(payload: ApplicationTestPayload, session: Sess
 async def change_application_status(payload: ApplicationTestPayload, session: Session = Depends(get_db)):
     application = session.query(models.Application).first()
     application.status = payload.status
-    session.commit()
 
+    session.commit()
     return status.HTTP_200_OK
 
 
@@ -365,6 +365,6 @@ async def change_application_status(payload: ApplicationTestPayload, session: Se
 async def change_borrower_status(payload: BorrowerTestPayload, session: Session = Depends(get_db)):
     borrower = session.query(models.Borrower).first()
     borrower.status = payload.status
-    session.commit()
 
+    session.commit()
     return status.HTTP_200_OK
