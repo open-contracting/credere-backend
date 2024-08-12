@@ -92,7 +92,7 @@ def _create_complete_application(
 
 
 def _get_awards_from_data_source(
-    last_updated_award_date: datetime,
+    last_updated_award_date: datetime | None,
     db_provider: Callable[[], Generator[Session, None, None]],
     until_date: datetime | None = None,
 ) -> None:

@@ -124,7 +124,7 @@ def get_award(
     return new_award
 
 
-def get_new_awards(index: int, from_date: datetime, until_date: datetime | None = None) -> httpx.Response:
+def get_new_awards(index: int, from_date: datetime | None, until_date: datetime | None = None) -> httpx.Response:
     offset = index * app_settings.secop_pagination_limit
     date_format = "%Y-%m-%dT%H:%M:%S.000"
 
@@ -134,6 +134,7 @@ def get_new_awards(index: int, from_date: datetime, until_date: datetime | None 
         " caseless_eq(`adjudicado`, 'Si')"
     )
 
+    # The fetch-all-awards-from-period command sets both. The command is typically run without time components.
     if from_date and until_date:
         url = (
             f"{base_url} AND ((fecha_de_ultima_publicaci >= '{from_date.strftime(date_format)}' "
@@ -141,14 +142,17 @@ def get_new_awards(index: int, from_date: datetime, until_date: datetime | None 
             f"(fecha_adjudicacion >= '{from_date.strftime(date_format)}' "
             f"AND fecha_adjudicacion < '{until_date.strftime(date_format)}'))"
         )
+    # The fetch-awards command sets from_date.
     else:
+        # from_date is set to the maximum value of Award.last_updated. Use `>` below to avoid repetition across runs.
         if from_date:
-            converted_date = from_date + timedelta(seconds=1)
+            converted_date = from_date
+        # from_date is None if the fetch-awards command is run on a fresh database.
         else:
             converted_date = datetime.now() - timedelta(days=app_settings.secop_default_days_from_ultima_actualizacion)
         url = (
-            f"{base_url} AND (fecha_de_ultima_publicaci >= '{converted_date.strftime(date_format)}' "
-            f"OR fecha_adjudicacion >= '{converted_date.strftime(date_format)}')"
+            f"{base_url} AND (fecha_de_ultima_publicaci > '{converted_date.strftime(date_format)}' "
+            f"OR fecha_adjudicacion > '{converted_date.strftime(date_format)}')"
         )
 
     return sources.make_request_with_retry(url, HEADERS)
