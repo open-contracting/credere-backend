@@ -64,8 +64,8 @@ async def change_email(
             type=models.MessageType.EMAIL_CHANGE_CONFIRMATION,
             external_message_id=external_message_id,
         )
-        session.commit()
 
+        session.commit()
         return payload
 
 
@@ -108,6 +108,6 @@ async def confirm_email(
             data=jsonable_encoder(payload, exclude_unset=True),
             application_id=application.id,
         )
-        session.commit()
 
+        session.commit()
         return parsers.ChangeEmail(new_email=application.primary_email, uuid=application.uuid)

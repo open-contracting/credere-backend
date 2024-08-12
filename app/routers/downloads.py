@@ -51,8 +51,8 @@ async def get_borrower_document(
                 data={"file_name": document.name},
                 application_id=document.application.id,
             )
-        session.commit()
 
+        session.commit()
         return Response(
             content=document.file,
             media_type="application/octet-stream",
@@ -130,8 +130,8 @@ async def download_application(
             application_id=application.id,
             user_id=user.id,
         )
-        session.commit()
 
+        session.commit()
         return Response(
             content=in_memory_zip.getvalue(),
             media_type="application/zip",

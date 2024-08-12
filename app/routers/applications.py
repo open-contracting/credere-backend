@@ -76,6 +76,7 @@ async def reject_application(
             type=models.MessageType.REJECTED_APPLICATION,
             external_message_id=message_id,
         )
+
         session.commit()
         return application
 
@@ -125,8 +126,8 @@ async def complete_application(
             type=models.MessageType.CREDIT_DISBURSED,
             external_message_id=message_id,
         )
-        session.commit()
 
+        session.commit()
         return application
 
 
@@ -207,8 +208,8 @@ async def approve_application(
             type=models.MessageType.APPROVED_APPLICATION,
             external_message_id=message_id,
         )
-        session.commit()
 
+        session.commit()
         return application
 
 
@@ -491,6 +492,7 @@ async def start_application(
     with rollback_on_error(session):
         application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
+
         session.commit()
         return application
 

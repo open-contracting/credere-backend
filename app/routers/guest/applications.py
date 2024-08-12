@@ -650,8 +650,8 @@ async def upload_document(
             data={"file_name": filename},
             application_id=application.id,
         )
-        session.commit()
 
+        session.commit()
         return document
 
 
@@ -700,8 +700,8 @@ async def complete_information_request(
             type=models.MessageType.BORROWER_DOCUMENT_UPDATED,
             external_message_id=message_id,
         )
-        session.commit()
 
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -739,8 +739,8 @@ async def upload_contract(
             models.BorrowerDocumentType.SIGNED_CONTRACT,
             new_file,
         )
-        session.commit()
 
+        session.commit()
         return document
 
 
@@ -794,8 +794,8 @@ async def confirm_upload_contract(
             data=jsonable_encoder({"contract_amount_submitted": payload.contract_amount_submitted}),
             application_id=application.id,
         )
-        session.commit()
 
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -888,8 +888,8 @@ async def find_alternative_credit_option(
             data=jsonable_encoder(payload, exclude_unset=True),
             application_id=new_application.id,
         )
-        session.commit()
 
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, new_application),
             borrower=new_application.borrower,
