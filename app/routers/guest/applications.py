@@ -230,48 +230,35 @@ async def credit_product_options(
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
             previous lenders are not found.
     """
-    with rollback_on_error(session):
-        rejecter_lenders = application.rejecter_lenders(session)
+    rejecter_lenders = application.rejecter_lenders(session)
 
-        if application.borrower.type.lower() == data_access.SUPPLIER_TYPE_TO_EXCLUDE:
-            credit_product_filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON}')::boolean is True")
-        else:
-            credit_product_filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON}')::boolean is True")
+    if application.borrower.type.lower() == data_access.SUPPLIER_TYPE_TO_EXCLUDE:
+        credit_product_filter = text(f"(borrower_types->>'{models.BorrowerType.NATURAL_PERSON}')::boolean is True")
+    else:
+        credit_product_filter = text(f"(borrower_types->>'{models.BorrowerType.LEGAL_PERSON}')::boolean is True")
 
-        loans_query = (
-            session.query(models.CreditProduct)
-            .join(models.Lender)
-            .options(joinedload(models.CreditProduct.lender))
-            .filter(
-                models.CreditProduct.type == models.CreditType.LOAN,
-                models.CreditProduct.borrower_size == payload.borrower_size,
-                models.CreditProduct.lower_limit <= payload.amount_requested,
-                models.CreditProduct.upper_limit >= payload.amount_requested,
-                models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
-                col(models.Lender.id).notin_(rejecter_lenders),
-                credit_product_filter,
-            )
+    credit_products_base_query = (
+        session.query(models.CreditProduct)
+        .join(models.Lender)
+        .options(joinedload(models.CreditProduct.lender))
+        .filter(
+            models.CreditProduct.borrower_size == payload.borrower_size,
+            models.CreditProduct.lower_limit <= payload.amount_requested,
+            models.CreditProduct.upper_limit >= payload.amount_requested,
+            models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
+            col(models.Lender.id).notin_(rejecter_lenders),
+            credit_product_filter,
         )
+    )
 
-        credit_lines_query = (
-            session.query(models.CreditProduct)
-            .join(models.Lender)
-            .options(joinedload(models.CreditProduct.lender))
-            .filter(
-                models.CreditProduct.type == models.CreditType.CREDIT_LINE,
-                models.CreditProduct.borrower_size == payload.borrower_size,
-                models.CreditProduct.lower_limit <= payload.amount_requested,
-                models.CreditProduct.upper_limit >= payload.amount_requested,
-                models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
-                col(models.Lender.id).notin_(rejecter_lenders),
-                credit_product_filter,
-            )
-        )
+    loans_query = credit_products_base_query.filter(models.CreditProduct.type == models.CreditType.LOAN)
 
-        loans = loans_query.all()
-        credit_lines = credit_lines_query.all()
+    credit_lines_query = credit_products_base_query.filter(models.CreditProduct.type == models.CreditType.CREDIT_LINE)
 
-        return serializers.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
+    loans = loans_query.all()
+    credit_lines = credit_lines_query.all()
+
+    return serializers.CreditProductListResponse(loans=loans, credit_lines=credit_lines)
 
 
 @router.post(
