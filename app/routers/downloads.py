@@ -9,7 +9,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, util
-from app.db import get_db, transaction_session
+from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
 from app.i18n import get_translated_string
 from app.utils import tables
@@ -33,7 +33,7 @@ async def get_borrower_document(
     :param id: The ID of the borrower document to retrieve.
     :return: A streaming response with the borrower document file content.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", id)
         dependencies.raise_if_unauthorized(document.application, user, roles=(models.UserType.OCP, models.UserType.FI))
 
@@ -51,6 +51,7 @@ async def get_borrower_document(
                 data={"file_name": document.name},
                 application_id=document.application.id,
             )
+        session.commit()
 
         return Response(
             content=document.file,
@@ -78,7 +79,7 @@ async def download_application(
 
     :return: A streaming response with a zip file containing the documents.
     """
-    with transaction_session(session):
+    with rollback_on_error(session):
         borrower = application.borrower
         award = application.award
         documents = list(application.borrower_documents)
@@ -129,6 +130,7 @@ async def download_application(
             application_id=application.id,
             user_id=user.id,
         )
+        session.commit()
 
         return Response(
             content=in_memory_zip.getvalue(),

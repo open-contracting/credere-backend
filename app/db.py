@@ -27,24 +27,6 @@ def rollback_on_error(session: Session) -> Generator[None, None, None]:
 
 
 @contextmanager
-def transaction_session(session: Session) -> Generator[None, None, None]:
-    """
-    Context manager for database transactions. It takes a Session instance, commits the transaction if it is
-    successful, and rolls back the transaction if any exception is raised.
-
-    :param session: The database session where the transaction is to be performed.
-    :raises Exception: Any exception that occurs during the transaction.
-    :yield: The same database session, for use in with-statement.
-    """
-    try:
-        yield
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-
-
-@contextmanager
 def handle_skipped_award(session: Session, msg: str) -> Generator[None, None, None]:
     try:
         yield
