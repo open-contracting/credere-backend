@@ -310,15 +310,13 @@ async def get_all_users(
     list_query = (
         session.query(models.User)
         .outerjoin(models.Lender)
-        .options(
-            joinedload(models.User.lender),
-        )
+        .options(joinedload(models.User.lender))
         .order_by(get_order_by(sort_field, sort_order, model=models.User), models.User.id)
     )
 
     total_count = list_query.count()
 
-    users = list_query.offset(page * page_size).limit(page_size).all()
+    users = list_query.limit(page_size).offset(page * page_size).all()
 
     return serializers.UserListResponse(
         items=users,

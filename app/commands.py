@@ -341,7 +341,7 @@ def update_statistics() -> None:
 
     with contextmanager(get_db)() as session:
         with rollback_on_error(session):
-            # Get general Kpis
+            # Get general KPIs
             statistic_kpis = statistics_utils.get_general_statistics(session, None, None, None)
 
             models.Statistic.create_or_update(
@@ -354,7 +354,7 @@ def update_statistics() -> None:
                 data=statistic_kpis,
             )
 
-            # Get Opt in statistics
+            # Get opt-in statistics
             statistics_msme_opt_in = statistics_utils.get_borrower_opt_in_stats(session)
             for key in keys_to_serialize:
                 statistics_msme_opt_in[key] = [data.model_dump() for data in statistics_msme_opt_in[key]]
@@ -369,9 +369,10 @@ def update_statistics() -> None:
                 data=statistics_msme_opt_in,
             )
 
-            # Get general Kpis for every lender
-            lender_ids = [id[0] for id in session.query(models.Lender.id).all()]
-            for lender_id in lender_ids:
+            # Get general KPIs for every lender
+            for row in session.query(models.Lender.id):
+                lender_id = row[0]
+
                 # Get statistics for each lender
                 statistic_kpis = statistics_utils.get_general_statistics(session, None, None, lender_id)
 

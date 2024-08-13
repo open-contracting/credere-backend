@@ -421,15 +421,11 @@ async def confirm_credit_product(
             .first()
         ):
             # Copy the documents into the database for the provided application.
-            for document in (
-                session.query(models.BorrowerDocument)
-                .filter(
-                    models.BorrowerDocument.application_id == lastest_application_id[0],
-                    col(models.BorrowerDocument.type).in_(
-                        [key for key, value in application.credit_product.required_document_types.items() if value]
-                    ),
-                )
-                .all()
+            for document in session.query(models.BorrowerDocument).filter(
+                models.BorrowerDocument.application_id == lastest_application_id[0],
+                col(models.BorrowerDocument.type).in_(
+                    [key for key, value in application.credit_product.required_document_types.items() if value]
+                ),
             ):
                 application.borrower_documents.append(
                     models.BorrowerDocument.create(
