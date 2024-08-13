@@ -135,17 +135,20 @@ Follow `these conventions <https://ocp-software-handbook.readthedocs.io/en/lates
 SQLAlchemy Query API
 ~~~~~~~~~~~~~~~~~~~~
 
-Syntax
-^^^^^^
+Use the `Legacy Query API <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html>`__. (The project started with SQLAlchemy 1.4. `2.0 syntax <https://docs.sqlalchemy.org/en/20/changelog/migration_20.html#migration-20-query-usage>`__ is more verbose.)
 
--  Use the `Legacy Query API <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html>`__. (The project started with SQLAlchemy 1.4. `2.0 syntax <https://docs.sqlalchemy.org/en/20/changelog/migration_20.html#migration-20-query-usage>`__ is more verbose.)
+JOIN
+^^^^
+
+-  For the ``Award`` model, use ``join(Award, Award.id == Application.award_id)``, because we only count applications or borrowers, not awards. (``join(Award, Award.borrower_id == Borrower.id)`` might count awards, undesirably.)
+-  For all other models, use ``join(model)``, instead of ``join(model, model.foreign_key == other.pk)``.
+-  If an ON clause is needed, use the order ``join(model, model... == other...)``, instead of ``join(model, other... == model...)``.
+
+WHERE
+^^^^^
+
 -  Use `filter <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter>`__, instead of `filter_by <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter_by>`__, to avoid ambiguity.
--  Use ``filter(a, b, c)``, instead of ``filter(a).filter(b).filter(c)``
--  Use ``join(model)``, instead of ``join(model, model.foreign_key == other.pk)``
-
-   .. note::
-
-      If necessary, use the order ``join(model, model... == other...)``, instead of ``join(model, other... == model...)``
+-  Use ``filter(a, b, c)``, instead of ``filter(a).filter(b).filter(c)``.
 
 Cheatsheet
 ^^^^^^^^^^
