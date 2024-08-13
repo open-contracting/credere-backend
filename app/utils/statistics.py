@@ -71,9 +71,7 @@ def _scalar_or_zero(query, formatter=None):
 
 
 def _statistic_data(query, group, default):
-    return [
-        StatisticData(name=row[0].strip('"') if row[0] else default, value=row[1]) for row in query.group_by(group)
-    ]
+    return [StatisticData(name=row[0] if row[0] else default, value=row[1]) for row in query.group_by(group)]
 
 
 def get_general_statistics(
