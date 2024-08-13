@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import status
 
 from app.models import UserType
@@ -91,3 +93,19 @@ def test_duplicate_user(client):
     # duplicate user
     response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_logout_invalid_authorization_header(client, caplog):
+    caplog.set_level(logging.ERROR)
+    response = client.get("/users/logout", headers={"Authorization": "Bearer ACCESS_TOKEN"})
+
+    assert response.json() == {"detail": "User logged out successfully"}
+    assert not caplog.records
+
+
+def test_logout_no_authorization_header(client, caplog):
+    caplog.set_level(logging.ERROR)
+    response = client.get("/users/logout")
+
+    assert response.json() == {"detail": "User logged out successfully"}
+    assert not caplog.records

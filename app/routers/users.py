@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import dependencies, models, serializers
 from app.aws import CognitoClient
 from app.db import get_db, rollback_on_error
+from app.settings import app_settings
 from app.util import SortOrder, commit_and_refresh, get_object_or_404, get_order_by
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ async def create_user(
             user.external_id = cognito_response["User"]["Username"]
 
             return commit_and_refresh(session, user)
-        except (client.exceptions().UsernameExistsException, IntegrityError) as e:
+        except (client.exceptions.UsernameExistsException, IntegrityError) as e:
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -203,14 +204,23 @@ def logout(
     client: CognitoClient = Depends(dependencies.get_cognito_client),
 ) -> serializers.ResponseBase:
     """
-    Logout the user by invalidating the access token.
+    Logout the user from all devices in AWS Cognito.
 
     :param authorization: The Authorization header, like "Bearer ACCESS_TOKEN".
     :return: The response indicating successful logout.
     """
+
+    # The Authorization header is not set if the user is already logged out.
     if authorization is not None:
         try:
-            client.logout_user(authorization.split(" ")[1])
+            response = client.client.get_user(AccessToken=authorization.split(" ")[1])
+            # https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html
+            username = next(attr["Value"] for attr in response["UserAttributes"] if attr["Name"] == "sub")
+            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_user_global_sign_out.html
+            client.client.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=username)
+        # The user is not signed in ("Access Token has expired", "Invalid token", etc.).
+        except client.exceptions.NotAuthorizedException:
+            pass
         except ClientError as e:
             logger.exception(e)
 

@@ -56,6 +56,7 @@ class CognitoClient:
         #: A function reference that generates a password
         self.generate_password = generate_password_fn
 
+    @property
     def exceptions(self) -> Exceptions:
         return self.client.exceptions
 
@@ -253,24 +254,6 @@ class CognitoClient:
                 }
             case _:
                 raise NotImplementedError
-
-    def logout_user(self, access_token: str) -> dict[str, Any]:
-        """
-        Logs out a user from all devices in AWS Cognito.
-
-        :param access_token: The access token of the user to log out.
-        :return: The response from the Cognito 'admin_user_global_sign_out' method.
-        :raises boto3.exceptions: Any exceptions that occur when making the Cognito request.
-
-        Notes:
-            The 'admin_user_global_sign_out' method invalidates all refresh tokens issued to a user, which are required
-            for the user to maintain access to authorized resources. The method should be used when the user logs out
-            and chooses to log out from all devices.
-        """
-        response = self.client.get_user(AccessToken=access_token)
-        # https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html
-        username = next(attribute["Value"] for attribute in response["UserAttributes"] if attribute["Name"] == "sub")
-        return self.client.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=username)
 
     def reset_password(self, username: str) -> dict[str, Any]:
         """
