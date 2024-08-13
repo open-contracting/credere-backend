@@ -140,6 +140,12 @@ Syntax
 
 -  Use the `Legacy Query API <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html>`__. (The project started with SQLAlchemy 1.4. `2.0 syntax <https://docs.sqlalchemy.org/en/20/changelog/migration_20.html#migration-20-query-usage>`__ is more verbose.)
 -  Use `filter <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter>`__, instead of `filter_by <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter_by>`__, to avoid ambiguity.
+-  Use ``filter(a, b, c)``, instead of ``filter(a).filter(b).filter(c)``
+-  Use ``join(model)``, instead of ``join(model, model.foreign_key == other.pk)``
+
+   .. note::
+
+      If necessary, use the order ``join(model, model... == other...)``, instead of ``join(model, other... == model...)``
 
 Cheatsheet
 ^^^^^^^^^^
@@ -154,9 +160,6 @@ Cheatsheet
 -  `outerjoin <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.outerjoin>`__
 -  `options <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.options>`__ with `joinedload <https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#sqlalchemy.orm.joinedload>`__ or `defaultload <https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#sqlalchemy.orm.defaultload>`__
 -  `filter <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter>`__, not `where <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.where>`__
-
-   .. tip:: ``filter()`` can have multiple criteria, like ``filter(a, b, c)``
-
 -  `group_by <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.group_by>`__
 -  `having <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.having>`__
 -  `order_by <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.order_by>`__
