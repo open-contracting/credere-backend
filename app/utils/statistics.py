@@ -1,4 +1,5 @@
 from datetime import datetime
+from functools import partial
 from typing import Any
 
 from sqlalchemy import Integer, String, cast, distinct, func, select, text, true
@@ -191,17 +192,18 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
 
     # Reused variables
 
-    default_gender = "No definido"
-    default_size = BorrowerSize.NOT_INFORMED
     woman_values = ("Femenino", "Mujer")
     applications_count = session.query(Application).count()
     accepted_count = session.query(Application).filter(col(Application.borrower_accepted_at).isnot(None)).count()
+
+    statistic_gender = partial(_statistic_data, group="gender", default="No definido")
+    statistic_size = partial(_statistic_data, group="size", default=BorrowerSize.NOT_INFORMED)
 
     # Base queries
 
     base_declined_applications = session.query(Application).filter(col(Application.borrower_declined_at).isnot(None))
 
-    base_count_by_gender = (
+    base_count_gender = (
         session.query(
             cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
             func.count(Application.id).label("count"),
@@ -211,12 +213,12 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         .filter(Borrower.size != BorrowerSize.BIG)
     )
 
-    base_count_by_size = session.query(
+    base_count_size = session.query(
         col(Borrower.size).label("size"),
         func.count(Application.id).label("count"),
     ).join(Borrower, Application.borrower_id == Borrower.id)
 
-    base_count_distinct_by_gender = (
+    base_distinct_gender = (
         session.query(
             cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
             func.count(distinct(Borrower.id)).label("count"),
@@ -225,7 +227,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Application.award_id == Award.id)
     )
 
-    base_count_distinct_by_size = (
+    base_distinct_size = (
         session.query(
             col(Borrower.size).label("size"),
             func.count(distinct(Borrower.id)).label("count"),
@@ -387,63 +389,33 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         #
         # Bar graphs by gender and size
         #
-        "accepted_count_by_gender": _statistic_data(
-            query=base_count_by_gender, non_null="borrower_accepted_at", group="gender", default=default_gender
+        "accepted_count_by_gender": statistic_gender(query=base_count_gender, non_null="borrower_accepted_at"),
+        "submitted_count_by_gender": statistic_gender(query=base_count_gender, non_null="borrower_submitted_at"),
+        "approved_count_by_gender": statistic_gender(query=base_count_gender, non_null="lender_completed_at"),
+        "accepted_count_by_size": statistic_size(
+            query=base_count_size.filter(Borrower.is_msme == true()), non_null="borrower_accepted_at"
         ),
-        "submitted_count_by_gender": _statistic_data(
-            query=base_count_by_gender, non_null="borrower_submitted_at", group="gender", default=default_gender
+        "submitted_count_by_size": statistic_size(
+            query=base_count_size.filter(Borrower.size != BorrowerSize.BIG), non_null="borrower_submitted_at"
         ),
-        "approved_count_by_gender": _statistic_data(
-            query=base_count_by_gender, non_null="lender_completed_at", group="gender", default=default_gender
-        ),
-        "accepted_count_by_size": _statistic_data(
-            query=base_count_by_size.filter(Borrower.is_msme == true()),
-            non_null="borrower_accepted_at",
-            group="size",
-            default=default_size,
-        ),
-        "submitted_count_by_size": _statistic_data(
-            query=base_count_by_size.filter(Borrower.size != BorrowerSize.BIG),
-            non_null="borrower_submitted_at",
-            group="size",
-            default=default_size,
-        ),
-        "approved_count_by_size": _statistic_data(
-            query=base_count_by_size.filter(Borrower.size != BorrowerSize.BIG),
-            non_null="lender_completed_at",
-            group="size",
-            default=default_size,
+        "approved_count_by_size": statistic_size(
+            query=base_count_size.filter(Borrower.size != BorrowerSize.BIG), non_null="lender_completed_at"
         ),
         #
         # Bars graph by gender and size (distinct)
         #
-        "msme_accepted_count_distinct_by_gender": _statistic_data(
-            query=base_count_distinct_by_gender.filter(Borrower.is_msme == true()),
-            non_null="borrower_accepted_at",
-            group="gender",
-            default=default_gender,
+        "msme_accepted_count_distinct_by_gender": statistic_gender(
+            query=base_distinct_gender.filter(Borrower.is_msme == true()), non_null="borrower_accepted_at"
         ),
-        "msme_submitted_count_distinct_by_gender": _statistic_data(
-            query=base_count_distinct_by_gender.filter(Borrower.size != BorrowerSize.BIG),
-            non_null="borrower_submitted_at",
-            group="gender",
-            default=default_gender,
+        "msme_submitted_count_distinct_by_gender": statistic_gender(
+            query=base_distinct_gender.filter(Borrower.size != BorrowerSize.BIG), non_null="borrower_submitted_at"
         ),
-        "msme_approved_count_distinct_by_gender": _statistic_data(
-            query=base_count_distinct_by_gender.filter(Borrower.size != BorrowerSize.BIG),
-            non_null="lender_completed_at",
-            group="gender",
-            default=default_gender,
+        "msme_approved_count_distinct_by_gender": statistic_gender(
+            query=base_distinct_gender.filter(Borrower.size != BorrowerSize.BIG), non_null="lender_completed_at"
         ),
-        "accepted_count_distinct_by_size": _statistic_data(
-            query=base_count_distinct_by_size, non_null="borrower_accepted_at", group="size", default=default_size
-        ),
-        "submitted_count_distinct_by_size": _statistic_data(
-            query=base_count_distinct_by_size, non_null="borrower_submitted_at", group="size", default=default_size
-        ),
-        "approved_count_distinct_by_size": _statistic_data(
-            query=base_count_distinct_by_size, non_null="lender_completed_at", group="size", default=default_size
-        ),
+        "accepted_count_distinct_by_size": statistic_size(query=base_distinct_size, non_null="borrower_accepted_at"),
+        "submitted_count_distinct_by_size": statistic_size(query=base_distinct_size, non_null="borrower_submitted_at"),
+        "approved_count_distinct_by_size": statistic_size(query=base_distinct_size, non_null="lender_completed_at"),
         #
         # Average credit disbursed
         #
