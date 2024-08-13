@@ -37,20 +37,14 @@ def _get_base_query(
     :param lender_id: The ID of the lender for filtering applications. (default: None)
     :return: The base query for filtering applications.
     """
+    base_query = session_base
 
-    if start_date is not None and end_date is not None:
-        base_query = session_base.filter(
-            col(Application.created_at) >= start_date,
-            col(Application.created_at) <= end_date,
-        )
-    elif start_date is not None:
-        base_query = session_base.filter(col(Application.created_at) >= start_date)
-    elif end_date is not None:
-        base_query = session_base.filter(col(Application.created_at) <= end_date)
-    else:
-        base_query = session_base
+    if start_date:
+        base_query = base_query.filter(col(Application.created_at) >= start_date)
+    if end_date:
+        base_query = base_query.filter(col(Application.created_at) <= end_date)
 
-    if lender_id is not None:
+    if lender_id:
         base_query = base_query.filter(Application.lender_id == lender_id)
 
     return base_query
