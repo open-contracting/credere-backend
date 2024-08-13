@@ -60,6 +60,20 @@ def _truncate_round(number):
     return number if number % 1 else int(number)
 
 
+def _scalar_or_zero(query, formatter=None):
+    scalar = query.scalar() or 0
+    if formatter:
+        return formatter(scalar)
+    return scalar
+
+
+def _statistic_data(default, non_null, group, query):
+    return [
+        StatisticData(name=row[0].strip('"') if row[0] else default, value=row[1])
+        for row in query.filter(col(getattr(Application, non_null)).isnot(None)).group_by(group)
+    ]
+
+
 def get_general_statistics(
     session: Session,
     start_date: datetime | str | None = None,
@@ -121,18 +135,13 @@ def get_general_statistics(
         ).count(),
         "applications_with_credit_disbursed_count": applications_with_credit_disbursed_count,
         "proportion_of_disbursed": proportion_of_disbursed,
-        "average_amount_requested": int(
+        "average_amount_requested": _scalar_or_zero(
             _get_base_query(
-                session.query(func.avg(Application.amount_requested)),
-                start_date,
-                end_date,
-                lender_id,
-            )
-            .filter(col(Application.amount_requested).isnot(None))
-            .scalar()
-            or 0
+                session.query(func.avg(Application.amount_requested)), start_date, end_date, lender_id
+            ).filter(col(Application.amount_requested).isnot(None)),
+            formatter=int,
         ),
-        "average_repayment_period": (
+        "average_repayment_period": _scalar_or_zero(
             _get_base_query(
                 session.query(
                     func.avg(col(Application.repayment_years) * 12 + col(Application.repayment_months)).cast(Integer)
@@ -146,28 +155,18 @@ def get_general_statistics(
                 col(Application.borrower_submitted_at).isnot(None),
                 CreditProduct.type == CreditType.LOAN,
             )
-            .scalar()
-            or 0
         ),
         "applications_overdue_count": base_query.filter(col(Application.overdued_at).isnot(None)).count(),
-        "average_processing_time": int(
+        "average_processing_time": _scalar_or_zero(
             _get_base_query(
-                session.query(func.avg(Application.completed_in_days)),
-                start_date,
-                end_date,
-                lender_id,
-            )
-            .filter(Application.status == ApplicationStatus.COMPLETED)
-            .scalar()
-            or 0
+                session.query(func.avg(Application.completed_in_days)), start_date, end_date, lender_id
+            ).filter(Application.status == ApplicationStatus.COMPLETED),
+            formatter=int,
         ),
         "proportion_of_submitted_out_of_opt_in": proportion_of_submitted_out_of_opt_in,
     }
 
     return general_statistics
-
-
-DEFAULT_MISSING_GENDER = "No definido"
 
 
 # Group of Stat only for OCP USER (opt in stats)
@@ -182,8 +181,18 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
     :return: A dictionary containing the statistics specific opt-in applications.
     """
 
+    def _rejected_reason(reason):
+        return StatisticData(
+            name=reason,
+            value=base_declined_applications.filter(
+                text(f"(borrower_declined_preferences_data->>'{reason}')::boolean is True")
+            ).count(),
+        )
+
     # Reused variables
 
+    default_gender = "No definido"
+    default_size = BorrowerSize.NOT_INFORMED
     woman_values = ("Femenino", "Mujer")
     applications_count = session.query(Application).count()
     accepted_count = session.query(Application).filter(col(Application.borrower_accepted_at).isnot(None)).count()
@@ -261,11 +270,11 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             .group_by(Application.id)
             .count()
         ),
-        "total_credit_disbursed": int(
-            session.query(func.sum(Application.disbursed_final_amount))
-            .filter(col(Application.lender_completed_at).isnot(None))
-            .scalar()
-            or 0
+        "total_credit_disbursed": _scalar_or_zero(
+            session.query(func.sum(Application.disbursed_final_amount)).filter(
+                col(Application.lender_completed_at).isnot(None)
+            ),
+            formatter=int,
         ),
         #
         # Bar graphs
@@ -316,13 +325,12 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             .filter(Borrower.size != BorrowerSize.BIG)
             .count()
         ),
-        "msme_total_credit_disbursed": int(
+        "msme_total_credit_disbursed": _scalar_or_zero(
             session.query(func.sum(Application.disbursed_final_amount))
-            .filter(col(Application.lender_completed_at).isnot(None))
-            .filter(Borrower.size != BorrowerSize.BIG)
             .join(Borrower, Borrower.id == Application.borrower_id)
-            .scalar()
-            or 0
+            .filter(col(Application.lender_completed_at).isnot(None))
+            .filter(Borrower.size != BorrowerSize.BIG),
+            formatter=int,
         ),
         "approved_count_distinct_micro": (
             session.query(Borrower.id)
@@ -342,13 +350,12 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             .group_by(Borrower.id)
             .count()
         ),
-        "total_credit_disbursed_micro": int(
+        "total_credit_disbursed_micro": _scalar_or_zero(
             session.query(func.sum(Application.disbursed_final_amount))
             .join(Borrower, Borrower.id == Application.borrower_id)
             .filter(col(Application.lender_completed_at).isnot(None))
-            .filter(Borrower.size == BorrowerSize.MICRO)
-            .scalar()
-            or 0
+            .filter(Borrower.size == BorrowerSize.MICRO),
+            formatter=int,
         ),
         #
         # MSMEs statistics
@@ -371,166 +378,102 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         # Count of Declined reasons bars chart
         #
         "rejected_reasons_count_by_reason": [
-            StatisticData(
-                name="dont_need_access_credit",
-                value=base_declined_applications.filter(
-                    text("(borrower_declined_preferences_data->>'dont_need_access_credit')::boolean is True")
-                ).count(),
-            ),
-            StatisticData(
-                name="already_have_acredit",
-                value=base_declined_applications.filter(
-                    text("(borrower_declined_preferences_data->>'already_have_acredit')::boolean is True")
-                ).count(),
-            ),
-            StatisticData(
-                name="preffer_to_go_to_bank",
-                value=base_declined_applications.filter(
-                    text("(borrower_declined_preferences_data->>'preffer_to_go_to_bank')::boolean is True")
-                ).count(),
-            ),
-            StatisticData(
-                name="dont_want_access_credit",
-                value=base_declined_applications.filter(
-                    text("(borrower_declined_preferences_data->>'dont_want_access_credit')::boolean is True")
-                ).count(),
-            ),
-            StatisticData(
-                name="other",
-                value=base_declined_applications.filter(
-                    text("(borrower_declined_preferences_data->>'other')::boolean is True")
-                ).count(),
-            ),
+            _rejected_reason("dont_need_access_credit"),
+            _rejected_reason("already_have_acredit"),
+            _rejected_reason("preffer_to_go_to_bank"),
+            _rejected_reason("dont_want_access_credit"),
+            _rejected_reason("other"),
         ],
         #
         # Bar graphs by gender and size
         #
-        "accepted_count_by_gender": [
-            StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
-            for row in (
-                base_count_by_gender.filter(col(Application.borrower_accepted_at).isnot(None)).group_by("gender")
-            )
-        ],
-        "submitted_count_by_gender": [
-            StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
-            for row in (
-                base_count_by_gender.filter(col(Application.borrower_submitted_at).isnot(None)).group_by("gender")
-            )
-        ],
-        "approved_count_by_gender": [
-            StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
-            for row in (
-                base_count_by_gender.filter(col(Application.lender_completed_at).isnot(None)).group_by("gender")
-            )
-        ],
-        "accepted_count_by_size": [
-            StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
-            for row in (
-                base_count_by_size.filter(col(Application.borrower_accepted_at).isnot(None))
-                .filter(Borrower.is_msme == true())
-                .group_by("size")
-            )
-        ],
-        "submitted_count_by_size": [
-            StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
-            for row in (
-                base_count_by_size.filter(col(Application.borrower_submitted_at).isnot(None))
-                .filter(Borrower.size != BorrowerSize.BIG)
-                .group_by("size")
-            )
-        ],
-        "approved_count_by_size": [
-            StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
-            for row in (
-                base_count_by_size.filter(col(Application.lender_completed_at).isnot(None))
-                .filter(Borrower.size != BorrowerSize.BIG)
-                .group_by("size")
-            )
-        ],
+        "accepted_count_by_gender": _statistic_data(
+            query=base_count_by_gender, non_null="borrower_accepted_at", group="gender", default=default_gender
+        ),
+        "submitted_count_by_gender": _statistic_data(
+            query=base_count_by_gender, non_null="borrower_submitted_at", group="gender", default=default_gender
+        ),
+        "approved_count_by_gender": _statistic_data(
+            query=base_count_by_gender, non_null="lender_completed_at", group="gender", default=default_gender
+        ),
+        "accepted_count_by_size": _statistic_data(
+            query=base_count_by_size.filter(Borrower.is_msme == true()),
+            non_null="borrower_accepted_at",
+            group="size",
+            default=default_size,
+        ),
+        "submitted_count_by_size": _statistic_data(
+            query=base_count_by_size.filter(Borrower.size != BorrowerSize.BIG),
+            non_null="borrower_submitted_at",
+            group="size",
+            default=default_size,
+        ),
+        "approved_count_by_size": _statistic_data(
+            query=base_count_by_size.filter(Borrower.size != BorrowerSize.BIG),
+            non_null="lender_completed_at",
+            group="size",
+            default=default_size,
+        ),
         #
         # Bars graph by gender and size (distinct)
         #
-        "msme_accepted_count_distinct_by_gender": [
-            StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
-            for row in (
-                base_count_distinct_by_gender.filter(col(Application.borrower_accepted_at).isnot(None))
-                .filter(Borrower.is_msme == true())
-                .group_by("gender")
-            )
-        ],
-        "msme_submitted_count_distinct_by_gender": [
-            StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
-            for row in (
-                base_count_distinct_by_gender.filter(col(Application.borrower_submitted_at).isnot(None))
-                .filter(Borrower.size != BorrowerSize.BIG)
-                .group_by("gender")
-            )
-        ],
-        "msme_approved_count_distinct_by_gender": [
-            StatisticData(name=row[0].strip('"') if row[0] else DEFAULT_MISSING_GENDER, value=row[1])
-            for row in (
-                base_count_distinct_by_gender.filter(col(Application.lender_completed_at).isnot(None))
-                .filter(Borrower.size != BorrowerSize.BIG)
-                .group_by("gender")
-            )
-        ],
-        "accepted_count_distinct_by_size": [
-            StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
-            for row in (
-                base_count_distinct_by_size.filter(col(Application.borrower_accepted_at).isnot(None)).group_by("size")
-            )
-        ],
-        "submitted_count_distinct_by_size": [
-            StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
-            for row in (
-                base_count_distinct_by_size.filter(col(Application.borrower_submitted_at).isnot(None)).group_by("size")
-            )
-        ],
-        "approved_count_distinct_by_size": [
-            StatisticData(name=row[0].strip('"') if row[0] else BorrowerSize.NOT_INFORMED, value=row[1])
-            for row in (
-                base_count_distinct_by_size.filter(col(Application.lender_completed_at).isnot(None)).group_by("size")
-            )
-        ],
+        "msme_accepted_count_distinct_by_gender": _statistic_data(
+            query=base_count_distinct_by_gender.filter(Borrower.is_msme == true()),
+            non_null="borrower_accepted_at",
+            group="gender",
+            default=default_gender,
+        ),
+        "msme_submitted_count_distinct_by_gender": _statistic_data(
+            query=base_count_distinct_by_gender.filter(Borrower.size != BorrowerSize.BIG),
+            non_null="borrower_submitted_at",
+            group="gender",
+            default=default_gender,
+        ),
+        "msme_approved_count_distinct_by_gender": _statistic_data(
+            query=base_count_distinct_by_gender.filter(Borrower.size != BorrowerSize.BIG),
+            non_null="lender_completed_at",
+            group="gender",
+            default=default_gender,
+        ),
+        "accepted_count_distinct_by_size": _statistic_data(
+            query=base_count_distinct_by_size, non_null="borrower_accepted_at", group="size", default=default_size
+        ),
+        "submitted_count_distinct_by_size": _statistic_data(
+            query=base_count_distinct_by_size, non_null="borrower_submitted_at", group="size", default=default_size
+        ),
+        "approved_count_distinct_by_size": _statistic_data(
+            query=base_count_distinct_by_size, non_null="lender_completed_at", group="size", default=default_size
+        ),
         #
         # Average credit disbursed
         #
-        "msme_average_credit_disbursed": _truncate_round(
-            (
-                session.query(func.avg(Application.disbursed_final_amount))
-                .filter(col(Application.lender_completed_at).isnot(None))
-                .filter(Borrower.size != BorrowerSize.BIG)
-                .join(Borrower, Borrower.id == Application.borrower_id)
-                .scalar()
-                or 0
-            )
+        "msme_average_credit_disbursed": _scalar_or_zero(
+            session.query(func.avg(Application.disbursed_final_amount))
+            .join(Borrower, Borrower.id == Application.borrower_id)
+            .filter(col(Application.lender_completed_at).isnot(None))
+            .filter(Borrower.size != BorrowerSize.BIG),
+            formatter=_truncate_round,
         ),
         #
         # Unique number of SMEs who accessed
         #
-        "msme_accepted_count_distinct": (
+        "msme_accepted_count_distinct": _scalar_or_zero(
             session.query(func.count(distinct(Borrower.id)))
             .join(Application, Application.borrower_id == Borrower.id)
             .filter(col(Application.borrower_accepted_at).isnot(None))
             .filter(Borrower.is_msme == true())
-            .scalar()
-            or 0
         ),
-        "msme_submitted_count_distinct": (
+        "msme_submitted_count_distinct": _scalar_or_zero(
             session.query(func.count(distinct(Borrower.id)))
             .join(Application, Application.borrower_id == Borrower.id)
             .filter(col(Application.borrower_submitted_at).isnot(None))
             .filter(Borrower.size != BorrowerSize.BIG)
-            .scalar()
-            or 0
         ),
-        "msme_approved_count_distinct": (
+        "msme_approved_count_distinct": _scalar_or_zero(
             session.query(func.count(distinct(Borrower.id)))
             .join(Application, Application.borrower_id == Borrower.id)
             .filter(col(Application.lender_completed_at).isnot(None))
             .filter(Borrower.size != BorrowerSize.BIG)
-            .scalar()
-            or 0
         ),
         #
         # Average applications created per day
