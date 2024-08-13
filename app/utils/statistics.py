@@ -1,8 +1,7 @@
 from datetime import datetime
-from functools import partial
 from typing import Any
 
-from sqlalchemy import Integer, String, cast, distinct, func, select, text, true
+from sqlalchemy import Integer, distinct, func, text, true
 from sqlalchemy.orm import Query, Session
 from sqlmodel import col
 
@@ -208,56 +207,10 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
     base_borrower_group = session.query(Borrower.id).join(Application).group_by(Borrower.id)
     base_borrower_group_with_award = base_borrower_group.join(Award, Award.id == Application.award_id)
 
-    base_count_gender = (
-        session.query(
-            cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
-            func.count(Application.id).label("count"),
-        )
-        .select_from(Application)
-        .join(Borrower)
-        .join(Award, Award.id == Application.award_id)
-    )
-
-    base_count_size = session.query(
-        col(Borrower.size).label("size"),
-        func.count(Application.id).label("count"),
-    ).join(Borrower)
-
-    base_count_distinct_gender = (
-        session.query(
-            cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
-            func.count(distinct(Borrower.id)).label("count"),
-        )
-        .select_from(Borrower)
-        .join(Application)
-        .join(Award, Award.id == Application.award_id)
-    )
-
-    base_count_distinct_size = session.query(
-        col(Borrower.size).label("size"),
-        func.count(distinct(Borrower.id)).label("count"),
-    ).join(Application)
-
     # Reused variables
 
     applications_count = base_application.count()
     accepted_count = base_application.filter(accepted).count()
-
-    statistic_gender = partial(_statistic_data, group="gender", default="No definido")
-    statistic_size = partial(_statistic_data, group="size", default=BorrowerSize.NOT_INFORMED)
-
-    # Complex logic
-
-    if daily_counts := session.query(
-        select(func.date_trunc("day", Application.created_at).label("day"), func.count().label("daily_count"))
-        .group_by(func.date_trunc("day", Application.created_at))
-        .alias("daily_counts")
-    ).all():
-        average_applications_per_day = _truncate_round(
-            sum(row.daily_count for row in daily_counts) / len(daily_counts)
-        )
-    else:
-        average_applications_per_day = 0
 
     return {
         #
@@ -340,30 +293,6 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             _rejected_reason("other"),
         ],
         #
-        # Bar graphs by gender and size
-        #
-        "accepted_count_by_gender": statistic_gender(base_count_gender.filter(accepted, msme_from_source)),
-        "submitted_count_by_gender": statistic_gender(base_count_gender.filter(submitted, msme_from_borrower)),
-        "approved_count_by_gender": statistic_gender(base_count_gender.filter(approved, msme_from_borrower)),
-        "accepted_count_by_size": statistic_size(base_count_size.filter(accepted, msme_from_source)),
-        "submitted_count_by_size": statistic_size(base_count_size.filter(submitted, msme_from_borrower)),
-        "approved_count_by_size": statistic_size(base_count_size.filter(approved, msme_from_borrower)),
-        #
-        # Bars graph by gender and size (distinct)
-        #
-        "msme_accepted_count_distinct_by_gender": statistic_gender(
-            base_count_distinct_gender.filter(accepted, msme_from_source)
-        ),
-        "msme_submitted_count_distinct_by_gender": statistic_gender(
-            base_count_distinct_gender.filter(submitted, msme_from_borrower)
-        ),
-        "msme_approved_count_distinct_by_gender": statistic_gender(
-            base_count_distinct_gender.filter(approved, msme_from_borrower)
-        ),
-        "accepted_count_distinct_by_size": statistic_size(base_count_distinct_size.filter(accepted)),
-        "submitted_count_distinct_by_size": statistic_size(base_count_distinct_size.filter(submitted)),
-        "approved_count_distinct_by_size": statistic_size(base_count_distinct_size.filter(approved)),
-        #
         # Average credit disbursed
         #
         "msme_average_credit_disbursed": _scalar_or_zero(
@@ -378,8 +307,4 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         "msme_accepted_count_distinct": _scalar_or_zero(base_borrower_distinct.filter(accepted, msme_from_source)),
         "msme_submitted_count_distinct": _scalar_or_zero(base_borrower_distinct.filter(submitted, msme_from_borrower)),
         "msme_approved_count_distinct": _scalar_or_zero(base_borrower_distinct.filter(approved, msme_from_borrower)),
-        #
-        # Average applications created per day
-        #
-        "msme_average_applications_per_day": average_applications_per_day,
     }
