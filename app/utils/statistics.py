@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 from sqlalchemy import Integer, distinct, func, text, true
 from sqlalchemy.orm import Query, Session
@@ -49,14 +49,16 @@ def _get_base_query(
     return base_query
 
 
-def _truncate_round(number):
+def _truncate_round(number: float) -> int | float:
     number = round(number, 2)
     if number % 1:
         return number
     return int(number)
 
 
-def _scalar_or_zero(query, formatter=None):
+def _scalar_or_zero(
+    query: Query[Application] | Query[Borrower], formatter: Callable[[float], int | float] | None = None
+) -> int | float:
     scalar = query.scalar() or 0
     if formatter:
         return formatter(scalar)
@@ -172,7 +174,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
     :return: A dictionary containing the statistics specific opt-in applications.
     """
 
-    def _rejected_reason(reason):
+    def _rejected_reason(reason: str) -> StatisticData:
         return StatisticData(
             name=reason,
             value=base_applications_declined.filter(
