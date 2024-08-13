@@ -234,12 +234,17 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
                 .group_by(Lender.name)
             )
         ],
+        # "Unique women-led SMEs that use Credere to access credit options"
         "msme_accepted_count_woman": (
             base_borrower_group_with_award.filter(accepted, msme_from_source, woman_owned).count()
         ),
+        # "Number of women-led SMEs that submit a credit application through Credere"
         "msme_submitted_count_woman": (
             base_borrower_group_with_award.filter(submitted, msme_from_borrower, woman_owned).count()
         ),
+        # This query matches msme_approved_count, instead of msme_accepted_count_woman or msme_submitted_count_woman,
+        # because it counts applications, not borrowers. The variable name is similar but the semantics are different.
+        # "Number of women-led SMEs credit applications approved"
         "msme_approved_count_woman": (
             session.query(Application.id)
             .join(Borrower)
@@ -248,6 +253,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             .group_by(Application.id)
             .count()
         ),
+        # "Number of SMEs applications approved"
         "msme_approved_count": (
             session.query(Application.id).join(Borrower).filter(approved, msme_from_borrower).count()
         ),
