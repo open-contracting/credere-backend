@@ -195,13 +195,16 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
 
     # Filters
 
+    # When filtering by dates, remember to query or join Application.
     accepted = col(Application.borrower_accepted_at).isnot(None)
     declined = col(Application.borrower_declined_at).isnot(None)
     submitted = col(Application.borrower_submitted_at).isnot(None)
     approved = col(Application.lender_completed_at).isnot(None)
+    # When filtering by size, remember to query or join Borrower.
     msme_from_source = Borrower.is_msme == true()
     msme_from_borrower = Borrower.size != BorrowerSize.BIG
     micro = Borrower.size == BorrowerSize.MICRO
+    # When filtering by woman-owned, remember to join Award.
     woman_owned = Award.source_data_contracts["g_nero_representante_legal"].astext.in_(("Femenino", "Mujer"))
 
     # Base queries
@@ -209,41 +212,39 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
     base_application = session.query(Application)
     base_applications_declined = base_application.filter(declined)
 
-    base_borrower_distinct = session.query(func.count(distinct(Borrower.id))).join(
-        Application, Application.borrower_id == Borrower.id
-    )
-    base_borrower_group = (
-        session.query(Borrower.id).join(Application, Application.borrower_id == Borrower.id).group_by(Borrower.id)
-    )
-    base_borrower_group_with_award = base_borrower_group.join(Award, Award.borrower_id == Borrower.id)
+    base_borrower_distinct = session.query(func.count(distinct(Borrower.id))).join(Application)
+    base_borrower_group = session.query(Borrower.id).join(Application).group_by(Borrower.id)
+    base_borrower_group_with_award = base_borrower_group.join(Award, Award.id == Application.award_id)
 
     base_count_gender = (
         session.query(
             cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
             func.count(Application.id).label("count"),
         )
-        .join(Borrower, Borrower.id == Application.borrower_id)
+        .select_from(Application)
+        .join(Borrower)
         .join(Award, Award.id == Application.award_id)
     )
 
     base_count_size = session.query(
         col(Borrower.size).label("size"),
         func.count(Application.id).label("count"),
-    ).join(Borrower, Borrower.id == Application.borrower_id)
+    ).join(Borrower)
 
     base_count_distinct_gender = (
         session.query(
             cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
             func.count(distinct(Borrower.id)).label("count"),
         )
-        .join(Application, Application.borrower_id == Borrower.id)
+        .select_from(Borrower)
+        .join(Application)
         .join(Award, Award.id == Application.award_id)
     )
 
     base_count_distinct_size = session.query(
         col(Borrower.size).label("size"),
         func.count(distinct(Borrower.id)).label("count"),
-    ).join(Application, Application.borrower_id == Borrower.id)
+    ).join(Application)
 
     # Reused variables
 
@@ -287,7 +288,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             StatisticData(name=row[0], value=row[1])
             for row in (
                 session.query(Lender.name, func.count(Application.id))
-                .join(Lender, Lender.id == Application.lender_id)
+                .join(Lender)
                 .filter(submitted)
                 .group_by(Lender.name)
             )
@@ -300,34 +301,27 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         ),
         "msme_approved_count_woman": (
             session.query(Application.id)
-            .join(Borrower, Borrower.id == Application.borrower_id)
+            .join(Borrower)
             .join(Award, Award.id == Application.award_id)
             .filter(approved, msme_from_borrower, woman_owned)
             .group_by(Application.id)
             .count()
         ),
         "msme_approved_count": (
-            session.query(Application.id)
-            .join(Borrower, Borrower.id == Application.borrower_id)
-            .filter(approved, msme_from_borrower)
-            .count()
+            session.query(Application.id).join(Borrower).filter(approved, msme_from_borrower).count()
         ),
         "msme_total_credit_disbursed": _scalar_or_zero(
             session.query(func.sum(Application.disbursed_final_amount))
-            .join(Borrower, Borrower.id == Application.borrower_id)
+            .join(Borrower)
             .filter(approved, msme_from_borrower),
             formatter=int,
         ),
         "approved_count_distinct_micro": base_borrower_group.filter(approved, micro).count(),
         "approved_count_distinct_micro_woman": (
-            base_borrower_group.join(Award, Award.id == Application.award_id)
-            .filter(approved, micro, woman_owned)
-            .count()
+            base_borrower_group_with_award.filter(approved, micro, woman_owned).count()
         ),
         "total_credit_disbursed_micro": _scalar_or_zero(
-            session.query(func.sum(Application.disbursed_final_amount))
-            .join(Borrower, Borrower.id == Application.borrower_id)
-            .filter(approved, micro),
+            session.query(func.sum(Application.disbursed_final_amount)).join(Borrower).filter(approved, micro),
             formatter=int,
         ),
         #
@@ -338,7 +332,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             StatisticData(name=row[0], value=row[1])
             for row in (
                 session.query(Borrower.sector, func.count(distinct(Application.id)).label("count"))
-                .join(Application, Application.borrower_id == Borrower.id)
+                .join(Application)
                 .filter(accepted, msme_from_source, Borrower.sector != "")
                 .group_by(Borrower.sector)
             )
@@ -382,7 +376,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         #
         "msme_average_credit_disbursed": _scalar_or_zero(
             session.query(func.avg(Application.disbursed_final_amount))
-            .join(Borrower, Borrower.id == Application.borrower_id)
+            .join(Borrower)
             .filter(approved, msme_from_borrower),
             formatter=_truncate_round,
         ),
