@@ -317,7 +317,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application) 
     """
     return send_email(
         ses,
-        application.lender.email_group,
+        application.primary_email,
         prepare_html(
             "Contract_upload_confirmation",
             {
