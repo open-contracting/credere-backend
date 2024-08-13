@@ -199,17 +199,15 @@ def remove_dated_application_data() -> None:
                 for document in application.borrower_documents:
                     session.delete(document)
 
-                # Check if the borrower has other active applications
-                active_applications_with_same_borrower = (
+                # Reset the associated borrower's information if they have no other active applications.
+                if not session.query(
                     models.Application.unarchived(session)
                     .filter(
                         models.Application.borrower_id == application.borrower_id,
                         models.Application.id != application.id,
                     )
-                    .all()
-                )
-                # Delete the associated borrower info if no other active applications uses the borrower
-                if len(active_applications_with_same_borrower) == 0:
+                    .exists()
+                ).scalar():
                     application.borrower.legal_name = ""
                     application.borrower.email = ""
                     application.borrower.address = ""
