@@ -100,6 +100,8 @@ def get_general_statistics(
 
     base_query = _get_base_query(session.query(Application), start_date, end_date, lender_id)
 
+    application_received_count = base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count()
+
     applications_approved_count = base_query.filter(
         col(Application.status).in_(
             [ApplicationStatus.APPROVED, ApplicationStatus.CONTRACT_UPLOADED, ApplicationStatus.COMPLETED]
@@ -115,19 +117,19 @@ def get_general_statistics(
     else:
         proportion_of_disbursed = 0
 
-    if application_accepted_count := base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count():
+    if application_received_count:
         if lender_id is None:
             column = Application.borrower_accepted_at
         else:
             column = Application.borrower_submitted_at
         proportion_of_submitted_out_of_opt_in = round(
-            (application_accepted_count / session.query(Application).filter(col(column).isnot(None)).count()) * 100, 2
+            (application_received_count / session.query(Application).filter(col(column).isnot(None)).count()) * 100, 2
         )
     else:
         proportion_of_submitted_out_of_opt_in = 0.0
 
     general_statistics = {
-        "applications_received_count": base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count(),
+        "applications_received_count": application_received_count,
         "applications_approved_count": applications_approved_count,
         "applications_rejected_count": base_query.filter(Application.status == ApplicationStatus.REJECTED).count(),
         "applications_waiting_for_information_count": base_query.filter(
