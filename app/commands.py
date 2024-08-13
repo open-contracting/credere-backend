@@ -337,18 +337,6 @@ def update_statistics() -> None:
         "sector_statistics",
         "rejected_reasons_count_by_reason",
         "fis_chosen_by_supplier",
-        "accepted_count_by_gender",
-        "submitted_count_by_gender",
-        "approved_count_by_gender",
-        "accepted_count_by_size",
-        "submitted_count_by_size",
-        "approved_count_by_size",
-        "msme_accepted_count_distinct_by_gender",
-        "msme_submitted_count_distinct_by_gender",
-        "msme_approved_count_distinct_by_gender",
-        "accepted_count_distinct_by_size",
-        "submitted_count_distinct_by_size",
-        "approved_count_distinct_by_size",
     ]
 
     with contextmanager(get_db)() as session:
