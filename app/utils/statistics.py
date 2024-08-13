@@ -240,14 +240,10 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         .join(Award, Award.id == Application.award_id)
     )
 
-    base_count_distinct_size = (
-        session.query(
-            col(Borrower.size).label("size"),
-            func.count(distinct(Borrower.id)).label("count"),
-        )
-        .join(Application, Application.borrower_id == Borrower.id)
-        .join(Award, Award.id == Application.award_id)
-    )
+    base_count_distinct_size = session.query(
+        col(Borrower.size).label("size"),
+        func.count(distinct(Borrower.id)).label("count"),
+    ).join(Application, Application.borrower_id == Borrower.id)
 
     # Reused variables
 
@@ -278,14 +274,8 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         "accepted_count": accepted_count,
         "accepted_percentage": round((accepted_count / applications_count * 100), 2) if applications_count else 0,
         "unique_businesses_contacted_by_credere": session.query(Borrower).count(),
-        "accepted_count_unique": base_borrower_group_with_award.filter(accepted).count(),
-        "approved_count": (
-            session.query(Application.id)
-            .join(Award, Award.id == Application.award_id)
-            .filter(approved)
-            .group_by(Application.id)
-            .count()
-        ),
+        "accepted_count_unique": base_borrower_group.filter(accepted).count(),
+        "approved_count": session.query(Application.id).filter(approved).group_by(Application.id).count(),
         "total_credit_disbursed": _scalar_or_zero(
             session.query(func.sum(Application.disbursed_final_amount)).filter(approved),
             formatter=int,
