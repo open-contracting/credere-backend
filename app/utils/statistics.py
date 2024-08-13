@@ -58,7 +58,9 @@ def _get_base_query(
 
 def _truncate_round(number):
     number = round(number, 2)
-    return number if number % 1 else int(number)
+    if number % 1:
+        return number
+    return int(number)
 
 
 def _scalar_or_zero(query, formatter=None):
@@ -201,6 +203,11 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
 
     # Base queries
 
+    base_borrower_group = (
+        session.query(Borrower.id).join(Application, Application.borrower_id == Borrower.id).group_by(Borrower.id)
+    )
+    base_borrower_group_with_award = base_borrower_group.join(Award, Award.borrower_id == Borrower.id)
+
     base_declined_applications = session.query(Application).filter(col(Application.borrower_declined_at).isnot(None))
 
     base_count_gender = (
@@ -258,12 +265,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         "accepted_percentage": round((accepted_count / applications_count * 100), 2) if applications_count else 0,
         "unique_businesses_contacted_by_credere": session.query(Borrower).count(),
         "accepted_count_unique": (
-            session.query(Borrower.id)
-            .join(Award, Award.borrower_id == Borrower.id)
-            .join(Application, Application.borrower_id == Borrower.id)
-            .filter(col(Application.borrower_accepted_at).isnot(None))
-            .group_by(Borrower.id)
-            .count()
+            base_borrower_group_with_award.filter(col(Application.borrower_accepted_at).isnot(None)).count()
         ),
         "approved_count": (
             session.query(Application.id)
@@ -291,23 +293,15 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             )
         ],
         "msme_accepted_count_woman": (
-            session.query(Borrower.id)
-            .join(Award, Award.borrower_id == Borrower.id)
-            .join(Application, Application.borrower_id == Borrower.id)
-            .filter(col(Application.borrower_accepted_at).isnot(None))
+            base_borrower_group_with_award.filter(col(Application.borrower_accepted_at).isnot(None))
             .filter(Borrower.is_msme == true())
             .filter(Award.source_data_contracts["g_nero_representante_legal"].astext.in_(woman_values))
-            .group_by(Borrower.id)
             .count()
         ),
         "msme_submitted_count_woman": (
-            session.query(Borrower.id)
-            .join(Award, Award.borrower_id == Borrower.id)
-            .join(Application, Application.borrower_id == Borrower.id)
-            .filter(col(Application.borrower_submitted_at).isnot(None))
+            base_borrower_group_with_award.filter(col(Application.borrower_submitted_at).isnot(None))
             .filter(Borrower.size != BorrowerSize.BIG)
             .filter(Award.source_data_contracts["g_nero_representante_legal"].astext.in_(woman_values))
-            .group_by(Borrower.id)
             .count()
         ),
         "msme_approved_count_woman": (
@@ -335,21 +329,15 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             formatter=int,
         ),
         "approved_count_distinct_micro": (
-            session.query(Borrower.id)
-            .join(Application, Application.borrower_id == Borrower.id)
-            .filter(col(Application.lender_completed_at).isnot(None))
+            base_borrower_group.filter(col(Application.lender_completed_at).isnot(None))
             .filter(Borrower.size == BorrowerSize.MICRO)
-            .group_by(Borrower.id)
             .count()
         ),
         "approved_count_distinct_micro_woman": (
-            session.query(Borrower.id)
-            .join(Application, Application.borrower_id == Borrower.id)
-            .join(Award, Award.id == Application.award_id)
+            base_borrower_group.join(Award, Award.id == Application.award_id)
             .filter(col(Application.lender_completed_at).isnot(None))
             .filter(Award.source_data_contracts["g_nero_representante_legal"].astext.in_(woman_values))
             .filter(Borrower.size == BorrowerSize.MICRO)
-            .group_by(Borrower.id)
             .count()
         ),
         "total_credit_disbursed_micro": _scalar_or_zero(
