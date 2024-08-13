@@ -199,24 +199,20 @@ def login(
     "/users/logout",
 )
 def logout(
-    authorization: str = Header(None),
+    authorization: str | None = Header(None),
     client: CognitoClient = Depends(dependencies.get_cognito_client),
 ) -> serializers.ResponseBase:
     """
     Logout the user by invalidating the access token.
 
-    This endpoint logs out the user by invalidating the provided access token.
-    It extracts the access token from the Authorization header,
-    invalidates the token using the Cognito client, and returns a response indicating
-    successful logout.
-
-    :param authorization: The Authorization header containing the access token.
+    :param authorization: The Authorization header, like "Bearer ACCESS_TOKEN".
     :return: The response indicating successful logout.
     """
-    try:
-        client.logout_user(authorization.split(" ")[1])
-    except ClientError as e:
-        logger.exception(e)
+    if authorization is not None:
+        try:
+            client.logout_user(authorization.split(" ")[1])
+        except ClientError as e:
+            logger.exception(e)
 
     return serializers.ResponseBase(detail="User logged out successfully")
 
