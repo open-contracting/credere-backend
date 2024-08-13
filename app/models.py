@@ -502,12 +502,12 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         cls = type(self)
         return (
             session.query(Application.lender_id)
+            .distinct()
             .filter(
                 cls.award_borrower_identifier == self.award_borrower_identifier,
                 cls.status == ApplicationStatus.REJECTED,
                 col(cls.lender_id).isnot(None),
             )
-            .distinct()
             .all()
         )
 

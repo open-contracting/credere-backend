@@ -316,7 +316,7 @@ async def get_all_users(
 
     total_count = list_query.count()
 
-    users = list_query.offset(page * page_size).limit(page_size).all()
+    users = list_query.limit(page_size).offset(page * page_size).all()
 
     return serializers.UserListResponse(
         items=users,

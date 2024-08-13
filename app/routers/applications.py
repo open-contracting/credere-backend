@@ -432,7 +432,7 @@ async def get_applications_list(
 
     total_count = applications_query.count()
 
-    applications = applications_query.offset(page * page_size).limit(page_size).all()
+    applications = applications_query.limit(page_size).offset(page * page_size).all()
 
     return serializers.ApplicationListResponse(
         items=cast(list[models.ApplicationWithRelations], applications),
@@ -534,7 +534,7 @@ async def get_applications(
     )
     total_count = applications_query.count()
 
-    applications = applications_query.offset(page * page_size).limit(page_size).all()
+    applications = applications_query.limit(page_size).offset(page * page_size).all()
 
     return serializers.ApplicationListResponse(
         items=cast(list[models.ApplicationWithRelations], applications),
