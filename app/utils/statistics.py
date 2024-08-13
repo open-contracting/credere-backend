@@ -154,7 +154,7 @@ def get_general_statistics(
                 end_date,
                 lender_id,
             )
-            .join(CreditProduct, Application.credit_product_id == CreditProduct.id)
+            .join(CreditProduct, CreditProduct.id == Application.credit_product_id)
             .filter(
                 col(Application.borrower_submitted_at).isnot(None),
                 CreditProduct.type == CreditType.LOAN,
@@ -222,15 +222,15 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             cast(Award.source_data_contracts["g_nero_representante_legal"], String).label("gender"),
             func.count(Application.id).label("count"),
         )
-        .join(Award, Application.award_id == Award.id)
-        .join(Borrower, Application.borrower_id == Borrower.id)
+        .join(Borrower, Borrower.id == Application.borrower_id)
+        .join(Award, Award.id == Application.award_id)
         .filter(msme_from_borrower)
     )
 
     base_count_size = session.query(
         col(Borrower.size).label("size"),
         func.count(Application.id).label("count"),
-    ).join(Borrower, Application.borrower_id == Borrower.id)
+    ).join(Borrower, Borrower.id == Application.borrower_id)
 
     base_count_distinct_gender = (
         session.query(
@@ -238,7 +238,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             func.count(distinct(Borrower.id)).label("count"),
         )
         .join(Application, Application.borrower_id == Borrower.id)
-        .join(Award, Application.award_id == Award.id)
+        .join(Award, Award.id == Application.award_id)
     )
 
     base_count_distinct_size = (
@@ -247,7 +247,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             func.count(distinct(Borrower.id)).label("count"),
         )
         .join(Application, Application.borrower_id == Borrower.id)
-        .join(Award, Application.award_id == Award.id)
+        .join(Award, Award.id == Application.award_id)
     )
 
     # Reused variables
@@ -298,7 +298,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             StatisticData(name=row[0], value=row[1])
             for row in (
                 session.query(Lender.name, func.count(Application.id))
-                .join(Lender, Application.lender_id == Lender.id)
+                .join(Lender, Lender.id == Application.lender_id)
                 .filter(submitted)
                 .group_by(Lender.name)
             )
@@ -311,8 +311,8 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         ),
         "msme_approved_count_woman": (
             session.query(Application.id)
+            .join(Borrower, Borrower.id == Application.borrower_id)
             .join(Award, Award.id == Application.award_id)
-            .join(Borrower, Application.borrower_id == Borrower.id)
             .filter(approved, msme_from_borrower, woman_owned)
             .group_by(Application.id)
             .count()
@@ -349,7 +349,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             StatisticData(name=row[0], value=row[1])
             for row in (
                 session.query(Borrower.sector, func.count(distinct(Application.id)).label("count"))
-                .join(Application, Borrower.id == Application.borrower_id)
+                .join(Application, Application.borrower_id == Borrower.id)
                 .filter(accepted, msme_from_borrower, Borrower.sector != "")
                 .group_by(Borrower.sector)
             )
