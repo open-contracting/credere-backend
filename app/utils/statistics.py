@@ -224,7 +224,6 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         )
         .join(Borrower, Borrower.id == Application.borrower_id)
         .join(Award, Award.id == Application.award_id)
-        .filter(msme_from_borrower)
     )
 
     base_count_size = session.query(
@@ -350,7 +349,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             for row in (
                 session.query(Borrower.sector, func.count(distinct(Application.id)).label("count"))
                 .join(Application, Application.borrower_id == Borrower.id)
-                .filter(accepted, msme_from_borrower, Borrower.sector != "")
+                .filter(accepted, msme_from_source, Borrower.sector != "")
                 .group_by(Borrower.sector)
             )
         ],
@@ -367,9 +366,9 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         #
         # Bar graphs by gender and size
         #
-        "accepted_count_by_gender": statistic_gender(base_count_gender.filter(accepted)),
-        "submitted_count_by_gender": statistic_gender(base_count_gender.filter(submitted)),
-        "approved_count_by_gender": statistic_gender(base_count_gender.filter(approved)),
+        "accepted_count_by_gender": statistic_gender(base_count_gender.filter(accepted, msme_from_source)),
+        "submitted_count_by_gender": statistic_gender(base_count_gender.filter(submitted, msme_from_borrower)),
+        "approved_count_by_gender": statistic_gender(base_count_gender.filter(approved, msme_from_borrower)),
         "accepted_count_by_size": statistic_size(base_count_size.filter(accepted, msme_from_source)),
         "submitted_count_by_size": statistic_size(base_count_size.filter(submitted, msme_from_borrower)),
         "approved_count_by_size": statistic_size(base_count_size.filter(approved, msme_from_borrower)),
