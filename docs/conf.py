@@ -30,6 +30,7 @@ author = "Open Contracting Partnership"
 
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx_design",
 ]
 
 templates_path = ["_templates"]

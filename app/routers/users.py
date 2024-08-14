@@ -42,11 +42,12 @@ async def create_user(
 
             temporary_password = client.generate_password()
 
+            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_create_user.html
             response = client.cognito.admin_create_user(
                 UserPoolId=app_settings.cognito_pool_id,
                 Username=payload.email,
                 TemporaryPassword=temporary_password,
-                MessageAction="SUPPRESS",
+                MessageAction="SUPPRESS",  # do not send user invitation messages
                 UserAttributes=[{"Name": "email", "Value": payload.email}],
             )
 
@@ -91,6 +92,7 @@ def change_password(
             )
 
         # Verify the user's email.
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_update_user_attributes.html
         client.cognito.admin_update_user_attributes(
             UserPoolId=app_settings.cognito_pool_id,
             Username=user.username,
@@ -100,6 +102,7 @@ def change_password(
         )
 
         if "ChallengeName" in response and response["ChallengeName"] == "MFA_SETUP":
+            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/associate_software_token.html
             associate_response = client.cognito.associate_software_token(Session=response["Session"])
 
             return serializers.ChangePasswordResponse(
@@ -140,6 +143,7 @@ def setup_mfa(
     :return: The response indicating successful MFA setup or an error response.
     """
     try:
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/verify_software_token.html
         client.cognito.verify_software_token(
             AccessToken=setup_mfa.secret, Session=setup_mfa.session, UserCode=setup_mfa.temp_password
         )
@@ -226,6 +230,7 @@ def logout(
     # The Authorization header is not set if the user is already logged out.
     if authorization is not None:
         try:
+            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/get_user.html
             response = client.cognito.get_user(AccessToken=authorization.split(" ")[1])
             # "If `username` isn’t an alias attribute in your user pool, this value must be the `sub` of a local user
             # or the username of a user from a third-party IdP."
@@ -281,6 +286,7 @@ def forgot_password(
     try:
         temporary_password = client.generate_password()
 
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_set_user_password.html
         client.cognito.admin_set_user_password(
             UserPoolId=app_settings.cognito_pool_id,
             Username=user.username,
