@@ -5,9 +5,13 @@ coveralls
 flake8
 isort
 moto[cognitoidp]
+mypy
 pip-tools
 pre-commit
 pytest
 pytest-cov
 pytest-mock
 reportlab-stubs
+sqlalchemy2-stubs
+# typer-slim omits stubs
+typer

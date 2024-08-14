@@ -60,6 +60,7 @@ click==8.1.3
     #   black
     #   pip-tools
     #   transifex-python
+    #   typer
     #   typer-slim
     #   uvicorn
 coverage[toml]==6.5.0
@@ -97,9 +98,7 @@ future==0.18.3
     #   -r requirements.txt
     #   pyseeyou
 greenlet==3.0.3
-    # via
-    #   -r requirements.txt
-    #   sqlalchemy
+    # via -r requirements.txt
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -137,6 +136,8 @@ mako==1.2.4
     # via
     #   -r requirements.txt
     #   alembic
+markdown-it-py==3.0.0
+    # via rich
 markupsafe==2.1.2
     # via
     #   -r requirements.txt
@@ -145,14 +146,20 @@ markupsafe==2.1.2
     #   werkzeug
 mccabe==0.7.0
     # via flake8
+mdurl==0.1.2
+    # via markdown-it-py
 moto[cognitoidp]==5.0.6
+    # via -r requirements_dev.in
+mypy==1.11.1
     # via -r requirements_dev.in
 mypy-boto3-cognito-idp==1.29.0
     # via -r requirements.txt
 mypy-boto3-ses==1.29.0
     # via -r requirements.txt
 mypy-extensions==1.0.0
-    # via black
+    # via
+    #   black
+    #   mypy
 nodeenv==1.8.0
     # via pre-commit
 numpy==1.26.0
@@ -212,6 +219,8 @@ pydantic-settings==2.1.0
     # via -r requirements.txt
 pyflakes==3.0.1
     # via flake8
+pygments==2.18.0
+    # via rich
 pyjwt[crypto]==2.8.0
     # via -r requirements.txt
 pyproject-hooks==1.0.0
@@ -269,12 +278,16 @@ requests==2.32.3
     #   transifex-python
 responses==0.23.1
     # via moto
+rich==13.7.1
+    # via typer
 s3transfer==0.6.1
     # via
     #   -r requirements.txt
     #   boto3
 sentry-sdk[fastapi]==2.12.0
     # via -r requirements.txt
+shellingham==1.5.4
+    # via typer
 six==1.16.0
     # via
     #   -r requirements.txt
@@ -291,6 +304,8 @@ sqlalchemy[postgresql]==2.0.23
     #   -r requirements.txt
     #   alembic
     #   sqlmodel
+sqlalchemy2-stubs==0.0.2a38
+    # via -r requirements_dev.in
 sqlmodel==0.0.14
     # via -r requirements.txt
 starlette==0.36.3
@@ -303,6 +318,8 @@ toolz==0.12.0
     #   pyseeyou
 transifex-python==3.4.0
     # via -r requirements.txt
+typer==0.12.3
+    # via -r requirements_dev.in
 typer-slim==0.12.3
     # via -r requirements.txt
 types-awscrt==0.19.17
@@ -317,11 +334,14 @@ typing-extensions==4.8.0
     #   alembic
     #   boto3-stubs
     #   fastapi
+    #   mypy
     #   mypy-boto3-cognito-idp
     #   mypy-boto3-ses
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
+    #   sqlalchemy2-stubs
+    #   typer
     #   typer-slim
 tzdata==2023.3
     # via
