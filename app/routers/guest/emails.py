@@ -1,15 +1,11 @@
-import re
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from app import aws, dependencies, mail, models, parsers, util
+from app import aws, dependencies, mail, models, parsers, sources, util
 from app.db import get_db, rollback_on_error
 
 router = APIRouter()
-
-VALID_EMAIL = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
 
 @router.post(
@@ -31,7 +27,7 @@ async def change_email(
     with rollback_on_error(session):
         # Update the primary email of an application.
         new_email = payload.new_email
-        if not re.match(VALID_EMAIL, new_email):
+        if sources.is_valid_email(new_email):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="New email is not valid",
