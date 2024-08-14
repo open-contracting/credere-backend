@@ -561,7 +561,6 @@ async def update_apps_send_notifications(
         application.status = models.ApplicationStatus.SUBMITTED
         application.borrower_submitted_at = datetime.now(application.created_at.tzinfo)
         application.pending_documents = False
-        application = commit_and_refresh(session, application)
 
         try:
             mail.send_notification_new_app_to_fi(client.ses, application.lender.email_group)
@@ -581,7 +580,7 @@ async def update_apps_send_notifications(
             external_message_id=message_id,
         )
 
-        session.commit()  # application already refreshed above
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
