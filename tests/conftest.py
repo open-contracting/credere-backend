@@ -32,7 +32,7 @@ def mock_ses_client():
 
 @pytest.fixture(autouse=True)
 def mock_templated_email():
-    with patch.object(aws.sesClient, "send_templated_email", MagicMock()) as mock:
+    with patch.object(aws.ses_client, "send_templated_email", MagicMock()) as mock:
         mock.return_value = {"MessageId": "123"}
         yield mock
 

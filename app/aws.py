@@ -45,14 +45,14 @@ class CognitoClient:
 
     def __init__(
         self,
-        cognitoClient: CognitoIdentityProviderClient,
-        sesClient: SESClient,
+        cognito_client: CognitoIdentityProviderClient,
+        ses_client: SESClient,
         generate_password_fn: Callable[[], str],
     ):
         #: A boto3 client for Cognito
-        self.client = cognitoClient
+        self.client = cognito_client
         #: A boto3 client for SES
-        self.ses = sesClient
+        self.ses = ses_client
         #: A function reference that generates a password
         self.generate_password = generate_password_fn
 
@@ -417,7 +417,7 @@ cognito = boto3.client(
     aws_secret_access_key=app_settings.aws_client_secret,
 )
 
-sesClient = boto3.client(
+ses_client = boto3.client(
     "ses",
     region_name=app_settings.aws_region,
     aws_access_key_id=app_settings.aws_access_key,
@@ -426,6 +426,6 @@ sesClient = boto3.client(
 
 cognito_client = CognitoClient(
     cognito,
-    sesClient,
+    ses_client,
     generate_password_fn,
 )
