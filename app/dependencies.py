@@ -19,8 +19,8 @@ class ApplicationScope(Enum):
     UNEXPIRED = "UNEXPIRED"
 
 
-def get_cognito_client() -> Generator[aws.CognitoClient, None, None]:
-    yield aws.cognito_client
+def get_aws_client() -> Generator[aws.Client, None, None]:
+    yield aws.client
 
 
 async def get_auth_credentials(request: Request) -> auth.JWTAuthorizationCredentials | None:

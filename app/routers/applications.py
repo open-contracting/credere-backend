@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
-from app import aws, dependencies, models, parsers, serializers, util
+from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.util import SortOrder, commit_and_refresh, get_order_by
 
@@ -26,7 +26,7 @@ async def reject_application(
     payload: parsers.LenderRejectedApplication,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
@@ -69,7 +69,11 @@ async def reject_application(
             .all()
         )
 
-        message_id = client.send_rejected_email_to_sme(application, options)
+        if options:
+            message_id = mail.send_rejected_application_email(client.ses, application)
+        else:
+            message_id = mail.send_rejected_application_email_without_alternatives(client.ses, application)
+
         models.Message.create(
             session,
             application=application,
@@ -91,7 +95,7 @@ async def complete_application(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
             roles=(models.UserType.FI,),
@@ -119,7 +123,7 @@ async def complete_application(
             user_id=user.id,
         )
 
-        message_id = client.send_application_credit_disbursed(application)
+        message_id = mail.send_application_credit_disbursed(client.ses, application)
         models.Message.create(
             session,
             application=application,
@@ -140,7 +144,7 @@ async def approve_application(
     payload: parsers.LenderApprovedData,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
@@ -200,7 +204,7 @@ async def approve_application(
             user_id=user.id,
         )
 
-        message_id = client.send_application_approved_to_sme(application)
+        message_id = mail.send_application_approved_email(client.ses, application)
         models.Message.create(
             session,
             application=application,
@@ -552,7 +556,7 @@ async def email_sme(
     payload: parsers.ApplicationEmailSme,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
@@ -577,7 +581,8 @@ async def email_sme(
             application.information_requested_at = current_time
             application.pending_documents = True
 
-            message_id = client.send_request_to_sme(
+            message_id = mail.send_mail_request_to_sme(
+                client.ses,
                 application.uuid,
                 application.lender.name,
                 payload.message,

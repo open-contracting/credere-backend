@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from app import aws, dependencies, models, parsers, util
+from app import aws, dependencies, mail, models, parsers, util
 from app.db import get_db, rollback_on_error
 
 router = APIRouter()
@@ -19,7 +19,7 @@ VALID_EMAIL = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 async def change_email(
     payload: parsers.ChangeEmail,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     application: models.Application = Depends(dependencies.get_application_as_guest_via_payload),
 ) -> parsers.ChangeEmail:
     """
@@ -49,7 +49,8 @@ async def change_email(
             application_id=application.id,
         )
 
-        external_message_id = client.send_new_email_confirmation_to_sme(
+        external_message_id = mail.send_new_email_confirmation(
+            client.ses,
             application.borrower.legal_name,
             payload.new_email,
             old_email,

@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import aws, dependencies, models, serializers
+from app import aws, dependencies, mail, models, serializers
 from app.db import get_db, rollback_on_error
 from app.settings import app_settings
 from app.util import SortOrder, commit_and_refresh, get_object_or_404, get_order_by
@@ -23,13 +23,15 @@ router = APIRouter()
 async def create_user(
     payload: models.User,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     admin: models.User = Depends(dependencies.get_admin_user),
 ) -> models.User:
     """
-    Create a new user.
+    Create a new user in AWS Cognito.
 
-    This endpoint allows creating a new user. It is accessible only to users with the OCP role.
+    Email the user a temporary password.
+
+    Accessible only to users with the OCP role.
 
     :param payload: The user data for creating the new user.
     :return: The created user.
@@ -37,11 +39,23 @@ async def create_user(
     with rollback_on_error(session):
         try:
             user = models.User.create(session, **payload.model_dump())
-            cognito_response = client.admin_create_user(payload.email, payload.name)
-            user.external_id = cognito_response["User"]["Username"]
+
+            temporary_password = client.generate_password()
+
+            response = client.cognito.admin_create_user(
+                UserPoolId=app_settings.cognito_pool_id,
+                Username=payload.email,
+                TemporaryPassword=temporary_password,
+                MessageAction="SUPPRESS",
+                UserAttributes=[{"Name": "email", "Value": payload.email}],
+            )
+
+            mail.send_mail_to_new_user(client.ses, payload.name, payload.email, temporary_password)
+
+            user.external_id = response["User"]["Username"]
 
             return commit_and_refresh(session, user)
-        except (client.exceptions.UsernameExistsException, IntegrityError) as e:
+        except (client.cognito.exceptions.UsernameExistsException, IntegrityError) as e:
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -54,7 +68,7 @@ async def create_user(
 )
 def change_password(
     user: models.BasicUser,
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ChangePasswordResponse | serializers.ResponseBase:
     """
     Change user password.
@@ -67,24 +81,32 @@ def change_password(
     :return: The change password response or an error response.
     """
     try:
+        # This endpoint is only called for new users, to replace the generated password.
         response = client.initiate_auth(user.username, user.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
-            session = response["Session"]
             response = client.respond_to_auth_challenge(
                 username=user.username,
-                session=session,
+                session=response["Session"],
                 challenge_name="NEW_PASSWORD_REQUIRED",
                 new_password=user.password,
             )
 
-        client.verified_email(user.username)
-        if response.get("ChallengeName") is not None and response["ChallengeName"] == "MFA_SETUP":
-            mfa_setup_response = client.mfa_setup(response["Session"])
+        # Verify the user's email.
+        client.cognito.admin_update_user_attributes(
+            UserPoolId=app_settings.cognito_pool_id,
+            Username=user.username,
+            UserAttributes=[
+                {"Name": "email_verified", "Value": "true"},
+            ],
+        )
+
+        if "ChallengeName" in response and response["ChallengeName"] == "MFA_SETUP":
+            associate_response = client.cognito.associate_software_token(Session=response["Session"])
 
             return serializers.ChangePasswordResponse(
                 detail="Password changed with MFA setup required",
-                secret_code=mfa_setup_response["secret_code"],
-                session=mfa_setup_response["session"],
+                secret_code=associate_response["SecretCode"],
+                session=associate_response["Session"],
                 username=user.username,
             )
 
@@ -108,8 +130,8 @@ def change_password(
     "/users/setup-mfa",
 )
 def setup_mfa(
-    user: models.SetupMFA,
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    setup_mfa: models.SetupMFA,
+    client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """
     Set up multi-factor authentication (MFA) for the user.
@@ -117,12 +139,14 @@ def setup_mfa(
     This endpoint allows users to set up MFA using a software token. It verifies the software
     token with the provided secret, session, and temporary password.
 
-    :param user: The user data including the secret code, session, and temporary password.
+    :param setup_mfa: The user data including the secret code, session, and temporary password.
     :param response: The response object used to modify the response headers (automatically injected).
     :return: The response indicating successful MFA setup or an error response.
     """
     try:
-        client.verify_software_token(user.secret, user.session, user.temp_password)
+        client.cognito.verify_software_token(
+            AccessToken=setup_mfa.secret, Session=setup_mfa.session, UserCode=setup_mfa.temp_password
+        )
 
         return serializers.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
@@ -146,7 +170,7 @@ def setup_mfa(
 )
 def login(
     user: models.BasicUser,
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     session: Session = Depends(get_db),
 ) -> serializers.LoginResponse:
     """
@@ -162,6 +186,7 @@ def login(
     """
     try:
         db_user = get_object_or_404(session, models.User, "email", user.username)
+
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
@@ -200,7 +225,7 @@ def login(
 )
 def logout(
     authorization: str | None = Header(None),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """
     Logout the user from all devices in AWS Cognito.
@@ -212,13 +237,15 @@ def logout(
     # The Authorization header is not set if the user is already logged out.
     if authorization is not None:
         try:
-            response = client.client.get_user(AccessToken=authorization.split(" ")[1])
+            response = client.cognito.get_user(AccessToken=authorization.split(" ")[1])
+            # "If `username` isn’t an alias attribute in your user pool, this value must be the `sub` of a local user
+            # or the username of a user from a third-party IdP."
             # https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html
-            username = next(attr["Value"] for attr in response["UserAttributes"] if attr["Name"] == "sub")
+            sub = next(attribute["Value"] for attribute in response["UserAttributes"] if attribute["Name"] == "sub")
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_user_global_sign_out.html
-            client.client.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=username)
+            client.cognito.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=sub)
         # The user is not signed in ("Access Token has expired", "Invalid token", etc.).
-        except client.exceptions.NotAuthorizedException:
+        except client.cognito.exceptions.NotAuthorizedException:
             pass
         except ClientError as e:
             logger.exception(e)
@@ -251,20 +278,28 @@ def me(
     "/users/forgot-password",
 )
 def forgot_password(
-    user: models.BasicUser, client: aws.CognitoClient = Depends(dependencies.get_cognito_client)
+    user: models.BasicUser, client: aws.Client = Depends(dependencies.get_aws_client)
 ) -> serializers.ResponseBase:
     """
     Initiate the process of resetting a user's password.
 
-    This endpoint initiates the process of resetting a user's password.
-    It sends an email to the user with a reset link that they can use to set a new password.
+    Email the user a temporary password and a reset link.
 
     :param user: The user information containing the username or email address of the user.
     :return: The response indicating that an email with a reset link was sent to the user.
     """
     detail = "An email with a reset link was sent to end user"
     try:
-        client.reset_password(user.username)
+        temporary_password = client.generate_password()
+
+        client.cognito.admin_set_user_password(
+            UserPoolId=app_settings.cognito_pool_id,
+            Username=user.username,
+            Password=temporary_password,
+            Permanent=False,
+        )
+
+        mail.send_mail_to_reset_password(client.ses, user.username, temporary_password)
     except Exception:
         logger.exception("Error resetting password")
 
