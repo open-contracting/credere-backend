@@ -97,15 +97,19 @@ def test_duplicate_user(client):
 
 def test_logout_invalid_authorization_header(client, caplog):
     caplog.set_level(logging.ERROR)
+
     response = client.get("/users/logout", headers={"Authorization": "Bearer ACCESS_TOKEN"})
 
+    assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"detail": "User logged out successfully"}
     assert not caplog.records
 
 
 def test_logout_no_authorization_header(client, caplog):
     caplog.set_level(logging.ERROR)
+
     response = client.get("/users/logout")
 
+    assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"detail": "User logged out successfully"}
     assert not caplog.records
