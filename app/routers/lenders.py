@@ -45,8 +45,7 @@ async def create_lender(
 
             session.flush()
             return commit_and_refresh(session, lender)
-        except IntegrityError as e:
-            logger.exception(e)
+        except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Lender already exists",
@@ -118,8 +117,7 @@ async def update_lender(
             lender = lender.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
             return commit_and_refresh(session, lender)
-        except IntegrityError as e:
-            logger.exception(e)
+        except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Lender already exists",

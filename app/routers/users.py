@@ -55,8 +55,7 @@ async def create_user(
             user.external_id = response["User"]["Username"]
 
             return commit_and_refresh(session, user)
-        except (client.cognito.exceptions.UsernameExistsException, IntegrityError) as e:
-            logger.exception(e)
+        except (client.cognito.exceptions.UsernameExistsException, IntegrityError):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Username already exists",
@@ -110,7 +109,6 @@ def change_password(
                 username=user.username,
             )
     except ClientError as e:
-        logger.exception(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -148,7 +146,6 @@ def setup_mfa(
             AccessToken=setup_mfa.secret, Session=setup_mfa.session, UserCode=setup_mfa.temp_password
         )
     except ClientError as e:
-        logger.exception(e)
         if e.response["Error"]["Code"] == "NotAuthorizedException":
             raise HTTPException(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT,
@@ -198,7 +195,6 @@ def login(
         else:
             raise NotImplementedError
     except ClientError as e:
-        logger.exception(e)
         # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#parsing-error-responses-and-catching-exceptions-from-aws-services
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
@@ -391,8 +387,7 @@ async def update_user(
             user = user.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
             return commit_and_refresh(session, user)
-        except IntegrityError as e:
-            logger.exception(e)
+        except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="User already exists",

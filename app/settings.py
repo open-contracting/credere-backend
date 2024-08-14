@@ -1,3 +1,5 @@
+# https://fastapi.tiangolo.com/advanced/settings/#pydantic-settings
+
 import logging.config
 import re
 from typing import Any

@@ -124,14 +124,6 @@ To delete the image (e.g. when recreating it), run:
 Conventions
 -----------
 
-Black formater extention for VS code is being used for formatting, no config needed (ext id ms-python.black-formatter)
-
-Settings configured according to `Fastapi guidelines <https://fastapi.tiangolo.com/advanced/settings/>`__
-
-Versioning will be handled using an environment variable in .env file and following https://semver.org/
-
-Follow `these conventions <https://ocp-software-handbook.readthedocs.io/en/latest/git/index.html>`__ for commit messages and branch names.
-
 SQLAlchemy Query API
 ~~~~~~~~~~~~~~~~~~~~
 
