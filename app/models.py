@@ -500,7 +500,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         :return: The IDs of lenders who rejected applications from the application's borrower for the same award.
         """
         cls = type(self)
-        return (
+        lenders_id = (
             session.query(Application.lender_id)
             .distinct()
             .filter(
@@ -510,6 +510,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             )
             .all()
         )
+
+        return [lender_id for (lender_id,) in lenders_id]
 
     def days_waiting_for_lender(self, session: Session) -> int:
         """

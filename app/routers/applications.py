@@ -48,14 +48,7 @@ async def reject_application(
     with rollback_on_error(session):
         payload_dict = jsonable_encoder(payload, exclude_unset=True)
         application.stage_as_rejected(payload_dict)
-        # This next call performs the `session.flush()`.
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.REJECTED_APPLICATION,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-            user_id=user.id,
-        )
+
         options = (
             session.query(models.CreditProduct)
             .join(models.Lender)
@@ -73,7 +66,6 @@ async def reject_application(
             message_id = mail.send_rejected_application_email(client.ses, application)
         else:
             message_id = mail.send_rejected_application_email_without_alternatives(client.ses, application)
-
         models.Message.create(
             session,
             application=application,
@@ -81,8 +73,15 @@ async def reject_application(
             external_message_id=message_id,
         )
 
-        session.commit()
-        return application
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.REJECTED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
+        return commit_and_refresh(session, application)
 
 
 @router.post(
@@ -113,15 +112,6 @@ async def complete_application(
     with rollback_on_error(session):
         application.stage_as_completed(payload.disbursed_final_amount)
         application.completed_in_days = application.days_waiting_for_lender(session)
-        # This next call performs the `session.flush()`.
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
-            # payload.disbursed_final_amount is a Decimal.
-            data=jsonable_encoder({"disbursed_final_amount": payload.disbursed_final_amount}),
-            application_id=application.id,
-            user_id=user.id,
-        )
 
         message_id = mail.send_application_credit_disbursed(client.ses, application)
         models.Message.create(
@@ -131,8 +121,16 @@ async def complete_application(
             external_message_id=message_id,
         )
 
-        session.commit()
-        return application
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
+            # payload.disbursed_final_amount is a Decimal.
+            data=jsonable_encoder({"disbursed_final_amount": payload.disbursed_final_amount}),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
+        return commit_and_refresh(session, application)
 
 
 @router.post(
@@ -194,14 +192,6 @@ async def approve_application(
         application.status = models.ApplicationStatus.APPROVED
         application.lender_approved_at = datetime.now(application.created_at.tzinfo)
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.APPROVED_APPLICATION,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-            user_id=user.id,
-        )
-
         message_id = mail.send_application_approved_email(client.ses, application)
         models.Message.create(
             session,
@@ -210,8 +200,15 @@ async def approve_application(
             external_message_id=message_id,
         )
 
-        session.commit()
-        return application
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.APPROVED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
+        return commit_and_refresh(session, application)
 
 
 @router.put(
@@ -244,20 +241,22 @@ async def verify_data_field(
         payload_dict = {key: value for key, value in payload.model_dump().items() if value is not None}
         try:
             key, value = next(iter(payload_dict.items()))
-            verified_data = application.secop_data_verification.copy()
-            verified_data[key] = value
-            application.secop_data_verification = verified_data.copy()
-
-            models.ApplicationAction.create(
-                session,
-                type=models.ApplicationActionType.DATA_VALIDATION_UPDATE,
-                data=jsonable_encoder(payload, exclude_unset=True),
-                application_id=application.id,
-                user_id=user.id,
-            )
-            return commit_and_refresh(session, application)
         except StopIteration:
             return application
+
+        verified_data = application.secop_data_verification.copy()
+        verified_data[key] = value
+        application.secop_data_verification = verified_data.copy()
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.DATA_VALIDATION_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
+        return commit_and_refresh(session, application)
 
 
 @router.put(
@@ -296,6 +295,7 @@ async def verify_document(
             application_id=document.application.id,
             user_id=user.id,
         )
+
         document = commit_and_refresh(session, document)
         return document.application
 
@@ -338,8 +338,7 @@ async def update_application_award(
             user_id=user.id,
         )
 
-        commit_and_refresh(session, application)
-
+        application = commit_and_refresh(session, application)
         return util.get_modified_data_fields(session, application)
 
 
@@ -388,8 +387,7 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
-        commit_and_refresh(session, application)
-
+        application = commit_and_refresh(session, application)
         return util.get_modified_data_fields(session, application)
 
 
@@ -493,8 +491,7 @@ async def start_application(
         application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
 
-        session.commit()
-        return application
+        return commit_and_refresh(session, application)
 
 
 @router.get(
@@ -573,12 +570,11 @@ async def email_sme(
     """
 
     with rollback_on_error(session):
-        try:
-            application.status = models.ApplicationStatus.INFORMATION_REQUESTED
-            current_time = datetime.now(application.created_at.tzinfo)
-            application.information_requested_at = current_time
-            application.pending_documents = True
+        application.status = models.ApplicationStatus.INFORMATION_REQUESTED
+        application.information_requested_at = datetime.now(application.created_at.tzinfo)
+        application.pending_documents = True
 
+        try:
             message_id = mail.send_mail_request_to_sme(
                 client.ses,
                 application.uuid,
@@ -586,32 +582,30 @@ async def email_sme(
                 payload.message,
                 application.primary_email,
             )
-
-            models.ApplicationAction.create(
-                session,
-                type=models.ApplicationActionType.FI_REQUEST_INFORMATION,
-                data=jsonable_encoder(payload, exclude_unset=True),
-                application_id=application.id,
-                user_id=user.id,
-            )
-
-            models.Message.create(
-                session,
-                application_id=application.id,
-                body=payload.message,
-                lender_id=application.lender.id,
-                type=models.MessageType.FI_MESSAGE,
-                external_message_id=message_id,
-            )
-
-            session.commit()
-            return application
         except ClientError as e:
             logger.exception(e)
             return HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error",
             )
+        models.Message.create(
+            session,
+            application_id=application.id,
+            body=payload.message,
+            lender_id=application.lender.id,
+            type=models.MessageType.FI_MESSAGE,
+            external_message_id=message_id,
+        )
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.FI_REQUEST_INFORMATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
+        return commit_and_refresh(session, application)
 
 
 @router.get(

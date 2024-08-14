@@ -108,20 +108,18 @@ def change_password(
                 session=associate_response["Session"],
                 username=user.username,
             )
-
-        return serializers.ResponseBase(detail="Password changed")
     except ClientError as e:
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Temporal password is expired, please request a new one",
             )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="There was an error trying to update the password",
+        )
 
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="There was an error trying to update the password",
-            )
+    return serializers.ResponseBase(detail="Password changed")
 
 
 @router.put(
@@ -145,27 +143,25 @@ def setup_mfa(
         client.cognito.verify_software_token(
             AccessToken=setup_mfa.secret, Session=setup_mfa.session, UserCode=setup_mfa.temp_password
         )
-
-        return serializers.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
         if e.response["Error"]["Code"] == "NotAuthorizedException":
             raise HTTPException(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT,
                 detail="Invalid session for the user, session is expired",
             )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="There was an error trying to setup mfa",
+        )
 
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="There was an error trying to setup mfa",
-            )
+    return serializers.ResponseBase(detail="MFA configured successfully")
 
 
 @router.post(
     "/users/login",
 )
 def login(
-    user: models.BasicUser,
+    payload: models.BasicUser,
     client: aws.Client = Depends(dependencies.get_aws_client),
     session: Session = Depends(get_db),
 ) -> serializers.LoginResponse:
@@ -177,26 +173,20 @@ def login(
     it responds to the MFA challenge by providing the MFA code. If the authentication is successful,
     it returns the user information along with the generated access and refresh tokens.
 
-    :param user: The user data including the username, password, and MFA code.
+    :param payload: The user data including the username, password, and MFA code.
     :return: The response containing the user information and tokens if the login is successful.
     """
-    try:
-        db_user = get_object_or_404(session, models.User, "email", user.username)
+    user = get_object_or_404(session, models.User, "email", payload.username)
 
-        response = client.initiate_auth(user.username, user.password)
+    try:
+        response = client.initiate_auth(payload.username, payload.password)
 
         if "ChallengeName" in response:
             mfa_login_response = client.respond_to_auth_challenge(
-                username=user.username,
+                username=payload.username,
                 session=response["Session"],
                 challenge_name=response["ChallengeName"],
-                mfa_code=user.temp_password,
-            )
-
-            return serializers.LoginResponse(
-                user=db_user,
-                access_token=mfa_login_response["access_token"],
-                refresh_token=mfa_login_response["refresh_token"],
+                mfa_code=payload.temp_password,
             )
         else:
             raise NotImplementedError
@@ -207,12 +197,16 @@ def login(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Temporal password is expired, please request a new one",
             )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=e.response["Error"]["Message"],
+        )
 
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=e.response["Error"]["Message"],
-            )
+    return serializers.LoginResponse(
+        user=user,
+        access_token=mfa_login_response["access_token"],
+        refresh_token=mfa_login_response["refresh_token"],
+    )
 
 
 @router.get(
@@ -368,7 +362,7 @@ async def get_all_users(
 )
 async def update_user(
     id: int,
-    user: models.User,
+    payload: models.User,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> models.User:
@@ -378,18 +372,15 @@ async def update_user(
     This endpoint updates the information of a specific user identified by the provided ID.
 
     :param id: The ID of the user to update.
-    :param user: The updated user information.
+    :param payload: The updated user information.
     :return: The updated user information.
     """
-    # Rename the query parameter.
-    payload = user
-
     with rollback_on_error(session):
         try:
-            db_user = get_object_or_404(session, models.User, "id", id)
-            db_user = db_user.update(session, **jsonable_encoder(payload, exclude_unset=True))
+            user = get_object_or_404(session, models.User, "id", id)
+            user = user.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
-            return commit_and_refresh(session, db_user)
+            return commit_and_refresh(session, user)
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

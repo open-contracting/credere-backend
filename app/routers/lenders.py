@@ -21,33 +21,30 @@ logger = logging.getLogger(__name__)
     tags=["lenders"],
 )
 async def create_lender(
-    lender: models.LenderCreate,
+    payload: models.LenderCreate,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> models.Lender:
     """
     Create a new lender.
 
-    :param lender: The lender data to be created.
+    :param payload: The lender data to be created.
     :return: The created lender.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
-    # Rename the query parameter.
-    payload = lender
-
     with rollback_on_error(session):
         try:
             # Create a Lender instance without the credit_product data
-            db_lender = models.Lender(**payload.model_dump(exclude={"credit_products"}))
-            session.add(db_lender)
+            lender = models.Lender(**payload.model_dump(exclude={"credit_products"}))
+            session.add(lender)
 
             # Create a CreditProduct instance for each credit product and add it to the lender
             if payload.credit_products:
                 for credit_product in payload.credit_products:
-                    session.add(models.CreditProduct(**credit_product.model_dump(), lender=db_lender))
+                    session.add(models.CreditProduct(**credit_product.model_dump(), lender=lender))
 
             session.flush()
-            return commit_and_refresh(session, db_lender)
+            return commit_and_refresh(session, lender)
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -60,24 +57,24 @@ async def create_lender(
     tags=["lenders"],
 )
 async def create_credit_products(
-    credit_product: models.CreditProduct,
     lender_id: int,
+    payload: models.CreditProduct,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> models.CreditProduct:
     """
     Create a new credit product for a specific lender.
 
-    :param credit_product: The credit product data to be created.
+    :param payload: The credit product data to be created.
     :param lender_id: The ID of the lender for which the credit product will be created.
     :return: The created credit product.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with rollback_on_error(session):
         lender = get_object_or_404(session, models.Lender, "id", lender_id)
-        db_credit_product = models.CreditProduct.create(session, **credit_product.model_dump(), lender=lender)
+        credit_product = models.CreditProduct.create(session, **payload.model_dump(), lender=lender)
 
-        return commit_and_refresh(session, db_credit_product)
+        return commit_and_refresh(session, credit_product)
 
 
 @router.get(
@@ -197,24 +194,21 @@ async def get_credit_product(
     tags=["lenders"],
 )
 async def update_credit_products(
-    credit_product: models.CreditProduct,
     credit_product_id: int,
+    payload: models.CreditProduct,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> models.CreditProduct:
     """
     Update an existing credit product.
 
-    :param credit_product: The credit product data to update.
+    :param payload: The credit product data to update.
     :param credit_product_id: The ID of the credit product to update.
     :return: The updated credit product.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
-    # Rename the query parameter.
-    payload = credit_product
-
     with rollback_on_error(session):
-        db_credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
-        credit_product = db_credit_product.update(session, **jsonable_encoder(payload, exclude_unset=True))
+        credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
+        credit_product = credit_product.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
         return commit_and_refresh(session, credit_product)

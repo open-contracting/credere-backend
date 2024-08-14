@@ -29,27 +29,20 @@ async def change_email(
     :return: The data for changing the email address.
     """
     with rollback_on_error(session):
-        old_email = application.primary_email
-
         # Update the primary email of an application.
-        email = payload.new_email
-        if not re.match(VALID_EMAIL, email):
+        new_email = payload.new_email
+        if not re.match(VALID_EMAIL, new_email):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="New email is not valid",
             )
-        confirmation_email_token = util.generate_uuid(email)
-        application.confirmation_email_token = f"{email}---{confirmation_email_token}"
+
+        old_email = application.primary_email
+        confirmation_email_token = util.generate_uuid(new_email)
+        application.confirmation_email_token = f"{new_email}---{confirmation_email_token}"
         application.pending_email_confirmation = True
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_CHANGE_EMAIL,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-        )
-
-        external_message_id = mail.send_new_email_confirmation(
+        message_id = mail.send_new_email_confirmation(
             client.ses,
             application.borrower.legal_name,
             payload.new_email,
@@ -61,7 +54,14 @@ async def change_email(
             session,
             application=application,
             type=models.MessageType.EMAIL_CHANGE_CONFIRMATION,
-            external_message_id=external_message_id,
+            external_message_id=message_id,
+        )
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_CHANGE_EMAIL,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
 
         session.commit()
