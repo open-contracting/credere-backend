@@ -546,48 +546,48 @@ async def update_apps_send_notifications(
             application.
     """
     with rollback_on_error(session):
+        if not application.credit_product_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Credit product not selected",
+            )
+
+        if not application.lender:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Lender not selected",
+            )
+
+        application.status = models.ApplicationStatus.SUBMITTED
+        application.borrower_submitted_at = datetime.now(application.created_at.tzinfo)
+        application.pending_documents = False
+        application = commit_and_refresh(session, application)
+
         try:
-            if not application.credit_product_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Credit product not selected",
-                )
-
-            if not application.lender:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Lender not selected",
-                )
-
-            application.status = models.ApplicationStatus.SUBMITTED
-            current_time = datetime.now(application.created_at.tzinfo)
-            application.borrower_submitted_at = current_time
-            application.pending_documents = False
-            application = commit_and_refresh(session, application)
-
             mail.send_notification_new_app_to_fi(client.ses, application.lender.email_group)
             mail.send_notification_new_app_to_ocp(client.ses, app_settings.ocp_email_group, application.lender.name)
 
             message_id = mail.send_application_submission_completed(client.ses, application)
-            models.Message.create(
-                session,
-                application=application,
-                type=models.MessageType.SUBMISSION_COMPLETED,
-                external_message_id=message_id,
-            )
-
-            return serializers.ApplicationResponse(
-                application=cast(models.ApplicationRead, application),
-                borrower=application.borrower,
-                award=application.award,
-                lender=application.lender,
-            )
         except ClientError as e:
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error submitting the application",
             )
+        models.Message.create(
+            session,
+            application=application,
+            type=models.MessageType.SUBMISSION_COMPLETED,
+            external_message_id=message_id,
+        )
+
+        session.commit()
+        return serializers.ApplicationResponse(
+            application=cast(models.ApplicationRead, application),
+            borrower=application.borrower,
+            award=application.award,
+            lender=application.lender,
+        )
 
 
 @router.post(
@@ -742,28 +742,26 @@ async def confirm_upload_contract(
     :return: The application response containing the updated application and related entities.
     """
     with rollback_on_error(session):
-        FI_message_id, SME_message_id = (
+        fi_message_id, sme_message_id = (
             mail.send_upload_contract_notification_to_fi(client.ses, application),
             mail.send_upload_contract_confirmation(client.ses, application),
+        )
+        models.Message.create(
+            session,
+            application=application,
+            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
+            external_message_id=fi_message_id,
+        )
+        models.Message.create(
+            session,
+            application=application,
+            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
+            external_message_id=sme_message_id,
         )
 
         application.contract_amount_submitted = payload.contract_amount_submitted
         application.status = models.ApplicationStatus.CONTRACT_UPLOADED
         application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
-
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
-            external_message_id=FI_message_id,
-        )
-
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
-            external_message_id=SME_message_id,
-        )
 
         models.ApplicationAction.create(
             session,

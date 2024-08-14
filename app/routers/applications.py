@@ -246,20 +246,22 @@ async def verify_data_field(
         payload_dict = {key: value for key, value in payload.model_dump().items() if value is not None}
         try:
             key, value = next(iter(payload_dict.items()))
-            verified_data = application.secop_data_verification.copy()
-            verified_data[key] = value
-            application.secop_data_verification = verified_data.copy()
-
-            models.ApplicationAction.create(
-                session,
-                type=models.ApplicationActionType.DATA_VALIDATION_UPDATE,
-                data=jsonable_encoder(payload, exclude_unset=True),
-                application_id=application.id,
-                user_id=user.id,
-            )
-            return commit_and_refresh(session, application)
         except StopIteration:
             return application
+
+        verified_data = application.secop_data_verification.copy()
+        verified_data[key] = value
+        application.secop_data_verification = verified_data.copy()
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.DATA_VALIDATION_UPDATE,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
+        return commit_and_refresh(session, application)
 
 
 @router.put(
@@ -574,12 +576,11 @@ async def email_sme(
     """
 
     with rollback_on_error(session):
-        try:
-            application.status = models.ApplicationStatus.INFORMATION_REQUESTED
-            current_time = datetime.now(application.created_at.tzinfo)
-            application.information_requested_at = current_time
-            application.pending_documents = True
+        application.status = models.ApplicationStatus.INFORMATION_REQUESTED
+        application.information_requested_at = datetime.now(application.created_at.tzinfo)
+        application.pending_documents = True
 
+        try:
             message_id = mail.send_mail_request_to_sme(
                 client.ses,
                 application.uuid,
@@ -587,32 +588,31 @@ async def email_sme(
                 payload.message,
                 application.primary_email,
             )
-
-            models.ApplicationAction.create(
-                session,
-                type=models.ApplicationActionType.FI_REQUEST_INFORMATION,
-                data=jsonable_encoder(payload, exclude_unset=True),
-                application_id=application.id,
-                user_id=user.id,
-            )
-
-            models.Message.create(
-                session,
-                application_id=application.id,
-                body=payload.message,
-                lender_id=application.lender.id,
-                type=models.MessageType.FI_MESSAGE,
-                external_message_id=message_id,
-            )
-
-            session.commit()
-            return application
         except ClientError as e:
             logger.exception(e)
             return HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error",
             )
+        models.Message.create(
+            session,
+            application_id=application.id,
+            body=payload.message,
+            lender_id=application.lender.id,
+            type=models.MessageType.FI_MESSAGE,
+            external_message_id=message_id,
+        )
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.FI_REQUEST_INFORMATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
+        session.commit()
+        return application
 
 
 @router.get(

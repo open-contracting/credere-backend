@@ -109,8 +109,6 @@ def change_password(
                 session=associate_response["Session"],
                 username=user.username,
             )
-
-        return serializers.ResponseBase(detail="Password changed")
     except ClientError as e:
         logger.exception(e)
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
@@ -124,6 +122,8 @@ def change_password(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="There was an error trying to update the password",
             )
+
+    return serializers.ResponseBase(detail="Password changed")
 
 
 @router.put(
@@ -147,11 +147,8 @@ def setup_mfa(
         client.cognito.verify_software_token(
             AccessToken=setup_mfa.secret, Session=setup_mfa.session, UserCode=setup_mfa.temp_password
         )
-
-        return serializers.ResponseBase(detail="MFA configured successfully")
     except ClientError as e:
         logger.exception(e)
-
         if e.response["Error"]["Code"] == "NotAuthorizedException":
             raise HTTPException(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT,
@@ -163,6 +160,8 @@ def setup_mfa(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="There was an error trying to setup mfa",
             )
+
+    return serializers.ResponseBase(detail="MFA configured successfully")
 
 
 @router.post(
@@ -184,9 +183,9 @@ def login(
     :param user: The user data including the username, password, and MFA code.
     :return: The response containing the user information and tokens if the login is successful.
     """
-    try:
-        db_user = get_object_or_404(session, models.User, "email", user.username)
+    db_user = get_object_or_404(session, models.User, "email", user.username)
 
+    try:
         response = client.initiate_auth(user.username, user.password)
 
         if "ChallengeName" in response:
@@ -195,12 +194,6 @@ def login(
                 session=response["Session"],
                 challenge_name=response["ChallengeName"],
                 mfa_code=user.temp_password,
-            )
-
-            return serializers.LoginResponse(
-                user=db_user,
-                access_token=mfa_login_response["access_token"],
-                refresh_token=mfa_login_response["refresh_token"],
             )
         else:
             raise NotImplementedError
@@ -218,6 +211,12 @@ def login(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=e.response["Error"]["Message"],
             )
+
+    return serializers.LoginResponse(
+        user=db_user,
+        access_token=mfa_login_response["access_token"],
+        refresh_token=mfa_login_response["refresh_token"],
+    )
 
 
 @router.get(
