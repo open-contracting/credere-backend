@@ -410,13 +410,6 @@ class CognitoClient:
         return mail.send_copied_application_notification_to_sme(self.ses, application)
 
 
-cognito = boto3.client(
-    "cognito-idp",
-    region_name=app_settings.aws_region,
-    aws_access_key_id=app_settings.aws_access_key,
-    aws_secret_access_key=app_settings.aws_client_secret,
-)
-
 ses_client = boto3.client(
     "ses",
     region_name=app_settings.aws_region,
@@ -425,7 +418,12 @@ ses_client = boto3.client(
 )
 
 cognito_client = CognitoClient(
-    cognito,
+    boto3.client(
+        "cognito-idp",
+        region_name=app_settings.aws_region,
+        aws_access_key_id=app_settings.aws_access_key,
+        aws_secret_access_key=app_settings.aws_client_secret,
+    ),
     ses_client,
     generate_password_fn,
 )

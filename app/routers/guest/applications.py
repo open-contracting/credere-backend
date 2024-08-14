@@ -9,8 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
-from app import dependencies, models, parsers, serializers, util
-from app.aws import CognitoClient
+from app import aws, dependencies, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
 from app.settings import app_settings
@@ -528,7 +527,7 @@ async def update_apps_send_notifications(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
@@ -640,7 +639,7 @@ async def upload_document(
 async def complete_information_request(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
@@ -728,7 +727,7 @@ async def upload_contract(
 async def confirm_upload_contract(
     payload: parsers.UploadContractConfirmation,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.APPROVED,))
     ),
@@ -790,7 +789,7 @@ async def confirm_upload_contract(
 async def find_alternative_credit_option(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.REJECTED,))
     ),

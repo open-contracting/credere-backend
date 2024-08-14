@@ -8,8 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
-from app import dependencies, models, parsers, serializers, util
-from app.aws import CognitoClient
+from app import aws, dependencies, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.util import SortOrder, commit_and_refresh, get_order_by
 
@@ -27,7 +26,7 @@ async def reject_application(
     payload: parsers.LenderRejectedApplication,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
@@ -92,7 +91,7 @@ async def complete_application(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
             roles=(models.UserType.FI,),
@@ -141,7 +140,7 @@ async def approve_application(
     payload: parsers.LenderApprovedData,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
@@ -553,7 +552,7 @@ async def email_sme(
     payload: parsers.ApplicationEmailSme,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(

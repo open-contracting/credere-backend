@@ -10,8 +10,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
 import app.utils.statistics as statistics_utils
-from app import mail, models, util
-from app.aws import ses_client
+from app import aws, mail, models, util
 from app.db import get_db, handle_skipped_award, rollback_on_error
 from app.exceptions import SkippedAwardError, SourceFormatError
 from app.settings import app_settings
@@ -79,7 +78,7 @@ def _create_complete_application(
             )
 
             message_id = mail.send_invitation_email(
-                ses_client,
+                aws.ses_client,
                 application.uuid,
                 borrower.email,
                 borrower.legal_name,
@@ -280,7 +279,7 @@ def send_reminders() -> None:
                     title = application.award.title
 
                     message_id = mail.send_mail_intro_reminder(
-                        ses_client, uuid, email, borrower_name, buyer_name, title
+                        aws.ses_client, uuid, email, borrower_name, buyer_name, title
                     )
                     new_message.external_message_id = message_id
                     logger.info("Mail sent and status updated")
@@ -318,7 +317,7 @@ def send_reminders() -> None:
                     title = application.award.title
 
                     message_id = mail.send_mail_submit_reminder(
-                        ses_client, uuid, email, borrower_name, buyer_name, title
+                        aws.ses_client, uuid, email, borrower_name, buyer_name, title
                     )
                     new_message.external_message_id = message_id
                     logger.info("Mail sent and status updated")
@@ -411,7 +410,7 @@ def sla_overdue_applications() -> None:
                     if days_passed > application.lender.sla_days:
                         application.overdued_at = datetime.now(application.created_at.tzinfo)
                         message_id = mail.send_overdue_application_email_to_ocp(
-                            ses_client,
+                            aws.ses_client,
                             application.lender.name,
                         )
 
@@ -428,7 +427,7 @@ def sla_overdue_applications() -> None:
             name = lender_data["name"]
             count = lender_data["count"]
             email = lender_data["email"]
-            message_id = mail.send_overdue_application_email_to_fi(ses_client, name, email, count)
+            message_id = mail.send_overdue_application_email_to_fi(aws.ses_client, name, email, count)
 
             models.Message.create(
                 session,

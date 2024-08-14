@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app import dependencies
-from app.aws import CognitoClient
+from app import aws, dependencies
 from app.db import get_db
 from app.models import User
 
@@ -16,7 +15,7 @@ router = APIRouter()
 async def create_test_user_headers(
     payload: User,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
 ):
     user = User(**payload.model_dump())
 

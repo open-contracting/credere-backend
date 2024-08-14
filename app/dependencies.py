@@ -5,8 +5,7 @@ from typing import Any, Callable, Generator
 from fastapi import Depends, Form, HTTPException, Request, status
 from sqlalchemy.orm import Session, defaultload, joinedload
 
-from app import auth, models, parsers, util
-from app.aws import CognitoClient, cognito_client
+from app import auth, aws, models, parsers, util
 from app.db import get_db
 
 USER_CAN_EDIT_AWARD_BORROWER_DATA = (
@@ -20,8 +19,8 @@ class ApplicationScope(Enum):
     UNEXPIRED = "UNEXPIRED"
 
 
-def get_cognito_client() -> Generator[CognitoClient, None, None]:
-    yield cognito_client
+def get_cognito_client() -> Generator[aws.CognitoClient, None, None]:
+    yield aws.cognito_client
 
 
 async def get_auth_credentials(request: Request) -> auth.JWTAuthorizationCredentials | None:

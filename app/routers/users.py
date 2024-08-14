@@ -6,8 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import dependencies, models, serializers
-from app.aws import CognitoClient
+from app import aws, dependencies, models, serializers
 from app.db import get_db, rollback_on_error
 from app.settings import app_settings
 from app.util import SortOrder, commit_and_refresh, get_object_or_404, get_order_by
@@ -24,7 +23,7 @@ router = APIRouter()
 async def create_user(
     payload: models.User,
     session: Session = Depends(get_db),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     admin: models.User = Depends(dependencies.get_admin_user),
 ) -> models.User:
     """
@@ -55,7 +54,7 @@ async def create_user(
 )
 def change_password(
     user: models.BasicUser,
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
 ) -> serializers.ChangePasswordResponse | serializers.ResponseBase:
     """
     Change user password.
@@ -110,7 +109,7 @@ def change_password(
 )
 def setup_mfa(
     user: models.SetupMFA,
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
 ) -> serializers.ResponseBase:
     """
     Set up multi-factor authentication (MFA) for the user.
@@ -147,7 +146,7 @@ def setup_mfa(
 )
 def login(
     user: models.BasicUser,
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
     session: Session = Depends(get_db),
 ) -> serializers.LoginResponse:
     """
@@ -201,7 +200,7 @@ def login(
 )
 def logout(
     authorization: str | None = Header(None),
-    client: CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
 ) -> serializers.ResponseBase:
     """
     Logout the user from all devices in AWS Cognito.
@@ -252,7 +251,7 @@ def me(
     "/users/forgot-password",
 )
 def forgot_password(
-    user: models.BasicUser, client: CognitoClient = Depends(dependencies.get_cognito_client)
+    user: models.BasicUser, client: aws.CognitoClient = Depends(dependencies.get_cognito_client)
 ) -> serializers.ResponseBase:
     """
     Initiate the process of resetting a user's password.
