@@ -64,21 +64,3 @@ Update statistics
    python -m app.commands update-statistics
 
 Performs the calculation needed to populate the statistic table with data from other tables, mainly, the Applications table.
-
-Statistics updates
-~~~~~~~~~~~~~~~~~~
-
-This process is automatically run every time a user or MSME action adds new data that affects the statistics. The enpoints that update statistics are:
-
--  ``POST /applications/access-scheme``
--  ``POST /applications/{id}/reject-application``
--  ``POST /applications/{id}/complete-application``
--  ``POST /applications/{id}/approve-application``
--  ``POST /applications/{id}/start``
--  ``POST /applications/confirm-credit-product``
--  ``POST /applications/submit``
--  ``POST /applications/email-sme/``
--  ``POST /applications/complete-information-request``
--  ``POST /applications/decline``
--  ``POST /applications/rollback-decline``
--  ``POST /applications/decline-feedback``
