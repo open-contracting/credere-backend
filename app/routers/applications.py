@@ -73,7 +73,6 @@ async def reject_application(
             message_id = mail.send_rejected_application_email(client.ses, application)
         else:
             message_id = mail.send_rejected_application_email_without_alternatives(client.ses, application)
-
         models.Message.create(
             session,
             application=application,

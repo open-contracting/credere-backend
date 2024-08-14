@@ -71,21 +71,15 @@ def _create_complete_application(
                 expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
             )
 
-            message = models.Message.create(
+            message_id = mail.send_invitation_email(
+                aws.ses_client, application.uuid, borrower.email, borrower.legal_name, award.buyer_name, award.title
+            )
+            models.Message.create(
                 session,
                 application=application,
                 type=models.MessageType.BORROWER_INVITATION,
+                external_message_id=message_id,
             )
-
-            message_id = mail.send_invitation_email(
-                aws.ses_client,
-                application.uuid,
-                borrower.email,
-                borrower.legal_name,
-                award.buyer_name,
-                award.title,
-            )
-            message.external_message_id = message_id
 
             session.commit()
 
@@ -267,21 +261,21 @@ def send_reminders() -> None:
         for application in applications_to_send_intro_reminder:
             with contextmanager(get_db)() as session:
                 with rollback_on_error(session):
-                    new_message = models.Message.create(
+                    message_id = mail.send_mail_intro_reminder(
+                        aws.ses_client,
+                        application.uuid,
+                        application.primary_email,
+                        application.borrower.legal_name,
+                        application.award.buyer_name,
+                        application.award.title,
+                    )
+                    models.Message.create(
                         session,
                         application=application,
                         type=models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
+                        external_message_id=message_id,
                     )
-                    uuid = application.uuid
-                    email = application.primary_email
-                    borrower_name = application.borrower.legal_name
-                    buyer_name = application.award.buyer_name
-                    title = application.award.title
 
-                    message_id = mail.send_mail_intro_reminder(
-                        aws.ses_client, uuid, email, borrower_name, buyer_name, title
-                    )
-                    new_message.external_message_id = message_id
                     logger.info("Mail sent and status updated")
 
                     session.commit()
@@ -304,22 +298,21 @@ def send_reminders() -> None:
         for application in applications_to_send_submit_reminder:
             with contextmanager(get_db)() as session:
                 with rollback_on_error(session):
-                    # Db message table update
-                    new_message = models.Message.create(
+                    message_id = mail.send_mail_submit_reminder(
+                        aws.ses_client,
+                        application.uuid,
+                        application.primary_email,
+                        application.borrower.legal_name,
+                        application.award.buyer_name,
+                        application.award.title,
+                    )
+                    models.Message.create(
                         session,
                         application=application,
                         type=models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
+                        external_message_id=message_id,
                     )
-                    uuid = application.uuid
-                    email = application.primary_email
-                    borrower_name = application.borrower.legal_name
-                    buyer_name = application.award.buyer_name
-                    title = application.award.title
 
-                    message_id = mail.send_mail_submit_reminder(
-                        aws.ses_client, uuid, email, borrower_name, buyer_name, title
-                    )
-                    new_message.external_message_id = message_id
                     logger.info("Mail sent and status updated")
 
                     session.commit()
@@ -406,14 +399,15 @@ def sla_overdue_applications() -> None:
                     if "email" not in overdue_lenders[application.lender.id]:
                         overdue_lenders[application.lender.id]["email"] = application.lender.email_group
                         overdue_lenders[application.lender.id]["name"] = application.lender.name
+
                     overdue_lenders[application.lender.id]["count"] += 1
+
                     if days_passed > application.lender.sla_days:
                         application.overdued_at = datetime.now(application.created_at.tzinfo)
-                        message_id = mail.send_overdue_application_email_to_ocp(
-                            aws.ses_client,
-                            application.lender.name,
-                        )
 
+                        message_id = mail.send_overdue_application_email_to_ocp(
+                            aws.ses_client, application.lender.name
+                        )
                         models.Message.create(
                             session,
                             application=application,
@@ -424,11 +418,9 @@ def sla_overdue_applications() -> None:
                 session.commit()
 
         for lender_id, lender_data in overdue_lenders.items():
-            name = lender_data["name"]
-            count = lender_data["count"]
-            email = lender_data["email"]
-            message_id = mail.send_overdue_application_email_to_fi(aws.ses_client, name, email, count)
-
+            message_id = mail.send_overdue_application_email_to_fi(
+                aws.ses_client, lender_data["name"], lender_data["count"], lender_data["email"]
+            )
             models.Message.create(
                 session,
                 application=application,
