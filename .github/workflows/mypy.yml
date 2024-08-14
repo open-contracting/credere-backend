@@ -1,0 +1,21 @@
+name: Mypy
+on: [push, pull_request]
+jobs:
+  build:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: setup.cfg
+      - run: pip install -r requirements_dev.txt
+      # https://github.com/python/typing/issues/213 might resolve some models.py errors.
+      - shell: sh {0}
+        run: |
+          mypy --strict --show-error-codes app reportlab_mods.py > error-summary.txt
+          status=$?
+          cat error-summary.txt
+          [ $status -ne 0 ] && [ $(cut -d' ' -f2 error-summary.txt) -gt 65 ]

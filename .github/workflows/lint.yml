@@ -35,5 +35,5 @@ jobs:
       - env:
           # https://fastapi.tiangolo.com/tutorial/request-files/
           # uvicorn is run as a command in a Dockerfile.
-          STANDARD_MAINTENANCE_SCRIPTS_IGNORE: python-multipart,uvicorn
+          STANDARD_MAINTENANCE_SCRIPTS_IGNORE: python-multipart,typer,uvicorn
         run: pytest /tmp/test_requirements.py
