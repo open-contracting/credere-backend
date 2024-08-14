@@ -114,12 +114,10 @@ def change_password(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Temporal password is expired, please request a new one",
             )
-
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="There was an error trying to update the password",
-            )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="There was an error trying to update the password",
+        )
 
     return serializers.ResponseBase(detail="Password changed")
 
@@ -151,12 +149,10 @@ def setup_mfa(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT,
                 detail="Invalid session for the user, session is expired",
             )
-
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="There was an error trying to setup mfa",
-            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="There was an error trying to setup mfa",
+        )
 
     return serializers.ResponseBase(detail="MFA configured successfully")
 
@@ -201,12 +197,10 @@ def login(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Temporal password is expired, please request a new one",
             )
-
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=e.response["Error"]["Message"],
-            )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=e.response["Error"]["Message"],
+        )
 
     return serializers.LoginResponse(
         user=user,
