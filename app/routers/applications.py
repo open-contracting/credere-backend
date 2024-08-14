@@ -81,8 +81,7 @@ async def reject_application(
             user_id=user.id,
         )
 
-        session.commit()
-        return application
+        return commit_and_refresh(session, application)
 
 
 @router.post(
@@ -131,8 +130,7 @@ async def complete_application(
             user_id=user.id,
         )
 
-        session.commit()
-        return application
+        return commit_and_refresh(session, application)
 
 
 @router.post(
@@ -212,8 +210,7 @@ async def approve_application(
             user_id=user.id,
         )
 
-        session.commit()
-        return application
+        return commit_and_refresh(session, application)
 
 
 @router.put(
@@ -343,7 +340,7 @@ async def update_application_award(
             user_id=user.id,
         )
 
-        commit_and_refresh(session, application)
+        application = commit_and_refresh(session, application)
         return util.get_modified_data_fields(session, application)
 
 
@@ -392,7 +389,7 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
-        commit_and_refresh(session, application)
+        application = commit_and_refresh(session, application)
         return util.get_modified_data_fields(session, application)
 
 
@@ -496,8 +493,7 @@ async def start_application(
         application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
 
-        session.commit()
-        return application
+        return commit_and_refresh(session, application)
 
 
 @router.get(
@@ -611,8 +607,7 @@ async def email_sme(
             user_id=user.id,
         )
 
-        session.commit()
-        return application
+        return commit_and_refresh(session, application)
 
 
 @router.get(

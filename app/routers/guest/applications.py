@@ -84,7 +84,7 @@ async def decline(
             application.borrower.status = models.BorrowerStatus.DECLINE_OPPORTUNITIES
             application.borrower.declined_at = current_time
 
-        commit_and_refresh(session, application)
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -124,7 +124,7 @@ async def rollback_decline(
             application.borrower.status = models.BorrowerStatus.ACTIVE
             application.borrower.declined_at = None
 
-        commit_and_refresh(session, application)
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -581,7 +581,7 @@ async def update_apps_send_notifications(
             external_message_id=message_id,
         )
 
-        session.commit()
+        session.commit()  # application already refreshed above
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -627,8 +627,7 @@ async def upload_document(
             application_id=application.id,
         )
 
-        session.commit()
-        return document
+        return commit_and_refresh(session, document)
 
 
 @router.post(
@@ -676,7 +675,7 @@ async def complete_information_request(
             application_id=application.id,
         )
 
-        session.commit()
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -715,8 +714,7 @@ async def upload_contract(
             new_file,
         )
 
-        session.commit()
-        return document
+        return commit_and_refresh(session, document)
 
 
 @router.post(
@@ -771,7 +769,7 @@ async def confirm_upload_contract(
             application_id=application.id,
         )
 
-        session.commit()
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -864,7 +862,7 @@ async def find_alternative_credit_option(
             application_id=new_application.id,
         )
 
-        session.commit()
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, new_application),
             borrower=new_application.borrower,

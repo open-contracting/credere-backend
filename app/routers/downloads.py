@@ -37,20 +37,16 @@ async def get_borrower_document(
         document = util.get_object_or_404(session, models.BorrowerDocument, "id", id)
         dependencies.raise_if_unauthorized(document.application, user, roles=(models.UserType.OCP, models.UserType.FI))
 
-        if user.is_ocp():
-            models.ApplicationAction.create(
-                session,
-                type=models.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT,
-                data={"file_name": document.name},
-                application_id=document.application.id,
-            )
-        else:
-            models.ApplicationAction.create(
-                session,
-                type=models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT,
-                data={"file_name": document.name},
-                application_id=document.application.id,
-            )
+        models.ApplicationAction.create(
+            session,
+            type=(
+                models.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT
+                if user.is_ocp()
+                else models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT
+            ),
+            data={"file_name": document.name},
+            application_id=document.application.id,
+        )
 
         session.commit()
         return Response(
@@ -83,16 +79,13 @@ async def download_application(
         borrower = application.borrower
         award = application.award
         documents = list(application.borrower_documents)
-
         previous_awards = application.previous_awards(session)
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)
 
         elements: list[Any] = []
-
         elements.append(Paragraph(get_translated_string("Application Details", lang), styleTitle))
-
         elements.append(tables.create_application_table(application, lang))
         elements.append(Spacer(1, 20))
         elements.append(tables.create_borrower_table(borrower, application, lang))
@@ -101,7 +94,7 @@ async def download_application(
         elements.append(Spacer(1, 20))
         elements.append(tables.create_award_table(award, lang))
 
-        if previous_awards and len(previous_awards) > 0:
+        if previous_awards:
             elements.append(Spacer(1, 20))
             elements.append(Paragraph(get_translated_string("Previous Public Sector Contracts", lang), styleSubTitle))
             for award in previous_awards:
@@ -147,7 +140,9 @@ async def export_applications(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ) -> Response:
-    df = pd.DataFrame(
+    stream = io.StringIO()
+
+    pd.DataFrame(
         [
             {
                 get_translated_string("National Tax ID", lang): application.borrower.legal_identifier,
@@ -162,9 +157,7 @@ async def export_applications(
                 .options(joinedload(models.Application.borrower))
             )
         ]
-    )
-    stream = io.StringIO()
-    df.to_csv(stream, index=False)
+    ).to_csv(stream, index=False)
 
     return Response(
         content=stream.getvalue(),
