@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import aws, dependencies, models
 from app.db import get_db
+from app.settings import app_settings
 
 router = APIRouter()
 
@@ -11,11 +12,17 @@ router = APIRouter()
 async def create_test_user_headers(
     payload: models.User,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
 ):
     # Like create_user().
     user = models.User.create(session, **payload.model_dump())
-    response = client.admin_create_user(payload.email, payload.name)
+    response = client.cognito.admin_create_user(
+        UserPoolId=app_settings.cognito_pool_id,
+        Username=payload.email,
+        TemporaryPassword=client.generate_password(),
+        MessageAction="SUPPRESS",
+        UserAttributes=[{"Name": "email", "Value": payload.email}],
+    )
     user.external_id = response["User"]["Username"]
     session.commit()
 
@@ -29,6 +36,12 @@ async def create_test_user_headers(
             challenge_name="NEW_PASSWORD_REQUIRED",
             new_password="12345-UPPER-lower",
         )
-    client.verified_email(payload.email)
+    client.cognito.admin_update_user_attributes(
+        UserPoolId=app_settings.cognito_pool_id,
+        Username=payload.email,
+        UserAttributes=[
+            {"Name": "email_verified", "Value": "true"},
+        ],
+    )
 
     return {"Authorization": "Bearer " + response["AuthenticationResult"]["AccessToken"]}

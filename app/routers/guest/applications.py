@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
-from app import aws, dependencies, models, parsers, serializers, util
+from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
 from app.settings import app_settings
@@ -527,7 +527,7 @@ async def update_apps_send_notifications(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
             scopes=(ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
@@ -564,12 +564,11 @@ async def update_apps_send_notifications(
             application.borrower_submitted_at = current_time
             application.pending_documents = False
             application = commit_and_refresh(session, application)
-            client.send_notifications_of_new_applications(
-                ocp_email_group=app_settings.ocp_email_group,
-                lender_name=application.lender.name,
-                lender_email_group=application.lender.email_group,
-            )
-            message_id = client.send_application_submission_completed(application)
+
+            mail.send_notification_new_app_to_fi(client.ses, application.lender.email_group)
+            mail.send_notification_new_app_to_ocp(client.ses, app_settings.ocp_email_group, application.lender.name)
+
+            message_id = mail.send_application_submission_completed(client.ses, application)
             models.Message.create(
                 session,
                 application=application,
@@ -639,7 +638,7 @@ async def upload_document(
 async def complete_information_request(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
@@ -669,7 +668,7 @@ async def complete_information_request(
             application_id=application.id,
         )
 
-        message_id = client.send_upload_documents_notifications(application.lender.email_group)
+        message_id = mail.send_upload_documents_notifications_to_fi(client.ses, application.lender.email_group)
         models.Message.create(
             session,
             application=application,
@@ -727,7 +726,7 @@ async def upload_contract(
 async def confirm_upload_contract(
     payload: parsers.UploadContractConfirmation,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.APPROVED,))
     ),
@@ -743,7 +742,10 @@ async def confirm_upload_contract(
     :return: The application response containing the updated application and related entities.
     """
     with rollback_on_error(session):
-        FI_message_id, SME_message_id = client.send_upload_contract_notifications(application)
+        FI_message_id, SME_message_id = (
+            mail.send_upload_contract_notification_to_fi(client.ses, application),
+            mail.send_upload_contract_confirmation(client.ses, application),
+        )
 
         application.contract_amount_submitted = payload.contract_amount_submitted
         application.status = models.ApplicationStatus.CONTRACT_UPLOADED
@@ -789,7 +791,7 @@ async def confirm_upload_contract(
 async def find_alternative_credit_option(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
-    client: aws.CognitoClient = Depends(dependencies.get_cognito_client),
+    client: aws.Client = Depends(dependencies.get_aws_client),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.REJECTED,))
     ),
@@ -843,8 +845,7 @@ async def find_alternative_credit_option(
                 detail=f"There was a problem copying the application.{e}",
             )
 
-        message_id = client.send_copied_application_notifications(new_application)
-
+        message_id = mail.send_copied_application_notification_to_sme(client.ses, new_application)
         models.Message.create(
             session,
             application=new_application,

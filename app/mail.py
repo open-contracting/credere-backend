@@ -250,7 +250,7 @@ def send_application_credit_disbursed(ses: SESClient, application: Application) 
     )
 
 
-def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_password: str) -> str:
+def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_password: str) -> str:
     """
     Sends an email to a new user with a link to set their password.
 
@@ -261,7 +261,7 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_passwor
     :param ses: SES client instance used to send emails.
     :param name: The name of the new user.
     :param username: The username (email address) of the new user.
-    :param temp_password: The temporary password for the new user.
+    :param temporary_password: The temporary password for the new user.
     """
     return send_email(
         ses,
@@ -272,7 +272,8 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temp_passwor
                 "USER": name,
                 "SET_PASSWORD_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/set_password.png",
                 "LOGIN_URL": (
-                    f"{app_settings.frontend_url}/create-password?key={quote(temp_password)}&email={quote(username)}"
+                    f"{app_settings.frontend_url}/create-password"
+                    f"?key={quote(temporary_password)}&email={quote(username)}"
                 ),
             },
         ),
@@ -358,8 +359,8 @@ def send_new_email_confirmation(
             "NEW_MAIL": new_email,
             "AWARD_SUPPLIER_NAME": borrower_name,
             "CONFIRM_EMAIL_CHANGE_URL": (
-                f"{app_settings.frontend_url}/application/{quote(application_uuid)}/"
-                f"change-primary-email?token={quote(confirmation_email_token)}"
+                f"{app_settings.frontend_url}/application/{quote(application_uuid)}/change-primary-email"
+                f"?token={quote(confirmation_email_token)}"
             ),
             "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/confirmemailchange.png",
         },
@@ -370,7 +371,7 @@ def send_new_email_confirmation(
     return message_id
 
 
-def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: str) -> str:
+def send_mail_to_reset_password(ses: SESClient, username: str, temporary_password: str) -> str:
     """
     Sends an email to a user with instructions to reset their password.
 
@@ -379,7 +380,7 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: st
 
     :param ses: SES client instance used to send emails.
     :param username: The username associated with the account for which the password is to be reset.
-    :param temp_password: A temporary password generated for the account.
+    :param temporary_password: A temporary password generated for the account.
     """
     return send_email(
         ses,
@@ -389,7 +390,8 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temp_password: st
             {
                 "USER_ACCOUNT": username,
                 "RESET_PASSWORD_URL": (
-                    f"{app_settings.frontend_url}/create-password?key={quote(temp_password)}&email={quote(username)}"
+                    f"{app_settings.frontend_url}/create-password"
+                    f"?key={quote(temporary_password)}&email={quote(username)}"
                 ),
                 "RESET_PASSWORD_IMAGE": f"{LOCALIZED_IMAGES_BASE_URL}/ResetPassword.png",
             },
