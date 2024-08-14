@@ -436,7 +436,6 @@ async def confirm_credit_product(
                         verified=False,
                     )
                 )
-        application = commit_and_refresh(session, application)
 
         models.ApplicationAction.create(
             session,
@@ -444,6 +443,7 @@ async def confirm_credit_product(
             application_id=application.id,
         )
 
+        application = commit_and_refresh(session, application)
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -661,19 +661,19 @@ async def complete_information_request(
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-        )
-
         message_id = mail.send_upload_documents_notifications_to_fi(client.ses, application.lender.email_group)
         models.Message.create(
             session,
             application=application,
             type=models.MessageType.BORROWER_DOCUMENT_UPDATED,
             external_message_id=message_id,
+        )
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
         )
 
         session.commit()

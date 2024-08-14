@@ -48,14 +48,7 @@ async def reject_application(
     with rollback_on_error(session):
         payload_dict = jsonable_encoder(payload, exclude_unset=True)
         application.stage_as_rejected(payload_dict)
-        # This next call performs the `session.flush()`.
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.REJECTED_APPLICATION,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-            user_id=user.id,
-        )
+
         options = (
             session.query(models.CreditProduct)
             .join(models.Lender)
@@ -78,6 +71,14 @@ async def reject_application(
             application=application,
             type=models.MessageType.REJECTED_APPLICATION,
             external_message_id=message_id,
+        )
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.REJECTED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
         )
 
         session.commit()
@@ -112,15 +113,6 @@ async def complete_application(
     with rollback_on_error(session):
         application.stage_as_completed(payload.disbursed_final_amount)
         application.completed_in_days = application.days_waiting_for_lender(session)
-        # This next call performs the `session.flush()`.
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
-            # payload.disbursed_final_amount is a Decimal.
-            data=jsonable_encoder({"disbursed_final_amount": payload.disbursed_final_amount}),
-            application_id=application.id,
-            user_id=user.id,
-        )
 
         message_id = mail.send_application_credit_disbursed(client.ses, application)
         models.Message.create(
@@ -128,6 +120,15 @@ async def complete_application(
             application=application,
             type=models.MessageType.CREDIT_DISBURSED,
             external_message_id=message_id,
+        )
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
+            # payload.disbursed_final_amount is a Decimal.
+            data=jsonable_encoder({"disbursed_final_amount": payload.disbursed_final_amount}),
+            application_id=application.id,
+            user_id=user.id,
         )
 
         session.commit()
@@ -195,20 +196,20 @@ async def approve_application(
         application.status = models.ApplicationStatus.APPROVED
         application.lender_approved_at = datetime.now(application.created_at.tzinfo)
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.APPROVED_APPLICATION,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-            user_id=user.id,
-        )
-
         message_id = mail.send_application_approved_email(client.ses, application)
         models.Message.create(
             session,
             application=application,
             type=models.MessageType.APPROVED_APPLICATION,
             external_message_id=message_id,
+        )
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.APPROVED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
         )
 
         session.commit()
@@ -297,6 +298,7 @@ async def verify_document(
             application_id=document.application.id,
             user_id=user.id,
         )
+
         document = commit_and_refresh(session, document)
         return document.application
 
@@ -340,7 +342,6 @@ async def update_application_award(
         )
 
         commit_and_refresh(session, application)
-
         return util.get_modified_data_fields(session, application)
 
 
@@ -390,7 +391,6 @@ async def update_application_borrower(
         )
 
         commit_and_refresh(session, application)
-
         return util.get_modified_data_fields(session, application)
 
 

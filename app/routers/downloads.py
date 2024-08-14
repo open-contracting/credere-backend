@@ -119,14 +119,13 @@ async def download_application(
             for document in documents:
                 zip_file.writestr(document.name, document.file)
 
-        application_action_type = (
-            models.ApplicationActionType.OCP_DOWNLOAD_APPLICATION
-            if user.is_ocp()
-            else models.ApplicationActionType.FI_DOWNLOAD_APPLICATION
-        )
         models.ApplicationAction.create(
             session,
-            type=application_action_type,
+            type=(
+                models.ApplicationActionType.OCP_DOWNLOAD_APPLICATION
+                if user.is_ocp()
+                else models.ApplicationActionType.FI_DOWNLOAD_APPLICATION
+            ),
             application_id=application.id,
             user_id=user.id,
         )
