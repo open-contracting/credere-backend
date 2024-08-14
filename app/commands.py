@@ -360,9 +360,7 @@ def update_statistics() -> None:
             )
 
             # Get general KPIs for every lender
-            for row in session.query(models.Lender.id):
-                lender_id = row[0]
-
+            for (lender_id,) in session.query(models.Lender.id):
                 # Get statistics for each lender
                 statistic_kpis = statistics_utils.get_general_statistics(session, None, None, lender_id)
 

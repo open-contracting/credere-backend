@@ -228,8 +228,8 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         # Bar graphs
         #
         "fis_chosen_by_supplier": [
-            StatisticData(name=row[0], value=row[1])
-            for row in (
+            StatisticData(name=name, value=value)
+            for name, value in (
                 session.query(Lender.name, func.count(Application.id))
                 .join(Lender)
                 .filter(submitted)
@@ -278,8 +278,8 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         #
         "unique_smes_contacted_by_credere": session.query(Borrower).filter(col(Borrower.is_msme).is_(True)).count(),
         "sector_statistics": [
-            StatisticData(name=row[0], value=row[1])
-            for row in (
+            StatisticData(name=name, value=value)
+            for name, value in (
                 session.query(Borrower.sector, func.count(distinct(Application.id)).label("count"))
                 .join(Application)
                 .filter(accepted, msme_from_source, Borrower.sector != "")

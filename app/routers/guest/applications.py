@@ -244,7 +244,7 @@ async def credit_product_options(
             models.CreditProduct.lower_limit <= payload.amount_requested,
             models.CreditProduct.upper_limit >= payload.amount_requested,
             models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
-            col(models.Lender.id).notin_(application.rejecter_lenders(session)),
+            col(models.Lender.id).notin_(application.rejected_lenders(session)),
             text(f"(borrower_types->>'{borrower_type}')::boolean is True"),
         )
     )
@@ -417,11 +417,12 @@ async def confirm_credit_product(
                 models.Application.award_borrower_identifier == application.award_borrower_identifier,
             )
             .order_by(col(models.Application.created_at).desc())
-            .first()
+            .limit(1)
+            .scalar()
         ):
             # Copy the documents into the database for the provided application.
             for document in session.query(models.BorrowerDocument).filter(
-                models.BorrowerDocument.application_id == lastest_application_id[0],
+                models.BorrowerDocument.application_id == lastest_application_id,
                 col(models.BorrowerDocument.type).in_(
                     [key for key, value in application.credit_product.required_document_types.items() if value]
                 ),

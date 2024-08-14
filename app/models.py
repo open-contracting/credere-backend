@@ -495,13 +495,14 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             .all()
         )
 
-    def rejecter_lenders(self, session: Session) -> list[Self]:
+    def rejected_lenders(self, session: Session) -> list[Self]:
         """
         :return: The IDs of lenders who rejected applications from the application's borrower for the same award.
         """
         cls = type(self)
-        lenders_id = (
-            session.query(Application.lender_id)
+        return [
+            lender_id
+            for (lender_id,) in session.query(Application.lender_id)
             .distinct()
             .filter(
                 cls.award_borrower_identifier == self.award_borrower_identifier,
@@ -509,9 +510,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 col(cls.lender_id).isnot(None),
             )
             .all()
-        )
-
-        return [lender_id for (lender_id,) in lenders_id]
+        ]
 
     def days_waiting_for_lender(self, session: Session) -> int:
         """
