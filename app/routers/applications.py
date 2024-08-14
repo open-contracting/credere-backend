@@ -168,7 +168,6 @@ async def approve_application(
             if key not in app_secop_dict or not app_secop_dict[key]:
                 not_validated_fields.append(key)
         if not_validated_fields:
-            logger.error("Following fields were not validated: %s", not_validated_fields)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=util.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING,
@@ -180,7 +179,6 @@ async def approve_application(
             if not document.verified:
                 not_validated_documents.append(document.type)
         if not_validated_documents:
-            logger.error("Following documents were not validated: %s", not_validated_documents)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING,
