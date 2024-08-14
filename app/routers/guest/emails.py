@@ -27,7 +27,7 @@ async def change_email(
     with rollback_on_error(session):
         # Update the primary email of an application.
         new_email = payload.new_email
-        if sources.is_valid_email(new_email):
+        if not sources.is_valid_email(new_email):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="New email is not valid",
