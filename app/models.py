@@ -148,28 +148,40 @@ class ApplicationStatus(StrEnum):
     -  -> APPROVED -> CONTRACT_UPLOADED -> REJECTED
     """
 
-    # Credere sends an invitation to the borrower.
+    #: | Credere sends an invitation to the borrower.\
+    #: | (:ref:`fetch-awards<cmd-fetch-awards>`)
     PENDING = "PENDING"
-    # Borrower declines the invitation.
+    #: | Borrower declines the invitation.
+    #: | (``/applications/decline``)
     DECLINED = "DECLINED"
-    # Borrower accepts the invitation.
+    #: | Borrower accepts the invitation.
+    #: | (``/applications/access-scheme``)
     ACCEPTED = "ACCEPTED"
-    # Borrower submits its application.
+    #: | Borrower submits its application.
+    #: | (``/applications/submit``)
     SUBMITTED = "SUBMITTED"
-    # Lender start reviewing the application.
+    #: | Lender start reviewing the application.
+    #: | (``/applications/{id}/start``)
     STARTED = "STARTED"
-    # Lender rejects the application, after the borrower either submits its application, updates a document, or uploads
-    # its contract and final contract amount.
+    #: Lender rejects the application, after the borrower either submits its application, updates a document,
+    #: or uploads its contract and final contract amount.
+    #:
+    #: (``/applications/{id}/reject-application``)
     REJECTED = "REJECTED"
-    # Lender requests the borrower to update a document.
+    #: | Lender requests the borrower to update a document.
+    #: | (``/applications/email-sme/{id}``)
     INFORMATION_REQUESTED = "INFORMATION_REQUESTED"
-    # Borrower doesn't accept, or doesn't submit the application or information requested.
+    #: | Borrower doesn't accept, or doesn't submit the application or information requested.
+    #: | (:ref:`update-applications-to-lapsed<cmd-update-applications-to-lapsed>`)
     LAPSED = "LAPSED"
-    # Lender pre-approves the application, and Credere asks the borrower to upload its contract.
+    #: | Lender pre-approves the application, and Credere asks the borrower to upload its contract.
+    #: | (``/applications/{id}/approve-application``)
     APPROVED = "APPROVED"
-    # Borrower uploads its contract and final contract amount.
+    #: | Borrower uploads its contract and final contract amount.
+    #: | (``/applications/confirm-upload-contract``)
     CONTRACT_UPLOADED = "CONTRACT_UPLOADED"
-    # Lender sets the final credit disbursed.
+    #: | Lender sets the final credit disbursed.
+    #: | (``/applications/{id}/complete-application``)
     COMPLETED = "COMPLETED"
 
 
@@ -179,23 +191,40 @@ class BorrowerStatus(StrEnum):
 
 
 class MessageType(StrEnum):
+    #: PENDING (:ref:`fetch-awards<cmd-fetch-awards>`)
     BORROWER_INVITATION = "BORROWER_INVITATION"
+    #: PENDING (:ref:`send-reminders<cmd-send-reminders>`)
     BORROWER_PENDING_APPLICATION_REMINDER = "BORROWER_PENDING_APPLICATION_REMINDER"
+    #: ACCEPTED (:ref:`send-reminders<cmd-send-reminders>`)
     BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
-    BORROWER_DOCUMENT_UPDATED = "BORROWER_DOCUMENT_UPDATED"
+    #: ACCEPTED → SUBMITTED (``/applications/submit``)
     SUBMISSION_COMPLETED = "SUBMISSION_COMPLETED"
-    CONTRACT_UPLOAD_REQUEST = "CONTRACT_UPLOAD_REQUEST"
-    CONTRACT_UPLOAD_CONFIRMATION = "CONTRACT_UPLOAD_CONFIRMATION"
-    CONTRACT_UPLOAD_CONFIRMATION_TO_FI = "CONTRACT_UPLOAD_CONFIRMATION_TO_FI"
+    #: Unused, but corresponding message sent by ``/applications/submit`` :issue:`330`
     NEW_APPLICATION_OCP = "NEW_APPLICATION_OCP"
+    #: Unused, but corresponding message sent by ``/applications/submit`` :issue:`330`
     NEW_APPLICATION_FI = "NEW_APPLICATION_FI"
+    #: STARTED → INFORMATION_REQUESTED (``/applications/email-sme/{id}``)
     FI_MESSAGE = "FI_MESSAGE"
-    APPROVED_APPLICATION = "APPROVED_APPLICATION"
+    #: INFORMATION_REQUESTED → STARTED (``/applications/complete-information-request``)
+    BORROWER_DOCUMENT_UPDATED = "BORROWER_DOCUMENT_UPDATED"
+    #: STARTED → REJECTED (``/applications/{id}/reject-application``)
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
-    OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
-    EMAIL_CHANGE_CONFIRMATION = "EMAIL_CHANGE_CONFIRMATION"
-    APPLICATION_COPIED = "APPLICATION_COPIED"
+    #: STARTED → APPROVED (``/applications/{id}/approve-application``)
+    APPROVED_APPLICATION = "APPROVED_APPLICATION"
+    #: Unused
+    CONTRACT_UPLOAD_REQUEST = "CONTRACT_UPLOAD_REQUEST"
+    #: APPROVED → CONTRACT_UPLOADED (``/applications/confirm-upload-contract``)
+    CONTRACT_UPLOAD_CONFIRMATION = "CONTRACT_UPLOAD_CONFIRMATION"
+    #: APPROVED → CONTRACT_UPLOADED (``/applications/confirm-upload-contract``)
+    CONTRACT_UPLOAD_CONFIRMATION_TO_FI = "CONTRACT_UPLOAD_CONFIRMATION_TO_FI"
+    #: CONTRACT_UPLOADED → COMPLETED (``/applications/{id}/complete-application``)
     CREDIT_DISBURSED = "CREDIT_DISBURSED"
+    #: STARTED | CONTRACT_UPLOADED (:ref:`sla-overdue-applications<cmd-sla-overdue-applications>`)
+    OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
+    #: ACCEPTED (``/applications/find-alternative-credit-option``)
+    APPLICATION_COPIED = "APPLICATION_COPIED"
+    #: Any (``/applications/change-email``)
+    EMAIL_CHANGE_CONFIRMATION = "EMAIL_CHANGE_CONFIRMATION"
 
 
 class UserType(StrEnum):

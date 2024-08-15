@@ -732,7 +732,7 @@ async def confirm_upload_contract(
     """
     Confirm the upload of a contract document for an application.
 
-    Changes application status from "CONTRACT_UPLOADED" to "CONTRACT_ACCEPTED".
+    Changes application status from "APPROVED" to "CONTRACT_UPLOADED".
 
     Sends an email to SME notifying the current stage of their application.
 
