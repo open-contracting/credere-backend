@@ -252,7 +252,7 @@ def get_email(documento_proveedor: str) -> str:
     if len_email_response_json > 1:
         email = Counter(_get_email(email) for email in email_response_json).most_common(1)[0][0]
 
-    if not sources.is_valid_email(email):
+    if not util.is_valid_email(email):
         raise SkippedAwardError(
             "Invalid remote borrower email",
             url=email_url,
