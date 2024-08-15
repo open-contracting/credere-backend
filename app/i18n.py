@@ -3,11 +3,10 @@ from typing import Any
 from app.settings import app_settings
 
 if app_settings.transifex_token and app_settings.transifex_secret:
+    # https://developers.transifex.com/docs/python-sdk#initialization
     from transifex.native import init, tx
 
-    # if more langs added to project add them here
     init(app_settings.transifex_token, ["es", "en"], app_settings.transifex_secret)
-    # populate toolkit memory cache with translations from Transifex Content Delivery Service the first time
     tx.fetch_translations()
 
 

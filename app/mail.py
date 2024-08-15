@@ -7,6 +7,7 @@ from urllib.parse import quote
 
 from mypy_boto3_ses.client import SESClient
 
+from app.i18n import get_translated_string
 from app.models import Application
 from app.settings import app_settings
 
@@ -29,91 +30,9 @@ COMMON_DATA = {
     "LINK_LINK": app_settings.link_link,
 }
 
-# Templates files names and email subject
-TEMPLATE_FILES = {
-    "Access_to_credit_reminder": {
-        "es": "Recordatorio - Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato estatal",
-        "en": "Reminder - Opportunity to access MSME credit for being awarded a public contract",
-    },
-    "Access_to_credit_scheme_for_MSMEs": {
-        "es": "Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato estatal",
-        "en": "Opportunity to access MSME credit for being awarded a public contract",
-    },
-    "alternative_credit_msme": {
-        "en": "Alternative credit option",
-        "es": "Opción de crédito alternativa",
-    },
-    "Application_approved": {
-        "en": "Your credit application has been prequalified",
-        "es": "Revisión de tu aplicación completada exitosamente",
-    },
-    "Application_credit_disbursed": {
-        "en": "Your credit application has been approved",
-        "es": "Tu solicitud de crédito ha sido aprobada",
-    },
-    "Application_declined": {
-        "en": "Your credit application has been declined",
-        "es": "Tu solicitud de crédito ha sido rechazada",
-    },
-    "Application_declined_without_alternative": {
-        "en": "Your credit application has been declined",
-        "es": "Tu solicitud de crédito ha sido rechazada",
-    },
-    "Application_submitted": {
-        "en": "Application Submission Complete",
-        "es": "Envío de aplicación completada",
-    },
-    "Complete_application_reminder": {
-        "en": "Complete your credit application",
-        "es": "Completa tu solicitud de crédito",
-    },
-    "Confirm_email_address_change": {
-        "en": "Confirm email address change",
-        "es": "Confirmar cambio de dirección de correo electrónico",
-    },
-    "Contract_upload_confirmation": {
-        "en": "Thank you for uploading the signed contract",
-        "es": "Gracias por subir tu contrato firmado",
-    },
-    "Credit_application_submitted": {
-        "en": "Your credit application has been submitted",
-        "es": "Tu solicitud de crédito ha sido enviada",
-    },
-    "FI_Documents_Updated_FI_user": {
-        "en": "Application updated",
-        "es": "Aplicación actualizada",
-    },
-    "FI_New_application_submission_FI_user": {
-        "en": "New application submission",
-        "es": "Nueva aplicación recibida",
-    },
-    "New_Account_Created": {"en": "Welcome", "es": "Bienvenido/a"},
-    "New_application_submission_OCP_user": {
-        "en": "New application submission",
-        "es": "Nueva aplicación recibida",
-    },
-    "New_contract_submission": {
-        "en": "New contract submission",
-        "es": "Una MIPYME ha subido su contrato",
-    },
-    "Overdue_application_FI": {
-        "en": "You have credit applications that need processing",
-        "es": "Tienes solicitudes de crédito que necesitan procesamiento",
-    },
-    "Overdue_application_OCP_admin": {
-        "en": "New overdue application",
-        "es": "Nueva solicitud vencida",
-    },
-    "Request_data_to_SME": {
-        "en": "New message from a financial institution",
-        "es": "Nuevo mensaje de una institución financiera",
-    },
-    "Reset_password": {"en": "Reset password", "es": "Restablecer contraseña"},
-    "Upload_contract": {
-        "en": "Please upload your contract",
-        "es": "Por favor sube tu contrato",
-    },
-}
+
+def t(message: str) -> str:
+    return get_translated_string(message, app_settings.email_template_lang)
 
 
 def set_destinations(email: str, to_borrower: bool = True) -> str:
@@ -133,7 +52,7 @@ def set_destinations(email: str, to_borrower: bool = True) -> str:
     return app_settings.test_mail_receiver
 
 
-def prepare_html(template_name: str, parameters: dict[str, Any]) -> dict[str, str]:
+def prepare_html(template_name: str, subject: str, parameters: dict[str, Any]) -> dict[str, str]:
     """
     Reads the content of the file in template_name, replace its parameters, and prepare the rest of the main
     parameters and Subject to send the email via AWS.
@@ -152,7 +71,7 @@ def prepare_html(template_name: str, parameters: dict[str, Any]) -> dict[str, st
     return {
         **COMMON_DATA,
         "CONTENT": html,
-        "SUBJECT": f"Credere - {TEMPLATE_FILES[template_name][app_settings.email_template_lang]}",
+        "SUBJECT": f"Credere - {subject}",
     }
 
 
@@ -197,7 +116,11 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
     else:
         html_data["ADDITIONAL_COMMENTS"] = "Ninguno"
 
-    return send_email(ses, application.primary_email, prepare_html("Application_approved", html_data))
+    return send_email(
+        ses,
+        application.primary_email,
+        prepare_html("Application_approved", t("Your credit application has been prequalified"), html_data),
+    )
 
 
 def send_application_submission_completed(ses: SESClient, application: Application) -> str:
@@ -212,6 +135,7 @@ def send_application_submission_completed(ses: SESClient, application: Applicati
         application.primary_email,
         prepare_html(
             "Application_submitted",
+            t("Application Submission Complete"),
             {
                 "FI": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -232,6 +156,7 @@ def send_application_credit_disbursed(ses: SESClient, application: Application) 
         application.primary_email,
         prepare_html(
             "Application_credit_disbursed",
+            t("Your credit application has been approved"),
             {
                 "FI": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -258,6 +183,7 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_pa
         username,
         prepare_html(
             "New_Account_Created",
+            t("Welcome"),
             {
                 "USER": name,
                 "SET_PASSWORD_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/set_password.png",
@@ -284,6 +210,7 @@ def send_upload_contract_notification_to_lender(ses: SESClient, application: App
         application.lender.email_group,
         prepare_html(
             "New_contract_submission",
+            t("New contract submission"),
             {
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
@@ -305,6 +232,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application) 
         application.primary_email,
         prepare_html(
             "Contract_upload_confirmation",
+            t("Thank you for uploading the signed contract"),
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "TENDER_TITLE": application.award.title,
@@ -328,6 +256,7 @@ def send_new_email_confirmation(
     """
     data = prepare_html(
         "Confirm_email_address_change",
+        t("Confirm email address change"),
         {
             "NEW_MAIL": new_email,
             "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -358,6 +287,7 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temporary_passwor
         username,
         prepare_html(
             "Reset_password",
+            t("Reset password"),
             {
                 "USER_ACCOUNT": username,
                 "RESET_PASSWORD_URL": (
@@ -395,7 +325,11 @@ def send_invitation_email(ses: SESClient, application: Application) -> str:
     return send_email(
         ses,
         application.primary_email,
-        prepare_html("Access_to_credit_scheme_for_MSMEs", get_invitation_email_parameters(application)),
+        prepare_html(
+            "Access_to_credit_scheme_for_MSMEs",
+            t("Opportunity to access MSME credit for being awarded a public contract"),
+            get_invitation_email_parameters(application),
+        ),
     )
 
 
@@ -409,7 +343,11 @@ def send_mail_intro_reminder(ses: SESClient, application: Application) -> str:
     return send_email(
         ses,
         application.primary_email,
-        prepare_html("Access_to_credit_scheme_for_MSMEs", get_invitation_email_parameters(application)),
+        prepare_html(
+            "Access_to_credit_scheme_for_MSMEs",
+            t("Opportunity to access MSME credit for being awarded a public contract"),
+            get_invitation_email_parameters(application),
+        ),
     )
 
 
@@ -425,6 +363,7 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
         application.primary_email,
         prepare_html(
             "Access_to_credit_reminder",
+            t("Reminder - Opportunity to access MSME credit for being awarded a public contract"),
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "TENDER_TITLE": application.award.title,
@@ -449,6 +388,7 @@ def send_notification_new_app_to_lender(ses: SESClient, lender_email_group: str)
         lender_email_group,
         prepare_html(
             "FI_New_application_submission_FI_user",
+            t("New application submission"),
             {
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
@@ -469,6 +409,7 @@ def send_notification_new_app_to_ocp(ses: SESClient, lender_name: str) -> str:
         app_settings.ocp_email_group,
         prepare_html(
             "New_application_submission_OCP_user",
+            t("New application submission"),
             {
                 "FI": lender_name,
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
@@ -490,6 +431,7 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
         application.primary_email,
         prepare_html(
             "Request_data_to_SME",
+            t("New message from a financial institution"),
             {
                 "FI": application.lender.name,
                 "FI_MESSAGE": email_message,
@@ -513,6 +455,7 @@ def send_overdue_application_email_to_lender(ses: SESClient, lender_name: str, l
         lender_email,
         prepare_html(
             "Overdue_application_FI",
+            t("You have credit applications that need processing"),
             {
                 "USER": lender_name,
                 "NUMBER_APPLICATIONS": amount,
@@ -535,6 +478,7 @@ def send_overdue_application_email_to_ocp(ses: SESClient, name: str) -> str:
         app_settings.ocp_email_group,
         prepare_html(
             "Overdue_application_OCP_admin",
+            t("New overdue application"),
             {
                 "USER": name,
                 "FI": name,
@@ -555,6 +499,7 @@ def send_rejected_application_email(ses: SESClient, application: Application) ->
         application.primary_email,
         prepare_html(
             "Application_declined",
+            t("Your credit application has been declined"),
             {
                 "FI": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -577,6 +522,7 @@ def send_rejected_application_email_without_alternatives(ses: SESClient, applica
         application.primary_email,
         prepare_html(
             "Application_declined_without_alternative",
+            t("Your credit application has been declined"),
             {
                 "FI": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -595,6 +541,7 @@ def send_copied_application_notification_to_borrower(ses: SESClient, application
         application.primary_email,
         prepare_html(
             "alternative_credit_msme",
+            t("Alternative credit option"),
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "CONTINUE_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/continueInCredere.png",
@@ -616,6 +563,7 @@ def send_upload_documents_notifications_to_lender(ses: SESClient, lender_email: 
         lender_email,
         prepare_html(
             "FI_Documents_Updated_FI_user",
+            t("Application updated"),
             {
                 **COMMON_DATA,
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
