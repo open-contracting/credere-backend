@@ -500,17 +500,17 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
     )
 
 
-def send_overdue_application_email_to_lender(ses: SESClient, lender_name: str, email: str, amount: int) -> str:
+def send_overdue_application_email_to_lender(ses: SESClient, lender_name: str, lender_email: str, amount: int) -> str:
     """
     Sends an email notification to the lender about overdue applications.
 
     :param lender_name: Name of the recipient at the lender.
-    :param email: Email address of the recipient at the lender.
+    :param lender_email: Email address of the recipient at the lender.
     :param amount: Number of overdue applications.
     """
     return send_email(
         ses,
-        email,
+        lender_email,
         prepare_html(
             "Overdue_application_FI",
             {
@@ -604,16 +604,16 @@ def send_copied_application_notification_to_borrower(ses: SESClient, application
     )
 
 
-def send_upload_documents_notifications_to_lender(ses: SESClient, email: str) -> str:
+def send_upload_documents_notifications_to_lender(ses: SESClient, lender_email: str) -> str:
     """
     Sends an email notification to the lender to notify them that new
     documents have been uploaded and are ready for their review.
 
-    :param email: Email address of the lender to receive the notification.
+    :param lender_email: Email address of the lender to receive the notification.
     """
     return send_email(
         ses,
-        email,
+        lender_email,
         prepare_html(
             "FI_Documents_Updated_FI_user",
             {
