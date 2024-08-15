@@ -6,12 +6,15 @@ flake8
 isort
 moto[cognitoidp]
 mypy
+pandas-stubs
 pip-tools
 pre-commit
 pytest
 pytest-cov
 pytest-mock
 reportlab-stubs
+sphinx-autobuild
 sqlalchemy2-stubs
 # typer-slim omits stubs
 typer
+types-requests
