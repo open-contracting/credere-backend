@@ -12,7 +12,6 @@ from sqlmodel import col
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
-from app.settings import app_settings
 from app.sources import colombia as data_access
 from app.util import commit_and_refresh
 
@@ -565,7 +564,7 @@ async def update_apps_send_notifications(
 
         try:
             mail.send_notification_new_app_to_lender(client.ses, application.lender.email_group)
-            mail.send_notification_new_app_to_ocp(client.ses, app_settings.ocp_email_group, application.lender.name)
+            mail.send_notification_new_app_to_ocp(client.ses, application.lender.name)
 
             message_id = mail.send_application_submission_completed(client.ses, application)
         except ClientError as e:

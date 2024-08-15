@@ -84,9 +84,7 @@ def _create_complete_application(
                 expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
             )
 
-            message_id = mail.send_invitation_email(
-                aws.ses_client, application.uuid, borrower.email, borrower.legal_name, award.buyer_name, award.title
-            )
+            message_id = mail.send_invitation_email(aws.ses_client, application)
             models.Message.create(
                 session,
                 application=application,
@@ -197,14 +195,7 @@ def send_reminders() -> None:
         for application in applications_to_send_intro_reminder:
             with contextmanager(get_db)() as session:
                 with rollback_on_error(session):
-                    message_id = mail.send_mail_intro_reminder(
-                        aws.ses_client,
-                        application.uuid,
-                        application.primary_email,
-                        application.borrower.legal_name,
-                        application.award.buyer_name,
-                        application.award.title,
-                    )
+                    message_id = mail.send_mail_intro_reminder(aws.ses_client, application)
                     models.Message.create(
                         session,
                         application=application,
@@ -234,14 +225,7 @@ def send_reminders() -> None:
         for application in applications_to_send_submit_reminder:
             with contextmanager(get_db)() as session:
                 with rollback_on_error(session):
-                    message_id = mail.send_mail_submit_reminder(
-                        aws.ses_client,
-                        application.uuid,
-                        application.primary_email,
-                        application.borrower.legal_name,
-                        application.award.buyer_name,
-                        application.award.title,
-                    )
+                    message_id = mail.send_mail_submit_reminder(aws.ses_client, application)
                     models.Message.create(
                         session,
                         application=application,

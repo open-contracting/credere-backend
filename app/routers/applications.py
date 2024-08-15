@@ -575,13 +575,7 @@ async def email_borrower(
         application.pending_documents = True
 
         try:
-            message_id = mail.send_mail_request_to_borrower(
-                client.ses,
-                application.uuid,
-                application.lender.name,
-                payload.message,
-                application.primary_email,
-            )
+            message_id = mail.send_mail_request_to_borrower(client.ses, application, payload.message)
         except ClientError as e:
             logger.exception(e)
             return HTTPException(
