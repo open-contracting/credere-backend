@@ -15,7 +15,8 @@ jobs:
       - name: Run checks and tests
         env:
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
-        run: pytest -W error --cov app
+        # https://github.com/transifex/transifex-python/issues/118
+        run: pytest -W error -W ignore::DeprecationWarning --cov app
       - env:
           TEST_SETTINGS: True
         run: pytest -W error settings_tests/test_settings.py
