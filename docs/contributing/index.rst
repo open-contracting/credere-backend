@@ -76,13 +76,8 @@ Repository structure
        ├── statistics.py    # Statistics functions used by statistics routers, background tasks and commands
        └── tables.py        # Functions for generating tables in downloadable documents
 
-Tasks
------
-
-Update requirements
-~~~~~~~~~~~~~~~~~~~
-
-See `Requirements <https://ocp-software-handbook.readthedocs.io/en/latest/python/requirements.html>`__ in the OCP Software Development Handbook.
+Run commands
+------------
 
 Run server
 ~~~~~~~~~~
@@ -126,25 +121,6 @@ For example:
 
 And then run queries with ``session``.
 
-Create database migration
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   alembic revision -m "migration name"
-
-This generates a file like ``2ca870aa737d_migration_name.py``.
-
-Then, edit both functions, ``upgrade`` and ``downgrade``.
-
-Alternatively, run:
-
-.. code-block:: bash
-
-   alembic revision --autogenerate -m "migration name"
-
-This attempts to auto-detect the changes made to ``models.py``, subject to `limitations <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`__.
-
 Build documentation
 ~~~~~~~~~~~~~~~~~~~
 
@@ -173,10 +149,53 @@ To delete the image (e.g. when recreating it), run:
 
    docker rmi {image_id}
 
-Development
------------
+Make changes
+------------
 
 Read the next pages in this section to learn about style guides, and the :doc:`../api/index` about helper methods and application logic. See also the `OCP Software Development Handbook <https://ocp-software-handbook.readthedocs.io/en/latest/>`__, in particular:
 
 -  `Library and Web API <https://ocp-software-handbook.readthedocs.io/en/latest/general/api.html#web-api>`__
 -  `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__
+
+Update requirements
+~~~~~~~~~~~~~~~~~~~
+
+See `Requirements <https://ocp-software-handbook.readthedocs.io/en/latest/python/requirements.html>`__ in the OCP Software Development Handbook.
+
+Update models
+~~~~~~~~~~~~~
+
+Either run:
+
+.. code-block:: bash
+
+   alembic revision -m "title"
+
+This generates a file like ``2ca870aa737d_title.py``. Edit both functions, ``upgrade`` and ``downgrade``.
+
+Or run:
+
+.. code-block:: bash
+
+   alembic revision --autogenerate -m "migration name"
+
+This attempts to auto-detect the changes made to ``models.py``, subject to `limitations <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`__.
+
+Then, `update <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#generate-entity-relationship-diagram>`__ the :ref:`erd`. For example:
+
+.. code-block:: bash
+
+   java -jar schemaspy.jar -t pgsql -dp postgresql.jar -host localhost -db credere_backend -o schemaspy -norows -I '(django|auth).*'
+   mv schemaspy/diagrams/orphans/orphans.png docs/_static/
+   mv schemaspy/diagrams/summary/relationships.real.large.png docs/_static/
+
+.. _erd:
+
+Entity relationship diagram
+---------------------------
+
+.. image:: /_static/relationships.real.large.png
+   :target: /_images/relationships.real.large.png
+
+.. image:: /_static/orphans.png
+   :target: /_images/orphans.png
