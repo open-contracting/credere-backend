@@ -13,33 +13,31 @@ Contributing
 Setup
 -----
 
-Install requirements:
+#. Install the requirements:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   pip install -r requirements_dev.txt -r docs/requirements.txt
+      pip install -r requirements_dev.txt -r docs/requirements.txt
 
-If requirements are updated, re-run this command.
+   .. note::
 
-Install the git pre-commit hooks:
+      If requirements are updated in git, re-run this command.
 
-.. code-block:: bash
+#. Set up the git pre-commit hook:
 
-   pre-commit install
+   .. code-block:: bash
 
-Create a ``.env`` file, using ``.env.example`` as an example.
+      pre-commit install
 
-Create development and test databases in PostgreSQL, and set the :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.TEST_DATABASE_URL>` environment variables one at a time, for example:
+#. Create development and test databases. To use the default ``DATABASE_URL``, create a database named ``credere_backend`` to which your shell user has access.
 
-.. code-block:: bash
+   To customize settings (for example, to use a different ``DATABASE_URL``), create a ``.env`` file based on the ``.env.example`` file.
 
-   DATABASE_URL=postgresql://{username}:{password}@{host:port}/{db_name}
+#. Run database migrations:
 
-Run database migrations:
+   .. code-block:: bash
 
-.. code-block:: bash
-
-   alembic upgrade head
+      alembic upgrade head
 
 Repository structure
 --------------------
@@ -98,17 +96,11 @@ Run server
 Run tests
 ~~~~~~~~~
 
-The :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.TEST_DATABASE_URL>` environment variables must be set to the test database.
+The :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.Settings.test_database_url>` environment variables must be set to the test database.
 
 .. code-block:: bash
 
-   pytest -W error
-
-Check coverage:
-
-.. code-block:: bash
-
-   pytest --cov
+   pytest -W error --cov app
 
 Generate coverage HTML report:
 
@@ -179,36 +171,12 @@ To delete the image (e.g. when recreating it), run:
 
 .. code-block:: bash
 
-   docker rmi <your-image-id>
+   docker rmi {image_id}
 
 Development
 -----------
 
-Read this section and the :doc:`../api/index` to learn about helper methods and application logic.
+Read the next pages in this section to learn about style guides, and the :doc:`../api/index` about helper methods and application logic. See also the `OCP Software Development Handbook <https://ocp-software-handbook.readthedocs.io/en/latest/>`__, in particular:
 
-API endpoints naming conventions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Use lowercase letters and separate words with hyphens or underscores.
-
-   Example: GET /users or GET /users/all
-
-If the endpoint retrieves a specific resource, use the resource name in its singular form.
-
-   Example: GET /user/{id} or PUT /user/{id}
-
-For endpoints that return collections of resources, use plural nouns.
-
-   Example: GET /users or POST /users
-
-Use sub-resources to represent relationships between resources.
-
-   Example: GET /users/{id}/orders or GET /users/{id}/invoices
-
-For actions or operations that do not fit into the RESTful resource model, consider using verbs or descriptive phrases.
-
-   Example: POST /users/{id}/reset-password or PUT /users/{id}/activate
-
-Avoid using abbreviations or acronyms unless they are widely understood and agreed upon within your development team or industry.
-
-Ensure that the endpoint names are self-explanatory and reflect the purpose of the API operation.
+-  `Library and Web API <https://ocp-software-handbook.readthedocs.io/en/latest/general/api.html#web-api>`__
+-  `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__
