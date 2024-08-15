@@ -105,7 +105,7 @@ class UploadContractConfirmation(ApplicationBase):
     contract_amount_submitted: Decimal | None = None
 
 
-class ApplicationEmailSme(BaseModel):
+class ApplicationEmailBorrower(BaseModel):
     message: str
 
 

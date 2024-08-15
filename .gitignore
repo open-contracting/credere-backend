@@ -31,3 +31,4 @@ npm-debug.log
 .coverage
 coverage_re
 .DS_Store
+/schemaspy

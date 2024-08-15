@@ -13,33 +13,31 @@ Contributing
 Setup
 -----
 
-Install requirements:
+#. Install the requirements:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   pip install -r requirements_dev.txt -r docs/requirements.txt
+      pip install -r requirements_dev.txt -r docs/requirements.txt
 
-If requirements are updated, re-run this command.
+   .. note::
 
-Install the git pre-commit hooks:
+      If requirements are updated in git, re-run this command.
 
-.. code-block:: bash
+#. Set up the git pre-commit hook:
 
-   pre-commit install
+   .. code-block:: bash
 
-Create a ``.env`` file, using ``.envtest`` as an example.
+      pre-commit install
 
-Create development and test databases in PostgreSQL, and set the :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.TEST_DATABASE_URL>` environment variables one at a time, for example:
+#. Create development and test databases. To use the default ``DATABASE_URL``, create a database named ``credere_backend`` to which your shell user has access.
 
-.. code-block:: bash
+   To customize settings (for example, to use a different ``DATABASE_URL``), create a ``.env`` file based on the ``.env.example`` file.
 
-   DATABASE_URL=postgresql://{username}:{password}@{host:port}/{db_name}
+#. Run database migrations:
 
-Run database migrations:
+   .. code-block:: bash
 
-.. code-block:: bash
-
-   alembic upgrade head
+      alembic upgrade head
 
 Repository structure
 --------------------
@@ -78,13 +76,10 @@ Repository structure
        ├── statistics.py    # Statistics functions used by statistics routers, background tasks and commands
        └── tables.py        # Functions for generating tables in downloadable documents
 
-Tasks
------
+Run commands
+------------
 
-Update requirements
-~~~~~~~~~~~~~~~~~~~
-
-See `Requirements <https://ocp-software-handbook.readthedocs.io/en/latest/python/requirements.html>`__ in the OCP Software Development Handbook.
+.. _dev-server:
 
 Run server
 ~~~~~~~~~~
@@ -98,17 +93,11 @@ Run server
 Run tests
 ~~~~~~~~~
 
-The :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.TEST_DATABASE_URL>` environment variables must be set to the test database.
+The :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.Settings.test_database_url>` environment variables must be set to the test database.
 
 .. code-block:: bash
 
-   pytest -W error
-
-Check coverage:
-
-.. code-block:: bash
-
-   pytest --cov
+   pytest -W error --cov app
 
 Generate coverage HTML report:
 
@@ -133,25 +122,6 @@ For example:
    session = Session(engine)
 
 And then run queries with ``session``.
-
-Create database migration
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   alembic revision -m "migration name"
-
-This generates a file like ``2ca870aa737d_migration_name.py``.
-
-Then, edit both functions, ``upgrade`` and ``downgrade``.
-
-Alternatively, run:
-
-.. code-block:: bash
-
-   alembic revision --autogenerate -m "migration name"
-
-This attempts to auto-detect the changes made to ``models.py``, subject to `limitations <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`__.
 
 Build documentation
 ~~~~~~~~~~~~~~~~~~~
@@ -179,36 +149,78 @@ To delete the image (e.g. when recreating it), run:
 
 .. code-block:: bash
 
-   docker rmi <your-image-id>
+   docker rmi {image_id}
 
-Development
------------
+Make changes
+------------
 
-Read this section and the :doc:`../api/index` to learn about helper methods and application logic.
+Read the next pages in this section to learn about style guides, and the :doc:`../api/index` about helper methods and application logic. See also the `OCP Software Development Handbook <https://ocp-software-handbook.readthedocs.io/en/latest/>`__, in particular:
 
-API endpoints naming conventions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-  `Library and Web API <https://ocp-software-handbook.readthedocs.io/en/latest/general/api.html#web-api>`__
+-  `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__
 
-Use lowercase letters and separate words with hyphens or underscores.
+Style guide
+~~~~~~~~~~~
 
-   Example: GET /users or GET /users/all
+In Python code and documentation:
 
-If the endpoint retrieves a specific resource, use the resource name in its singular form.
+-  Use "lender", not "FI" or "financial institution".
+-  Use "borrower", not "MSME", "SME" or "small and medium-sized enterprises".
 
-   Example: GET /user/{id} or PUT /user/{id}
+.. note::
 
-For endpoints that return collections of resources, use plural nouns.
+   Some endpoints, enums and template names cannot be made to conform to this style guide, without migrating the database, updating the frontend or updating the email templates in :doc:`../aws/ses`.
 
-   Example: GET /users or POST /users
+Update requirements
+~~~~~~~~~~~~~~~~~~~
 
-Use sub-resources to represent relationships between resources.
+See `Requirements <https://ocp-software-handbook.readthedocs.io/en/latest/python/requirements.html>`__ in the OCP Software Development Handbook.
 
-   Example: GET /users/{id}/orders or GET /users/{id}/invoices
+Update API
+~~~~~~~~~~
 
-For actions or operations that do not fit into the RESTful resource model, consider using verbs or descriptive phrases.
+.. seealso:: :doc:`../api/index`
 
-   Example: POST /users/{id}/reset-password or PUT /users/{id}/activate
+After making changes, regenerate the OpenAPI document by running the server and:
 
-Avoid using abbreviations or acronyms unless they are widely understood and agreed upon within your development team or industry.
+.. code-block:: bash
 
-Ensure that the endpoint names are self-explanatory and reflect the purpose of the API operation.
+   curl http://localhost:8000/openapi.json -o docs/_static/openapi.json
+
+Update models
+~~~~~~~~~~~~~
+
+Either run:
+
+.. code-block:: bash
+
+   alembic revision -m "title"
+
+This generates a file like ``2ca870aa737d_title.py``. Edit both functions, ``upgrade`` and ``downgrade``.
+
+Or run:
+
+.. code-block:: bash
+
+   alembic revision --autogenerate -m "migration name"
+
+This attempts to auto-detect the changes made to ``models.py``, subject to `limitations <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`__.
+
+Then, `update <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#generate-entity-relationship-diagram>`__ the :ref:`erd`. For example:
+
+.. code-block:: bash
+
+   java -jar schemaspy.jar -t pgsql -dp postgresql.jar -host localhost -db credere_backend -o schemaspy -norows -I '(django|auth).*'
+   mv schemaspy/diagrams/orphans/orphans.png docs/_static/
+   mv schemaspy/diagrams/summary/relationships.real.large.png docs/_static/
+
+.. _erd:
+
+Entity relationship diagram
+---------------------------
+
+.. image:: /_static/relationships.real.large.png
+   :target: /_images/relationships.real.large.png
+
+.. image:: /_static/orphans.png
+   :target: /_images/orphans.png

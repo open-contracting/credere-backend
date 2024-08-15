@@ -84,9 +84,7 @@ def _create_complete_application(
                 expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
             )
 
-            message_id = mail.send_invitation_email(
-                aws.ses_client, application.uuid, borrower.email, borrower.legal_name, award.buyer_name, award.title
-            )
+            message_id = mail.send_invitation_email(aws.ses_client, application)
             models.Message.create(
                 session,
                 application=application,
@@ -187,14 +185,7 @@ def send_reminders() -> None:
         for application in applications_to_send_intro_reminder:
             with contextmanager(get_db)() as session:
                 with rollback_on_error(session):
-                    message_id = mail.send_mail_intro_reminder(
-                        aws.ses_client,
-                        application.uuid,
-                        application.primary_email,
-                        application.borrower.legal_name,
-                        application.award.buyer_name,
-                        application.award.title,
-                    )
+                    message_id = mail.send_mail_intro_reminder(aws.ses_client, application)
                     models.Message.create(
                         session,
                         application=application,
@@ -224,14 +215,7 @@ def send_reminders() -> None:
         for application in applications_to_send_submit_reminder:
             with contextmanager(get_db)() as session:
                 with rollback_on_error(session):
-                    message_id = mail.send_mail_submit_reminder(
-                        aws.ses_client,
-                        application.uuid,
-                        application.primary_email,
-                        application.borrower.legal_name,
-                        application.award.buyer_name,
-                        application.award.title,
-                    )
+                    message_id = mail.send_mail_submit_reminder(aws.ses_client, application)
                     models.Message.create(
                         session,
                         application=application,
@@ -288,9 +272,9 @@ def update_statistics() -> None:
             )
 
             # Get opt-in statistics
-            statistics_msme_opt_in = statistics_utils.get_borrower_opt_in_stats(session)
+            statistics_opt_in = statistics_utils.get_borrower_opt_in_stats(session)
             for key in keys_to_serialize:
-                statistics_msme_opt_in[key] = [data.model_dump() for data in statistics_msme_opt_in[key]]
+                statistics_opt_in[key] = [data.model_dump() for data in statistics_opt_in[key]]
 
             models.Statistic.create_or_update(
                 session,
@@ -299,7 +283,7 @@ def update_statistics() -> None:
                     models.Statistic.type == models.StatisticType.MSME_OPT_IN_STATISTICS,
                 ],
                 type=models.StatisticType.MSME_OPT_IN_STATISTICS,
-                data=statistics_msme_opt_in,
+                data=statistics_opt_in,
             )
 
             # Get general KPIs for every lender
@@ -359,7 +343,7 @@ def sla_overdue_applications() -> None:
                 session.commit()
 
         for lender_id, lender_data in overdue_lenders.items():
-            message_id = mail.send_overdue_application_email_to_fi(
+            message_id = mail.send_overdue_application_email_to_lender(
                 aws.ses_client, lender_data["name"], lender_data["count"], lender_data["email"]
             )
             models.Message.create(

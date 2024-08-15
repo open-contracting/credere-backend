@@ -15,32 +15,25 @@ from tests.test_fetcher import _load_json_file
 file = os.path.join(__location__, "file.jpeg")
 wrong_file = os.path.join(__location__, "file.gif")
 
-fi_user = {
-    "email": "FI_user@noreply.open-contracting.org",
-    "name": "Test FI",
-    "type": models.UserType.FI,
-}
-
-
-fi_user_with_lender = {
+lender_user = {
     "id": 2,
-    "email": "FI_user_with_lender@noreply.open-contracting.org",
-    "name": "Test FI with lender",
+    "email": "lender-user@noreply.open-contracting.org",
+    "name": "Test lender",
     "type": models.UserType.FI,
     "lender_id": 1,
 }
 
-fi_user_with_lender_2 = {
+lender_user_2 = {
     "id": 3,
-    "email": "FI_user_with_lender_2@noreply.open-contracting.org",
-    "name": "Test FI with lender 2",
+    "email": "lender-user-2@noreply.open-contracting.org",
+    "name": "Test lender 2",
     "type": models.UserType.FI,
     "lender_id": 2,
 }
 
 ocp_user = {
-    "email": "OCP_user@noreply.open-contracting.org",
-    "name": "OCP_user@noreply.open-contracting.org",
+    "email": "OCP-user@noreply.open-contracting.org",
+    "name": "OCP-user@noreply.open-contracting.org",
     "type": models.UserType.OCP,
 }
 
@@ -130,7 +123,7 @@ source_contract = _load_json_file("mock_data/contract.json")
 def test_reject_application(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
     client.post("/lenders", json=lender, headers=ocp_headers)
-    fi_headers = client.post("/create-test-user-headers", json=fi_user_with_lender).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
     client.post("/create-test-credit-option", json=test_credit_option)
     client.post("/create-test-application", json=application_with_lender_payload)
 
@@ -138,7 +131,7 @@ def test_reject_application(client):
     response = client.post(
         "/applications/1/reject-application",
         json=reject_payload,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
@@ -150,7 +143,7 @@ def test_reject_application(client):
     response = client.post(
         "/applications/1/reject-application",
         json=reject_payload,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.json()["status"] == models.ApplicationStatus.REJECTED
     assert response.status_code == status.HTTP_200_OK
@@ -190,10 +183,10 @@ def test_access_expired_application(client):
 def test_approve_application_cicle(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
     client.post("/lenders", json=lender, headers=ocp_headers)
-    fi_headers = client.post("/create-test-user-headers", json=fi_user_with_lender).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     client.post("/lenders", json=lender_2, headers=ocp_headers)
-    fi_headers_2 = client.post("/create-test-user-headers", json=fi_user_with_lender_2).json()
+    lender_headers_2 = client.post("/create-test-user-headers", json=lender_user_2).json()
     client.post("/create-test-credit-option", json=test_credit_option)
     client.post("/create-test-application", json=application_with_lender_payload)
 
@@ -222,19 +215,19 @@ def test_approve_application_cicle(client):
     response = client.post("/applications/confirm-credit-product", json=application_base)
     assert response.status_code == status.HTTP_200_OK
 
-    # FI user tries to fetch previous awards
-    response = client.get("/applications/1/previous-awards", headers=fi_headers)
+    # Lender user tries to fetch previous awards
+    response = client.get("/applications/1/previous-awards", headers=lender_headers)
     assert len(response.json()) == len(source_award)
     assert response.json()[0]["previous"] is True
     assert response.json()[0]["entity_code"] == source_award[0]["nit_entidad"]
     assert response.status_code == status.HTTP_200_OK
 
-    # different FI user tries to fetch previous awards
-    response = client.get("/applications/1/previous-awards", headers=fi_headers_2)
+    # different lender user tries to fetch previous awards
+    response = client.get("/applications/1/previous-awards", headers=lender_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # different lender tries to get the application
-    response = client.get("/applications/id/1", headers=fi_headers_2)
+    response = client.get("/applications/id/1", headers=lender_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     new_email = "newtestemail@gmail.com"
@@ -296,70 +289,70 @@ def test_approve_application_cicle(client):
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    # different FI user tries to start the application
-    response = client.post("/applications/1/start", headers=fi_headers_2)
+    # different lender user tries to start the application
+    response = client.post("/applications/1/start", headers=lender_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    # different FI user tries to update the award
-    response = client.put("/applications/1/award", json=update_award, headers=fi_headers_2)
+    # different lender user tries to update the award
+    response = client.put("/applications/1/award", json=update_award, headers=lender_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    # different FI user tries to update the borrower
-    response = client.put("/applications/1/award", json=update_borrower, headers=fi_headers_2)
+    # different lender user tries to update the borrower
+    response = client.put("/applications/1/award", json=update_borrower, headers=lender_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    # The FI user starts application
-    response = client.post("/applications/1/start", headers=fi_headers)
+    # The lender user starts application
+    response = client.post("/applications/1/start", headers=lender_headers)
     assert response.json()["status"] == models.ApplicationStatus.STARTED
     assert response.status_code == status.HTTP_200_OK
 
-    # different FI user tries to update the award
+    # different lender user tries to update the award
     response = client.put(
         "/applications/1/award",
         json=update_award,
-        headers=fi_headers_2,
+        headers=lender_headers_2,
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    # different FI user tries to update the borrower
+    # different lender user tries to update the borrower
     response = client.put(
         "/applications/1/borrower",
         json=update_borrower,
-        headers=fi_headers_2,
+        headers=lender_headers_2,
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    # FI user tries to update non existing award
+    # Lender user tries to update non existing award
     response = client.put(
         "/applications/100/award",
         json=update_award,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    # FI user tries to update non existing borrower
+    # Lender user tries to update non existing borrower
     response = client.put(
         "/applications/100/borrower",
         json=update_borrower,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    # FI user tries to update the award
+    # Lender user tries to update the award
     response = client.put(
         "/applications/1/award",
         json=update_award,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.json()["award"]["title"] == update_award["title"]
     assert response.status_code == status.HTTP_200_OK
 
-    # FI user tries to update the borrower
+    # Lender user tries to update the borrower
     response = client.put(
         "/applications/1/borrower",
         json=update_borrower,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.json()["borrower"]["legal_name"] == update_borrower["legal_name"]
     assert response.status_code == status.HTTP_200_OK
@@ -367,7 +360,7 @@ def test_approve_application_cicle(client):
     response = client.post(
         "applications/email-sme/1",
         json={"message": "test message"},
-        headers=fi_headers,
+        headers=lender_headers,
     )
 
     assert response.json()["status"] == models.ApplicationStatus.INFORMATION_REQUESTED
@@ -400,7 +393,7 @@ def test_approve_application_cicle(client):
         assert response.json()["application"]["status"] == models.ApplicationStatus.STARTED
         assert response.status_code == status.HTTP_200_OK
 
-        response = client.get("/applications/documents/id/1", headers=fi_headers)
+        response = client.get("/applications/documents/id/1", headers=lender_headers)
         assert response.status_code == status.HTTP_200_OK
 
         # OCP user downloads the document
@@ -415,7 +408,7 @@ def test_approve_application_cicle(client):
     response = client.post(
         "/applications/1/approve-application",
         json=approve_application,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
@@ -423,7 +416,7 @@ def test_approve_application_cicle(client):
     response = client.put(
         "/applications/1/verify-data-field",
         json={"legal_name": True},
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.json()["secop_data_verification"] == {
         "legal_name": True,
@@ -440,7 +433,7 @@ def test_approve_application_cicle(client):
     response = client.post(
         "/applications/1/approve-application",
         json=approve_application,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
@@ -448,7 +441,7 @@ def test_approve_application_cicle(client):
     response = client.put(
         "/applications/documents/1/verify-document",
         json={"verified": True},
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.json()["id"] == 1
     with contextmanager(get_test_db(engine))() as session:
@@ -459,12 +452,12 @@ def test_approve_application_cicle(client):
     response = client.post(
         "/applications/1/approve-application",
         json=approve_application,
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.json()["status"] == models.ApplicationStatus.APPROVED
     assert response.status_code == status.HTTP_200_OK
 
-    # msme uploads contract
+    # Borrower uploads contract
     with open(file, "rb") as file_to_upload:
         response = client.post(
             "/applications/upload-contract",
@@ -483,7 +476,7 @@ def test_approve_application_cicle(client):
     response = client.post(
         "/applications/1/complete-application",
         json={"disbursed_final_amount": 10000},
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["status"] == models.ApplicationStatus.COMPLETED
@@ -492,7 +485,7 @@ def test_approve_application_cicle(client):
 def test_get_applications(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
     client.post("/lenders", json=lender, headers=ocp_headers)
-    fi_headers = client.post("/create-test-user-headers", json=fi_user_with_lender).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     client.post("/create-test-credit-option", json=test_credit_option)
     client.post("/create-test-application", json=application_with_lender_payload)
@@ -509,17 +502,17 @@ def test_get_applications(client):
     response = client.get("/applications/id/1", headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.get("/applications/id/1", headers=fi_headers)
+    response = client.get("/applications/id/1", headers=lender_headers)
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get("/applications/id/1")
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # tries to get a non existing application
-    response = client.get("/applications/id/100", headers=fi_headers)
+    response = client.get("/applications/id/100", headers=lender_headers)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    response = client.get("/applications", headers=fi_headers)
+    response = client.get("/applications", headers=lender_headers)
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get("/applications")

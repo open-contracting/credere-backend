@@ -33,18 +33,12 @@ async def change_email(
                 detail="New email is not valid",
             )
 
-        old_email = application.primary_email
         confirmation_email_token = util.generate_uuid(new_email)
         application.confirmation_email_token = f"{new_email}---{confirmation_email_token}"
         application.pending_email_confirmation = True
 
         message_id = mail.send_new_email_confirmation(
-            client.ses,
-            application.borrower.legal_name,
-            payload.new_email,
-            old_email,
-            confirmation_email_token,
-            application.uuid,
+            client.ses, application, payload.new_email, confirmation_email_token
         )
         models.Message.create(
             session,

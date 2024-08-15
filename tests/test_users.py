@@ -5,13 +5,13 @@ from fastapi import status
 from app.models import UserType
 
 ocp_user = {
-    "email": "OCP_test@noreply.open-contracting.org",
+    "email": "OCP-test@noreply.open-contracting.org",
     "name": "OCP Test User",
     "type": UserType.OCP,
 }
-fi_user = {
-    "email": "fi_test@noreply.open-contracting.org",
-    "name": "FI Test User",
+lender_user = {
+    "email": "lender-test@noreply.open-contracting.org",
+    "name": "Lender Test User",
     "type": UserType.FI,
 }
 
@@ -32,7 +32,7 @@ def test_get_me(client):
 
 def test_create_and_get_user(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.json()["name"] == test_user["name"]
@@ -55,20 +55,20 @@ def test_create_and_get_user(client):
 
     response = client.get(
         "/users?page=0&page_size=5&sort_field=created_at&sort_order=desc",
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_update_user(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     response = client.post("/users", json=test_user, headers=ocp_headers)
     assert response.json()["name"] == test_user["name"]
     assert response.status_code == status.HTTP_200_OK
 
-    # update user 3 since 1 is ocp test user and 2 FI test user
+    # update user 3 since 1 is ocp test user and 2 lender test user
     response = client.put(
         "/users/3",
         json={"email": "new_name@noreply.open-contracting.org"},
@@ -80,7 +80,7 @@ def test_update_user(client):
     response = client.put(
         "/users/3",
         json={"email": "anoter_email@noreply.open-contracting.org"},
-        headers=fi_headers,
+        headers=lender_headers,
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 

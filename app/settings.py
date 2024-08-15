@@ -188,10 +188,3 @@ if app_settings.sentry_dsn:
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
         traces_sample_rate=1.0,
     )
-
-# email template names
-NEW_USER_TEMPLATE_NAME = "credere-NewAccountCreated"
-RESET_PASSWORD_TEMPLATE_NAME = "credere-ResetPassword"
-ACCESS_TO_CREDIT_SCHEME_FOR_MSMES_TEMPLATE_NAME = "credere-AccessToCreditSchemeForMSMEs"
-INTRO_REMINDER_TEMPLATE_NAME = "credere-AccessToCreditSchemeReminder"
-APPLICATION_REMINDER_TEMPLATE_NAME = "credere-ApplicationReminder"

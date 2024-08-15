@@ -12,7 +12,6 @@ from sqlmodel import col
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
-from app.settings import app_settings
 from app.sources import colombia as data_access
 from app.util import commit_and_refresh
 
@@ -537,7 +536,7 @@ async def update_apps_send_notifications(
 ) -> serializers.ApplicationResponse:
     """
     Changes application status from "'ACCEPTED" to "SUBMITTED".
-    Sends a notification to OCP and FI user.
+    Sends a notification to OCP and lender user.
 
     This operation also ensures that the credit product and lender are selected before updating the status.
 
@@ -564,8 +563,8 @@ async def update_apps_send_notifications(
         application.pending_documents = False
 
         try:
-            mail.send_notification_new_app_to_fi(client.ses, application.lender.email_group)
-            mail.send_notification_new_app_to_ocp(client.ses, app_settings.ocp_email_group, application.lender.name)
+            mail.send_notification_new_app_to_lender(client.ses, application.lender.email_group)
+            mail.send_notification_new_app_to_ocp(client.ses, application.lender.name)
 
             message_id = mail.send_application_submission_completed(client.ses, application)
         except ClientError as e:
@@ -650,7 +649,7 @@ async def complete_information_request(
     Changes the application from "INFORMATION REQUESTED" status back to "STARTED" and updates the pending documents
     status.
 
-    This operation also sends a notification about the uploaded documents to the FI.
+    This operation also sends a notification about the uploaded documents to the lender.
 
     :param payload: The application data to update.
     :return: The updated application with borrower, award, lender, and documents details.
@@ -660,7 +659,7 @@ async def complete_information_request(
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
-        message_id = mail.send_upload_documents_notifications_to_fi(client.ses, application.lender.email_group)
+        message_id = mail.send_upload_documents_notifications_to_lender(client.ses, application.lender.email_group)
         models.Message.create(
             session,
             application=application,
@@ -734,27 +733,27 @@ async def confirm_upload_contract(
 
     Changes application status from "APPROVED" to "CONTRACT_UPLOADED".
 
-    Sends an email to SME notifying the current stage of their application.
+    Sends an email to the borrower notifying the current stage of their application.
 
     :param payload: The confirmation data for the uploaded contract.
     :return: The application response containing the updated application and related entities.
     """
     with rollback_on_error(session):
-        fi_message_id, sme_message_id = (
-            mail.send_upload_contract_notification_to_fi(client.ses, application),
+        lender_message_id, borrower_message_id = (
+            mail.send_upload_contract_notification_to_lender(client.ses, application),
             mail.send_upload_contract_confirmation(client.ses, application),
         )
         models.Message.create(
             session,
             application=application,
             type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
-            external_message_id=fi_message_id,
+            external_message_id=lender_message_id,
         )
         models.Message.create(
             session,
             application=application,
             type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
-            external_message_id=sme_message_id,
+            external_message_id=borrower_message_id,
         )
 
         application.contract_amount_submitted = payload.contract_amount_submitted
@@ -841,7 +840,7 @@ async def find_alternative_credit_option(
                 detail=f"There was a problem copying the application.{e}",
             )
 
-        message_id = mail.send_copied_application_notification_to_sme(client.ses, new_application)
+        message_id = mail.send_copied_application_notification_to_borrower(client.ses, new_application)
         models.Message.create(
             session,
             application=new_application,
