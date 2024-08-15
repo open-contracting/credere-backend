@@ -27,7 +27,7 @@ Install the git pre-commit hooks:
 
    pre-commit install
 
-Create a ``.env`` file, using ``.envtest`` as an example.
+Create a ``.env`` file, using ``.env.example`` as an example.
 
 Create development and test databases in PostgreSQL, and set the :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.TEST_DATABASE_URL>` environment variables one at a time, for example:
 
