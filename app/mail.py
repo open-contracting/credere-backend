@@ -327,7 +327,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application) 
                 "BUYER_NAME": application.award.buyer_name,
             },
         ),
-        to_msme=False,
+        to_msme=True,
     )
 
 
