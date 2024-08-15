@@ -1,9 +1,5 @@
-import logging
-
 import httpx
 from email_validator import EmailNotValidError, validate_email
-
-logger = logging.getLogger(__name__)
 
 # The reasons for this configuration were not documented in 427ce63. Assume server and certificate instability.
 client = httpx.Client(transport=httpx.HTTPTransport(retries=3, verify=False), timeout=60)

@@ -1,4 +1,3 @@
-import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -12,8 +11,6 @@ from app.sources import colombia as data_access
 from app.util import commit_and_refresh, get_object_or_404
 
 router = APIRouter()
-
-logger = logging.getLogger(__name__)
 
 
 @router.post(
