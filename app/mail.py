@@ -116,7 +116,7 @@ TEMPLATE_FILES = {
 }
 
 
-def set_destinations(email: str, to_msme: bool = True) -> str:
+def set_destinations(email: str, to_borrower: bool = True) -> str:
     """
     Sets the email destination for the application based on the environment.
 
@@ -125,10 +125,10 @@ def set_destinations(email: str, to_msme: bool = True) -> str:
     If it's not in 'production' environment, it returns the test email receiver set in the application settings.
 
     :param email: The email to be set as destination.
-    :param to_msme: If the email is for an MSME.
+    :param to_borrower: If the email is for a borrower.
     :return: Returns the destination email.
     """
-    if app_settings.environment == "production" or not to_msme:
+    if app_settings.environment == "production" or not to_borrower:
         return email
     return app_settings.test_mail_receiver
 
@@ -156,8 +156,8 @@ def prepare_html(template_name: str, parameters: dict[str, Any]) -> dict[str, st
     }
 
 
-def send_email(ses: SESClient, email: str, data: dict[str, str], to_msme: bool = True) -> str:
-    destinations = set_destinations(email, to_msme)
+def send_email(ses: SESClient, email: str, data: dict[str, str], to_borrower: bool = True) -> str:
+    destinations = set_destinations(email, to_borrower)
 
     logger.info("%s - Email to: %s sent to %s", app_settings.environment, email, destinations)
     response = ses.send_templated_email(
@@ -277,15 +277,15 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_pa
                 ),
             },
         ),
-        to_msme=False,
+        to_borrower=False,
     )
 
 
-def send_upload_contract_notification_to_fi(ses: SESClient, application: Application) -> str:
+def send_upload_contract_notification_to_lender(ses: SESClient, application: Application) -> str:
     """
-    Sends an email to the Financial Institution (FI) to notify them of a new contract submission.
+    Sends an email to the lender to notify them of a new contract submission.
 
-    This function generates an email message for the Financial Institution (FI) associated with
+    This function generates an email message for the lender associated with
     the application, notifying them that a new contract has been submitted and needs their review.
     The email contains a link to login and review the contract.
 
@@ -302,7 +302,7 @@ def send_upload_contract_notification_to_fi(ses: SESClient, application: Applica
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
             },
         ),
-        to_msme=False,
+        to_borrower=False,
     )
 
 
@@ -395,7 +395,7 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temporary_passwor
                 "RESET_PASSWORD_IMAGE": f"{LOCALIZED_IMAGES_BASE_URL}/ResetPassword.png",
             },
         ),
-        to_msme=False,
+        to_borrower=False,
     )
 
 
@@ -506,9 +506,9 @@ def send_mail_submit_reminder(
     )
 
 
-def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str) -> str:
+def send_notification_new_app_to_lender(ses: SESClient, lender_email_group: str) -> str:
     """
-    Sends a notification email about a new application to a financial institution's email group.
+    Sends a notification email about a new application to a lender's email group.
 
     :param ses: SES client instance used to send emails.
     :param lender_email_group: List of email addresses belonging to the lender.
@@ -523,7 +523,7 @@ def send_notification_new_app_to_fi(ses: SESClient, lender_email_group: str) -> 
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
             },
         ),
-        to_msme=False,
+        to_borrower=False,
     )
 
 
@@ -546,24 +546,26 @@ def send_notification_new_app_to_ocp(ses: SESClient, ocp_email_group: str, lende
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
             },
         ),
-        to_msme=False,
+        to_borrower=False,
     )
 
 
-def send_mail_request_to_sme(ses: SESClient, uuid: str, lender_name: str, email_message: str, sme_email: str) -> str:
+def send_mail_request_to_borrower(
+    ses: SESClient, uuid: str, lender_name: str, email_message: str, borrower_email: str
+) -> str:
     """
-    Sends an email request to the Small and Medium-Sized Enterprises (SME) from the lender for additional data.
+    Sends an email request to the borrower for additional data.
 
     :param ses: SES client instance used to send emails.
     :param uuid: Unique identifier for the application.
     :param lender_name: Name of the lender making the request.
     :param email_message: Message content from the lender to be included in the email.
-    :param sme_email: Email address of the SME.
+    :param borrower_email: Email address of the borrower.
     :return: The unique identifier for the sent message.
     """
     return send_email(
         ses,
-        sme_email,
+        borrower_email,
         prepare_html(
             "Request_data_to_SME",
             {
@@ -576,13 +578,13 @@ def send_mail_request_to_sme(ses: SESClient, uuid: str, lender_name: str, email_
     )
 
 
-def send_overdue_application_email_to_fi(ses: SESClient, name: str, email: str, amount: int) -> str:
+def send_overdue_application_email_to_lender(ses: SESClient, name: str, email: str, amount: int) -> str:
     """
-    Sends an email notification to the Financial Institution (FI) about overdue applications.
+    Sends an email notification to the lender about overdue applications.
 
     :param ses: SES client instance used to send emails.
-    :param name: Name of the recipient at the FI.
-    :param email: Email address of the recipient at the FI.
+    :param name: Name of the recipient at the lender.
+    :param email: Email address of the recipient at the lender.
     :param amount: Number of overdue applications.
     :return: The unique identifier for the sent message.
     """
@@ -598,7 +600,7 @@ def send_overdue_application_email_to_fi(ses: SESClient, name: str, email: str, 
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
             },
         ),
-        to_msme=False,
+        to_borrower=False,
     )
 
 
@@ -622,7 +624,7 @@ def send_overdue_application_email_to_ocp(ses: SESClient, name: str) -> str:
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
             },
         ),
-        to_msme=False,
+        to_borrower=False,
     )
 
 
@@ -673,9 +675,9 @@ def send_rejected_application_email_without_alternatives(ses: SESClient, applica
     )
 
 
-def send_copied_application_notification_to_sme(ses: SESClient, application: Application) -> str:
+def send_copied_application_notification_to_borrower(ses: SESClient, application: Application) -> str:
     """
-    Sends an email notification to the SME (Small and Medium-Sized Enterprises) when an application
+    Sends an email notification to the borrower when an application
     has been copied, allowing them to continue with the application process.
 
     :param ses: SES client instance used to send emails.
@@ -696,13 +698,13 @@ def send_copied_application_notification_to_sme(ses: SESClient, application: App
     )
 
 
-def send_upload_documents_notifications_to_fi(ses: SESClient, email: str) -> str:
+def send_upload_documents_notifications_to_lender(ses: SESClient, email: str) -> str:
     """
-    Sends an email notification to the Financial Institution (FI) to notify them that new
+    Sends an email notification to the lender to notify them that new
     documents have been uploaded and are ready for their review.
 
     :param ses: SES client instance used to send emails.
-    :param email: Email address of the Financial Institution to receive the notification.
+    :param email: Email address of the lender to receive the notification.
     :return: The unique identifier for the sent message.
     """
     return send_email(
@@ -716,5 +718,5 @@ def send_upload_documents_notifications_to_fi(ses: SESClient, email: str) -> str
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
             },
         ),
-        to_msme=False,
+        to_borrower=False,
     )

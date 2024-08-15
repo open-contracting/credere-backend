@@ -80,12 +80,12 @@ async def get_ocp_statistics_opt_in(
     session: Session = Depends(get_db),
 ) -> serializers.StatisticOptInResponse:
     """
-    Retrieve OCP statistics for MSME opt-in.
+    Retrieve OCP statistics for borrower opt-in.
 
     This secure endpoint is accessible only to users with the OCP role. It retrieves
-    statistics related to MSME opt-in and the count of FIs chosen by MSMEs in the Online Credit Platform (OCP).
+    statistics related to borrower opt-in and the count of lenders chosen by borrower.
 
-    :return: Response containing the OCP statistics for MSME opt-in.
+    :return: Response containing the OCP statistics for borrower opt-in.
     """
     if result := (
         session.query(Statistic)
@@ -108,17 +108,17 @@ async def get_ocp_statistics_opt_in(
     "/statistics-fi",
     tags=["statistics"],
 )
-async def get_fi_statistics(
+async def get_lender_statistics(
     session: Session = Depends(get_db), user: User = Depends(dependencies.get_user)
 ) -> serializers.StatisticResponse:
     """
-    Retrieve statistics for a Financial Institution (FI).
+    Retrieve statistics for a lender.
 
-    This endpoint retrieves statistics specific to a Financial Institution (FI).
+    This endpoint retrieves statistics specific to a lender.
     It provides general statistics such as the number of applications, awards, and borrowers
-    associated with the FI.
+    associated with the lender.
 
-    :return: Response containing the statistics for the Financial Institution.
+    :return: Response containing the statistics for the lender.
     """
     if result := (
         session.query(Statistic)

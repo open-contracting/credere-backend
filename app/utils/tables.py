@@ -232,7 +232,7 @@ def create_borrower_table(borrower: models.Borrower, application: models.Applica
 
 def create_documents_table(documents: list[models.BorrowerDocument], lang: str) -> Table:
     """
-    Creates a table of MSME information and documents.
+    Creates a table of borrower information and documents.
 
     :param documents: List of documents.
     :param lang: The lang requested.
