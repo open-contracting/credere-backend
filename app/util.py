@@ -10,6 +10,7 @@ from typing import Any, Callable, Generator, TypeVar
 
 import httpx
 import orjson
+from email_validator import EmailNotValidError, validate_email
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlmodel import SQLModel, col
@@ -87,6 +88,19 @@ def get_secret_hash(nit_entidad: str) -> str:
     message = nit_entidad.encode()
     key = app_settings.hash_key.encode()
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
+
+
+def is_valid_email(email: str) -> bool:
+    """
+    Check if the given email is valid.
+
+    :param email: The email address to validate.
+    :return: True if the email is valid, False otherwise.
+    """
+    try:
+        return bool(validate_email(email, allow_smtputf8=False))
+    except EmailNotValidError:
+        return False
 
 
 def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:

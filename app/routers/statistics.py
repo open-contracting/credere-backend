@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends
@@ -9,8 +8,6 @@ import app.utils.statistics as statistics_utils
 from app import dependencies, serializers
 from app.db import get_db
 from app.models import Statistic, StatisticCustomRange, StatisticType, User
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
