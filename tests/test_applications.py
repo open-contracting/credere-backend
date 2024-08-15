@@ -237,7 +237,7 @@ def test_approve_application_cicle(client):
     response = client.get("/applications/id/1", headers=fi_headers_2)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    new_email = "new_test_email@example.com"
+    new_email = "newtestemail@gmail.com"
     new_wrong_email = "wrong_email@@noreply!$%&/().open-contracting.org"
 
     # borrower tries to change their email to a non valid one

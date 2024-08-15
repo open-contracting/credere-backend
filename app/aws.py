@@ -35,6 +35,7 @@ def generate_password_fn() -> str:
     return password
 
 
+# https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html#cognito-user-pools-computing-secret-hash
 def get_secret_hash(username: str) -> str:
     """
     Generates a secret hash for the given username using Cognito client secret and Cognito client id.

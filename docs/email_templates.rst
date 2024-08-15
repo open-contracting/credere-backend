@@ -1,31 +1,10 @@
 Email templates
 ===============
 
-This project uses SES services from AWS to store email templates and send emails.
+This project uses :doc:`aws/ses` to store email templates and send emails.
 
-AWS SES Configuration
----------------------
-
-Verified identities
-~~~~~~~~~~~~~~~~~~~
-
-If our AWS SES account is in sandbox status (most likely if it’s an AWS account for testing purposes), to be able to send or receive mail through SES, we need to add both the sender’s and receiver’s email as verified identities.
-
-Receiving failure and error notifications from SES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In the AWS Simple Notification Service, we must add:
-
--  A Topic and a Subscription. The subscription must include the email to which the notifications will be sent. An access policy must also be added to the subscription, allowing the SES service to use it.
-
-In AWS SES, for the verified entity sending the mail, we must set:
-
--  Notifications: In the Notifications tab, we must select the notifications we want to receive (Bounce, Delivery Feedback, Complaint Feedback) and link it to the topic we created through the AWS Simple Notification Service.
-
--  A configuration set, that is linked to our AWS Simple email Service Topic, and in the “Event types” tabs que must select the eventes que want to track (Hard bounces, Complaints, Rejects, Rendering failures)
-
-Managing email templates
-------------------------
+Managing templates
+------------------
 
 There are two types of templates, the ones stored in the source code and AWS and the ones used by the source code only.
 

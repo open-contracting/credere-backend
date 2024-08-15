@@ -1,6 +1,15 @@
 Contributing
 ============
 
+.. toctree::
+   :caption: contents
+
+   sqlalchemy
+
+.. seealso::
+
+   `ADRs for models.py and sources/colombia.py <https://drive.google.com/drive/folders/1WtrwJH3kSQNxt9K-sa1s4O8HbwkLzcEA>`__
+
 Setup
 -----
 
@@ -24,13 +33,50 @@ Create development and test databases in PostgreSQL, and set the ``DATABASE_URL`
 
 .. code-block:: bash
 
-   DATABASE_URL=postgresql://{username}:{password}@{host_adress:port}/{db_name}
+   DATABASE_URL=postgresql://{username}:{password}@{host:port}/{db_name}
 
 Run database migrations:
 
 .. code-block:: bash
 
    alembic upgrade head
+
+Repository structure
+--------------------
+
+.. tree app/ -I '__pycache__'
+
+.. code-block:: none
+
+   app/
+   ├── __init__.py
+   ├── auth.py              # Permissions and JWT token verification
+   ├── aws.py               # Amazon Web Services API clients
+   ├── commands.py          # Typer commands
+   ├── db.py                # SQLAlchemy database operations and session management
+   ├── dependencies.py      # FastAPI dependencies
+   ├── exceptions.py        # Definitions of exceptions raised by this application
+   ├── i18n.py              # Internationalization support
+   ├── mail.py              # Email sending
+   ├── main.py              # FastAPI application entry point
+   ├── models.py            # SQLAlchemy models
+   ├── parsers.py           # Pydantic models to parse query string arguments
+   ├── routers              # FastAPI routers
+   │   ├── __init__.py
+   │   ├── guest            # FastAPI routers for passwordless URLs
+   │   │   └── {...}.py
+   │   └── {...}.py
+   ├── serializers.py       # Pydantic models to serialize API responses
+   ├── settings.py          # Environment settings and Sentry configuration
+   ├── sources              # Data sources for contracts, awards, and borrowers
+   │   ├── __init__.py
+   │   ├── util.py
+   │   └── colombia.py
+   ├── util.py              # Utilities used by routers, background tasks and commands
+   └── utils
+       ├── __init__.py
+       ├── statistics.py    # Statistics functions used by statistics routers, background tasks and commands
+       └── tables.py        # Functions for generating tables in downloadable documents
 
 Tasks
 -----
@@ -40,8 +86,8 @@ Update requirements
 
 See `Requirements <https://ocp-software-handbook.readthedocs.io/en/latest/python/requirements.html>`__ in the OCP Software Development Handbook.
 
-Run application
-~~~~~~~~~~~~~~~
+Run server
+~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -70,6 +116,22 @@ Generate coverage HTML report:
 
 You can the open ``htmlcov/index.html`` in a browser.
 
+Run shell
+~~~~~~~~~
+
+For example:
+
+.. code-block:: python
+
+   from sqlalchemy import create_engine
+   from sqlalchemy.orm import Session
+   from sqlmodel import col
+   from app import models
+   engine = create_engine("postgresql:///credere", echo=True)
+   session = Session(engine)
+
+And then run queries with ``session``.
+
 Create database migration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -94,7 +156,9 @@ Build documentation
 
 .. admonition:: One-time setup
 
-   pip install furo sphinx-autobuild
+   .. code-block:: bash
+
+      pip install -r docs/requirements.txt
 
 .. code-block:: bash
 
@@ -124,61 +188,6 @@ To delete the image (e.g. when recreating it), run:
 Conventions
 -----------
 
-SQLAlchemy Query API
-~~~~~~~~~~~~~~~~~~~~
-
-Use the `Legacy Query API <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html>`__. (The project started with SQLAlchemy 1.4. `2.0 syntax <https://docs.sqlalchemy.org/en/20/changelog/migration_20.html#migration-20-query-usage>`__ is more verbose.)
-
-JOIN
-^^^^
-
--  For the ``Award`` model, use ``join(Award, Award.id == Application.award_id)``, because we only count applications or borrowers, not awards. (``join(Award, Award.borrower_id == Borrower.id)`` might count awards, undesirably.)
--  For all other models, use ``join(model)``, instead of ``join(model, model.foreign_key == other.pk)``.
--  If an ON clause is needed, use the order ``join(model, model... == other...)``, instead of ``join(model, other... == model...)``.
-
-WHERE
-^^^^^
-
--  Use `filter <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter>`__, instead of `filter_by <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter_by>`__, to avoid ambiguity.
--  Use ``filter(a, b, c)``, instead of ``filter(a).filter(b).filter(c)``.
-
-Cheatsheet
-^^^^^^^^^^
-
-``Query`` instance methods can be chained **in any order**, but typically:
-
--  `distinct <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.distinct>`__
--  `join <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.join>`__
-
-   .. note:: "the order in which each call to the join() method occurs is important."
-
--  `outerjoin <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.outerjoin>`__
--  `options <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.options>`__ with `joinedload <https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#sqlalchemy.orm.joinedload>`__ or `defaultload <https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#sqlalchemy.orm.defaultload>`__
--  `filter <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.filter>`__, not `where <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.where>`__
--  `group_by <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.group_by>`__
--  `having <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.having>`__
--  `order_by <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.order_by>`__
--  `limit <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.limit>`__
--  `offset <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.offset>`__
-
-``Query`` instances must be executed with one of:
-
--  SELECT
-
-   -  ``__iter__``
-   -  `all <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.all>`__: all rows as ``list``
-   -  `first <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.first>`__: at most one row
-   -  `one <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.one>`__: exactly one row, or error
-   -  `scalar <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.scalar>`__: the first column of `one_or_none <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.one_or_none>`__
-   -  `count <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.count>`__: row count as ``int``
-
-   .. attention: `exists() <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.exists>`__, unlike the Django ORM, doesn't execute the query.
-
--  `update <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.update>`__
--  `delete <https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.delete>`__
-
-.. attention:: `My Query does not return the same number of objects as query.count() tells me - why? <https://docs.sqlalchemy.org/en/20/faq/sessions.html#faq-query-deduplicating>`__
-
 API endpoints naming conventions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -205,29 +214,3 @@ For actions or operations that do not fit into the RESTful resource model, consi
 Avoid using abbreviations or acronyms unless they are widely understood and agreed upon within your development team or industry.
 
 Ensure that the endpoint names are self-explanatory and reflect the purpose of the API operation.
-
-Deployment
-----------
-
-First admin user set up
-~~~~~~~~~~~~~~~~~~~~~~~
-
-#. Create a user in Cognito
-
-   -  Create the user manually in the pool from the AWS console.
-   -  Mark “Don’t send invitation” and mark the option of verified email address.
-   -  After adding the new user to the pool, get the username from Cognito.
-
-#. Create the user in the Credere database
-
-   Insert in the user table from the Credere database a record for the user.
-
-   .. code-block:: none
-
-      INSERT INTO public.credere_user(type, language, email, name, external_id) VALUES (“OCP”, “es”, {EMAIL}, “Admin User”, {COGNITO_USER_ID});
-
-#. Reset the password through the Frontend
-
-   -  Go to the login page
-   -  Click “Forgot Password?”
-   -  You will receive the email to set the password and after that configure the MFA for the new user.

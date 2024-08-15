@@ -13,7 +13,7 @@ VERSION: str = "0.1.1"
 def sentry_filter_transactions(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
     """
     Filter transactions to be sent to Sentry.
-    This function prevents transactions that interact with AWS Cognito from being sent to Sentry.
+    This function prevents transactions that interact with Cognito from being sent to Sentry.
 
     :param event: The event data.
     :param hint: A dictionary of extra data passed to the function.

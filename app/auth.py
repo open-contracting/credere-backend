@@ -111,7 +111,7 @@ public_keys = None
 
 def _get_public_keys() -> JWKS:
     """
-    Retrieves the public keys from the well-known JWKS (JSON Web Key Set) endpoint of AWS Cognito.
+    Retrieves the public keys from the well-known JWKS (JSON Web Key Set) endpoint of Cognito.
 
     The function caches the fetched keys in a global variable `public_keys` to avoid repetitive calls
     to the endpoint.
@@ -121,6 +121,7 @@ def _get_public_keys() -> JWKS:
     global public_keys
     if public_keys is None:
         public_keys = JWKS.model_validate(
+            # https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
             requests.get(
                 f"https://cognito-idp.{app_settings.aws_region}.amazonaws.com/"
                 f"{app_settings.cognito_pool_id}/.well-known/jwks.json"
