@@ -4,7 +4,9 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any, Callable, Generator
 
+import click
 import typer
+import typer.cli
 from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
@@ -18,7 +20,16 @@ from app.sources import colombia as data_access
 
 logger = logging.getLogger(__name__)
 
-app = typer.Typer()
+
+class OrderedGroup(typer.cli.TyperCLIGroup):
+    # https://github.com/fastapi/typer/blob/adca3254f8c2adc8d9b71b5cdea65c41770bd9b9/typer/cli.py#L55-L57
+    # https://github.com/pallets/click/blob/e16088a8569597c55f108ea89af6245898249ec2/src/click/core.py#L1684-L1686
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        self.maybe_add_run(ctx)
+        return list(self.commands)
+
+
+app = typer.Typer(cls=OrderedGroup)
 
 
 # Called by fetch-award* commands.
@@ -164,60 +175,6 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
 
 
 @app.command()
-def remove_dated_application_data() -> None:
-    """
-    Clear personal data and delete borrower documents from applications that have been in a final state for some time.
-    If the borrower has no other active applications, clear the borrower's personal data.
-    """
-    with contextmanager(get_db)() as session:
-        for application in models.Application.archivable(session).options(
-            joinedload(models.Application.borrower),
-            joinedload(models.Application.borrower_documents),
-        ):
-            with rollback_on_error(session):
-                application.award.previous = True
-                application.primary_email = ""
-                application.archived_at = datetime.utcnow()
-
-                for document in application.borrower_documents:
-                    session.delete(document)
-
-                # Clear the associated borrower's personal data if they have no other active applications.
-                if not session.query(
-                    models.Application.unarchived(session)
-                    .filter(
-                        models.Application.borrower_id == application.borrower_id,
-                        models.Application.id != application.id,
-                    )
-                    .exists()
-                ).scalar():
-                    application.borrower.legal_name = ""
-                    application.borrower.email = ""
-                    application.borrower.address = ""
-                    application.borrower.legal_identifier = ""
-                    application.borrower.source_data = {}
-
-                session.commit()
-
-
-@app.command()
-def update_applications_to_lapsed() -> None:
-    """
-    Lapse applications that have been waiting for the borrower to respond for some time.
-    """
-    with contextmanager(get_db)() as session:
-        for application in models.Application.lapseable(session).options(
-            joinedload(models.Application.borrower),
-            joinedload(models.Application.borrower_documents),
-        ):
-            with rollback_on_error(session):
-                application.status = models.ApplicationStatus.LAPSED
-                application.application_lapsed_at = datetime.utcnow()
-
-                session.commit()
-
-
-@app.command()
 def send_reminders() -> None:
     """
     Send reminders to borrowers about PENDING and ACCEPTED applications.
@@ -295,6 +252,23 @@ def send_reminders() -> None:
                     logger.info("Mail sent and status updated")
 
                     session.commit()
+
+
+@app.command()
+def update_applications_to_lapsed() -> None:
+    """
+    Lapse applications that have been waiting for the borrower to respond for some time.
+    """
+    with contextmanager(get_db)() as session:
+        for application in models.Application.lapseable(session).options(
+            joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
+        ):
+            with rollback_on_error(session):
+                application.status = models.ApplicationStatus.LAPSED
+                application.application_lapsed_at = datetime.utcnow()
+
+                session.commit()
 
 
 @app.command()
@@ -407,6 +381,43 @@ def sla_overdue_applications() -> None:
             )
 
         session.commit()
+
+
+@app.command()
+def remove_dated_application_data() -> None:
+    """
+    Clear personal data and delete borrower documents from applications that have been in a final state for some time.
+    If the borrower has no other active applications, clear the borrower's personal data.
+    """
+    with contextmanager(get_db)() as session:
+        for application in models.Application.archivable(session).options(
+            joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
+        ):
+            with rollback_on_error(session):
+                application.award.previous = True
+                application.primary_email = ""
+                application.archived_at = datetime.utcnow()
+
+                for document in application.borrower_documents:
+                    session.delete(document)
+
+                # Clear the associated borrower's personal data if they have no other active applications.
+                if not session.query(
+                    models.Application.unarchived(session)
+                    .filter(
+                        models.Application.borrower_id == application.borrower_id,
+                        models.Application.id != application.id,
+                    )
+                    .exists()
+                ).scalar():
+                    application.borrower.legal_name = ""
+                    application.borrower.email = ""
+                    application.borrower.address = ""
+                    application.borrower.legal_identifier = ""
+                    application.borrower.source_data = {}
+
+                session.commit()
 
 
 if __name__ == "__main__":
