@@ -159,6 +159,18 @@ Read the next pages in this section to learn about style guides, and the :doc:`.
 -  `Library and Web API <https://ocp-software-handbook.readthedocs.io/en/latest/general/api.html#web-api>`__
 -  `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__
 
+Style guide
+~~~~~~~~~~~
+
+In Python code and documentation:
+
+-  Use "lender", not "FI" or "financial institution".
+-  Use "borrower", not "MSME", "SME" or "small and medium-sized enterprises".
+
+.. note::
+
+   Some endpoints, enums and template names cannot be made to conform to this style guide, without migrating the database, updating the frontend or updating the email templates in :doc:`../aws/ses`.
+
 Update requirements
 ~~~~~~~~~~~~~~~~~~~
 

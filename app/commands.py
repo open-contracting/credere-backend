@@ -298,9 +298,9 @@ def update_statistics() -> None:
             )
 
             # Get opt-in statistics
-            statistics_msme_opt_in = statistics_utils.get_borrower_opt_in_stats(session)
+            statistics_opt_in = statistics_utils.get_borrower_opt_in_stats(session)
             for key in keys_to_serialize:
-                statistics_msme_opt_in[key] = [data.model_dump() for data in statistics_msme_opt_in[key]]
+                statistics_opt_in[key] = [data.model_dump() for data in statistics_opt_in[key]]
 
             models.Statistic.create_or_update(
                 session,
@@ -309,7 +309,7 @@ def update_statistics() -> None:
                     models.Statistic.type == models.StatisticType.MSME_OPT_IN_STATISTICS,
                 ],
                 type=models.StatisticType.MSME_OPT_IN_STATISTICS,
-                data=statistics_msme_opt_in,
+                data=statistics_opt_in,
             )
 
             # Get general KPIs for every lender
@@ -369,7 +369,7 @@ def sla_overdue_applications() -> None:
                 session.commit()
 
         for lender_id, lender_data in overdue_lenders.items():
-            message_id = mail.send_overdue_application_email_to_fi(
+            message_id = mail.send_overdue_application_email_to_lender(
                 aws.ses_client, lender_data["name"], lender_data["count"], lender_data["email"]
             )
             models.Message.create(

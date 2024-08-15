@@ -155,7 +155,7 @@ async def approve_application(
     Approve an application:
     Changes application status from "STARTED" to "APPROVED".
 
-    Sends an email to  SME notifying the current stage of their application.
+    Sends an email to the borrower notifying the current stage of their application.
 
     :param payload: The approved application data.
     :return: The approved application with its associated relations.
@@ -507,7 +507,7 @@ async def get_applications(
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
     """
-    Get a paginated list of submitted applications for a specific FI user.
+    Get a paginated list of submitted applications for a specific lender user.
 
     :param page: The page number of the application list (default: 0).
     :param page_size: The number of applications per page (default: 10).
@@ -547,8 +547,8 @@ async def get_applications(
     tags=["applications"],
     response_model=models.ApplicationWithRelations,
 )
-async def email_sme(
-    payload: parsers.ApplicationEmailSme,
+async def email_borrower(
+    payload: parsers.ApplicationEmailBorrower,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: aws.Client = Depends(dependencies.get_aws_client),
@@ -560,13 +560,13 @@ async def email_sme(
     ),
 ) -> Any:
     """
-    Send an email to SME and update the application status:
+    Send an email to the borrower and update the application status:
     Changes the application status from "STARTED" to "INFORMATION_REQUESTED".
-    sends an email to SME notifying the request.
+    sends an email to the borrower notifying the request.
 
-    :param payload: The payload containing the message to send to SME.
+    :param payload: The payload containing the message to send to the borrower.
     :return: The updated application with its associated relations.
-    :raises HTTPException: If there's an error in sending the email to SME.
+    :raises HTTPException: If there's an error in sending the email to the borrower.
     """
 
     with rollback_on_error(session):
@@ -575,7 +575,7 @@ async def email_sme(
         application.pending_documents = True
 
         try:
-            message_id = mail.send_mail_request_to_sme(
+            message_id = mail.send_mail_request_to_borrower(
                 client.ses,
                 application.uuid,
                 application.lender.name,

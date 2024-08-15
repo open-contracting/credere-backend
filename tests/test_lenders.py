@@ -4,9 +4,9 @@ from fastapi import status
 
 from app.models import BorrowerSize, CreditType, UserType
 
-fi_user = {
-    "email": "FI_user@noreply.open-contracting.org",
-    "name": "Test FI",
+lender_user = {
+    "email": "lender-user@noreply.open-contracting.org",
+    "name": "Test lender",
     "type": UserType.FI,
 }
 
@@ -103,12 +103,12 @@ lender_with_credit_product = {
 
 def test_create_credit_product(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     client.post("/lenders", json=lender, headers=ocp_headers)
 
-    # FI tries to create credit product
-    response = client.post("/lenders/1/credit-products", json=credit_product, headers=fi_headers)
+    # Lender tries to create credit product
+    response = client.post("/lenders/1/credit-products", json=credit_product, headers=lender_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     with warnings.catch_warnings():
@@ -143,7 +143,7 @@ def test_create_credit_product(client):
 
 def test_create_lender(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     response = client.post("/lenders/", json=lender, headers=ocp_headers)
     assert response.json()["id"] == 1
@@ -153,13 +153,13 @@ def test_create_lender(client):
     response = client.post("/lenders/", json=lender, headers=ocp_headers)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    response = client.post("/lenders/", json=lender, headers=fi_headers)
+    response = client.post("/lenders/", json=lender, headers=lender_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_create_lender_with_credit_product(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     with warnings.catch_warnings():
         # "Pydantic serializer warnings" "Expected `decimal` but got `float` - serialized value may not be as expected"
@@ -168,14 +168,14 @@ def test_create_lender_with_credit_product(client):
         response = client.post("/lenders/", json=lender_with_credit_product, headers=ocp_headers)
         assert response.status_code == status.HTTP_200_OK
 
-    # fi user tries to create lender
-    response = client.post("/lenders/", json=lender_with_credit_product, headers=fi_headers)
+    # lender user tries to create lender
+    response = client.post("/lenders/", json=lender_with_credit_product, headers=lender_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_get_lender(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     response = client.post("/lenders/", json=lender, headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
@@ -183,7 +183,7 @@ def test_get_lender(client):
     response = client.get("/lenders/", headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.get("/lenders/1", headers=fi_headers)
+    response = client.get("/lenders/1", headers=lender_headers)
     assert response.status_code == status.HTTP_200_OK
 
     response = client.get("/lenders/100", headers=ocp_headers)
@@ -192,7 +192,7 @@ def test_get_lender(client):
 
 def test_update_lender(client):
     ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    fi_headers = client.post("/create-test-user-headers", json=fi_user).json()
+    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
 
     response = client.post("/lenders/", json=lender, headers=ocp_headers)
     assert response.status_code == status.HTTP_200_OK
@@ -201,8 +201,8 @@ def test_update_lender(client):
     assert response.json()["name"] == lender_modified["name"]
     assert response.status_code == status.HTTP_200_OK
 
-    # fi user tries to update lender
-    response = client.put("/lenders/1", json=lender_modified, headers=fi_headers)
+    # Lender user tries to update lender
+    response = client.put("/lenders/1", json=lender_modified, headers=lender_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     response = client.put("/lenders/1", json=lender_modified_not_valid, headers=ocp_headers)
