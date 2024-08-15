@@ -219,7 +219,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         "accepted_percentage": round((accepted_count / applications_count * 100), 2) if applications_count else 0,
         "unique_businesses_contacted_by_credere": session.query(Borrower).count(),
         "accepted_count_unique": base_borrower_group.filter(accepted).count(),
-        "approved_count": session.query(Application.id).filter(approved).group_by(Application.id).count(),
+        "approved_count": base_application.filter(approved).count(),
         "total_credit_disbursed": _scalar_or_zero(
             session.query(func.sum(Application.disbursed_final_amount)).filter(approved),
             formatter=int,
