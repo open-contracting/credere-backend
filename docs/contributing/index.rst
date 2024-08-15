@@ -154,12 +154,6 @@ This attempts to auto-detect the changes made to ``models.py``, subject to `limi
 Build documentation
 ~~~~~~~~~~~~~~~~~~~
 
-.. admonition:: One-time setup
-
-   .. code-block:: bash
-
-      pip install -r docs/requirements.txt
-
 .. code-block:: bash
 
    sphinx-autobuild -q docs docs/_build/html --watch .
