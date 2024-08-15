@@ -79,6 +79,8 @@ Repository structure
 Run commands
 ------------
 
+.. _dev-server:
+
 Run server
 ~~~~~~~~~~
 
@@ -161,6 +163,17 @@ Update requirements
 ~~~~~~~~~~~~~~~~~~~
 
 See `Requirements <https://ocp-software-handbook.readthedocs.io/en/latest/python/requirements.html>`__ in the OCP Software Development Handbook.
+
+Update API
+~~~~~~~~~~
+
+.. seealso:: :doc:`../api/index`
+
+After making changes, regenerate the OpenAPI document by running the server and:
+
+.. code-block:: bash
+
+   curl http://localhost:8000/openapi.json -o docs/_static/openapi.json
 
 Update models
 ~~~~~~~~~~~~~

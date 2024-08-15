@@ -34,6 +34,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
 html_static_path = ["_static"]
+html_additional_pages = {
+    "api/redoc": "redoc.html",
+    "api/swagger-ui": "swagger-ui.html",
+}
 
 # -- Extension configuration -------------------------------------------------
 
