@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
+# Called by fetch-award* commands.
 def _create_complete_application(
     award_entry: dict[str, str], db_provider: Callable[[], Generator[Session, None, None]]
 ) -> None:
@@ -421,6 +422,7 @@ def sla_overdue_applications() -> None:
             )
             models.Message.create(
                 session,
+                # NOTE: A random application that might not even be to the lender, but application is not nullable.
                 application=application,
                 type=models.MessageType.OVERDUE_APPLICATION,
                 external_message_id=message_id,

@@ -17,7 +17,7 @@ Install requirements:
 
 .. code-block:: bash
 
-   pip install -r requirements_dev.txt
+   pip install -r requirements_dev.txt -r docs/requirements.txt
 
 If requirements are updated, re-run this command.
 
@@ -29,7 +29,7 @@ Install the git pre-commit hooks:
 
 Create a ``.env`` file, using ``.envtest`` as an example.
 
-Create development and test databases in PostgreSQL, and set the ``DATABASE_URL`` and ``TEST_DATABASE_URL`` environment variables, for example:
+Create development and test databases in PostgreSQL, and set the :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.TEST_DATABASE_URL>` environment variables one at a time, for example:
 
 .. code-block:: bash
 
@@ -93,10 +93,12 @@ Run server
 
    uvicorn app.main:app --reload
 
+.. _dev-tests:
+
 Run tests
 ~~~~~~~~~
 
-The ``DATABASE_URL`` and ``TEST_DATABASE_URL`` environment variables must be set to the test database.
+The :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DATABASE_URL<app.settings.TEST_DATABASE_URL>` environment variables must be set to the test database.
 
 .. code-block:: bash
 
@@ -179,8 +181,10 @@ To delete the image (e.g. when recreating it), run:
 
    docker rmi <your-image-id>
 
-Conventions
+Development
 -----------
+
+Read this section and the :doc:`../api/index` to learn about helper methods and application logic.
 
 API endpoints naming conventions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

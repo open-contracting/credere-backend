@@ -12,3 +12,4 @@ Credere backend
    aws/index
    deployment/index
    contributing/index
+   api/index

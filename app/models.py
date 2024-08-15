@@ -134,74 +134,86 @@ class ApplicationStatus(StrEnum):
     """
     The different workflows are:
 
-    -  PENDING -> LAPSED
-    -  PENDING -> DECLINED
-    -  PENDING -> ACCEPTED -> LAPSED
-    -  PENDING -> ACCEPTED -> SUBMITTED -> STARTED
+    -  PENDING → LAPSED
+    -  PENDING → DECLINED
+    -  PENDING → ACCEPTED → LAPSED
+    -  PENDING → ACCEPTED → SUBMITTED → STARTED (→ …)
 
-    From STARTED:
+    And then, from STARTED:
 
-    -  -> INFORMATION_REQUESTED -> LAPSED
-    -  -> INFORMATION_REQUESTED -> STARTED
-    -  -> REJECTED
-    -  -> APPROVED -> CONTRACT_UPLOADED -> COMPLETED
-    -  -> APPROVED -> CONTRACT_UPLOADED -> REJECTED
+    -  → INFORMATION_REQUESTED → LAPSED
+    -  → INFORMATION_REQUESTED → STARTED (→ …)
+    -  → REJECTED
+    -  → APPROVED → CONTRACT_UPLOADED → COMPLETED
+    -  → APPROVED → CONTRACT_UPLOADED → REJECTED
     """
 
-    #: | Credere sends an invitation to the borrower.\
-    #: | (:ref:`fetch-awards<cmd-fetch-awards>`)
+    #: Credere sends an invitation to the borrower.\
+    #:
+    #: (:doc:`fetch-awards</commands>`)
     PENDING = "PENDING"
-    #: | Borrower declines the invitation.
-    #: | (``/applications/decline``)
+    #: Borrower declines the invitation.
+    #:
+    #: (``/applications/decline``)
     DECLINED = "DECLINED"
-    #: | Borrower accepts the invitation.
-    #: | (``/applications/access-scheme``)
+    #: Borrower accepts the invitation.
+    #:
+    #: (``/applications/access-scheme``)
     ACCEPTED = "ACCEPTED"
-    #: | Borrower submits its application.
-    #: | (``/applications/submit``)
+    #: Borrower submits its application.
+    #:
+    #: (``/applications/submit``)
     SUBMITTED = "SUBMITTED"
-    #: | Lender start reviewing the application.
-    #: | (``/applications/{id}/start``)
+    #: Lender start reviewing the application.
+    #:
+    #: (``/applications/{id}/start``)
     STARTED = "STARTED"
     #: Lender rejects the application, after the borrower either submits its application, updates a document,
     #: or uploads its contract and final contract amount.
     #:
     #: (``/applications/{id}/reject-application``)
     REJECTED = "REJECTED"
-    #: | Lender requests the borrower to update a document.
-    #: | (``/applications/email-sme/{id}``)
+    #: Lender requests the borrower to update a document.
+    #:
+    #: (``/applications/email-sme/{id}``)
     INFORMATION_REQUESTED = "INFORMATION_REQUESTED"
-    #: | Borrower doesn't accept, or doesn't submit the application or information requested.
-    #: | (:ref:`update-applications-to-lapsed<cmd-update-applications-to-lapsed>`)
+    #: Borrower doesn't accept, or doesn't submit the application or information requested.
+    #:
+    #: (:doc:`update-applications-to-lapsed</commands>`)
     LAPSED = "LAPSED"
-    #: | Lender pre-approves the application, and Credere asks the borrower to upload its contract.
-    #: | (``/applications/{id}/approve-application``)
+    #: Lender pre-approves the application, and Credere asks the borrower to upload its contract.
+    #:
+    #: (``/applications/{id}/approve-application``)
     APPROVED = "APPROVED"
-    #: | Borrower uploads its contract and final contract amount.
-    #: | (``/applications/confirm-upload-contract``)
+    #: Borrower uploads its contract and final contract amount.
+    #:
+    #: (``/applications/confirm-upload-contract``)
     CONTRACT_UPLOADED = "CONTRACT_UPLOADED"
-    #: | Lender sets the final credit disbursed.
-    #: | (``/applications/{id}/complete-application``)
+    #: Lender sets the final credit disbursed.
+    #:
+    #: (``/applications/{id}/complete-application``)
     COMPLETED = "COMPLETED"
 
 
 class BorrowerStatus(StrEnum):
+    #: The borrower may receive Credere invitations.
     ACTIVE = "ACTIVE"
+    #: The borrower has opted out of Credere entirely.
     DECLINE_OPPORTUNITIES = "DECLINE_OPPORTUNITIES"
 
 
 class MessageType(StrEnum):
-    #: PENDING (:ref:`fetch-awards<cmd-fetch-awards>`)
+    #: PENDING (:doc:`fetch-awards</commands>`)
     BORROWER_INVITATION = "BORROWER_INVITATION"
-    #: PENDING (:ref:`send-reminders<cmd-send-reminders>`)
+    #: PENDING (:doc:`send-reminders</commands>`)
     BORROWER_PENDING_APPLICATION_REMINDER = "BORROWER_PENDING_APPLICATION_REMINDER"
-    #: ACCEPTED (:ref:`send-reminders<cmd-send-reminders>`)
+    #: ACCEPTED (:doc:`send-reminders</commands>`)
     BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
     #: ACCEPTED → SUBMITTED (``/applications/submit``)
     SUBMISSION_COMPLETED = "SUBMISSION_COMPLETED"
-    #: Unused, but corresponding message sent by ``/applications/submit`` :issue:`330`
+    #: Unused, but the corresponding message is sent by ``/applications/submit`` :issue:`330`
     NEW_APPLICATION_OCP = "NEW_APPLICATION_OCP"
-    #: Unused, but corresponding message sent by ``/applications/submit`` :issue:`330`
+    #: Unused, but the corresponding message is sent by ``/applications/submit`` :issue:`330`
     NEW_APPLICATION_FI = "NEW_APPLICATION_FI"
     #: STARTED → INFORMATION_REQUESTED (``/applications/email-sme/{id}``)
     FI_MESSAGE = "FI_MESSAGE"
@@ -219,7 +231,7 @@ class MessageType(StrEnum):
     CONTRACT_UPLOAD_CONFIRMATION_TO_FI = "CONTRACT_UPLOAD_CONFIRMATION_TO_FI"
     #: CONTRACT_UPLOADED → COMPLETED (``/applications/{id}/complete-application``)
     CREDIT_DISBURSED = "CREDIT_DISBURSED"
-    #: STARTED | CONTRACT_UPLOADED (:ref:`sla-overdue-applications<cmd-sla-overdue-applications>`)
+    #: STARTED | CONTRACT_UPLOADED (:doc:`sla-overdue-applications</commands>`)
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
     #: ACCEPTED (``/applications/find-alternative-credit-option``)
     APPLICATION_COPIED = "APPLICATION_COPIED"
@@ -411,10 +423,17 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def unarchived(cls, session: Session) -> "Query[Self]":
+        """
+        :return: A query for unarchived applications.
+        """
         return session.query(cls).filter(col(cls.archived_at).is_(None))
 
     @classmethod
     def expiring_soon(cls, session: Session) -> "Query[Self]":
+        """
+        :return: A query for applications whose ``expired_at`` attribute is within
+            :attr:`~app.settings.Settings.reminder_days_before_expiration` days from now.
+        """
         return session.query(cls).filter(
             col(cls.expired_at) > datetime.now(),
             col(cls.expired_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
@@ -422,6 +441,12 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def pending_introduction_reminder(cls, session: Session) -> "Query[Self]":
+        """
+        :return: A query for PENDING applications that are :meth:`~app.models.Application.expiring_soon` and whose
+            borrower may receive Credere invitations and hasn't already received a reminder to accept.
+
+        .. seealso:: :doc:`send-reminders</commands>`
+        """
         return (
             cls.expiring_soon(session)
             .filter(
@@ -435,13 +460,25 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
+        """
+        :issue:`350`
+
+        .. seealso:: :doc:`send-reminders</commands>`
+        """
         return cls.expiring_soon(session).filter(
             cls.status == ApplicationStatus.ACCEPTED,
             col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
         )
 
     @classmethod
-    def lapsed(cls, session: Session) -> "Query[Self]":
+    def lapseable(cls, session: Session) -> "Query[Self]":
+        """
+        :return: A query for :meth:`~app.models.Application.unarchived` applications that have been waiting for the
+            borrower to respond (PENDING, ACCEPTED, INFORMATION_REQUESTED) for
+            :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
+
+        .. seealso:: :doc:`update-applications-to-lapsed</commands>`
+        """
         delta = timedelta(days=app_settings.days_to_change_to_lapsed)
 
         return cls.unarchived(session).filter(
@@ -463,12 +500,16 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def submitted(cls, session: Session) -> "Query[Self]":
+        """
+        :return: A query for :meth:`~app.models.Application.unarchived` applications that have been submitted to any
+            lender (not one of PENDING, DECLINED, ACCEPTED) and that aren't LAPSED.
+        """
         return cls.unarchived(session).filter(
             col(cls.status).notin_(
                 [
                     ApplicationStatus.PENDING,
-                    ApplicationStatus.ACCEPTED,
                     ApplicationStatus.DECLINED,
+                    ApplicationStatus.ACCEPTED,
                     ApplicationStatus.LAPSED,
                 ]
             )
@@ -476,6 +517,9 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def submitted_to_lender(cls, session: Session, lender_id: int | None) -> "Query[Self]":
+        """
+        :return: A query for applications :meth:`~app.models.Application.submitted` to a specific lender.
+        """
         return cls.submitted(session).filter(
             Application.lender_id == lender_id,
             col(Application.lender_id).isnot(None),
@@ -483,6 +527,13 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def archivable(cls, session: Session) -> "Query[Self]":
+        """
+        :return: A query for :meth:`~app.models.Application.unarchived` applications that have been in a final state
+            (DECLINED, REJECTED, COMPLETED, LAPSED) for
+            :attr:`~app.settings.Settings.days_to_erase_borrowers_data` days.
+
+        .. seealso:: :doc:`remove-dated-application-data</commands>`
+        """
         delta = timedelta(days=app_settings.days_to_erase_borrowers_data)
 
         return cls.unarchived(session).filter(
@@ -508,11 +559,14 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @property
     def tz(self) -> tzinfo | None:
+        """
+        :return: The application's time zone.
+        """
         return self.created_at.tzinfo
 
     def previous_awards(self, session: Session) -> list["Award"]:
         """
-        :return: The previous awards for the application's borrower, in reverse time order by contract start date.
+        :return: The previous awards to the application's borrower, in reverse time order by contract start date.
         """
         return (
             session.query(Award)
@@ -526,7 +580,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     def rejected_lenders(self, session: Session) -> list[Self]:
         """
-        :return: The IDs of lenders who rejected applications from the application's borrower for the same award.
+        :return: The IDs of lenders who rejected applications from the application's borrower, for the same award.
         """
         cls = type(self)
         return [
@@ -543,7 +597,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     def days_waiting_for_lender(self, session: Session) -> int:
         """
-        :return: The number of days while waiting for the lender to perform an action.
+        :return: The number of days that the application has been waiting for the lender to respond.
         """
         days = 0
 
@@ -584,11 +638,17 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         return round(days)
 
     def stage_as_rejected(self, lender_rejected_data: dict[str, Any]) -> None:
+        """
+        Assign fields related to marking the application as REJECTED.
+        """
         self.status = ApplicationStatus.REJECTED
         self.lender_rejected_at = datetime.now(self.tz)
         self.lender_rejected_data = lender_rejected_data
 
     def stage_as_completed(self, disbursed_final_amount: Decimal | None) -> None:
+        """
+        Assign fields related to marking the application as COMPLETED.
+        """
         self.status = ApplicationStatus.COMPLETED
         self.lender_completed_at = datetime.now(self.tz)
         self.disbursed_final_amount = disbursed_final_amount

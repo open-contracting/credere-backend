@@ -21,13 +21,3 @@ app.include_router(guest.emails.router)
 app.include_router(downloads.router)
 app.include_router(lenders.router)
 app.include_router(statistics.router)
-
-
-@app.get("/")
-def read_root() -> dict[str, str]:
-    return {"Title": "Credere backend"}
-
-
-@app.api_route("/info")
-async def info() -> dict[str, str]:
-    return {"Title": "Credere backend", "version": app_settings.version}

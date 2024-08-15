@@ -23,6 +23,7 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.viewcode",
     "sphinx_design",
+    "sphinxcontrib.typer",
 ]
 
 templates_path = ["_templates"]
