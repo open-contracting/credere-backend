@@ -7,13 +7,12 @@ from fastapi import status
 from app import models, util
 from app.db import engine
 from tests import MockResponse, get_test_db
-
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
 from tests.test_fetcher import _load_json_file
 
-file = os.path.join(__location__, "file.jpeg")
-wrong_file = os.path.join(__location__, "file.gif")
+basedir = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+file = os.path.join(basedir, "fixtures", "file.jpeg")
+wrong_file = os.path.join(basedir, "fixtures", "file.gif")
 
 lender_user = {
     "id": 2,
@@ -112,12 +111,10 @@ approve_application = {
 }
 
 update_award = {"title": "new test title"}
-
 update_borrower = {"legal_name": "new_legal_name"}
 
-source_award = award = _load_json_file("mock_data/award.json")
-
-source_contract = _load_json_file("mock_data/contract.json")
+source_award = award = _load_json_file("fixtures/award.json")
+source_contract = _load_json_file("fixtures/contract.json")
 
 
 def test_reject_application(client):

@@ -3,34 +3,31 @@ import os
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
-from app import models, util
-from app.commands import fetch_award_by_id_and_supplier, fetch_awards
+from typer.testing import CliRunner
+
+from app import commands, models, util
 from tests import MockResponse, get_test_db
 
 
 def _load_json_file(filename):
-    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-    filepath = os.path.join(__location__, filename)
-
-    with open(filepath, "r") as json_file:
-        data = json.load(json_file)
-
-    return data
+    filepath = os.path.join(os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__))), filename)
+    with open(filepath, "r") as f:
+        return json.load(f)
 
 
 AWARD_ID = "TEST_AWARD_ID"
 SUPPLIER_ID = "987654321"
 
-contract = _load_json_file("mock_data/contract.json")
-award = _load_json_file("mock_data/award.json")
-borrower = _load_json_file("mock_data/borrower.json")
-borrower_declined = _load_json_file("mock_data/borrower_declined.json")
+contract = _load_json_file("fixtures/contract.json")
+award = _load_json_file("fixtures/award.json")
+borrower = _load_json_file("fixtures/borrower.json")
+borrower_declined = _load_json_file("fixtures/borrower_declined.json")
+email = _load_json_file("fixtures/email.json")
+application_result = _load_json_file("fixtures/application_result.json")
+award_result = _load_json_file("fixtures/award_result.json")
+borrower_result = _load_json_file("fixtures/borrower_result.json")
 
-email = _load_json_file("mock_data/email.json")
-application_result = _load_json_file("mock_data/application_result.json")
-
-award_result = _load_json_file("mock_data/award_result.json")
-borrower_result = _load_json_file("mock_data/borrower_result.json")
+runner = CliRunner()
 
 
 @contextmanager
@@ -140,9 +137,11 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database):
         email,
         "app.sources.make_request_with_retry",
     ):
-        fetch_award_by_id_and_supplier(AWARD_ID, SUPPLIER_ID)
+        result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
         util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
 
+        assert result.exit_code == 0
+        assert result.stdout == ""
         assert session.query(models.Award).count() == 1
         assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
@@ -182,7 +181,10 @@ def test_fetch_previous_borrower_awards(engine, create_and_drop_database):
 def test_fetch_empty_contracts(create_and_drop_database, caplog):
     with caplog.at_level("INFO"):
         with _mock_response(200, [], "app.sources.colombia.get_new_awards"):
-            fetch_awards()
+            result = runner.invoke(commands.app, ["fetch-awards"])
+
+            assert result.exit_code == 0
+            assert result.stdout == ""
 
     assert "No new contracts" in caplog.text
 
@@ -202,7 +204,10 @@ def test_fetch_new_awards_from_date(engine, create_and_drop_database):
         email,
         "app.sources.make_request_with_retry",
     ):
-        fetch_awards()
+        result = runner.invoke(commands.app, ["fetch-awards"])
+
+        assert result.exit_code == 0
+        assert result.stdout == ""
 
         with contextmanager(get_test_db(engine))() as session:
             inserted_award = session.query(models.Award).one()
@@ -223,7 +228,10 @@ def test_fetch_award_by_contract_and_supplier_empty(engine, create_and_drop_data
             [],
             "app.sources.colombia.get_award_by_id_and_supplier",
         ):
-            fetch_award_by_id_and_supplier(AWARD_ID, SUPPLIER_ID)
+            result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
+
+            assert result.exit_code == 0
+            assert result.stdout == ""
 
     assert f"The award with id {AWARD_ID} and supplier id {SUPPLIER_ID} was not found" in caplog.text
 
@@ -246,7 +254,10 @@ def test_fetch_award_by_id_and_supplier(engine, create_and_drop_database):
         email,
         "app.sources.make_request_with_retry",
     ):
-        fetch_award_by_id_and_supplier(AWARD_ID, SUPPLIER_ID)
+        result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
+
+        assert result.exit_code == 0
+        assert result.stdout == ""
 
         with contextmanager(get_test_db(engine))() as session:
             inserted_award = session.query(models.Award).one()
