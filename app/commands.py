@@ -220,7 +220,7 @@ def update_applications_to_lapsed() -> None:
     to "LAPSED" and sets the application_lapsed_at timestamp to the current UTC time.
     """
     with contextmanager(get_db)() as session:
-        for application in models.Application.lapsed(session).options(
+        for application in models.Application.lapseable(session).options(
             joinedload(models.Application.borrower),
             joinedload(models.Application.borrower_documents),
         ):
