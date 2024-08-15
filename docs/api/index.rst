@@ -6,3 +6,4 @@ API reference
    settings
    models
    enums
+   util

@@ -48,15 +48,21 @@ class Settings(BaseSettings):
 
     #: The secret key with which to hash borrower identifiers (to allow for deduplication even after the borrower's
     #: information has been removed).
+    #:
+    #: .. seealso:: :func:`app.util.get_secret_hash`
     hash_key: str = ""
     #: The maximum file size of uploaded documents or uploaded contracts (sync with ``VITE_MAX_FILE_SIZE_MB`` in
     #: Credere frontend).
+    #:
+    #: .. seealso:: :func:`app.util.validate_file`
     max_file_size_mb: int = 5
 
     # Timeline
 
     #: The number of days after the application is created, after which a PENDING or DECLINED application becomes
     #: inaccessible to the borrower.
+    #:
+    #: .. seealso:: :doc:`fetch-awards</commands>`
     application_expiration_days: int = 7
     #: The number of days before a PENDING application's expiration date, past which the borrower is sent a reminder.
     #: :issue:`350`

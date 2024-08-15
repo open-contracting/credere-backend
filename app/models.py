@@ -148,7 +148,7 @@ class ApplicationStatus(StrEnum):
     -  → APPROVED → CONTRACT_UPLOADED → REJECTED
     """
 
-    #: Credere sends an invitation to the borrower.\
+    #: Credere sends an invitation to the borrower.
     #:
     #: (:doc:`fetch-awards</commands>`)
     PENDING = "PENDING"
@@ -752,9 +752,7 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
     @classmethod
     def last_updated(cls, session: Session) -> datetime | None:
         """
-        Get the date of the last updated award.
-
-        :return: The last updated award date.
+        :return: The date of the last updated award.
         """
         if obj := session.query(cls).order_by(nulls_last(desc(cls.source_last_updated_at))).first():
             return obj.source_last_updated_at
