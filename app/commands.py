@@ -27,6 +27,7 @@ def _create_complete_application(
 ) -> None:
     with contextmanager(db_provider)() as session:
         with handle_skipped_award(session, "Error creating application"):
+            # Create the award. If it exists, skip this award.
             award = util.create_award_from_data_source(session, award_entry)
 
             # Create a new borrower or update an existing borrower based on the entry data.
@@ -92,9 +93,6 @@ def _get_awards_from_data_source(
 ) -> None:
     """
     Fetch new awards from the given date and process them.
-
-    :param last_updated_award_date: Date string in the format 'YYYY-MM-DD'.
-    :type last_updated_award_date: datetime
     """
     index = 0
     awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
@@ -126,14 +124,15 @@ def _get_awards_from_data_source(
 @app.command()
 def fetch_awards() -> None:
     """
-    Fetch new awards, checks if they exist in our database. If not it checks award's borrower and check if they exist.
-    if either award and borrower doesn't exist or if borrower exist but the award doesn't it will create an application
-    in status pending
+    Fetch new awards from the date of the most recently updated award.
 
-    An email invitation will be sent to the proper borrower email obtained from endpoint data
-    (In this case SECOP Colombia) for each application created
-
-    you can also pass an email_invitation as parameter if you want to invite a particular borrower
+    \b
+    -  If the award already exists, skip the award.
+       Otherwise, create the award.
+    -  If the borrower opted out of Credere entirely, skip the award.
+       Otherwise, create or update the borrower.
+    -  If the application already exists, skip the award.
+       Otherwise, create a PENDING application and email an invitation to the borrower.
     """
     with contextmanager(get_db)() as session:
         last_updated_award_date = models.Award.last_updated(session)
@@ -167,19 +166,9 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
 @app.command()
 def remove_dated_application_data() -> None:
     """
-    Remove dated data from the database.
-
-    This function retrieves applications with a decline, reject, or accepted status that are
-    past their due date from the database. It removes sensitive data from these applications
-    (e.g., primary_email) and sets the archived_at timestamp to the current UTC time. It also
-    removes associated borrower documents.
-
-    If the award associated with the application is not used in any other active applications,
-    it will also be deleted from the database. Additionally, if the borrower is not associated
-    with any other active applications, their personal information (legal_name, email, address,
-    legal_identifier) will be cleared.
+    Clear personal data and delete borrower documents from applications that have been in a final state for some time.
+    If the borrower has no other active applications, clear the borrower's personal data.
     """
-
     with contextmanager(get_db)() as session:
         for application in models.Application.archivable(session).options(
             joinedload(models.Application.borrower),
@@ -193,7 +182,7 @@ def remove_dated_application_data() -> None:
                 for document in application.borrower_documents:
                     session.delete(document)
 
-                # Reset the associated borrower's information if they have no other active applications.
+                # Clear the associated borrower's personal data if they have no other active applications.
                 if not session.query(
                     models.Application.unarchived(session)
                     .filter(
@@ -214,10 +203,7 @@ def remove_dated_application_data() -> None:
 @app.command()
 def update_applications_to_lapsed() -> None:
     """
-    Set applications with lapsed status in the database.
-
-    This function retrieves the lapsed applications from the database and updates their status
-    to "LAPSED" and sets the application_lapsed_at timestamp to the current UTC time.
+    Lapse applications that have been waiting for the borrower to respond for some time.
     """
     with contextmanager(get_db)() as session:
         for application in models.Application.lapseable(session).options(
@@ -234,15 +220,7 @@ def update_applications_to_lapsed() -> None:
 @app.command()
 def send_reminders() -> None:
     """
-    Send reminders to borrowers.
-
-    This function retrieves applications that require a reminder email to be sent to the borrowers.
-    It first retrieves applications that need an introduction reminder and sends the emails. Then,
-    it retrieves applications that need a submit reminder and sends those emails as well.
-
-    For each application, it saves the message type (BORROWER_PENDING_APPLICATION_REMINDER or
-    BORROWER_PENDING_SUBMIT_REMINDER) to the database and updates the external_message_id after
-    the email has been sent successfully.
+    Send reminders to borrowers about PENDING and ACCEPTED applications.
     """
     with contextmanager(get_db)() as session:
         applications_to_send_intro_reminder = (
@@ -383,7 +361,7 @@ def update_statistics() -> None:
 @app.command()
 def sla_overdue_applications() -> None:
     """
-    Send SLA (Service Level Agreement) overdue reminders to borrowers.
+    Send reminders to lenders and OCP about overdue applications.
     """
     with contextmanager(get_db)() as session:
         overdue_lenders: dict[str, Any] = defaultdict(lambda: {"count": 0})

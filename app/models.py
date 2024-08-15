@@ -752,7 +752,7 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
     @classmethod
     def last_updated(cls, session: Session) -> datetime | None:
         """
-        :return: The date of the last updated award.
+        :return: The most recent ``source_last_updated_at`` value.
         """
         if obj := session.query(cls).order_by(nulls_last(desc(cls.source_last_updated_at))).first():
             return obj.source_last_updated_at
