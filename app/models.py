@@ -38,9 +38,6 @@ def _get_missing_data_keys(input_dict: dict[str, Any]) -> dict[str, bool]:
 
 # https://github.com/tiangolo/sqlmodel/issues/254
 class ActiveRecordMixin:
-    # https://github.com/tiangolo/sqlmodel/issues/348
-    __config__ = None
-
     @classmethod
     def filter_by(cls, session: Session, field: str, value: Any) -> "Query[Self]":
         """
