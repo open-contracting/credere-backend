@@ -459,16 +459,11 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         """
         lapsed_at = col(cls.borrower_accepted_at) + timedelta(days=app_settings.days_to_change_to_lapsed)
 
-        return (
-            session.query(cls)
-            .filter(
-                cls.status == ApplicationStatus.ACCEPTED,
-                datetime.now() < lapsed_at,
-                lapsed_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_lapsed),
-                col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
-                Borrower.status == BorrowerStatus.ACTIVE,
-            )
-            .join(Borrower, cls.borrower_id == Borrower.id)
+        return session.query(cls).filter(
+            cls.status == ApplicationStatus.ACCEPTED,
+            datetime.now() < lapsed_at,
+            lapsed_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_lapsed),
+            col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
         )
 
     @classmethod
