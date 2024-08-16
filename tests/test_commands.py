@@ -44,7 +44,7 @@ def test_send_reminders_intro(client, mock_send_templated_email):
 
 def test_send_reminders_submit(client, mock_send_templated_email):
     client.post("/create-test-application", json=application_accepted_payload)
-    client.get("/set-test-application-to-remind/id/1")
+    client.get("/set-test-application-to-remind-submit/id/1")
 
     result = runner.invoke(commands.app, ["send-reminders"])
 

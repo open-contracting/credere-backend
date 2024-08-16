@@ -454,8 +454,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
         """
         :return: A query for ACCEPTED applications whose ``borrower_accepted_at`` attribute is within
-            :attr:`~app.settings.Settings.reminder_days_before_lapsed` days from now, and whose
-            borrower hasn't already received a reminder to submit.
+            :attr:`~app_settings.days_to_change_to_lapsed` - :attr:`~app.settings.Settings.reminder_days_before_lapsed`
+            days from now, and whose borrower hasn't already received a reminder to submit.
 
         .. seealso:: :doc:`send-reminders</commands>`
         """
@@ -463,8 +463,9 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         return session.query(cls).filter(
             col(cls.status) == ApplicationStatus.ACCEPTED,
             col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
-            col(cls.borrower_accepted_at) > datetime.now(),
-            col(cls.borrower_accepted_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_lapsed),
+            col(cls.borrower_accepted_at)
+            + timedelta(days=app_settings.days_to_change_to_lapsed - app_settings.reminder_days_before_lapsed)
+            <= datetime.now(),
         )
 
     @classmethod
