@@ -19,43 +19,15 @@ LOCALIZED_IMAGES_BASE_URL = app_settings.images_base_url
 if app_settings.email_template_lang != "":
     LOCALIZED_IMAGES_BASE_URL = f"{LOCALIZED_IMAGES_BASE_URL}/{app_settings.email_template_lang}"
 
-COMMON_DATA = {
-    "OCP_LOGO": f"{app_settings.images_base_url}/logoocp.jpg",
-    "TWITTER_LOGO": f"{app_settings.images_base_url}/twiterlogo.png",
-    "FB_LOGO": f"{app_settings.images_base_url}/facebook.png",
-    "LINK_LOGO": f"{app_settings.images_base_url}/link.png",
-    "STRIVE_LOGO": f"{app_settings.images_base_url}/strive_logo_lockup_horizontal_positive.png",
-    "TWITTER_LINK": app_settings.twitter_link,
-    "FACEBOOK_LINK": app_settings.facebook_link,
-    "LINK_LINK": app_settings.link_link,
-}
-
 
 def t(message: str) -> str:
     return get_translated_string(message, app_settings.email_template_lang)
 
 
-def set_destinations(email: str, to_borrower: bool = True) -> str:
-    """
-    Sets the email destination for the application based on the environment.
-
-    This function checks if the application is running in the 'production' environment.
-    If it is, it returns the email passed as the parameter to the function.
-    If it's not in 'production' environment, it returns the test email receiver set in the application settings.
-
-    :param email: The email to be set as destination.
-    :param to_borrower: If the email is for a borrower.
-    :return: Returns the destination email.
-    """
-    if app_settings.environment == "production" or not to_borrower:
-        return email
-    return app_settings.test_mail_receiver
-
-
 def prepare_html(template_name: str, subject: str, parameters: dict[str, Any]) -> dict[str, str]:
     """
-    Reads the content of the file in template_name, replace its parameters, and prepare the rest of the main
-    parameters and Subject to send the email via AWS.
+    Read the HTML file and replace its parameters (like ``BUYER_NAME``) to use as the ``{{CONTENT}}`` tag in the email
+    template, then return all tags required by the email template.
     """
     with open(
         os.path.join(
@@ -69,24 +41,32 @@ def prepare_html(template_name: str, subject: str, parameters: dict[str, Any]) -
         html = html.replace("{{%s}}" % key, str(parameters[key]))
 
     return {
-        **COMMON_DATA,
         "CONTENT": html,
         "SUBJECT": f"Credere - {subject}",
+        "OCP_LOGO": f"{app_settings.images_base_url}/logoocp.jpg",
+        "TWITTER_LOGO": f"{app_settings.images_base_url}/twiterlogo.png",
+        "FB_LOGO": f"{app_settings.images_base_url}/facebook.png",
+        "LINK_LOGO": f"{app_settings.images_base_url}/link.png",
+        "STRIVE_LOGO": f"{app_settings.images_base_url}/strive_logo_lockup_horizontal_positive.png",
+        "TWITTER_LINK": app_settings.twitter_link,
+        "FACEBOOK_LINK": app_settings.facebook_link,
+        "LINK_LINK": app_settings.link_link,
     }
 
 
-def send_email(ses: SESClient, email: str, data: dict[str, str], to_borrower: bool = True) -> str:
-    destinations = set_destinations(email, to_borrower)
+def send_email(ses: SESClient, email: str, data: dict[str, str], *, to_borrower: bool = True) -> str:
+    if app_settings.environment == "production" or not to_borrower:
+        to_address = email
+    else:
+        to_address = app_settings.test_mail_receiver
 
-    logger.info("%s - Email to: %s sent to %s", app_settings.environment, email, destinations)
-    response = ses.send_templated_email(
+    logger.info("%s - Email to: %s sent to %s", app_settings.environment, email, to_address)
+    return ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [destinations]},
+        Destination={"ToAddresses": [to_address]},
         Template=f"credere-main-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
-    )
-
-    return response["MessageId"]
+    )["MessageId"]
 
 
 def send_application_approved_email(ses: SESClient, application: Application) -> str:
@@ -565,7 +545,6 @@ def send_upload_documents_notifications_to_lender(ses: SESClient, lender_email: 
             "FI_Documents_Updated_FI_user",
             t("Application updated"),
             {
-                **COMMON_DATA,
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
             },
