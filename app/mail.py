@@ -409,7 +409,7 @@ def send_mail_intro_reminder(ses: SESClient, application: Application) -> str:
     return send_email(
         ses,
         application.primary_email,
-        prepare_html("Access_to_credit_scheme_for_MSMEs", get_invitation_email_parameters(application)),
+        prepare_html("Access_to_credit_reminder", get_invitation_email_parameters(application)),
     )
 
 
