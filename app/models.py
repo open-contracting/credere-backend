@@ -430,7 +430,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_introduction_reminder(cls, session: Session) -> "Query[Self]":
         """
-        :return: A query for PENDING applications whose ``expired_at`` attribute is within
+        :return: A query for PENDING applications whose expiration date is within
             :attr:`~app.settings.Settings.reminder_days_before_expiration` days from now, and whose
             borrower may receive Credere invitations and hasn't already received a reminder to accept.
 
@@ -451,9 +451,9 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
         """
-        :return: A query for ACCEPTED applications whose ``borrower_accepted_at`` attribute is within
-            :attr:`~app_settings.days_to_change_to_lapsed` - :attr:`~app.settings.Settings.reminder_days_before_lapsed`
-            days from now, and whose borrower hasn't already received a reminder to submit.
+        :return: A query for ACCEPTED applications whose lapsed date is within
+            :attr:`~app.settings.Settings.reminder_days_before_lapsed` days from now, and whose
+            borrower hasn't already received a reminder to submit.
 
         .. seealso:: :doc:`send-reminders</commands>`
         """
