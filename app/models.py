@@ -461,13 +461,17 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
         """
-        :issue:`350`
+        :return: A query for ACCEPTED applications that are lapsing soon and whose
+            borrower hasn't already received a reminder to submit.
 
         .. seealso:: :doc:`send-reminders</commands>`
         """
-        return cls.expiring_soon(session).filter(
-            cls.status == ApplicationStatus.ACCEPTED,
+
+        return session.query(cls).filter(
+            col(cls.status) == ApplicationStatus.ACCEPTED,
             col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
+            col(cls.borrower_accepted_at) > datetime.now(),
+            col(cls.borrower_accepted_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_lapsed),
         )
 
     @classmethod
