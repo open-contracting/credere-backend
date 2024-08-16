@@ -1,10 +1,13 @@
+import json
 import logging
+import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any, Callable, Generator
 
 import click
+import minify_html
 import typer
 import typer.cli
 from sqlalchemy import Date, cast
@@ -30,6 +33,8 @@ class OrderedGroup(typer.cli.TyperCLIGroup):
 
 
 app = typer.Typer(cls=OrderedGroup)
+dev = typer.Typer()
+app.add_typer(dev, name="dev", help="Commands for maintainers of Credere.")
 
 
 # Called by fetch-award* commands.
@@ -392,6 +397,32 @@ def remove_dated_application_data() -> None:
                     application.borrower.source_data = {}
 
                 session.commit()
+
+
+@dev.command()
+def cli_input_json(name: str, file: typer.FileText) -> None:
+    """
+    Print a JSON string for the aws ses create-template --cli-input-json argument.
+    """
+    # aws ses create-template --generate-cli-skeleton
+    json.dump(
+        {
+            "Template": {
+                "TemplateName": name,
+                "Subject": "{{SUBJECT}}",
+                "HtmlPart": minify_html.minify(
+                    file.read(),
+                    do_not_minify_doctype=True,
+                    ensure_spec_compliant_unquoted_attribute_values=True,
+                    keep_spaces_between_attributes=True,
+                    minify_css=True,
+                ),
+            }
+        },
+        sys.stdout,
+        indent=4,
+        ensure_ascii=False,
+    )
 
 
 if __name__ == "__main__":

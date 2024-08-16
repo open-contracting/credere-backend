@@ -32,3 +32,5 @@ npm-debug.log
 coverage_re
 .DS_Store
 /schemaspy
+/credere-main-*.json
+/test.json

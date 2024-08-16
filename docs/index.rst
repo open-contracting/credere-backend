@@ -8,7 +8,6 @@ Credere backend
    :maxdepth: 1
 
    commands
-   email_templates
    aws/index
    deployment/index
    contributing/index
