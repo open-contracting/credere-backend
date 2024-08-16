@@ -141,7 +141,7 @@ async def set_test_application_to_remind(id: int, session: Session = Depends(get
 async def set_test_application_to_remind_submit(id: int, session: Session = Depends(get_db)):
     application = session.query(models.Application).filter(models.Application.id == id).first()
     application.borrower_accepted_at = datetime.now(application.created_at.tzinfo) - timedelta(
-        days=app_settings.reminder_days_before_lapsed
+        days=app_settings.days_to_change_to_lapsed - app_settings.reminder_days_before_lapsed
     )
 
     session.commit()
