@@ -165,6 +165,7 @@ def send_email(ses: SESClient, email: str, data: dict[str, str], to_borrower: bo
         Destination={"ToAddresses": [destinations]},
         Template=f"credere-main-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
+        ReplyToAddresses=[app_settings.ocp_email_group],
     )
 
     return response["MessageId"]
