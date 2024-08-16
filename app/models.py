@@ -439,14 +439,13 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         return (
             session.query(cls)
             .filter(
-                col(cls.expired_at) > datetime.now(),
+                cls.status == ApplicationStatus.PENDING,
+                datetime.now() < col(cls.expired_at),
                 col(cls.expired_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
-                col(cls.status) == ApplicationStatus.PENDING,
                 col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_APPLICATION_REMINDER)),
-                col(Borrower.status) == BorrowerStatus.ACTIVE,
+                Borrower.status == BorrowerStatus.ACTIVE,
             )
             .join(Borrower, cls.borrower_id == Borrower.id)
-            .join(Award, cls.award_id == Award.id)
         )
 
     @classmethod
@@ -458,12 +457,18 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
         .. seealso:: :doc:`send-reminders</commands>`
         """
+        lapsed_at = col(cls.borrower_accepted_at) + timedelta(days=app_settings.days_to_change_to_lapsed)
 
-        return session.query(cls).filter(
-            col(cls.status) == ApplicationStatus.ACCEPTED,
-            col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
-            col(cls.borrower_accepted_at) > datetime.now(),
-            col(cls.borrower_accepted_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_lapsed),
+        return (
+            session.query(cls)
+            .filter(
+                cls.status == ApplicationStatus.ACCEPTED,
+                datetime.now() < lapsed_at,
+                lapsed_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_lapsed),
+                col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
+                Borrower.status == BorrowerStatus.ACTIVE,
+            )
+            .join(Borrower, cls.borrower_id == Borrower.id)
         )
 
     @classmethod
