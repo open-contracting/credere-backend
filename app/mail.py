@@ -24,7 +24,7 @@ def t(message: str) -> str:
     return get_translated_string(message, app_settings.email_template_lang)
 
 
-def prepare_html(template_name: str, subject: str, parameters: dict[str, Any]) -> dict[str, str]:
+def get_template_data(template_name: str, subject: str, parameters: dict[str, Any]) -> dict[str, str]:
     """
     Read the HTML file and replace its parameters (like ``BUYER_NAME``) to use as the ``{{CONTENT}}`` tag in the email
     template, then return all tags required by the email template.
@@ -77,7 +77,7 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
     link to upload the contract. The email is sent to the primary email address associated
     with the application. The function utilizes the SES (Simple Email Service) client to send the email.
     """
-    html_data = {
+    parameters = {
         "FI": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
         "TENDER_TITLE": application.award.title,
@@ -87,19 +87,19 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
     }
 
     if application.lender.default_pre_approval_message:
-        html_data["ADDITIONAL_COMMENTS"] = application.lender.default_pre_approval_message
+        parameters["ADDITIONAL_COMMENTS"] = application.lender.default_pre_approval_message
     elif (
         "additional_comments" in application.lender_approved_data
         and application.lender_approved_data["additional_comments"]
     ):
-        html_data["ADDITIONAL_COMMENTS"] = application.lender_approved_data["additional_comments"]
+        parameters["ADDITIONAL_COMMENTS"] = application.lender_approved_data["additional_comments"]
     else:
-        html_data["ADDITIONAL_COMMENTS"] = "Ninguno"
+        parameters["ADDITIONAL_COMMENTS"] = "Ninguno"
 
     return send_email(
         ses,
         application.primary_email,
-        prepare_html("Application_approved", t("Your credit application has been prequalified"), html_data),
+        get_template_data("Application_approved", t("Your credit application has been prequalified"), parameters),
     )
 
 
@@ -113,7 +113,7 @@ def send_application_submission_completed(ses: SESClient, application: Applicati
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Application_submitted",
             t("Application Submission Complete"),
             {
@@ -134,7 +134,7 @@ def send_application_credit_disbursed(ses: SESClient, application: Application) 
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Application_credit_disbursed",
             t("Your credit application has been approved"),
             {
@@ -161,7 +161,7 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_pa
     return send_email(
         ses,
         username,
-        prepare_html(
+        get_template_data(
             "New_Account_Created",
             t("Welcome"),
             {
@@ -188,7 +188,7 @@ def send_upload_contract_notification_to_lender(ses: SESClient, application: App
     return send_email(
         ses,
         application.lender.email_group,
-        prepare_html(
+        get_template_data(
             "New_contract_submission",
             t("New contract submission"),
             {
@@ -210,7 +210,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application) 
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Contract_upload_confirmation",
             t("Thank you for uploading the signed contract"),
             {
@@ -234,7 +234,7 @@ def send_new_email_confirmation(
     :param new_email: The new email address to be set as the primary email.
     :param confirmation_email_token: The token generated for confirming the email change.
     """
-    data = prepare_html(
+    data = get_template_data(
         "Confirm_email_address_change",
         t("Confirm email address change"),
         {
@@ -265,7 +265,7 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temporary_passwor
     return send_email(
         ses,
         username,
-        prepare_html(
+        get_template_data(
             "Reset_password",
             t("Reset password"),
             {
@@ -305,7 +305,7 @@ def send_invitation_email(ses: SESClient, application: Application) -> str:
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Access_to_credit_scheme_for_MSMEs",
             t("Opportunity to access MSME credit for being awarded a public contract"),
             get_invitation_email_parameters(application),
@@ -323,7 +323,7 @@ def send_mail_intro_reminder(ses: SESClient, application: Application) -> str:
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Access_to_credit_scheme_for_MSMEs",
             t("Opportunity to access MSME credit for being awarded a public contract"),
             get_invitation_email_parameters(application),
@@ -341,7 +341,7 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Access_to_credit_reminder",
             t("Reminder - Opportunity to access MSME credit for being awarded a public contract"),
             {
@@ -366,7 +366,7 @@ def send_notification_new_app_to_lender(ses: SESClient, lender_email_group: str)
     return send_email(
         ses,
         lender_email_group,
-        prepare_html(
+        get_template_data(
             "FI_New_application_submission_FI_user",
             t("New application submission"),
             {
@@ -387,7 +387,7 @@ def send_notification_new_app_to_ocp(ses: SESClient, lender_name: str) -> str:
     return send_email(
         ses,
         app_settings.ocp_email_group,
-        prepare_html(
+        get_template_data(
             "New_application_submission_OCP_user",
             t("New application submission"),
             {
@@ -409,7 +409,7 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Request_data_to_SME",
             t("New message from a financial institution"),
             {
@@ -433,7 +433,7 @@ def send_overdue_application_email_to_lender(ses: SESClient, lender_name: str, l
     return send_email(
         ses,
         lender_email,
-        prepare_html(
+        get_template_data(
             "Overdue_application_FI",
             t("You have credit applications that need processing"),
             {
@@ -456,7 +456,7 @@ def send_overdue_application_email_to_ocp(ses: SESClient, name: str) -> str:
     return send_email(
         ses,
         app_settings.ocp_email_group,
-        prepare_html(
+        get_template_data(
             "Overdue_application_OCP_admin",
             t("New overdue application"),
             {
@@ -477,7 +477,7 @@ def send_rejected_application_email(ses: SESClient, application: Application) ->
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Application_declined",
             t("Your credit application has been declined"),
             {
@@ -500,7 +500,7 @@ def send_rejected_application_email_without_alternatives(ses: SESClient, applica
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "Application_declined_without_alternative",
             t("Your credit application has been declined"),
             {
@@ -519,7 +519,7 @@ def send_copied_application_notification_to_borrower(ses: SESClient, application
     return send_email(
         ses,
         application.primary_email,
-        prepare_html(
+        get_template_data(
             "alternative_credit_msme",
             t("Alternative credit option"),
             {
@@ -541,7 +541,7 @@ def send_upload_documents_notifications_to_lender(ses: SESClient, lender_email: 
     return send_email(
         ses,
         lender_email,
-        prepare_html(
+        get_template_data(
             "FI_Documents_Updated_FI_user",
             t("Application updated"),
             {
