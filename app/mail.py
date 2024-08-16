@@ -424,7 +424,7 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
         ses,
         application.primary_email,
         prepare_html(
-            "Access_to_credit_reminder",
+            "Complete_application_reminder",
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "TENDER_TITLE": application.award.title,
