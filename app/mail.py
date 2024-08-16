@@ -140,7 +140,7 @@ def send_application_credit_disbursed(ses: SESClient, application: Application) 
             {
                 "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-                "FI_EMAIL": application.lender.email_group,
+                "LENDER_EMAIL": application.lender.email_group,
             },
         ),
     )
@@ -412,7 +412,7 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
             t("New message from a financial institution"),
             {
                 "LENDER_NAME": application.lender.name,
-                "FI_MESSAGE": email_message,
+                "LENDER_MESSAGE": email_message,
                 "LOGIN_DOCUMENTS_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/documents",
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/uploadDocument.png",
             },
