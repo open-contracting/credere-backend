@@ -69,7 +69,6 @@ class Settings(BaseSettings):
     #: .. seealso::
     #:
     #:    -  :attr:`~app.settings.Settings.application_expiration_days`
-    #:    -  :meth:`app.models.Application.expiring_soon`
     reminder_days_before_expiration: int = 3
     #: The number of days before a ACCEPTED application's lapsed date, past which the borrower is sent a reminder.
     #:
