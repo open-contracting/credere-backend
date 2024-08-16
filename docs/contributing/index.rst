@@ -162,6 +162,8 @@ Read the next pages in this section to learn about style guides, and the :doc:`.
 Style guide
 ~~~~~~~~~~~
 
+-  Use lowercase filenames, including ``email_templates/`` files.
+
 In Python code and documentation:
 
 -  Use "lender", not "FI" or "financial institution".
@@ -169,7 +171,7 @@ In Python code and documentation:
 
 .. note::
 
-   Some endpoints, enums and template names cannot be made to conform to this style guide, without migrating the database, updating the frontend or updating the email templates in :doc:`../aws/ses`.
+   Some endpoints and enums cannot be made to conform to this style guide, without migrating the database or updating the frontend.
 
 Update requirements
 ~~~~~~~~~~~~~~~~~~~
