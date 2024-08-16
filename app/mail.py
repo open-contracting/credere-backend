@@ -357,7 +357,7 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
     )
 
 
-def send_notification_new_app_to_lender(ses: SESClient, lender_email_group: str) -> str:
+def send_notification_new_app_to_lender(ses: SESClient, application: Application) -> str:
     """
     Sends a notification email about a new application to a lender's email group.
 
@@ -365,7 +365,7 @@ def send_notification_new_app_to_lender(ses: SESClient, lender_email_group: str)
     """
     return send_email(
         ses,
-        lender_email_group,
+        application.lender.email_group,
         get_template_data(
             "FI_New_application_submission_FI_user",
             t("New application submission"),
@@ -527,16 +527,14 @@ def send_copied_application_notification_to_borrower(ses: SESClient, application
     )
 
 
-def send_upload_documents_notifications_to_lender(ses: SESClient, lender_email: str) -> str:
+def send_upload_documents_notifications_to_lender(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification to the lender to notify them that new
     documents have been uploaded and are ready for their review.
-
-    :param lender_email: Email address of the lender to receive the notification.
     """
     return send_email(
         ses,
-        lender_email,
+        application.lender.email_group,
         get_template_data(
             "FI_Documents_Updated_FI_user",
             t("Application updated"),

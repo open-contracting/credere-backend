@@ -563,7 +563,7 @@ async def update_apps_send_notifications(
         application.pending_documents = False
 
         try:
-            mail.send_notification_new_app_to_lender(client.ses, application.lender.email_group)
+            mail.send_notification_new_app_to_lender(client.ses, application)
             mail.send_notification_new_app_to_ocp(client.ses, application)
 
             message_id = mail.send_application_submission_completed(client.ses, application)
@@ -659,7 +659,7 @@ async def complete_information_request(
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
-        message_id = mail.send_upload_documents_notifications_to_lender(client.ses, application.lender.email_group)
+        message_id = mail.send_upload_documents_notifications_to_lender(client.ses, application)
         models.Message.create(
             session,
             application=application,
