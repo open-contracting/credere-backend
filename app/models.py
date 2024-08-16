@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Optional, Self
 
-from pydantic import BaseModel, ConfigDict, PlainSerializer
+from pydantic import BaseModel, PlainSerializer
 from sqlalchemy import DECIMAL, Boolean, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
@@ -316,6 +316,7 @@ class CreditProductBase(SQLModel):
 
 class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
     __tablename__ = "credit_product"
+
     id: int | None = Field(default=None, primary_key=True)
     lender: "Lender" = Relationship(back_populates="credit_products")
     created_at: datetime | None = Field(
@@ -346,6 +347,7 @@ class BorrowerDocumentBase(SQLModel):
 
 class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
     __tablename__ = "borrower_document"
+
     application: Optional["Application"] = Relationship(back_populates="borrower_documents")
     file: bytes
 
@@ -778,6 +780,7 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
 
 class EventLog(SQLModel, ActiveRecordMixin, table=True):
     __tablename__ = "event_log"
+
     id: int | None = Field(default=None, primary_key=True)
     category: str = Field(nullable=False)
     message: str = Field(nullable=False)
@@ -812,12 +815,14 @@ class UserWithLender(UserBase):
 
 class User(UserBase, ActiveRecordMixin, table=True):
     __tablename__ = "credere_user"
+
     application_actions: list["ApplicationAction"] = Relationship(back_populates="user")
     lender: Optional["Lender"] = Relationship(back_populates="users")
 
 
 class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     __tablename__ = "application_action"
+
     id: int | None = Field(default=None, primary_key=True)
     type: ApplicationActionType = Field(nullable=True)
     data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
@@ -828,7 +833,6 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     created_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BasicUser(BaseModel):
