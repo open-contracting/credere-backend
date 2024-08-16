@@ -564,7 +564,7 @@ async def update_apps_send_notifications(
 
         try:
             mail.send_notification_new_app_to_lender(client.ses, application.lender.email_group)
-            mail.send_notification_new_app_to_ocp(client.ses, application.lender.name)
+            mail.send_notification_new_app_to_ocp(client.ses, application)
 
             message_id = mail.send_application_submission_completed(client.ses, application)
         except ClientError as e:

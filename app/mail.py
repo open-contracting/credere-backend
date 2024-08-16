@@ -78,7 +78,7 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
     with the application. The function utilizes the SES (Simple Email Service) client to send the email.
     """
     parameters = {
-        "FI": application.lender.name,
+        "LENDER_NAME": application.lender.name,
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
         "TENDER_TITLE": application.award.title,
         "BUYER_NAME": application.award.buyer_name,
@@ -117,7 +117,7 @@ def send_application_submission_completed(ses: SESClient, application: Applicati
             "Application_submitted",
             t("Application Submission Complete"),
             {
-                "FI": application.lender.name,
+                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
             },
         ),
@@ -138,7 +138,7 @@ def send_application_credit_disbursed(ses: SESClient, application: Application) 
             "Application_credit_disbursed",
             t("Your credit application has been approved"),
             {
-                "FI": application.lender.name,
+                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "FI_EMAIL": application.lender.email_group,
             },
@@ -378,11 +378,9 @@ def send_notification_new_app_to_lender(ses: SESClient, lender_email_group: str)
     )
 
 
-def send_notification_new_app_to_ocp(ses: SESClient, lender_name: str) -> str:
+def send_notification_new_app_to_ocp(ses: SESClient, application: Application) -> str:
     """
     Sends a notification email about a new application to the Open Contracting Partnership's (OCP) email group.
-
-    :param lender_name: Name of the lender associated with the new application.
     """
     return send_email(
         ses,
@@ -391,7 +389,7 @@ def send_notification_new_app_to_ocp(ses: SESClient, lender_name: str) -> str:
             "New_application_submission_OCP_user",
             t("New application submission"),
             {
-                "FI": lender_name,
+                "LENDER_NAME": application.lender.name,
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
             },
@@ -413,7 +411,7 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
             "Request_data_to_SME",
             t("New message from a financial institution"),
             {
-                "FI": application.lender.name,
+                "LENDER_NAME": application.lender.name,
                 "FI_MESSAGE": email_message,
                 "LOGIN_DOCUMENTS_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/documents",
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/uploadDocument.png",
@@ -447,11 +445,9 @@ def send_overdue_application_email_to_lender(ses: SESClient, lender_name: str, l
     )
 
 
-def send_overdue_application_email_to_ocp(ses: SESClient, name: str) -> str:
+def send_overdue_application_email_to_ocp(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification to the Open Contracting Partnership (OCP) about overdue applications.
-
-    :param name: Name of the recipient at the OCP.
     """
     return send_email(
         ses,
@@ -460,8 +456,8 @@ def send_overdue_application_email_to_ocp(ses: SESClient, name: str) -> str:
             "Overdue_application_OCP_admin",
             t("New overdue application"),
             {
-                "USER": name,
-                "FI": name,
+                "USER": application.lender.name,
+                "LENDER_NAME": application.lender.name,
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
             },
@@ -481,7 +477,7 @@ def send_rejected_application_email(ses: SESClient, application: Application) ->
             "Application_declined",
             t("Your credit application has been declined"),
             {
-                "FI": application.lender.name,
+                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "FIND_ALTENATIVE_URL": (
                     f"{app_settings.frontend_url}/application/{quote(application.uuid)}/find-alternative-credit"
@@ -504,7 +500,7 @@ def send_rejected_application_email_without_alternatives(ses: SESClient, applica
             "Application_declined_without_alternative",
             t("Your credit application has been declined"),
             {
-                "FI": application.lender.name,
+                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
             },
         ),
