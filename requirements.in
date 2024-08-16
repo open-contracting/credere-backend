@@ -5,6 +5,7 @@ click
 email_validator
 fastapi
 httpx
+minify-html
 mypy-boto3-cognito-idp
 mypy-boto3-ses
 orjson

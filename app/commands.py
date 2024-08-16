@@ -1,10 +1,13 @@
+import json
 import logging
+import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any, Callable, Generator
 
 import click
+import minify_html
 import typer
 import typer.cli
 from sqlalchemy import Date, cast
@@ -30,6 +33,8 @@ class OrderedGroup(typer.cli.TyperCLIGroup):
 
 
 app = typer.Typer(cls=OrderedGroup)
+dev = typer.Typer()
+app.add_typer(dev, name="dev", help="Commands for maintainers of Credere.")
 
 
 # Called by fetch-award* commands.
@@ -95,16 +100,35 @@ def _create_complete_application(
             session.commit()
 
 
-def _get_awards_from_data_source(
-    last_updated_award_date: datetime | None,
-    db_provider: Callable[[], Generator[Session, None, None]],
-    until_date: datetime | None = None,
+@app.command()
+def fetch_awards(
+    from_date: datetime = typer.Option(default=None, formats=["%Y-%m-%d"]),
+    until_date: datetime = typer.Option(default=None, formats=["%Y-%m-%d"]),
 ) -> None:
     """
-    Fetch new awards from the given date and process them.
+    Fetch new awards from the date of the most recently updated award, or in the period described by the --from-date
+    and --until-date options.
+
+    \b
+    -  If the award already exists, skip the award.
+       Otherwise, create the award.
+    -  If the borrower opted out of Credere entirely, skip the award.
+       Otherwise, create or update the borrower.
+    -  If the application already exists, skip the award.
+       Otherwise, create a PENDING application and email an invitation to the borrower.
     """
+
+    if bool(from_date) ^ bool(until_date):
+        raise click.UsageError("--from-date and --until-date must either be both set or both not set.")
+    if from_date and until_date and from_date > until_date:
+        raise click.UsageError("--from-date must be earlier than --until-date.")
+
+    if from_date is None:
+        with contextmanager(get_db)() as session:
+            from_date = models.Award.last_updated(session)
+
     index = 0
-    awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
+    awards_response = data_access.get_new_awards(index, from_date, until_date)
     awards_response_json = util.loads(awards_response)
 
     if not awards_response_json:
@@ -121,49 +145,20 @@ def _get_awards_from_data_source(
                     "Source contract is missing required fields:"
                     f" url={awards_response.url}, data={awards_response_json}"
                 )
-            _create_complete_application(entry, db_provider)
+            _create_complete_application(entry, get_db)
 
         index += 1
-        awards_response = data_access.get_new_awards(index, last_updated_award_date, until_date)
+        awards_response = data_access.get_new_awards(index, from_date, until_date)
         awards_response_json = util.loads(awards_response)
 
     logger.info("Total fetched contracts: %d", total)
 
 
 @app.command()
-def fetch_awards() -> None:
-    """
-    Fetch new awards from the date of the most recently updated award.
-
-    \b
-    -  If the award already exists, skip the award.
-       Otherwise, create the award.
-    -  If the borrower opted out of Credere entirely, skip the award.
-       Otherwise, create or update the borrower.
-    -  If the application already exists, skip the award.
-       Otherwise, create a PENDING application and email an invitation to the borrower.
-    """
-    with contextmanager(get_db)() as session:
-        last_updated_award_date = models.Award.last_updated(session)
-    _get_awards_from_data_source(last_updated_award_date, get_db)
-
-
-@app.command()
-def fetch_all_awards_from_period(from_date: datetime, until_date: datetime) -> None:
-    """
-    NOTE: For manual use only.
-    Fetch all awards, regardless of their status, from the from_date, until_date period.
-    Useful when want to force send invitations for awards made in the past.
-    """
-    _get_awards_from_data_source(from_date, get_db, until_date)
-
-
-@app.command()
 def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
     """
-    NOTE: For manual use only.
-    Fetch a specific award by award_id and supplier_id.
-    Useful when want to directly invite a supplier who for some reason wasn't invited by Credere.
+    Fetch one award, by award ID and supplier ID, and process it like the fetch-awards command.
+    Use this to manually invite a borrower who wasn't automatically invited.
     """
     award_response_json = util.loads(data_access.get_award_by_id_and_supplier(award_id, supplier_id))
     if not award_response_json:
@@ -402,6 +397,32 @@ def remove_dated_application_data() -> None:
                     application.borrower.source_data = {}
 
                 session.commit()
+
+
+@dev.command()
+def cli_input_json(name: str, file: typer.FileText) -> None:
+    """
+    Print a JSON string for the aws ses create-template --cli-input-json argument.
+    """
+    # aws ses create-template --generate-cli-skeleton
+    json.dump(
+        {
+            "Template": {
+                "TemplateName": name,
+                "Subject": "{{SUBJECT}}",
+                "HtmlPart": minify_html.minify(
+                    file.read(),
+                    do_not_minify_doctype=True,
+                    ensure_spec_compliant_unquoted_attribute_values=True,
+                    keep_spaces_between_attributes=True,
+                    minify_css=True,
+                ),
+            }
+        },
+        sys.stdout,
+        indent=4,
+        ensure_ascii=False,
+    )
 
 
 if __name__ == "__main__":

@@ -134,7 +134,6 @@ def get_new_awards(index: int, from_date: datetime | None, until_date: datetime 
         " caseless_eq(`adjudicado`, 'Si')"
     )
 
-    # The fetch-all-awards-from-period command sets both. The command is typically run without time components.
     if from_date and until_date:
         url = (
             f"{base_url} AND ((fecha_de_ultima_publicaci >= '{from_date.strftime(date_format)}' "
@@ -142,7 +141,6 @@ def get_new_awards(index: int, from_date: datetime | None, until_date: datetime 
             f"(fecha_adjudicacion >= '{from_date.strftime(date_format)}' "
             f"AND fecha_adjudicacion < '{until_date.strftime(date_format)}'))"
         )
-    # The fetch-awards command sets from_date.
     else:
         # from_date is set to the maximum value of Award.last_updated. Use `>` below to avoid repetition across runs.
         if from_date:

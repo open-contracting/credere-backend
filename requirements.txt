@@ -73,6 +73,8 @@ mako==1.2.4
     # via alembic
 markupsafe==2.1.2
     # via mako
+minify-html==0.15.0
+    # via -r requirements.in
 mypy-boto3-cognito-idp==1.29.0
     # via -r requirements.in
 mypy-boto3-ses==1.29.0
