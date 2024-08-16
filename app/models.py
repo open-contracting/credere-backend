@@ -17,23 +17,15 @@ from app.settings import app_settings
 FLOAT_DECIMAL = Annotated[Decimal, PlainSerializer(lambda x: float(x), return_type=float, when_used="json")]
 
 
-def _get_missing_data_keys(input_dict: dict[str, Any]) -> dict[str, bool]:
+def _get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
     """
     Get a dictionary indicating whether each key in the input dictionary has missing data (empty or None).
 
-    :param input_dict: The input dictionary to check for missing data.
+    :param data: The input dictionary to check for missing data.
     :return: A dictionary with the same keys as the input dictionary, where the values are True if the corresponding
              value in the input dictionary is empty or None, and False otherwise.
     """
-
-    result_dict = {}
-    for key, value in input_dict.items():
-        if value == "" or value is None:
-            result_dict[key] = True
-        else:
-            result_dict[key] = False
-
-    return result_dict
+    return {key: value == "" or value is None for key, value in data.items()}
 
 
 # https://github.com/tiangolo/sqlmodel/issues/254
@@ -361,7 +353,6 @@ class ApplicationBase(SQLModel):
     borrower_id: int | None = Field(foreign_key="borrower.id", index=True)
     lender_id: int | None = Field(foreign_key="lender.id", nullable=True)
     contract_amount_submitted: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
-
     disbursed_final_amount: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
     amount_requested: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
     currency: str = Field(default="COP", description="ISO 4217 currency code")

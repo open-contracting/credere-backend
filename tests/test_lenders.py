@@ -120,7 +120,7 @@ def test_create_credit_product(client):
         assert response.status_code == status.HTTP_200_OK
 
     # OCP user tries to create a credit product for a non existent lender
-    response = client.post("/lenders/100/credit-products", json=credit_product, headers=ocp_headers)
+    response = client.post("/lenders/999/credit-products", json=credit_product, headers=ocp_headers)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
     with warnings.catch_warnings():
@@ -134,7 +134,7 @@ def test_create_credit_product(client):
         assert response.status_code == status.HTTP_200_OK
 
     # tries to update a credit product that does not exist
-    response = client.put("/credit-products/100", json=updated_credit_product, headers=ocp_headers)
+    response = client.put("/credit-products/999", json=updated_credit_product, headers=ocp_headers)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
     response = client.get("/credit-products/1")
@@ -186,7 +186,7 @@ def test_get_lender(client):
     response = client.get("/lenders/1", headers=lender_headers)
     assert response.status_code == status.HTTP_200_OK
 
-    response = client.get("/lenders/100", headers=ocp_headers)
+    response = client.get("/lenders/999", headers=ocp_headers)
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
