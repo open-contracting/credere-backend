@@ -8,6 +8,8 @@ Frontend integration
 Error handling
 --------------
 
+.. attention:: This behavior might be changed. :issue:`362`
+
 An endpoint can return HTTP error status codes. The error response is JSON text with a "detail" key. The frontend uses `TanStack Query v4 <https://tanstack.com/query/v4>`__ and the ``onError`` callback of these APIs to handle these errors:
 
 -  `useQuery <https://tanstack.com/query/v4/docs/framework/react/reference/useQuery>`__ (``onError`` is `deprecated <https://tkdodo.eu/blog/breaking-react-querys-api-on-purpose>`__)
