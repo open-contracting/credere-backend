@@ -13,7 +13,6 @@ from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
 from app.sources import colombia as data_access
-from app.util import commit_and_refresh
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +82,7 @@ async def decline(
             application.borrower.status = models.BorrowerStatus.DECLINE_OPPORTUNITIES
             application.borrower.declined_at = current_time
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -123,7 +122,7 @@ async def rollback_decline(
             application.borrower.status = models.BorrowerStatus.ACTIVE
             application.borrower.declined_at = None
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -158,7 +157,7 @@ async def decline_feedback(
 
         application.borrower_declined_preferences_data = borrower_declined_preferences_data
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -197,7 +196,7 @@ async def access_scheme(
         application.status = models.ApplicationStatus.ACCEPTED
         application.expired_at = None
 
-        commit_and_refresh(session, application)
+        session.commit()
 
         background_tasks.add_task(util.get_previous_awards_from_data_source, application.borrower_id)
 
@@ -299,7 +298,7 @@ async def select_credit_product(
             application_id=application.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -354,7 +353,7 @@ async def rollback_select_credit_product(
             application_id=application.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -443,7 +442,7 @@ async def confirm_credit_product(
             application_id=application.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -508,7 +507,7 @@ async def rollback_confirm_credit_product(
             application_id=application.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -580,7 +579,7 @@ async def update_apps_send_notifications(
             external_message_id=message_id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -626,7 +625,8 @@ async def upload_document(
             application_id=application.id,
         )
 
-        return commit_and_refresh(session, document)
+        session.commit()
+        return document
 
 
 @router.post(
@@ -674,7 +674,7 @@ async def complete_information_request(
             application_id=application.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -713,7 +713,8 @@ async def upload_contract(
             new_file,
         )
 
-        return commit_and_refresh(session, document)
+        session.commit()
+        return document
 
 
 @router.post(
@@ -768,7 +769,7 @@ async def confirm_upload_contract(
             application_id=application.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -861,7 +862,7 @@ async def find_alternative_credit_option(
             application_id=new_application.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, new_application),
             borrower=new_application.borrower,

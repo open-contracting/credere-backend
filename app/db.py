@@ -11,7 +11,12 @@ from app.settings import app_settings
 
 # https://docs.sqlalchemy.org/en/20/orm/session_basics.html#using-a-sessionmaker
 engine = create_engine(app_settings.test_database_url if app_settings.test_database_url else app_settings.database_url)
-SessionLocal = sessionmaker(bind=engine)
+# https://docs.sqlalchemy.org/en/20/orm/session_api.html#sqlalchemy.orm.Session.__init__
+# "It’s also usually a good idea to set Session.expire_on_commit to False so that subsequent access to objects that
+# came from a Session within the view layer do not need to emit new SQL queries to refresh the objects, if the
+# transaction has been committed already."
+# https://docs.sqlalchemy.org/en/20/orm/session_basics.html#when-do-i-construct-a-session-when-do-i-commit-it-and-when-do-i-close-it
+SessionLocal = sessionmaker(expire_on_commit=False, bind=engine)
 
 
 @contextmanager

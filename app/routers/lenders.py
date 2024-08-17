@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import dependencies, models, serializers
 from app.db import get_db, rollback_on_error
 from app.sources import colombia as data_access
-from app.util import commit_and_refresh, get_object_or_404
+from app.util import get_object_or_404
 
 router = APIRouter()
 
@@ -40,7 +40,8 @@ async def create_lender(
                 for credit_product in payload.credit_products:
                     session.add(models.CreditProduct(**credit_product.model_dump(), lender=lender))
 
-            return commit_and_refresh(session, lender)
+            session.commit()
+            return lender
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -70,7 +71,8 @@ async def create_credit_products(
         lender = get_object_or_404(session, models.Lender, "id", lender_id)
         credit_product = models.CreditProduct.create(session, **payload.model_dump(), lender=lender)
 
-        return commit_and_refresh(session, credit_product)
+        session.commit()
+        return credit_product
 
 
 @router.get(
@@ -112,7 +114,8 @@ async def update_lender(
             lender = get_object_or_404(session, models.Lender, "id", id)
             lender = lender.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
-            return commit_and_refresh(session, lender)
+            session.commit()
+            return lender
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -207,4 +210,5 @@ async def update_credit_products(
         credit_product = get_object_or_404(session, models.CreditProduct, "id", credit_product_id)
         credit_product = credit_product.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
-        return commit_and_refresh(session, credit_product)
+        session.commit()
+        return credit_product

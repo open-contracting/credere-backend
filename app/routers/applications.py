@@ -10,7 +10,7 @@ from sqlmodel import col
 
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
-from app.util import SortOrder, commit_and_refresh, get_order_by
+from app.util import SortOrder, get_order_by
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,8 @@ async def reject_application(
             user_id=user.id,
         )
 
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.post(
@@ -130,7 +131,8 @@ async def complete_application(
             user_id=user.id,
         )
 
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.post(
@@ -208,7 +210,8 @@ async def approve_application(
             user_id=user.id,
         )
 
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.put(
@@ -256,7 +259,8 @@ async def verify_data_field(
             user_id=user.id,
         )
 
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.put(
@@ -296,7 +300,7 @@ async def verify_document(
             user_id=user.id,
         )
 
-        commit_and_refresh(session, document)
+        session.commit()
         return document.application
 
 
@@ -338,7 +342,7 @@ async def update_application_award(
             user_id=user.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return util.get_modified_data_fields(session, application)
 
 
@@ -387,7 +391,7 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
-        commit_and_refresh(session, application)
+        session.commit()
         return util.get_modified_data_fields(session, application)
 
 
@@ -491,7 +495,8 @@ async def start_application(
         application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
 
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.get(
@@ -599,7 +604,8 @@ async def email_borrower(
             user_id=user.id,
         )
 
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.get(
