@@ -1,39 +1,16 @@
-from fastapi import status
+from datetime import datetime, timedelta
+
 from typer.testing import CliRunner
 
-from app import commands, models
-
-ocp_user = {
-    "email": "OCP-user@example.com",
-    "name": "OCP-user@example.com",
-    "type": models.UserType.OCP,
-}
-lender = {
-    "id": 1,
-    "name": "test",
-    "email_group": "test@lender.com",
-    "status": "Active",
-    "type": "Some Type",
-    "sla_days": 7,
-}
-lender_user = {
-    "id": 2,
-    "email": "lender-user@example.com",
-    "name": "Test lender",
-    "type": models.UserType.FI,
-    "lender_id": 1,
-}
-
-application_payload = {"status": models.ApplicationStatus.PENDING}
-application_accepted_payload = {"status": models.ApplicationStatus.ACCEPTED}
-application_with_lender_payload = {"status": models.ApplicationStatus.STARTED, "lender_id": 1}
+from app import commands
+from app.settings import app_settings
 
 runner = CliRunner()
 
 
-def test_send_reminders_intro(client, mock_send_templated_email):
-    client.post("/create-test-application", json=application_payload)
-    client.get("/set-test-application-to-remind/id/1")
+def test_send_reminders_intro(session, mock_send_templated_email, pending_application):
+    pending_application.expired_at = datetime.now(pending_application.tz) + timedelta(seconds=1)
+    session.commit()
 
     result = runner.invoke(commands.app, ["send-reminders"])
 
@@ -42,9 +19,13 @@ def test_send_reminders_intro(client, mock_send_templated_email):
     assert mock_send_templated_email.call_count == 1
 
 
-def test_send_reminders_submit(client, mock_send_templated_email):
-    client.post("/create-test-application", json=application_accepted_payload)
-    client.get("/set-test-application-to-remind-submit/id/1")
+def test_send_reminders_submit(session, mock_send_templated_email, accepted_application):
+    accepted_application.borrower_accepted_at = (
+        datetime.now(accepted_application.tz)
+        - timedelta(days=app_settings.days_to_change_to_lapsed)
+        + timedelta(days=app_settings.reminder_days_before_lapsed)
+    )
+    session.commit()
 
     result = runner.invoke(commands.app, ["send-reminders"])
 
@@ -53,9 +34,7 @@ def test_send_reminders_submit(client, mock_send_templated_email):
     assert mock_send_templated_email.call_count == 1
 
 
-def test_send_reminders_no_applications_to_remind(client, mock_send_templated_email):
-    client.post("/create-test-application", json=application_payload)
-
+def test_send_reminders_no_applications_to_remind(mock_send_templated_email, pending_application):
     result = runner.invoke(commands.app, ["send-reminders"])
 
     assert result.exit_code == 0
@@ -63,9 +42,11 @@ def test_send_reminders_no_applications_to_remind(client, mock_send_templated_em
     assert mock_send_templated_email.call_count == 0
 
 
-def test_set_lapsed_applications(client):
-    client.post("/create-test-application", json=application_payload)
-    client.get("/set-test-application-as-lapsed/id/1")
+def test_set_lapsed_applications(session, pending_application):
+    pending_application.created_at = datetime.now(pending_application.tz) - timedelta(
+        days=app_settings.days_to_change_to_lapsed + 2
+    )
+    session.commit()
 
     result = runner.invoke(commands.app, ["update-applications-to-lapsed"])
 
@@ -73,21 +54,19 @@ def test_set_lapsed_applications(client):
     assert result.stdout == ""
 
 
-def test_set_lapsed_applications_no_lapsed(client):
-    client.post("/create-test-application", json=application_payload)
-
+def test_set_lapsed_applications_no_lapsed(pending_application):
     result = runner.invoke(commands.app, ["update-applications-to-lapsed"])
 
     assert result.exit_code == 0
     assert result.stdout == ""
 
 
-def test_send_overdue_reminders(client, mock_send_templated_email):
-    ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    client.post("/lenders", json=lender, headers=ocp_headers)
-    client.post("/create-test-application", json=application_with_lender_payload)
+def test_send_overdue_reminders(session, mock_send_templated_email, started_application):
+    started_application.lender_started_at = datetime.now(started_application.tz) - timedelta(
+        days=started_application.lender.sla_days + 1
+    )
+    session.commit()
 
-    client.get("/set-application-as-overdue/id/1")
     result = runner.invoke(commands.app, ["sla-overdue-applications"])
 
     assert result.exit_code == 0
@@ -95,12 +74,10 @@ def test_send_overdue_reminders(client, mock_send_templated_email):
     assert mock_send_templated_email.call_count == 2
 
 
-def test_send_overdue_reminders_empty(client, mock_send_templated_email):
-    ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    client.post("/lenders", json=lender, headers=ocp_headers)
-    client.post("/create-test-application", json=application_with_lender_payload)
+def test_send_overdue_reminders_empty(session, mock_send_templated_email, started_application):
+    started_application.lender_started_at = datetime.now(started_application.tz)
+    session.commit()
 
-    client.get("/set-application-as-started/id/1")
     result = runner.invoke(commands.app, ["sla-overdue-applications"])
 
     assert result.exit_code == 0
@@ -108,23 +85,19 @@ def test_send_overdue_reminders_empty(client, mock_send_templated_email):
     assert mock_send_templated_email.call_count == 0
 
 
-def test_remove_data(client):
-    client.post("/create-test-application", json=application_payload)
-    client.get("/set-test-application-as-dated/id/1")
-
-    client.post(
-        "/applications/1/update-test-application-status",
-        json={"status": models.ApplicationStatus.DECLINED},
+def test_remove_data(session, declined_application):
+    declined_application.borrower_declined_at = datetime.now(declined_application.tz) - timedelta(
+        days=app_settings.days_to_erase_borrowers_data + 1
     )
+    session.commit()
+
     result = runner.invoke(commands.app, ["remove-dated-application-data"])
 
     assert result.exit_code == 0
     assert result.stdout == ""
 
 
-def test_remove_data_no_dated_application(client):
-    client.post("/create-test-application", json=application_payload)
-
+def test_remove_data_no_dated_application(pending_application):
     result = runner.invoke(commands.app, ["remove-dated-application-data"])
 
     assert result.exit_code == 0
@@ -136,18 +109,3 @@ def test_update_statistic(engine, create_and_drop_database):
 
     assert result.exit_code == 0
     assert result.stdout == ""
-
-
-def test_statistics(client):
-    ocp_headers = client.post("/create-test-user-headers", json=ocp_user).json()
-    client.post("/lenders", json=lender, headers=ocp_headers)
-    lender_headers = client.post("/create-test-user-headers", json=lender_user).json()
-
-    response = client.get("/statistics-ocp", headers=ocp_headers)
-    assert response.status_code == status.HTTP_200_OK
-
-    response = client.get("/statistics-ocp/opt-in", headers=ocp_headers)
-    assert response.status_code == status.HTTP_200_OK
-
-    response = client.get("/statistics-fi", headers=lender_headers)
-    assert response.status_code == status.HTTP_200_OK

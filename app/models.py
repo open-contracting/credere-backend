@@ -423,7 +423,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         """
         :return: A query for PENDING applications whose expiration date is within
             :attr:`~app.settings.Settings.reminder_days_before_expiration` days from now, and whose
-            borrower may receive Credere invitations and hasn't already received a reminder to accept.
+            borrower hasn't already received a reminder to accept and may receive Credere invitations.
 
         .. seealso:: :doc:`send-reminders</commands>`
         """

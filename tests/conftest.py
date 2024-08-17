@@ -17,7 +17,7 @@ from app.db import get_db
 from app.routers import applications, downloads, guest, lenders, statistics, users
 from app.settings import app_settings
 from tests import create_user, get_test_db
-from tests.protected_routes import applications_test, users_test
+from tests.protected_routes import users_test
 
 
 @pytest.fixture(scope="session")
@@ -70,7 +70,6 @@ def app() -> Generator[FastAPI, Any, None]:
     app.include_router(guest.emails.router)
     app.include_router(downloads.router)
     app.include_router(users_test.router)
-    app.include_router(applications_test.router)
     app.include_router(statistics.router)
     yield app
 
@@ -130,7 +129,7 @@ def lender(session):
     instance = models.Lender.create(
         session,
         name="test",
-        email_group="test@noreply.open-contracting.org",
+        email_group="test@example.com",
         type="Some Type",
         sla_days=7,
         status="Active",
@@ -144,7 +143,7 @@ def unauthorized_lender(session):
     instance = models.Lender.create(
         session,
         name="test 2",
-        email_group="test@noreply.open-contracting.org",
+        email_group="test@example.com",
         type="Some Type",
         sla_days=7,
         status="Active",
@@ -158,7 +157,7 @@ def admin_header(session, aws_client):
     return create_user(
         session,
         aws_client,
-        email="OCP-test@noreply.open-contracting.org",
+        email="OCP-test@open-contracting.org",
         name="OCP Test User",
         type=models.UserType.OCP,
     )
@@ -169,7 +168,7 @@ def lender_header(session, aws_client, lender):
     return create_user(
         session,
         aws_client,
-        email="lender-user@noreply.open-contracting.org",
+        email="lender-user@example.com",
         name="Lender Test User",
         type=models.UserType.FI,
         lender=lender,
@@ -181,7 +180,7 @@ def unauthorized_lender_header(session, aws_client, unauthorized_lender):
     return create_user(
         session,
         aws_client,
-        email="lender-user-2@noreply.open-contracting.org",
+        email="lender-user-2@example.com",
         name="Lender Test User 2",
         type=models.UserType.FI,
         lender=unauthorized_lender,
@@ -368,7 +367,7 @@ def application_uuid_payload(application_payload):
 
 
 @pytest.fixture
-def pending_application(session, lender, credit_product, application_payload):
+def pending_application(session, application_payload, credit_product, lender):
     instance = models.Application.create(
         session,
         **application_payload,
@@ -381,19 +380,18 @@ def pending_application(session, lender, credit_product, application_payload):
 
 
 @pytest.fixture
-def declined_application(session, credit_product, application_payload):
+def declined_application(session, application_payload, credit_product):
     instance = models.Application.create(
         session,
         **application_payload,
         status=models.ApplicationStatus.DECLINED,
     )
     session.commit()
-    session.refresh(instance)
     return instance
 
 
 @pytest.fixture
-def accepted_application(session, credit_product, application_payload):
+def accepted_application(session, application_payload, credit_product):
     instance = models.Application.create(
         session,
         **application_payload,
@@ -401,5 +399,16 @@ def accepted_application(session, credit_product, application_payload):
         credit_product_id=credit_product.id,
     )
     session.commit()
-    session.refresh(instance)
+    return instance
+
+
+@pytest.fixture
+def started_application(session, application_payload, lender):
+    instance = models.Application.create(
+        session,
+        **application_payload,
+        status=models.ApplicationStatus.STARTED,
+        lender=lender,
+    )
+    session.commit()
     return instance
