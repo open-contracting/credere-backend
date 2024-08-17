@@ -51,7 +51,6 @@ async def application_by_uuid(
 )
 async def decline(
     payload: parsers.ApplicationDeclinePayload,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
@@ -96,7 +95,6 @@ async def decline(
 )
 async def rollback_decline(
     payload: parsers.ApplicationBase,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
@@ -136,7 +134,6 @@ async def rollback_decline(
 )
 async def decline_feedback(
     payload: parsers.ApplicationDeclineFeedbackPayload,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
@@ -187,7 +184,6 @@ async def access_scheme(
     Search for previous awards for the borrower and add them to the application.
 
     :param payload: The application data.
-    :param background_tasks: The background tasks to be executed.
     :return: The application response containing the updated application, borrower, and award.
     :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
     """
@@ -367,7 +363,6 @@ async def rollback_select_credit_product(
 )
 async def confirm_credit_product(
     payload: parsers.ApplicationBase,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
@@ -459,7 +454,6 @@ async def confirm_credit_product(
 )
 async def rollback_confirm_credit_product(
     payload: parsers.ApplicationBase,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_payload(
@@ -524,7 +518,6 @@ async def rollback_confirm_credit_product(
 )
 async def update_apps_send_notifications(
     payload: parsers.ApplicationBase,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: aws.Client = Depends(dependencies.get_aws_client),
     application: models.Application = Depends(
@@ -635,7 +628,6 @@ async def upload_document(
 )
 async def complete_information_request(
     payload: parsers.ApplicationBase,
-    background_tasks: BackgroundTasks,
     client: aws.Client = Depends(dependencies.get_aws_client),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
