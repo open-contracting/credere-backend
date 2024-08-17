@@ -43,6 +43,7 @@ def get_test_db(engine):
 
 
 def create_user(session, aws_client, *, email, **kwargs):
+    # Like create_user().
     user = models.User.create(session, email=email, **kwargs)
     response = aws_client.cognito.admin_create_user(
         UserPoolId=app_settings.cognito_pool_id,

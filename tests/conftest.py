@@ -12,12 +12,15 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 
-from app import aws, dependencies, models
+from app import aws, dependencies, main, models
 from app.db import get_db
-from app.routers import applications, downloads, guest, lenders, statistics, users
 from app.settings import app_settings
 from tests import create_user, get_test_db
-from tests.protected_routes import users_test
+
+
+@pytest.fixture(scope="session")
+def app() -> Generator[FastAPI, Any, None]:
+    yield main.app
 
 
 @pytest.fixture(scope="session")
@@ -58,20 +61,6 @@ def create_and_drop_database(engine):
     models.SQLModel.metadata.create_all(engine)
     yield
     models.SQLModel.metadata.drop_all(engine)
-
-
-@pytest.fixture(scope="session")
-def app() -> Generator[FastAPI, Any, None]:
-    app = FastAPI()
-    app.include_router(users.router)
-    app.include_router(lenders.router)
-    app.include_router(applications.router)
-    app.include_router(guest.applications.router)
-    app.include_router(guest.emails.router)
-    app.include_router(downloads.router)
-    app.include_router(users_test.router)
-    app.include_router(statistics.router)
-    yield app
 
 
 @pytest.fixture
