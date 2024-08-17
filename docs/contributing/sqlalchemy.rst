@@ -1,10 +1,51 @@
 SQLAlchemy
 ==========
 
-Reminders
----------
+Read SQLAlchemy's `Session Basics <https://docs.sqlalchemy.org/en/20/orm/session_basics.html>`__, in particular:
 
--  Use ``instance.related = related``, not ``instance.related_id = related.id``. If ``session.flush()`` was not called ``session.add(related)``, then ``related.id`` is ``None``.
+-  `Adding New or Existing Items <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#adding-new-or-existing-items>`__
+
+      "For transient (i.e. brand new) instances, ``Session.add()`` will have the effect of an INSERT taking place for those instances upon the next flush. For instances which are persistent (i.e. were loaded by this session), they are already present and do not need to be added."
+
+-  `Flushing <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#session-flushing>`__
+
+      With ``autoflush=True``, "the flush step is nearly always done transparently. Specifically, the flush occurs before any individual SQL statement is issued as a result of a ``Query`` …, as well as within the ``Session.commit()`` call before the transaction is committed."
+
+-  `When do I construct a Session, when do I commit it, and when do I close it? <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#when-do-i-construct-a-session-when-do-i-commit-it-and-when-do-i-close-it>`__
+
+      For web applications, "the basic pattern is create a ``Session`` at the start of a web request, call the ``Session.commit()`` method at the end of web requests that do POST, PUT, or DELETE, and then close the session at the end of web request"
+
+-  `Expiring / Refreshing <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#expiring-refreshing>`__ (also under `State Management <https://docs.sqlalchemy.org/en/20/orm/session_state_management.html#refreshing-expiring>`__, in particular, `When to Expire or Refresh <https://docs.sqlalchemy.org/en/20/orm/session_state_management.html#when-to-expire-or-refresh>`__)
+
+   In SQLAlchemy, `as SQLModel documents <https://sqlmodel.tiangolo.com/tutorial/automatic-id-none-refresh/#commit-the-changes-to-the-database>`__, if you access an instance (but not its attributes) after ``session.commit()`` – like when constructing a JSON response – then "something unexpected happens" by default. We follow the advice from the answer to the previous question:
+
+      "It’s also usually a good idea to set ``Session.expire_on_commit`` to False so that subsequent access to objects that came from a ``Session`` within the view layer do not need to emit new SQL queries to refresh the objects, if the transaction has been committed already."
+
+
+   .. seealso:: `I’m re-loading data with my Session but it isn’t seeing changes that I committed elsewhere <https://docs.sqlalchemy.org/en/20/faq/sessions.html#i-m-re-loading-data-with-my-session-but-it-isn-t-seeing-changes-that-i-committed-elsewhere>`__
+
+-  `My Query does not return the same number of objects as query.count() tells me - why? <https://docs.sqlalchemy.org/en/20/faq/sessions.html#my-query-does-not-return-the-same-number-of-objects-as-query-count-tells-me-why>`__
+
+Flushing
+--------
+
+-  Use ``session.add(instance)`` to INSERT rows.
+-  Use ``instance.related = related``, not ``instance.related_id = related.id``.
+
+   .. attention::
+
+      Otherwise, if ``session.flush()`` is not called after ``session.add(related)``, then ``related.id`` is ``None``!
+
+-  Use the :meth:`app.models.ActiveRecordMixin.create` and :meth:`app.models.ActiveRecordMixin.update` methods, which call ``session.flush()`` to avoid such errors.
+
+Committing
+----------
+
+-  Commit before sending emails, adding `background tasks <https://fastapi.tiangolo.com/reference/background/?h=background>`__ or returning responses, to ensure changes are persisted before irreversible actions are taken.
+-  Commit after sending an email, especially in a for-loop, so that if a later query fails, we don't send repeat emails on the next run. This is contrary to the advice in `Session Basics <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#when-do-i-construct-a-session-when-do-i-commit-it-and-when-do-i-close-it>`__:
+
+      "For a command-line script, the application would create a single, global ``Session`` that is established when the program begins to do its work, and **commits it right as the program is completing its task**." (emphasis added)
+
 
 Query API
 ---------
