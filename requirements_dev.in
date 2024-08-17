@@ -9,6 +9,7 @@ mypy
 pandas-stubs
 pip-tools
 pre-commit
+py-html-checker
 pytest
 pytest-cov
 pytest-mock
