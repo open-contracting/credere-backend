@@ -6,6 +6,3 @@ exclude = '/(migrations|node_modules)/'
 profile = 'black'
 line_length = 119
 skip = ['migrations']
-
-[tool.pytest.ini_options]
-addopts = "--random-order --random-order-bucket=global"
