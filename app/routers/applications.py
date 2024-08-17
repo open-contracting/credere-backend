@@ -296,7 +296,7 @@ async def verify_document(
             user_id=user.id,
         )
 
-        document = commit_and_refresh(session, document)
+        commit_and_refresh(session, document)
         return document.application
 
 
@@ -338,7 +338,7 @@ async def update_application_award(
             user_id=user.id,
         )
 
-        application = commit_and_refresh(session, application)
+        commit_and_refresh(session, application)
         return util.get_modified_data_fields(session, application)
 
 
@@ -387,7 +387,7 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
-        application = commit_and_refresh(session, application)
+        commit_and_refresh(session, application)
         return util.get_modified_data_fields(session, application)
 
 
