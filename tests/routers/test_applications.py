@@ -1,15 +1,13 @@
 import os
-from contextlib import contextmanager
 from unittest.mock import patch
 
 from fastapi import status
 
 from app import models, util
-from app.db import engine
-from tests import BASEDIR, MockResponse, assert_ok, get_test_db, load_json_file
+from tests import BASEDIR, MockResponse, assert_ok, load_json_file
 
 
-def test_reject_application(client, session, lender_header, pending_application, application_uuid_payload):
+def test_reject_application(client, session, lender_header, pending_application):
     appid = pending_application.id
     payload = {
         "compliance_checks_failed": True,
@@ -31,18 +29,12 @@ def test_reject_application(client, session, lender_header, pending_application,
     assert_ok(response)
     assert response.json()["status"] == models.ApplicationStatus.REJECTED
 
-    response = client.post("/applications/find-alternative-credit-option", json=application_uuid_payload)
+    response = client.post("/applications/find-alternative-credit-option", json={"uuid": pending_application.uuid})
     assert_ok(response)
 
 
 def test_approve_application_cycle(
-    client,
-    session,
-    admin_header,
-    lender_header,
-    unauthorized_lender_header,
-    pending_application,
-    application_uuid_payload,
+    reset_database, client, session, admin_header, lender_header, unauthorized_lender_header, pending_application
 ):
     appid = pending_application.id
     source_award = load_json_file("fixtures/award.json")
@@ -64,19 +56,19 @@ def test_approve_application_cycle(
         "app.sources.colombia._get_remote_contract",
         return_value=(load_json_file("fixtures/contract.json"), "url"),
     ):
-        response = client.post("/applications/access-scheme", json=application_uuid_payload)
+        response = client.post("/applications/access-scheme", json={"uuid": pending_application.uuid})
         assert_ok(response)
         assert response.json()["application"]["status"] == models.ApplicationStatus.ACCEPTED
 
         # Application should be accepted now so it cannot be accepted again
-        response = client.post("/applications/access-scheme", json=application_uuid_payload)
+        response = client.post("/applications/access-scheme", json={"uuid": pending_application.uuid})
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.json() == {"detail": "Application status should not be ACCEPTED"}
 
     response = client.post(
         "/applications/credit-product-options",
         json={
-            "uuid": "123-456-789",
+            "uuid": pending_application.uuid,
             "borrower_size": models.BorrowerSize.SMALL,
             "amount_requested": 10000,
         },
@@ -86,7 +78,7 @@ def test_approve_application_cycle(
     response = client.post(
         "/applications/select-credit-product",
         json={
-            "uuid": "123-456-789",
+            "uuid": pending_application.uuid,
             "borrower_size": models.BorrowerSize.SMALL,
             "amount_requested": 10000,
             "sector": "adminstration",
@@ -95,7 +87,7 @@ def test_approve_application_cycle(
     )
     assert_ok(response)
 
-    response = client.post("/applications/confirm-credit-product", json=application_uuid_payload)
+    response = client.post("/applications/confirm-credit-product", json={"uuid": pending_application.uuid})
     assert_ok(response)
 
     # Lender user tries to fetch previous awards
@@ -118,34 +110,38 @@ def test_approve_application_cycle(
     # borrower tries to change their email to a non valid one
     response = client.post(
         "/applications/change-email",
-        json={"uuid": "123-456-789", "new_email": "wrong_email@@noreply!$%&/().open-contracting.org"},
+        json={"uuid": pending_application.uuid, "new_email": "wrong_email@@noreply!$%&/().open-contracting.org"},
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert response.json() == {"detail": "New email is not valid"}
 
-    response = client.post("/applications/change-email", json={"uuid": "123-456-789", "new_email": new_email})
+    response = client.post(
+        "/applications/change-email", json={"uuid": pending_application.uuid, "new_email": new_email}
+    )
     assert_ok(response)
 
-    response = client.post("/applications/change-email", json={"uuid": "123-456-789", "new_email": new_email})
+    response = client.post(
+        "/applications/change-email", json={"uuid": pending_application.uuid, "new_email": new_email}
+    )
     assert_ok(response)
 
     confirmation_email_token = util.generate_uuid(new_email)
 
     response = client.post(
         "/applications/confirm-change-email",
-        json={"uuid": "123-456-789", "confirmation_email_token": confirmation_email_token},
+        json={"uuid": pending_application.uuid, "confirmation_email_token": confirmation_email_token},
     )
     assert_ok(response)
 
     # borrower tries to confirm email without a pending change
     response = client.post(
         "/applications/confirm-change-email",
-        json={"uuid": "123-456-789", "confirmation_email_token": "confirmation_email_token"},
+        json={"uuid": pending_application.uuid, "confirmation_email_token": "confirmation_email_token"},
     )
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json() == {"detail": "Application is not pending an email confirmation"}
 
-    response = client.post("/applications/submit", json=application_uuid_payload)
+    response = client.post("/applications/submit", json={"uuid": pending_application.uuid})
     assert_ok(response)
     assert response.json()["application"]["status"] == models.ApplicationStatus.SUBMITTED
 
@@ -153,7 +149,7 @@ def test_approve_application_cycle(
     with open(file, "rb") as file_to_upload:
         response = client.post(
             "/applications/upload-document",
-            data={"uuid": "123-456-789", "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT},
+            data={"uuid": pending_application.uuid, "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT},
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -217,7 +213,7 @@ def test_approve_application_cycle(
     with open(os.path.join(BASEDIR, "fixtures", "file.gif"), "rb") as file_to_upload:
         response = client.post(
             "/applications/upload-document",
-            data={"uuid": "123-456-789", "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT},
+            data={"uuid": pending_application.uuid, "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT},
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -226,12 +222,12 @@ def test_approve_application_cycle(
     with open(file, "rb") as file_to_upload:
         response = client.post(
             "/applications/upload-document",
-            data={"uuid": "123-456-789", "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT},
+            data={"uuid": pending_application.uuid, "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT},
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert_ok(response)
 
-        response = client.post("/applications/complete-information-request", json={"uuid": "123-456-789"})
+        response = client.post("/applications/complete-information-request", json={"uuid": pending_application.uuid})
         assert_ok(response)
         assert response.json()["application"]["status"] == models.ApplicationStatus.STARTED
 
@@ -276,8 +272,7 @@ def test_approve_application_cycle(
     )
     assert_ok(response)
     assert response.json()["id"] == 1
-    with contextmanager(get_test_db(engine))() as session:
-        assert session.query(models.BorrowerDocument).one().verified is True
+    assert session.query(models.BorrowerDocument).one().verified is True
 
     # lender approves application
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
@@ -288,14 +283,14 @@ def test_approve_application_cycle(
     with open(file, "rb") as file_to_upload:
         response = client.post(
             "/applications/upload-contract",
-            data={"uuid": "123-456-789"},
+            data={"uuid": pending_application.uuid},
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert_ok(response)
 
     response = client.post(
         "/applications/confirm-upload-contract",
-        json={"uuid": "123-456-789", "contract_amount_submitted": 100000},
+        json={"uuid": pending_application.uuid, "contract_amount_submitted": 100000},
     )
     assert_ok(response)
     assert response.json()["application"]["status"] == models.ApplicationStatus.CONTRACT_UPLOADED
@@ -342,13 +337,13 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": "Not authenticated"}
 
-    response = client.get("/applications/uuid/123-456-789")
+    response = client.get(f"/applications/uuid/{pending_application.uuid}")
     assert_ok(response)
 
     pending_application.status = models.ApplicationStatus.LAPSED
     session.commit()
 
-    response = client.get("/applications/uuid/123-456-789")
+    response = client.get(f"/applications/uuid/{pending_application.uuid}")
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json() == {"detail": "APPLICATION_LAPSED"}
 

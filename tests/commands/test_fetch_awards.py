@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from typer.testing import CliRunner
 
 from app import commands, models, util
-from tests import MockResponse, get_test_db, load_json_file
+from tests import MockResponse, load_json_file
 
 AWARD_ID = "TEST_AWARD_ID"
 SUPPLIER_ID = "987654321"
@@ -13,7 +13,7 @@ application_result = load_json_file("fixtures/application_result.json")
 award = load_json_file("fixtures/award.json")
 award_result = load_json_file("fixtures/award_result.json")
 borrower = load_json_file("fixtures/borrower.json")
-borrower_declined = load_json_file("fixtures/borrower_declined.json")
+# borrower_declined = load_json_file("fixtures/borrower_declined.json")
 borrower_result = load_json_file("fixtures/borrower_result.json")
 contract = load_json_file("fixtures/contract.json")
 email = load_json_file("fixtures/email.json")
@@ -36,33 +36,16 @@ def mock_response(status_code: int, content: dict, function_path: str):
 
 
 @contextmanager
-def mock_whole_process_once(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
-    # this will mock the whole process of the fetcher once responding to make_request_with_retry in order
+def mock_whole_process(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
+    # Mock all calls to make_request_with_retry from fetch-awards.
     mock = MagicMock(
         side_effect=[
             MockResponse(status_code, award),
             MockResponse(status_code, borrower),
             MockResponse(status_code, email),
+            MockResponse(status_code, award),
         ]
     )
-
-    with patch(function_path, mock):
-        yield mock
-
-
-@contextmanager
-def mock_whole_process(status_code: int, award_mock: dict, borrower_mock: dict, email_mock: dict, function_path: str):
-    # this will mock the whole process of the fetcher responding to make_request_with_retry in order
-    #
-    mock = MagicMock(
-        side_effect=[
-            MockResponse(status_code, award_mock),
-            MockResponse(status_code, borrower_mock),
-            MockResponse(status_code, email_mock),
-            MockResponse(status_code, award_mock),
-        ]
-    )
-
     with patch(function_path, mock):
         yield mock
 
@@ -75,7 +58,6 @@ def mock_response_second_empty(status_code: int, content: dict, function_path: s
             MockResponse(200, []),
         ]
     )
-
     with patch(function_path, mock):
         yield mock
 
@@ -109,8 +91,8 @@ def compare_objects(fetched_model, expected_result):
         assert expected_result[key] == value
 
 
-def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database):
-    with contextmanager(get_test_db(engine))() as session, mock_response(
+def test_fetch_previous_borrower_awards_empty(reset_database, sessionmaker, session):
+    with mock_response(
         200,
         [],  # changed
         "app.sources.colombia.get_previous_awards",
@@ -126,7 +108,7 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database):
         "app.sources.make_request_with_retry",
     ):
         result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
-        util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
+        util.get_previous_awards_from_data_source(borrower_result["id"], sessionmaker)
 
         assert result.exit_code == 0
         assert result.stdout == ""
@@ -134,12 +116,12 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database):
         assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
 
-def test_fetch_previous_borrower_awards(engine, create_and_drop_database):
+def test_fetch_previous_borrower_awards(reset_database, sessionmaker, session):
     # We can make a shallow copy, as we change `id_contrato` only, to make `source_contract_id` different.
     previous_contract = contract[0].copy()
     previous_contract["id_contrato"] = "CO1.test.123456.previous"
 
-    with contextmanager(get_test_db(engine))() as session, mock_response(
+    with mock_response(
         200,
         award,  # changed
         "app.sources.colombia.get_previous_awards",
@@ -159,14 +141,14 @@ def test_fetch_previous_borrower_awards(engine, create_and_drop_database):
     ):
         models.Borrower.create(session, **borrower_result)
         session.commit()
-        util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
+        util.get_previous_awards_from_data_source(borrower_result["id"], sessionmaker)
 
         assert session.query(models.Award).count() == 1
         assert session.query(models.Award).one().previous is True
         assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
 
-def test_fetch_empty_contracts(create_and_drop_database, caplog):
+def test_fetch_empty_contracts(reset_database, caplog):
     with caplog.at_level("INFO"):
         with mock_response(200, [], "app.sources.colombia.get_new_awards"):
             result = runner.invoke(commands.app, ["fetch-awards"])
@@ -177,7 +159,7 @@ def test_fetch_empty_contracts(create_and_drop_database, caplog):
     assert "No new contracts" in caplog.text
 
 
-def test_fetch_new_awards_from_date(engine, create_and_drop_database):
+def test_fetch_new_awards_from_date(reset_database, session):
     with mock_response_second_empty(
         200,
         award,
@@ -197,19 +179,19 @@ def test_fetch_new_awards_from_date(engine, create_and_drop_database):
         assert result.exit_code == 0
         assert result.stdout == ""
 
-        with contextmanager(get_test_db(engine))() as session:
-            inserted_award = session.query(models.Award).one()
-            inserted_borrower = session.query(models.Borrower).one()
-            inserted_application = session.query(models.Application).one()
-            compare_objects(inserted_award, award_result)
-            compare_objects(inserted_borrower, borrower_result)
-            compare_objects(inserted_application, application_result)
+        inserted_award = session.query(models.Award).one()
+        inserted_borrower = session.query(models.Borrower).one()
+        inserted_application = session.query(models.Application).one()
+
+        compare_objects(inserted_award, award_result)
+        compare_objects(inserted_borrower, borrower_result)
+        compare_objects(inserted_application, application_result)
 
 
-def test_fetch_award_by_contract_and_supplier_empty(engine, create_and_drop_database, caplog):
+def test_fetch_award_by_contract_and_supplier_empty(reset_database, session, caplog):
     with caplog.at_level("INFO"):
         with mock_function_response(
-            get_test_db(engine)(),
+            session,
             "app.db.get_db",
         ), mock_response(
             200,
@@ -224,9 +206,9 @@ def test_fetch_award_by_contract_and_supplier_empty(engine, create_and_drop_data
     assert f"The award with id {AWARD_ID} and supplier id {SUPPLIER_ID} was not found" in caplog.text
 
 
-def test_fetch_award_by_id_and_supplier(engine, create_and_drop_database):
+def test_fetch_award_by_id_and_supplier(reset_database, session):
     with mock_function_response(
-        get_test_db(engine)(),
+        session,
         "app.db.get_db",
     ), mock_response(
         200,
@@ -247,10 +229,10 @@ def test_fetch_award_by_id_and_supplier(engine, create_and_drop_database):
         assert result.exit_code == 0
         assert result.stdout == ""
 
-        with contextmanager(get_test_db(engine))() as session:
-            inserted_award = session.query(models.Award).one()
-            inserted_borrower = session.query(models.Borrower).one()
-            inserted_application = session.query(models.Application).one()
-            compare_objects(inserted_award, award_result)
-            compare_objects(inserted_borrower, borrower_result)
-            compare_objects(inserted_application, application_result)
+        inserted_award = session.query(models.Award).one()
+        inserted_borrower = session.query(models.Borrower).one()
+        inserted_application = session.query(models.Application).one()
+
+        compare_objects(inserted_award, award_result)
+        compare_objects(inserted_borrower, borrower_result)
+        compare_objects(inserted_application, application_result)

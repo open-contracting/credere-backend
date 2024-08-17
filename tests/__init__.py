@@ -1,5 +1,6 @@
 import json
 import os
+from contextlib import contextmanager
 from typing import Generator
 
 from fastapi import status
@@ -77,3 +78,12 @@ def create_user(session, aws_client, *, email, **kwargs):
 
 def assert_ok(response):
     assert response.status_code == status.HTTP_200_OK, f"{response.status_code}: {response.json()}"
+
+
+@contextmanager
+def assert_change(obj, attr, change):
+    expected = getattr(obj, attr) + change
+    yield
+    actual = getattr(obj, attr)
+
+    assert actual == expected, f"{actual} != {expected}"

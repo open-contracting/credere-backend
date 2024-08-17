@@ -1,4 +1,5 @@
 import os
+import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Any, Generator
@@ -56,16 +57,30 @@ def mock_send_templated_email(mock_aws):
         yield mock
 
 
-@pytest.fixture(autouse=True)
-def create_and_drop_database(engine):
+@pytest.fixture(scope="session", autouse=True)
+def database(engine):
     models.SQLModel.metadata.create_all(engine)
     yield
     models.SQLModel.metadata.drop_all(engine)
 
 
 @pytest.fixture
-def session(engine):
-    with contextmanager(get_test_db(engine))() as db_session:
+def reset_database(engine):
+    models.SQLModel.metadata.drop_all(engine)
+    models.SQLModel.metadata.create_all(engine)
+    yield
+    models.SQLModel.metadata.drop_all(engine)
+    models.SQLModel.metadata.create_all(engine)
+
+
+@pytest.fixture
+def sessionmaker(engine):
+    return get_test_db(engine)
+
+
+@pytest.fixture
+def session(sessionmaker):
+    with contextmanager(sessionmaker)() as db_session:
         yield db_session
 
 
@@ -117,7 +132,7 @@ def client(app: FastAPI, engine, aws_client) -> Generator[TestClient, Any, None]
 def lender(session):
     instance = models.Lender.create(
         session,
-        name="test",
+        name=uuid.uuid4(),
         email_group="test@example.com",
         type="Some Type",
         sla_days=7,
@@ -131,7 +146,7 @@ def lender(session):
 def unauthorized_lender(session):
     instance = models.Lender.create(
         session,
-        name="test 2",
+        name=uuid.uuid4(),
         email_group="test@example.com",
         type="Some Type",
         sla_days=7,
@@ -146,7 +161,7 @@ def admin_header(session, aws_client):
     return create_user(
         session,
         aws_client,
-        email="OCP-test@open-contracting.org",
+        email=f"ocp-test-{uuid.uuid4()}@open-contracting.org",
         name="OCP Test User",
         type=models.UserType.OCP,
     )
@@ -157,7 +172,7 @@ def lender_header(session, aws_client, lender):
     return create_user(
         session,
         aws_client,
-        email="lender-user@example.com",
+        email=f"lender-user-{uuid.uuid4()}@example.com",
         name="Lender Test User",
         type=models.UserType.FI,
         lender=lender,
@@ -169,11 +184,20 @@ def unauthorized_lender_header(session, aws_client, unauthorized_lender):
     return create_user(
         session,
         aws_client,
-        email="lender-user-2@example.com",
-        name="Lender Test User 2",
+        email=f"lender-user-{uuid.uuid4()}@example.com",
+        name="Lender Test User",
         type=models.UserType.FI,
         lender=unauthorized_lender,
     )
+
+
+@pytest.fixture
+def user_payload():
+    return {
+        "email": f"test-{uuid.uuid4()}@noreply.open-contracting.org",
+        "name": "Test User",
+        "type": models.UserType.FI,
+    }
 
 
 @pytest.fixture
@@ -267,7 +291,7 @@ def award(session):
 def borrower(session):
     instance = models.Borrower.create(
         session,
-        borrower_identifier="test_hash_12345678",
+        borrower_identifier=uuid.uuid4(),
         legal_name="",  # tests expect this to be in missing_data
         email="test@example.com",
         address="Direccion: Test Address\nCiudad: Test City\nProvincia: No provisto\nEstado: No provisto",
@@ -309,10 +333,15 @@ def borrower(session):
 
 
 @pytest.fixture
-def application_payload(award, borrower):
+def application_uuid():
+    return uuid.uuid4()
+
+
+@pytest.fixture
+def application_payload(application_uuid, award, borrower):
     return {
         "award_id": award.id,
-        "uuid": "123-456-789",
+        "uuid": application_uuid,
         "primary_email": "test@example.com",
         "award_borrower_identifier": "test_hash_12345678",
         "borrower": borrower,
@@ -348,11 +377,6 @@ def application_payload(award, borrower):
         "updated_at": "2023-06-26T03:14:31.572553+00:00",
         "archived_at": None,
     }
-
-
-@pytest.fixture
-def application_uuid_payload(application_payload):
-    return {"uuid": application_payload["uuid"]}
 
 
 @pytest.fixture

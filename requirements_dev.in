@@ -12,6 +12,7 @@ pre-commit
 pytest
 pytest-cov
 pytest-mock
+pytest-random-order
 reportlab-stubs
 sphinx-autobuild
 sqlalchemy2-stubs
