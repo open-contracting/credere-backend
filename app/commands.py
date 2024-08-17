@@ -60,7 +60,7 @@ def _create_complete_application(
             else:
                 borrower = models.Borrower.create(session, **data)
 
-            award.borrower_id = borrower.id
+            award.borrower = borrower
 
             # Create a new application and insert it into the database.
             award_borrower_identifier: str = util.get_secret_hash(
@@ -81,8 +81,8 @@ def _create_complete_application(
                 )
             application = models.Application.create(
                 session,
-                award_id=award.id,
-                borrower_id=borrower.id,
+                award=award,
+                borrower=borrower,
                 primary_email=borrower.email,
                 award_borrower_identifier=award_borrower_identifier,
                 uuid=util.generate_uuid(award_borrower_identifier),

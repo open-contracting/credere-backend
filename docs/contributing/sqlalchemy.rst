@@ -1,6 +1,11 @@
 SQLAlchemy
 ==========
 
+Reminders
+---------
+
+-  Use ``instance.related = related``, not ``instance.related_id = related.id``. If ``session.flush()`` was not called ``session.add(related)``, then ``related.id`` is ``None``.
+
 Query API
 ---------
 

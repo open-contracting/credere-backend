@@ -29,6 +29,10 @@ def _get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
 
 
 # https://github.com/tiangolo/sqlmodel/issues/254
+#
+# The session.flush() calls are not strictly necessary. However, they can avoid errors like:
+#
+#     instance.related_id = related.id  # related_id is set to None
 class ActiveRecordMixin:
     @classmethod
     def filter_by(cls, session: Session, field: str, value: Any) -> "Query[Self]":

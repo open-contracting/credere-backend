@@ -739,6 +739,10 @@ async def confirm_upload_contract(
     :return: The application response containing the updated application and related entities.
     """
     with rollback_on_error(session):
+        application.contract_amount_submitted = payload.contract_amount_submitted
+        application.status = models.ApplicationStatus.CONTRACT_UPLOADED
+        application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
+
         lender_message_id, borrower_message_id = (
             mail.send_upload_contract_notification_to_lender(client.ses, application),
             mail.send_upload_contract_confirmation(client.ses, application),
@@ -755,10 +759,6 @@ async def confirm_upload_contract(
             type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
             external_message_id=borrower_message_id,
         )
-
-        application.contract_amount_submitted = payload.contract_amount_submitted
-        application.status = models.ApplicationStatus.CONTRACT_UPLOADED
-        application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
 
         models.ApplicationAction.create(
             session,

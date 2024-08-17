@@ -40,7 +40,6 @@ async def create_lender(
                 for credit_product in payload.credit_products:
                     session.add(models.CreditProduct(**credit_product.model_dump(), lender=lender))
 
-            session.flush()
             return commit_and_refresh(session, lender)
         except IntegrityError:
             raise HTTPException(

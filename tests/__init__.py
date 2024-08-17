@@ -31,7 +31,7 @@ def load_json_file(filename):
 
 
 def get_test_db(engine):
-    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    factory = sessionmaker(bind=engine)
 
     def inner() -> Generator[Session, None, None]:
         session = factory()
