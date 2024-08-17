@@ -82,10 +82,7 @@ def test_create_lender(client, admin_header, lender_header, lender):
     payload = {
         "name": "John Doe",
         "email_group": "lenders@noreply.open-contracting.org",
-        "status": "Active",
         "type": "Some Type",
-        "borrowed_type_preferences": {},
-        "limits_preferences": {},
         "sla_days": 5,
     }
 
@@ -107,7 +104,6 @@ def test_create_lender_with_credit_product(client, admin_header, lender_header, 
     payload = {
         "name": "test lender",
         "email_group": "test@noreply.open-contracting.org",
-        "status": "Active",
         "type": "Some Type",
         "sla_days": 5,
         "credit_products": [
@@ -162,10 +158,7 @@ def test_update_lender(client, admin_header, lender_header, lender):
     payload = {
         "name": "John smith",
         "email_group": "lenders@noreply.open-contracting.org",
-        "status": "Active",
         "type": "Some Type",
-        "borrowed_type_preferences": {},
-        "limits_preferences": {},
         "sla_days": 5,
     }
 
