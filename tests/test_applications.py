@@ -26,6 +26,7 @@ def test_reject_application(client, session, lender_header, pending_application,
     # tries to reject the application before its started
     response = client.post(f"/applications/{appid}/reject-application", json=payload, headers=lender_header)
     assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": "Application status should not be PENDING"}
 
     pending_application.status = models.ApplicationStatus.STARTED
     session.commit()
@@ -103,6 +104,7 @@ def test_approve_application_cycle(
         # Application should be accepted now so it cannot be accepted again
         response = client.post("/applications/access-scheme", json=application_uuid_payload)
         assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.json() == {"detail": "Application status should not be ACCEPTED"}
 
     response = client.post(
         "/applications/credit-product-options",
@@ -139,10 +141,12 @@ def test_approve_application_cycle(
     # different lender user tries to fetch previous awards
     response = client.get(f"/applications/{appid}/previous-awards", headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "User is not authorized"}
 
     # different lender tries to get the application
     response = client.get(f"/applications/id/{appid}", headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "User is not authorized"}
 
     # borrower tries to change their email to a non valid one
     response = client.post(
@@ -150,6 +154,7 @@ def test_approve_application_cycle(
         json={"uuid": "123-456-789", "new_email": "wrong_email@@noreply!$%&/().open-contracting.org"},
     )
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json() == {"detail": "New email is not valid"}
 
     response = client.post("/applications/change-email", json={"uuid": "123-456-789", "new_email": new_email})
     assert_ok(response)
@@ -171,6 +176,7 @@ def test_approve_application_cycle(
         json={"uuid": "123-456-789", "confirmation_email_token": "confirmation_email_token"},
     )
     assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": "Application is not pending an email confirmation"}
 
     response = client.post("/applications/submit", json=application_uuid_payload)
     assert_ok(response)
@@ -184,18 +190,22 @@ def test_approve_application_cycle(
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {"detail": "Cannot upload document at this stage"}
 
     # different lender user tries to start the application
     response = client.post(f"/applications/{appid}/start", headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "User is not authorized"}
 
     # different lender user tries to update the award
     response = client.put(f"/applications/{appid}/award", json=award_payload, headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "User is not authorized"}
 
     # different lender user tries to update the borrower
     response = client.put(f"/applications/{appid}/borrower", json=borrower_payload, headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "User is not authorized"}
 
     # The lender user starts application
     response = client.post(f"/applications/{appid}/start", headers=lender_header)
@@ -205,18 +215,22 @@ def test_approve_application_cycle(
     # different lender user tries to update the award
     response = client.put(f"/applications/{appid}/award", json=award_payload, headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "User is not authorized"}
 
     # different lender user tries to update the borrower
     response = client.put(f"/applications/{appid}/borrower", json=borrower_payload, headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "User is not authorized"}
 
     # Lender user tries to update non existing award
     response = client.put("/applications/999/award", json=award_payload, headers=lender_header)
     assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Application not found"}
 
     # Lender user tries to update non existing borrower
     response = client.put("/applications/999/borrower", json=borrower_payload, headers=lender_header)
     assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Application not found"}
 
     # Lender user tries to update the award
     response = client.put(f"/applications/{appid}/award", json=award_payload, headers=lender_header)
@@ -229,7 +243,6 @@ def test_approve_application_cycle(
     assert response.json()["borrower"]["legal_name"] == borrower_payload["legal_name"]
 
     response = client.post(f"applications/email-sme/{appid}", json={"message": "test message"}, headers=lender_header)
-
     assert_ok(response)
     assert response.json()["status"] == models.ApplicationStatus.INFORMATION_REQUESTED
 
@@ -241,6 +254,7 @@ def test_approve_application_cycle(
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.json() == {"detail": "Format not allowed. It must be a PNG, JPEG, or PDF file"}
 
     with open(file, "rb") as file_to_upload:
         response = client.post(
@@ -264,10 +278,12 @@ def test_approve_application_cycle(
         # OCP ask for a file that does not exist
         response = client.get("/applications/documents/id/999", headers=admin_header)
         assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json() == {"detail": "BorrowerDocument not found"}
 
     # lender tries to approve the application without verifying legal_name
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
     assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": "BORROWER_FIELD_VERIFICATION_MISSING"}
 
     # verify legal_name
     response = client.put(f"/applications/{appid}/verify-data-field", json={"legal_name": True}, headers=lender_header)
@@ -285,6 +301,7 @@ def test_approve_application_cycle(
     # lender tries to approve the application without verifying INCORPORATION_DOCUMENT
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
     assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": "DOCUMENT_VERIFICATION_MISSING"}
 
     # verify borrower document
     response = client.put(
@@ -334,6 +351,7 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
 
     response = client.get("/applications/admin-list/?page=1&page_size=4&sort_field=borrower.legal_name&sort_order=asc")
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "Not authenticated"}
 
     response = client.get(f"/applications/id/{appid}", headers=admin_header)
     assert_ok(response)
@@ -343,16 +361,19 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
 
     response = client.get(f"/applications/id/{appid}")
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "Not authenticated"}
 
     # tries to get a non existing application
     response = client.get("/applications/id/999", headers=lender_header)
     assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Application not found"}
 
     response = client.get("/applications", headers=lender_header)
     assert_ok(response)
 
     response = client.get("/applications")
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "Not authenticated"}
 
     response = client.get("/applications/uuid/123-456-789")
     assert_ok(response)
@@ -362,12 +383,15 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
 
     response = client.get("/applications/uuid/123-456-789")
     assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": "APPLICATION_LAPSED"}
 
     response = client.get("/applications/uuid/123-456")
     assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Application not found"}
 
     response = client.post("/applications/access-scheme", json={"uuid": "123-456"})
     assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {"detail": "Application not found"}
 
 
 def test_application_declined(client, pending_application):
@@ -382,6 +406,7 @@ def test_application_declined(client, pending_application):
     response = client.post("/applications/access-scheme", json={"uuid": "123-456-789"})
 
     assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": "Application status should not be DECLINED"}
 
 
 def test_application_rollback_declined(client, session, declined_application):
@@ -397,6 +422,7 @@ def test_application_rollback_declined(client, session, declined_application):
     response = client.post("/applications/rollback-decline", json={"uuid": "123-456-789"})
 
     assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": "Application status should not be PENDING"}
 
 
 def test_application_declined_feedback(client, declined_application):
