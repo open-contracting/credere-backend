@@ -33,16 +33,10 @@ def test_create_and_get_user(client, admin_header, lender_header):
     assert response.json() == {"detail": "User not found"}
 
     # try to get all users
-    response = client.get(
-        "/users?page=0&page_size=5&sort_field=created_at&sort_order=desc",
-        headers=admin_header,
-    )
+    response = client.get("/users?page=0&page_size=5&sort_field=created_at&sort_order=desc", headers=admin_header)
     assert_ok(response)
 
-    response = client.get(
-        "/users?page=0&page_size=5&sort_field=created_at&sort_order=desc",
-        headers=lender_header,
-    )
+    response = client.get("/users?page=0&page_size=5&sort_field=created_at&sort_order=desc", headers=lender_header)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Insufficient permissions"}
 
