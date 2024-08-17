@@ -38,8 +38,6 @@ async def create_user(
     """
     with rollback_on_error(session):
         try:
-            user = models.User.create(session, **payload.model_dump())
-
             temporary_password = client.generate_password()
 
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_create_user.html
@@ -51,11 +49,12 @@ async def create_user(
                 UserAttributes=[{"Name": "email", "Value": payload.email}],
             )
 
-            mail.send_mail_to_new_user(client.ses, payload.name, payload.email, temporary_password)
-
+            user = models.User.create(session, **payload.model_dump())
             user.external_id = response["User"]["Username"]
 
             session.commit()
+            mail.send_mail_to_new_user(client.ses, payload.name, payload.email, temporary_password)
+
             return user
         except (client.cognito.exceptions.UsernameExistsException, IntegrityError):
             raise HTTPException(
