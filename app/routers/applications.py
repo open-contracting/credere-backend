@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any, cast
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
@@ -24,7 +24,6 @@ router = APIRouter()
 )
 async def reject_application(
     payload: parsers.LenderRejectedApplication,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: aws.Client = Depends(dependencies.get_aws_client),
     user: models.User = Depends(dependencies.get_user),
@@ -91,7 +90,6 @@ async def reject_application(
 )
 async def complete_application(
     payload: parsers.LenderReviewContract,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
     client: aws.Client = Depends(dependencies.get_aws_client),
@@ -140,7 +138,6 @@ async def complete_application(
 )
 async def approve_application(
     payload: parsers.LenderApprovedData,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: aws.Client = Depends(dependencies.get_aws_client),
     user: models.User = Depends(dependencies.get_user),
@@ -469,7 +466,6 @@ async def get_application(
 )
 async def start_application(
     id: int,
-    background_tasks: BackgroundTasks,
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
@@ -549,7 +545,6 @@ async def get_applications(
 )
 async def email_borrower(
     payload: parsers.ApplicationEmailBorrower,
-    background_tasks: BackgroundTasks,
     session: Session = Depends(get_db),
     client: aws.Client = Depends(dependencies.get_aws_client),
     user: models.User = Depends(dependencies.get_user),
