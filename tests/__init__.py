@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Generator
 
 from fastapi import status
@@ -6,6 +7,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app import models
 from app.settings import app_settings
+
+BASEDIR = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
 class MockResponse:
@@ -19,6 +22,11 @@ class MockResponse:
 
     def json(self):
         return self.json_data
+
+
+def load_json_file(filename):
+    with open(os.path.join(BASEDIR, filename)) as f:
+        return json.load(f)
 
 
 def get_test_db(engine):

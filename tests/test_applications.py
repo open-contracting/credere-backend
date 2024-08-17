@@ -7,10 +7,7 @@ from fastapi import status
 
 from app import models, util
 from app.db import engine
-from tests import MockResponse, assert_ok, get_test_db
-from tests.test_fetcher import _load_json_file
-
-BASEDIR = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+from tests import BASEDIR, MockResponse, assert_ok, get_test_db, load_json_file
 
 
 def test_reject_application(client, session, lender_header, pending_application, application_uuid_payload):
@@ -78,7 +75,7 @@ def test_approve_application_cycle(
     application_uuid_payload,
 ):
     appid = pending_application.id
-    source_award = _load_json_file("fixtures/award.json")
+    source_award = load_json_file("fixtures/award.json")
     new_email = "newtestemail@gmail.com"
     file = os.path.join(BASEDIR, "fixtures", "file.jpeg")
     award_payload = {"title": "new test title"}
@@ -95,7 +92,7 @@ def test_approve_application_cycle(
         return_value=MockResponse(status.HTTP_200_OK, source_award),
     ), patch(
         "app.sources.colombia._get_remote_contract",
-        return_value=(_load_json_file("fixtures/contract.json"), "url"),
+        return_value=(load_json_file("fixtures/contract.json"), "url"),
     ):
         response = client.post("/applications/access-scheme", json=application_uuid_payload)
         assert_ok(response)

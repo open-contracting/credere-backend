@@ -1,31 +1,22 @@
-import json
-import os
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
 from app import commands, models, util
-from tests import MockResponse, get_test_db
-
-
-def _load_json_file(filename):
-    filepath = os.path.join(os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__))), filename)
-    with open(filepath, "r") as f:
-        return json.load(f)
-
+from tests import MockResponse, get_test_db, load_json_file
 
 AWARD_ID = "TEST_AWARD_ID"
 SUPPLIER_ID = "987654321"
 
-contract = _load_json_file("fixtures/contract.json")
-award = _load_json_file("fixtures/award.json")
-borrower = _load_json_file("fixtures/borrower.json")
-borrower_declined = _load_json_file("fixtures/borrower_declined.json")
-email = _load_json_file("fixtures/email.json")
-application_result = _load_json_file("fixtures/application_result.json")
-award_result = _load_json_file("fixtures/award_result.json")
-borrower_result = _load_json_file("fixtures/borrower_result.json")
+application_result = load_json_file("fixtures/application_result.json")
+award = load_json_file("fixtures/award.json")
+award_result = load_json_file("fixtures/award_result.json")
+borrower = load_json_file("fixtures/borrower.json")
+borrower_declined = load_json_file("fixtures/borrower_declined.json")
+borrower_result = load_json_file("fixtures/borrower_result.json")
+contract = load_json_file("fixtures/contract.json")
+email = load_json_file("fixtures/email.json")
 
 runner = CliRunner()
 
