@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 from contextlib import contextmanager
@@ -54,7 +55,12 @@ def mock_aws(aws_credentials):
 def mock_send_templated_email(mock_aws):
     with patch.object(aws.ses_client, "send_templated_email", MagicMock()) as mock:
         mock.return_value = {"MessageId": "123"}
+
         yield mock
+
+        # Ensure all tags are replaced.
+        for call in mock.mock_calls:
+            assert "{{" not in json.loads(call.kwargs["TemplateData"])["CONTENT"]
 
 
 @pytest.fixture(scope="session", autouse=True)
