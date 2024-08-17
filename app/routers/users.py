@@ -53,6 +53,7 @@ async def create_user(
             user.external_id = response["User"]["Username"]
 
             session.commit()
+
             mail.send_mail_to_new_user(client.ses, payload.name, payload.email, temporary_password)
 
             return user

@@ -651,19 +651,19 @@ async def complete_information_request(
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+        )
+
         message_id = mail.send_upload_documents_notifications_to_lender(client.ses, application.lender.email_group)
         models.Message.create(
             session,
             application=application,
             type=models.MessageType.BORROWER_DOCUMENT_UPDATED,
             external_message_id=message_id,
-        )
-
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
         )
 
         session.commit()
@@ -736,6 +736,14 @@ async def confirm_upload_contract(
         application.status = models.ApplicationStatus.CONTRACT_UPLOADED
         application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
 
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_UPLOAD_CONTRACT,
+            # payload.contract_amount_submitted is a Decimal.
+            data=jsonable_encoder({"contract_amount_submitted": payload.contract_amount_submitted}),
+            application_id=application.id,
+        )
+
         lender_message_id, borrower_message_id = (
             mail.send_upload_contract_notification_to_lender(client.ses, application),
             mail.send_upload_contract_confirmation(client.ses, application),
@@ -751,14 +759,6 @@ async def confirm_upload_contract(
             application=application,
             type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
             external_message_id=borrower_message_id,
-        )
-
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_UPLOAD_CONTRACT,
-            # payload.contract_amount_submitted is a Decimal.
-            data=jsonable_encoder({"contract_amount_submitted": payload.contract_amount_submitted}),
-            application_id=application.id,
         )
 
         session.commit()
@@ -833,14 +833,6 @@ async def find_alternative_credit_option(
                 detail=f"There was a problem copying the application.{e}",
             )
 
-        message_id = mail.send_copied_application_notification_to_borrower(client.ses, new_application)
-        models.Message.create(
-            session,
-            application=new_application,
-            type=models.MessageType.APPLICATION_COPIED,
-            external_message_id=message_id,
-        )
-
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.COPIED_APPLICATION,
@@ -852,6 +844,14 @@ async def find_alternative_credit_option(
             type=models.ApplicationActionType.APPLICATION_COPIED_FROM,
             data=jsonable_encoder(payload, exclude_unset=True),
             application_id=new_application.id,
+        )
+
+        message_id = mail.send_copied_application_notification_to_borrower(client.ses, new_application)
+        models.Message.create(
+            session,
+            application=new_application,
+            type=models.MessageType.APPLICATION_COPIED,
+            external_message_id=message_id,
         )
 
         session.commit()

@@ -41,11 +41,11 @@ Flushing
 Committing
 ----------
 
--  Commit before sending emails, adding `background tasks <https://fastapi.tiangolo.com/reference/background/?h=background>`__ or returning responses, to ensure changes are persisted before irreversible actions are taken.
--  Commit after sending an email, especially in a for-loop, so that if a later query fails, we don't send repeat emails on the next run. This is contrary to the advice in `Session Basics <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#when-do-i-construct-a-session-when-do-i-commit-it-and-when-do-i-close-it>`__:
+-  Credere is an email-centered service. Until an email is sent, processing is incomplete. Send emails after all database queries (other than ``Message`` creation, which depends on the message ID), *then* commit. That way, after emails are sent, only integrity errors could cause the transaction to rollback (unfortunately, sent emails can't be undone).
+-  Commit before adding `background tasks <https://fastapi.tiangolo.com/reference/background/?h=background>`__ and returning responses, to ensure changes are persisted before irreversible actions are taken.
+-  In a for-loop, commit after sending an email, so that if a later query fails, we don't send repeat emails on the next run. This is contrary to the advice in `Session Basics <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#when-do-i-construct-a-session-when-do-i-commit-it-and-when-do-i-close-it>`__:
 
       "For a command-line script, the application would create a single, global ``Session`` that is established when the program begins to do its work, and **commits it right as the program is completing its task**." (emphasis added)
-
 
 Query API
 ---------
