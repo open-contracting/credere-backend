@@ -1,6 +1,8 @@
+import os
 import pathlib
 import re
 
+import pytest
 from html_checker.validator import ValidatorInterface
 
 from tests import BASEDIR
@@ -26,6 +28,7 @@ allow = {
 }
 
 
+@pytest.mark.skipif("CI" not in os.environ, reason="skipping slow test in development")
 def test_valid_html(tmp_path):
     files = (pathlib.Path(BASEDIR).parent / "email_templates").glob("*")
     for file in files:

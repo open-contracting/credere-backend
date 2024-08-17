@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from typer.testing import CliRunner
 
 from app import commands, models, util
-from tests import MockResponse, load_json_file
+from tests import MockResponse, assert_success, load_json_file
 
 AWARD_ID = "TEST_AWARD_ID"
 SUPPLIER_ID = "987654321"
@@ -110,8 +110,7 @@ def test_fetch_previous_borrower_awards_empty(reset_database, sessionmaker, sess
         result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
         util.get_previous_awards_from_data_source(borrower_result["id"], sessionmaker)
 
-        assert result.exit_code == 0
-        assert result.stdout == ""
+        assert_success(result)
         assert session.query(models.Award).count() == 1
         assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
@@ -153,8 +152,7 @@ def test_fetch_empty_contracts(reset_database, caplog):
         with mock_response(200, [], "app.sources.colombia.get_new_awards"):
             result = runner.invoke(commands.app, ["fetch-awards"])
 
-            assert result.exit_code == 0
-            assert result.stdout == ""
+            assert_success(result)
 
     assert "No new contracts" in caplog.text
 
@@ -176,8 +174,7 @@ def test_fetch_new_awards_from_date(reset_database, session):
     ):
         result = runner.invoke(commands.app, ["fetch-awards"])
 
-        assert result.exit_code == 0
-        assert result.stdout == ""
+        assert_success(result)
 
         inserted_award = session.query(models.Award).one()
         inserted_borrower = session.query(models.Borrower).one()
@@ -200,8 +197,7 @@ def test_fetch_award_by_contract_and_supplier_empty(reset_database, session, cap
         ):
             result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
 
-            assert result.exit_code == 0
-            assert result.stdout == ""
+            assert_success(result)
 
     assert f"The award with id {AWARD_ID} and supplier id {SUPPLIER_ID} was not found" in caplog.text
 
@@ -226,8 +222,7 @@ def test_fetch_award_by_id_and_supplier(reset_database, session):
     ):
         result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
 
-        assert result.exit_code == 0
-        assert result.stdout == ""
+        assert_success(result)
 
         inserted_award = session.query(models.Award).one()
         inserted_borrower = session.query(models.Borrower).one()

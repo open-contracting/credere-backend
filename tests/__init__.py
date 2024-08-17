@@ -81,8 +81,8 @@ def assert_ok(response):
 
 
 def assert_success(result):
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert result.exit_code == 0, result.exc_info
+    assert result.stdout == ""  # CliRunner(mix_stderr=True) by default
 
 
 @contextmanager
