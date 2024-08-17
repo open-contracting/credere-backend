@@ -80,6 +80,11 @@ def assert_ok(response):
     assert response.status_code == status.HTTP_200_OK, f"{response.status_code}: {response.json()}"
 
 
+def assert_success(result):
+    assert result.exit_code == 0
+    assert result.stdout == ""
+
+
 @contextmanager
 def assert_change(obj, attr, change):
     expected = getattr(obj, attr) + change

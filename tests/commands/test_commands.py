@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 
 from app import commands, models
 from app.settings import app_settings
-from tests import assert_change
+from tests import assert_change, assert_success
 
 runner = CliRunner()
 
@@ -16,8 +16,7 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
     with assert_change(mock_send_templated_email, "call_count", 1):
         result = runner.invoke(commands.app, ["send-reminders"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_send_reminders_submit(session, mock_send_templated_email, accepted_application):
@@ -31,16 +30,14 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
     with assert_change(mock_send_templated_email, "call_count", 1):
         result = runner.invoke(commands.app, ["send-reminders"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_send_reminders_no_applications_to_remind(mock_send_templated_email, pending_application):
     with assert_change(mock_send_templated_email, "call_count", 0):
         result = runner.invoke(commands.app, ["send-reminders"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_set_lapsed_applications(session, pending_application):
@@ -51,15 +48,13 @@ def test_set_lapsed_applications(session, pending_application):
 
     result = runner.invoke(commands.app, ["update-applications-to-lapsed"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_set_lapsed_applications_no_lapsed(pending_application):
     result = runner.invoke(commands.app, ["update-applications-to-lapsed"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_send_overdue_reminders(session, mock_send_templated_email, started_application):
@@ -71,8 +66,7 @@ def test_send_overdue_reminders(session, mock_send_templated_email, started_appl
     with assert_change(mock_send_templated_email, "call_count", 2):  # to admin and lender
         result = runner.invoke(commands.app, ["sla-overdue-applications"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_send_overdue_reminders_empty(session, mock_send_templated_email, started_application):
@@ -87,8 +81,7 @@ def test_send_overdue_reminders_empty(session, mock_send_templated_email, starte
     with assert_change(mock_send_templated_email, "call_count", 0):
         result = runner.invoke(commands.app, ["sla-overdue-applications"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_remove_data(session, declined_application):
@@ -99,19 +92,16 @@ def test_remove_data(session, declined_application):
 
     result = runner.invoke(commands.app, ["remove-dated-application-data"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_remove_data_no_dated_application(pending_application):
     result = runner.invoke(commands.app, ["remove-dated-application-data"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
 
 
 def test_update_statistic(engine):
     result = runner.invoke(commands.app, ["update-statistics"])
 
-    assert result.exit_code == 0
-    assert result.stdout == ""
+    assert_success(result)
