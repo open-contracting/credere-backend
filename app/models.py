@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Optional, Self
 
-from pydantic import BaseModel, ConfigDict, PlainSerializer
+from pydantic import BaseModel, PlainSerializer
 from sqlalchemy import DECIMAL, Boolean, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
@@ -17,30 +17,19 @@ from app.settings import app_settings
 FLOAT_DECIMAL = Annotated[Decimal, PlainSerializer(lambda x: float(x), return_type=float, when_used="json")]
 
 
-def _get_missing_data_keys(input_dict: dict[str, Any]) -> dict[str, bool]:
+def _get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
     """
     Get a dictionary indicating whether each key in the input dictionary has missing data (empty or None).
 
-    :param input_dict: The input dictionary to check for missing data.
+    :param data: The input dictionary to check for missing data.
     :return: A dictionary with the same keys as the input dictionary, where the values are True if the corresponding
              value in the input dictionary is empty or None, and False otherwise.
     """
-
-    result_dict = {}
-    for key, value in input_dict.items():
-        if value == "" or value is None:
-            result_dict[key] = True
-        else:
-            result_dict[key] = False
-
-    return result_dict
+    return {key: value == "" or value is None for key, value in data.items()}
 
 
 # https://github.com/tiangolo/sqlmodel/issues/254
 class ActiveRecordMixin:
-    # https://github.com/tiangolo/sqlmodel/issues/348
-    __config__ = None
-
     @classmethod
     def filter_by(cls, session: Session, field: str, value: Any) -> "Query[Self]":
         """
@@ -319,6 +308,7 @@ class CreditProductBase(SQLModel):
 
 class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
     __tablename__ = "credit_product"
+
     id: int | None = Field(default=None, primary_key=True)
     lender: "Lender" = Relationship(back_populates="credit_products")
     created_at: datetime | None = Field(
@@ -349,6 +339,7 @@ class BorrowerDocumentBase(SQLModel):
 
 class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
     __tablename__ = "borrower_document"
+
     application: Optional["Application"] = Relationship(back_populates="borrower_documents")
     file: bytes
 
@@ -362,7 +353,6 @@ class ApplicationBase(SQLModel):
     borrower_id: int | None = Field(foreign_key="borrower.id", index=True)
     lender_id: int | None = Field(foreign_key="lender.id", nullable=True)
     contract_amount_submitted: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
-
     disbursed_final_amount: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
     amount_requested: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
     currency: str = Field(default="COP", description="ISO 4217 currency code")
@@ -429,44 +419,41 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         return session.query(cls).filter(col(cls.archived_at).is_(None))
 
     @classmethod
-    def expiring_soon(cls, session: Session) -> "Query[Self]":
-        """
-        :return: A query for applications whose ``expired_at`` attribute is within
-            :attr:`~app.settings.Settings.reminder_days_before_expiration` days from now.
-        """
-        return session.query(cls).filter(
-            col(cls.expired_at) > datetime.now(),
-            col(cls.expired_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
-        )
-
-    @classmethod
     def pending_introduction_reminder(cls, session: Session) -> "Query[Self]":
         """
-        :return: A query for PENDING applications that are :meth:`~app.models.Application.expiring_soon` and whose
-            borrower may receive Credere invitations and hasn't already received a reminder to accept.
+        :return: A query for PENDING applications whose expiration date is within
+            :attr:`~app.settings.Settings.reminder_days_before_expiration` days from now, and whose
+            borrower hasn't already received a reminder to accept and may receive Credere invitations.
 
         .. seealso:: :doc:`send-reminders</commands>`
         """
         return (
-            cls.expiring_soon(session)
+            session.query(cls)
             .filter(
                 cls.status == ApplicationStatus.PENDING,
+                datetime.now() < col(cls.expired_at),
+                col(cls.expired_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
                 col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_APPLICATION_REMINDER)),
                 Borrower.status == BorrowerStatus.ACTIVE,
             )
             .join(Borrower, cls.borrower_id == Borrower.id)
-            .join(Award, cls.award_id == Award.id)
         )
 
     @classmethod
     def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
         """
-        :issue:`350`
+        :return: A query for ACCEPTED applications whose lapsed date is within
+            :attr:`~app.settings.Settings.reminder_days_before_lapsed` days from now, and whose
+            borrower hasn't already received a reminder to submit.
 
         .. seealso:: :doc:`send-reminders</commands>`
         """
-        return cls.expiring_soon(session).filter(
+        lapsed_at = col(cls.borrower_accepted_at) + timedelta(days=app_settings.days_to_change_to_lapsed)
+
+        return session.query(cls).filter(
             cls.status == ApplicationStatus.ACCEPTED,
+            datetime.now() < lapsed_at,
+            lapsed_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_lapsed),
             col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
         )
 
@@ -784,6 +771,7 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
 
 class EventLog(SQLModel, ActiveRecordMixin, table=True):
     __tablename__ = "event_log"
+
     id: int | None = Field(default=None, primary_key=True)
     category: str = Field(nullable=False)
     message: str = Field(nullable=False)
@@ -818,12 +806,14 @@ class UserWithLender(UserBase):
 
 class User(UserBase, ActiveRecordMixin, table=True):
     __tablename__ = "credere_user"
+
     application_actions: list["ApplicationAction"] = Relationship(back_populates="user")
     lender: Optional["Lender"] = Relationship(back_populates="users")
 
 
 class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     __tablename__ = "application_action"
+
     id: int | None = Field(default=None, primary_key=True)
     type: ApplicationActionType = Field(nullable=True)
     data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
@@ -834,7 +824,6 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     created_at: datetime | None = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
     )
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BasicUser(BaseModel):

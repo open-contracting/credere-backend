@@ -46,6 +46,7 @@ Repository structure
 
 .. code-block:: none
 
+   email_templates/         # HTML fragments
    app/
    ├── __init__.py
    ├── auth.py              # Permissions and JWT token verification

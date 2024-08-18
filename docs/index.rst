@@ -8,6 +8,7 @@ Credere backend
    :maxdepth: 1
 
    commands
+   frontend
    aws/index
    deployment/index
    contributing/index

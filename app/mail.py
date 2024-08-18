@@ -64,6 +64,7 @@ def send_email(ses: SESClient, email: str, data: dict[str, str], *, to_borrower:
     return ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": [to_address]},
+        ReplyToAddresses=[app_settings.ocp_email_group],
         Template=f"credere-main-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )["MessageId"]
@@ -324,7 +325,7 @@ def send_mail_intro_reminder(ses: SESClient, application: Application) -> str:
         ses,
         application.primary_email,
         get_template_data(
-            "Access_to_credit_scheme_for_MSMEs",
+            "Access_to_credit_reminder",
             t("Opportunity to access MSME credit for being awarded a public contract"),
             get_invitation_email_parameters(application),
         ),
@@ -342,7 +343,7 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
         ses,
         application.primary_email,
         get_template_data(
-            "Access_to_credit_reminder",
+            "Complete_application_reminder",
             t("Reminder - Opportunity to access MSME credit for being awarded a public contract"),
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,

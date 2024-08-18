@@ -1,5 +1,8 @@
+import json
 import os
+import uuid
 from contextlib import contextmanager
+from datetime import datetime
 from typing import Any, Generator
 from unittest.mock import MagicMock, patch
 
@@ -11,12 +14,15 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 
-from app import aws, dependencies, models
+from app import aws, dependencies, main, models
 from app.db import get_db
-from app.routers import applications, downloads, guest, lenders, statistics, users
 from app.settings import app_settings
-from tests import get_test_db
-from tests.protected_routes import applications_test, borrowers_test, users_test
+from tests import create_user, get_test_db
+
+
+@pytest.fixture(scope="session")
+def app() -> Generator[FastAPI, Any, None]:
+    yield main.app
 
 
 @pytest.fixture(scope="session")
@@ -55,35 +61,38 @@ def mock_aws(aws_credentials):
 def mock_send_templated_email(mock_aws):
     with patch.object(aws.ses_client, "send_templated_email", MagicMock()) as mock:
         mock.return_value = {"MessageId": "123"}
+
         yield mock
 
+        # Ensure all tags are replaced.
+        for call in mock.mock_calls:
+            assert "{{" not in json.loads(call.kwargs["TemplateData"])["CONTENT"]
 
-@pytest.fixture(autouse=True)
-def create_and_drop_database(engine):
+
+@pytest.fixture(scope="session", autouse=True)
+def database(engine):
     models.SQLModel.metadata.create_all(engine)
     yield
     models.SQLModel.metadata.drop_all(engine)
 
 
-@pytest.fixture(scope="session")
-def app() -> Generator[FastAPI, Any, None]:
-    app = FastAPI()
-    app.include_router(users.router)
-    app.include_router(lenders.router)
-    app.include_router(applications.router)
-    app.include_router(guest.applications.router)
-    app.include_router(guest.emails.router)
-    app.include_router(downloads.router)
-    app.include_router(users_test.router)
-    app.include_router(applications_test.router)
-    app.include_router(borrowers_test.router)
-    app.include_router(statistics.router)
-    yield app
+@pytest.fixture
+def reset_database(engine):
+    models.SQLModel.metadata.drop_all(engine)
+    models.SQLModel.metadata.create_all(engine)
+    yield
+    models.SQLModel.metadata.drop_all(engine)
+    models.SQLModel.metadata.create_all(engine)
 
 
 @pytest.fixture
-def session(engine):
-    with contextmanager(get_test_db(engine))() as db_session:
+def sessionmaker(engine):
+    return get_test_db(engine)
+
+
+@pytest.fixture
+def session(sessionmaker):
+    with contextmanager(sessionmaker)() as db_session:
         yield db_session
 
 
@@ -129,3 +138,247 @@ def client(app: FastAPI, engine, aws_client) -> Generator[TestClient, Any, None]
 
     with TestClient(app) as client:
         yield client
+
+
+@pytest.fixture
+def lender(session):
+    instance = models.Lender.create(
+        session,
+        name=uuid.uuid4(),
+        email_group="test@example.com",
+        type="Some Type",
+        sla_days=7,
+        status="Active",
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def unauthorized_lender(session):
+    instance = models.Lender.create(
+        session,
+        name=uuid.uuid4(),
+        email_group="test@example.com",
+        type="Some Type",
+        sla_days=7,
+        status="Active",
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def admin_header(session, aws_client):
+    return create_user(
+        session,
+        aws_client,
+        email=f"ocp-test-{uuid.uuid4()}@open-contracting.org",
+        name="OCP Test User",
+        type=models.UserType.OCP,
+    )
+
+
+@pytest.fixture
+def lender_header(session, aws_client, lender):
+    return create_user(
+        session,
+        aws_client,
+        email=f"lender-user-{uuid.uuid4()}@example.com",
+        name="Lender Test User",
+        type=models.UserType.FI,
+        lender=lender,
+    )
+
+
+@pytest.fixture
+def unauthorized_lender_header(session, aws_client, unauthorized_lender):
+    return create_user(
+        session,
+        aws_client,
+        email=f"lender-user-{uuid.uuid4()}@example.com",
+        name="Lender Test User",
+        type=models.UserType.FI,
+        lender=unauthorized_lender,
+    )
+
+
+@pytest.fixture
+def user_payload():
+    return {
+        "email": f"test-{uuid.uuid4()}@noreply.open-contracting.org",
+        "name": "Test User",
+        "type": models.UserType.FI,
+    }
+
+
+@pytest.fixture
+def credit_product(session, lender):
+    instance = models.CreditProduct.create(
+        session,
+        borrower_size=models.BorrowerSize.SMALL,
+        lower_limit=5000.00,
+        upper_limit=500000.00,
+        interest_rate=3.75,
+        type=models.CreditType.LOAN,
+        required_document_types={
+            "INCORPORATION_DOCUMENT": True,
+        },
+        other_fees_total_amount=1000,
+        other_fees_description="Other test fees",
+        more_info_url="www.moreinfo.test",
+        lender=lender,
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def award(session):
+    instance = models.Award.create(
+        session,
+        award_amount="123456",
+        award_currency="COP",
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def borrower(session):
+    instance = models.Borrower.create(
+        session,
+        borrower_identifier=uuid.uuid4(),
+        legal_name="",  # tests expect this to be in missing_data
+        email="test@example.com",
+        address="Direccion: Test Address\nCiudad: Test City\nProvincia: No provisto\nEstado: No provisto",
+        legal_identifier="",
+        type="Test Organization Type",
+        sector="",
+        size=models.BorrowerSize.NOT_INFORMED,
+        created_at=datetime.utcnow(),
+        updated_at="2023-06-22T17:48:05.381251",
+        declined_at=None,
+        source_data={
+            "nombre_entidad": "Test Entity",
+            "nit": "123456789121",
+            "tel_fono_entidad": "1234567890",
+            "correo_entidad": "test@example.com",
+            "direccion": "Test Address",
+            "estado_entidad": "Test State",
+            "ciudad": "Test City",
+            "website": "https://example.com",
+            "tipo_organizacion": "Test Organization Type",
+            "tipo_de_documento": "Test Document Type",
+            "numero_de_cuenta": "Test Account Number",
+            "banco": "Test Bank",
+            "tipo_cuenta": "Test Account Type",
+            "tipo_documento_representante_legal": "Test Representative Document Type",
+            "num_documento_representante_legal": "987654321",
+            "nombre_representante_legal": "Test Legal Representative",
+            "nacionalidad_representante_legal": "COLOMBIANO",
+            "direcci_n_representante_legal": "Test Representative Address",
+            "genero_representante_legal": "No Definido",
+            "es_pyme": "SI",
+            "regimen_tributario": "Test Tax Regime",
+            "pais": "CO",
+        },
+        status=models.BorrowerStatus.ACTIVE,
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def application_uuid():
+    return uuid.uuid4()
+
+
+@pytest.fixture
+def application_payload(application_uuid, award, borrower):
+    return {
+        "award_id": award.id,
+        "uuid": application_uuid,
+        "primary_email": "test@example.com",
+        "award_borrower_identifier": "test_hash_12345678",
+        "borrower": borrower,
+        "contract_amount_submitted": None,
+        "amount_requested": 10000,
+        "currency": "COP",
+        "calculator_data": {},
+        "pending_documents": True,
+        "pending_email_confirmation": True,
+        "borrower_submitted_at": None,
+        "borrower_accepted_at": None,
+        "borrower_declined_at": None,
+        "borrower_declined_preferences_data": {},
+        "borrower_declined_data": {},
+        "lender_started_at": None,
+        "secop_data_verification": {
+            "legal_name": False,
+            "address": True,
+            "legal_identifier": True,
+            "type": True,
+            "size": True,
+            "sector": True,
+            "email": True,
+        },
+        "lender_approved_at": None,
+        "lender_approved_data": {},
+        "lender_rejected_data": {},
+        "lender_rejected_at": None,
+        "repayment_months": None,
+        "borrower_uploaded_contract_at": None,
+        "completed_in_days": None,
+        "created_at": datetime.utcnow(),
+        "updated_at": "2023-06-26T03:14:31.572553+00:00",
+        "archived_at": None,
+    }
+
+
+@pytest.fixture
+def pending_application(session, application_payload, credit_product, lender):
+    instance = models.Application.create(
+        session,
+        **application_payload,
+        status=models.ApplicationStatus.PENDING,
+        credit_product_id=credit_product.id,
+        lender=lender,
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def declined_application(session, application_payload, credit_product):
+    instance = models.Application.create(
+        session,
+        **application_payload,
+        status=models.ApplicationStatus.DECLINED,
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def accepted_application(session, application_payload, credit_product):
+    instance = models.Application.create(
+        session,
+        **application_payload,
+        status=models.ApplicationStatus.ACCEPTED,
+        credit_product_id=credit_product.id,
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def started_application(session, application_payload, lender):
+    instance = models.Application.create(
+        session,
+        **application_payload,
+        status=models.ApplicationStatus.STARTED,
+        lender=lender,
+    )
+    session.commit()
+    return instance

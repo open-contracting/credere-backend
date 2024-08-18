@@ -1,98 +1,68 @@
-import json
-import os
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
 from app import commands, models, util
-from tests import MockResponse, get_test_db
-
-
-def _load_json_file(filename):
-    filepath = os.path.join(os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__))), filename)
-    with open(filepath, "r") as f:
-        return json.load(f)
-
+from tests import MockResponse, assert_success, load_json_file
 
 AWARD_ID = "TEST_AWARD_ID"
 SUPPLIER_ID = "987654321"
 
-contract = _load_json_file("fixtures/contract.json")
-award = _load_json_file("fixtures/award.json")
-borrower = _load_json_file("fixtures/borrower.json")
-borrower_declined = _load_json_file("fixtures/borrower_declined.json")
-email = _load_json_file("fixtures/email.json")
-application_result = _load_json_file("fixtures/application_result.json")
-award_result = _load_json_file("fixtures/award_result.json")
-borrower_result = _load_json_file("fixtures/borrower_result.json")
+application_result = load_json_file("fixtures/application_result.json")
+award = load_json_file("fixtures/award.json")
+award_result = load_json_file("fixtures/award_result.json")
+borrower = load_json_file("fixtures/borrower.json")
+# borrower_declined = load_json_file("fixtures/borrower_declined.json")
+borrower_result = load_json_file("fixtures/borrower_result.json")
+contract = load_json_file("fixtures/contract.json")
+email = load_json_file("fixtures/email.json")
 
 runner = CliRunner()
 
 
 @contextmanager
-def _mock_function_response(content: dict, function_path: str):
+def mock_function_response(content: dict, function_path: str):
     mock = MagicMock(return_value=content)
     with patch(function_path, mock):
         yield mock
 
 
 @contextmanager
-def _mock_response(status_code: int, content: dict, function_path: str):
+def mock_response(status_code: int, content: dict, function_path: str):
     mock = MagicMock(return_value=MockResponse(status_code, content))
     with patch(function_path, mock):
         yield mock
 
 
 @contextmanager
-def _mock_whole_process_once(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
-    # this will mock the whole process of the fetcher once responding to make_request_with_retry in order
+def mock_whole_process(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
+    # Mock all calls to make_request_with_retry from fetch-awards.
     mock = MagicMock(
         side_effect=[
             MockResponse(status_code, award),
             MockResponse(status_code, borrower),
             MockResponse(status_code, email),
+            MockResponse(status_code, award),
         ]
     )
-
     with patch(function_path, mock):
         yield mock
 
 
 @contextmanager
-def _mock_whole_process(status_code: int, award_mock: dict, borrower_mock: dict, email_mock: dict, function_path: str):
-    # this will mock the whole process of the fetcher responding to make_request_with_retry in order
-    #
-    mock = MagicMock(
-        side_effect=[
-            MockResponse(status_code, award_mock),
-            MockResponse(status_code, borrower_mock),
-            MockResponse(status_code, email_mock),
-            MockResponse(status_code, award_mock),
-        ]
-    )
-
-    with patch(function_path, mock):
-        yield mock
-
-
-@contextmanager
-def _mock_response_second_empty(status_code: int, content: dict, function_path: str):
+def mock_response_second_empty(status_code: int, content: dict, function_path: str):
     mock = MagicMock(
         side_effect=[
             MockResponse(status_code, content),
             MockResponse(200, []),
         ]
     )
-
     with patch(function_path, mock):
         yield mock
 
 
-def _compare_objects(
-    fetched_model,
-    expected_result,
-):
+def compare_objects(fetched_model, expected_result):
     for key, value in fetched_model.__dict__.items():
         if key in {
             "created_at",
@@ -121,16 +91,16 @@ def _compare_objects(
         assert expected_result[key] == value
 
 
-def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database):
-    with contextmanager(get_test_db(engine))() as session, _mock_response(
+def test_fetch_previous_borrower_awards_empty(reset_database, sessionmaker, session):
+    with mock_response(
         200,
         [],  # changed
         "app.sources.colombia.get_previous_awards",
-    ), _mock_response(
+    ), mock_response(
         200,
         award,
         "app.sources.colombia.get_award_by_id_and_supplier",
-    ), _mock_whole_process(
+    ), mock_whole_process(
         200,
         contract,
         borrower,
@@ -138,31 +108,30 @@ def test_fetch_previous_borrower_awards_empty(engine, create_and_drop_database):
         "app.sources.make_request_with_retry",
     ):
         result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
-        util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
+        util.get_previous_awards_from_data_source(borrower_result["id"], sessionmaker)
 
-        assert result.exit_code == 0
-        assert result.stdout == ""
+        assert_success(result)
         assert session.query(models.Award).count() == 1
         assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
 
-def test_fetch_previous_borrower_awards(engine, create_and_drop_database):
+def test_fetch_previous_borrower_awards(reset_database, sessionmaker, session):
     # We can make a shallow copy, as we change `id_contrato` only, to make `source_contract_id` different.
     previous_contract = contract[0].copy()
     previous_contract["id_contrato"] = "CO1.test.123456.previous"
 
-    with contextmanager(get_test_db(engine))() as session, _mock_response(
+    with mock_response(
         200,
         award,  # changed
         "app.sources.colombia.get_previous_awards",
-    ), _mock_response(
+    ), mock_response(
         200,
         award,
         "app.sources.colombia.get_award_by_id_and_supplier",
     ), patch(
         "app.sources.colombia._get_remote_contract",
         return_value=([previous_contract], "url"),
-    ), _mock_whole_process(
+    ), mock_whole_process(
         200,
         [previous_contract],
         borrower,
@@ -171,33 +140,32 @@ def test_fetch_previous_borrower_awards(engine, create_and_drop_database):
     ):
         models.Borrower.create(session, **borrower_result)
         session.commit()
-        util.get_previous_awards_from_data_source(borrower_result["id"], get_test_db(engine))
+        util.get_previous_awards_from_data_source(borrower_result["id"], sessionmaker)
 
         assert session.query(models.Award).count() == 1
         assert session.query(models.Award).one().previous is True
         assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
 
-def test_fetch_empty_contracts(create_and_drop_database, caplog):
+def test_fetch_empty_contracts(reset_database, caplog):
     with caplog.at_level("INFO"):
-        with _mock_response(200, [], "app.sources.colombia.get_new_awards"):
+        with mock_response(200, [], "app.sources.colombia.get_new_awards"):
             result = runner.invoke(commands.app, ["fetch-awards"])
 
-            assert result.exit_code == 0
-            assert result.stdout == ""
+            assert_success(result)
 
     assert "No new contracts" in caplog.text
 
 
-def test_fetch_new_awards_from_date(engine, create_and_drop_database):
-    with _mock_response_second_empty(
+def test_fetch_new_awards_from_date(reset_database, session):
+    with mock_response_second_empty(
         200,
         award,
         "app.sources.colombia.get_new_awards",
-    ), _mock_function_response(
+    ), mock_function_response(
         "test_hash_12345678",
         "app.util.get_secret_hash",
-    ), _mock_whole_process(
+    ), mock_whole_process(
         200,
         contract,
         borrower,
@@ -206,48 +174,46 @@ def test_fetch_new_awards_from_date(engine, create_and_drop_database):
     ):
         result = runner.invoke(commands.app, ["fetch-awards"])
 
-        assert result.exit_code == 0
-        assert result.stdout == ""
+        assert_success(result)
 
-        with contextmanager(get_test_db(engine))() as session:
-            inserted_award = session.query(models.Award).one()
-            inserted_borrower = session.query(models.Borrower).one()
-            inserted_application = session.query(models.Application).one()
-            _compare_objects(inserted_award, award_result)
-            _compare_objects(inserted_borrower, borrower_result)
-            _compare_objects(inserted_application, application_result)
+        inserted_award = session.query(models.Award).one()
+        inserted_borrower = session.query(models.Borrower).one()
+        inserted_application = session.query(models.Application).one()
+
+        compare_objects(inserted_award, award_result)
+        compare_objects(inserted_borrower, borrower_result)
+        compare_objects(inserted_application, application_result)
 
 
-def test_fetch_award_by_contract_and_supplier_empty(engine, create_and_drop_database, caplog):
+def test_fetch_award_by_contract_and_supplier_empty(reset_database, session, caplog):
     with caplog.at_level("INFO"):
-        with _mock_function_response(
-            get_test_db(engine)(),
+        with mock_function_response(
+            session,
             "app.db.get_db",
-        ), _mock_response(
+        ), mock_response(
             200,
             [],
             "app.sources.colombia.get_award_by_id_and_supplier",
         ):
             result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
 
-            assert result.exit_code == 0
-            assert result.stdout == ""
+            assert_success(result)
 
     assert f"The award with id {AWARD_ID} and supplier id {SUPPLIER_ID} was not found" in caplog.text
 
 
-def test_fetch_award_by_id_and_supplier(engine, create_and_drop_database):
-    with _mock_function_response(
-        get_test_db(engine)(),
+def test_fetch_award_by_id_and_supplier(reset_database, session):
+    with mock_function_response(
+        session,
         "app.db.get_db",
-    ), _mock_response(
+    ), mock_response(
         200,
         award,
         "app.sources.colombia.get_award_by_id_and_supplier",
-    ), _mock_function_response(
+    ), mock_function_response(
         "test_hash_12345678",
         "app.util.get_secret_hash",
-    ), _mock_whole_process(
+    ), mock_whole_process(
         200,
         contract,
         borrower,
@@ -256,13 +222,12 @@ def test_fetch_award_by_id_and_supplier(engine, create_and_drop_database):
     ):
         result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
 
-        assert result.exit_code == 0
-        assert result.stdout == ""
+        assert_success(result)
 
-        with contextmanager(get_test_db(engine))() as session:
-            inserted_award = session.query(models.Award).one()
-            inserted_borrower = session.query(models.Borrower).one()
-            inserted_application = session.query(models.Application).one()
-            _compare_objects(inserted_award, award_result)
-            _compare_objects(inserted_borrower, borrower_result)
-            _compare_objects(inserted_application, application_result)
+        inserted_award = session.query(models.Award).one()
+        inserted_borrower = session.query(models.Borrower).one()
+        inserted_application = session.query(models.Application).one()
+
+        compare_objects(inserted_award, award_result)
+        compare_objects(inserted_borrower, borrower_result)
+        compare_objects(inserted_application, application_result)
