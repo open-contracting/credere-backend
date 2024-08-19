@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import Any, Optional, Self
 
 from pydantic import BaseModel, PlainSerializer
-from sqlalchemy import DECIMAL, Boolean, Column, DateTime, and_, desc, or_, select
+from sqlalchemy import DECIMAL, Boolean, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import ColumnElement, Select, func
@@ -15,6 +15,16 @@ from typing_extensions import Annotated
 from app.settings import app_settings
 
 FLOAT_DECIMAL = Annotated[Decimal, PlainSerializer(lambda x: float(x), return_type=float, when_used="json")]
+ONCREATE_TIMESTAMP = Field(
+    sa_type=DateTime(timezone=True),
+    default=datetime.utcnow(),
+    sa_column_kwargs={"server_default": func.now()},
+)
+ONUPDATE_TIMESTAMP = Field(
+    sa_type=DateTime(timezone=True),
+    default=datetime.utcnow(),
+    sa_column_kwargs={"onupdate": func.now()},
+)
 
 
 def _get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
@@ -291,19 +301,19 @@ class StatisticCustomRange(StrEnum):
 
 
 class CreditProductBase(SQLModel):
-    borrower_size: BorrowerSize = Field(nullable=False)
-    lower_limit: FLOAT_DECIMAL = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
-    upper_limit: FLOAT_DECIMAL = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
-    interest_rate: str = Field(default="", nullable=False)
-    additional_information: str = Field(default="", nullable=False)
-    type: CreditType = Field(nullable=False)
-    borrower_types: dict[str, bool] = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
-    procurement_category_to_exclude: str = Field(default="", nullable=False)
-    required_document_types: dict[str, bool] = Field(default_factory=dict, sa_column=Column(JSON))
-    other_fees_total_amount: Decimal = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
-    other_fees_description: str = Field(default="", nullable=False)
-    more_info_url: str = Field(default="", nullable=False)
-    lender_id: int = Field(foreign_key="lender.id", nullable=False, index=True)
+    borrower_size: BorrowerSize
+    lower_limit: FLOAT_DECIMAL = Field(sa_type=DECIMAL(precision=16, scale=2))
+    upper_limit: FLOAT_DECIMAL = Field(sa_type=DECIMAL(precision=16, scale=2))
+    interest_rate: str = Field(default="")
+    additional_information: str = Field(default="")
+    type: CreditType
+    borrower_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
+    procurement_category_to_exclude: str = Field(default="")
+    required_document_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    other_fees_total_amount: Decimal = Field(sa_type=DECIMAL(precision=16, scale=2))
+    other_fees_description: str = Field(default="")
+    more_info_url: str = Field(default="")
+    lender_id: int = Field(foreign_key="lender.id", index=True)
 
 
 class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
@@ -311,12 +321,8 @@ class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     lender: "Lender" = Relationship(back_populates="credit_products")
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
-    updated_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
-    )
+    created_at: datetime = ONCREATE_TIMESTAMP
+    updated_at: datetime = ONUPDATE_TIMESTAMP
 
 
 class BorrowerDocumentBase(SQLModel):
@@ -326,15 +332,9 @@ class BorrowerDocumentBase(SQLModel):
     type: BorrowerDocumentType = Field(nullable=True)
     verified: bool = Field(default=False)
     name: str = Field(default="")
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
-    updated_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
-    )
-    submitted_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
+    created_at: datetime = ONCREATE_TIMESTAMP
+    updated_at: datetime = ONUPDATE_TIMESTAMP
+    submitted_at: datetime = ONCREATE_TIMESTAMP
 
 
 class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
@@ -345,56 +345,50 @@ class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
 
 
 class ApplicationBase(SQLModel):
-    award_id: int | None = Field(foreign_key="award.id", nullable=True, index=True)
-    uuid: str = Field(unique=True, nullable=False)
-    primary_email: str = Field(default="", nullable=False)
+    award_id: int | None = Field(foreign_key="award.id", index=True)
+    uuid: str = Field(unique=True)
+    primary_email: str = Field(default="")
     status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, nullable=True)
-    award_borrower_identifier: str = Field(default="", nullable=False)
+    award_borrower_identifier: str = Field(default="")
     borrower_id: int | None = Field(foreign_key="borrower.id", index=True)
-    lender_id: int | None = Field(foreign_key="lender.id", nullable=True)
-    contract_amount_submitted: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
-    disbursed_final_amount: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
-    amount_requested: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
+    lender_id: int | None = Field(foreign_key="lender.id")
+    contract_amount_submitted: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
+    disbursed_final_amount: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
+    amount_requested: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
     currency: str = Field(default="COP", description="ISO 4217 currency code")
-    repayment_years: int | None = Field(nullable=True)
-    repayment_months: int | None = Field(nullable=True)
-    payment_start_date: datetime | None = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
-    calculator_data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    borrower_credit_product_selected_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
+    repayment_years: int | None
+    repayment_months: int | None
+    payment_start_date: datetime | None = Field(sa_type=DateTime(timezone=False))
+    calculator_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    borrower_credit_product_selected_at: datetime | None = Field(sa_type=DateTime(timezone=True))
     pending_documents: bool = Field(default=False)
     pending_email_confirmation: bool = Field(default=False)
-    borrower_submitted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    borrower_accepted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    borrower_declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    overdued_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    borrower_declined_preferences_data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    borrower_declined_data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    lender_started_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    secop_data_verification: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    lender_approved_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    lender_approved_data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    lender_rejected_data: dict[str, Any] | None = Field(default_factory=dict, sa_column=Column(JSON))
-    lender_rejected_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    borrower_uploaded_contract_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    lender_completed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    completed_in_days: int | None = Field(nullable=True)
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
-    updated_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
-    )
-    expired_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    archived_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    information_requested_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    application_lapsed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
-    credit_product_id: int | None = Field(foreign_key="credit_product.id", nullable=True)
+    borrower_submitted_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    borrower_accepted_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    borrower_declined_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    overdued_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    borrower_declined_preferences_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    borrower_declined_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    lender_started_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    secop_data_verification: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    lender_approved_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    lender_approved_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    lender_rejected_data: dict[str, Any] | None = Field(default_factory=dict, sa_type=JSON)
+    lender_rejected_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    borrower_uploaded_contract_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    lender_completed_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    completed_in_days: int | None
+    created_at: datetime = ONCREATE_TIMESTAMP
+    updated_at: datetime = ONUPDATE_TIMESTAMP
+    expired_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    archived_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    information_requested_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    application_lapsed_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    credit_product_id: int | None = Field(foreign_key="credit_product.id")
 
 
 class ApplicationPrivate(ApplicationBase):
-    confirmation_email_token: str | None = Field(index=True, nullable=True, default="")
+    confirmation_email_token: str | None = Field(default="", index=True)
 
 
 class ApplicationRead(ApplicationBase):
@@ -644,38 +638,34 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
 class BorrowerBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
-    borrower_identifier: str = Field(default="", unique=True, nullable=False)
+    borrower_identifier: str = Field(default="", unique=True)
     legal_name: str = Field(default="")
     email: str = Field(default="")
     address: str = Field(default="")
     legal_identifier: str = Field(default="")
     type: str = Field(default="")
     sector: str = Field(default="")
-    annual_revenue: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
+    annual_revenue: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     # Self-reported
     size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED, nullable=True)
     # From source
-    is_msme: bool = Field(default=True, nullable=False)
-    missing_data: dict[str, bool] = Field(default_factory=dict, sa_column=Column(JSON))
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
-    updated_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
-    )
-    declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    is_msme: bool = Field(default=True)
+    missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    created_at: datetime = ONCREATE_TIMESTAMP
+    updated_at: datetime = ONUPDATE_TIMESTAMP
+    declined_at: datetime | None = Field(sa_type=DateTime(timezone=True))
 
 
 class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
-    source_data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    source_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
     status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE, nullable=True)
     applications: list["Application"] | None = Relationship(back_populates="borrower")
     awards: list["Award"] = Relationship(back_populates="borrower")
 
 
 class LenderBase(SQLModel):
-    name: str = Field(default="", nullable=False, unique=True)
+    name: str = Field(default="", unique=True)
     email_group: str = Field(default="")
     type: str = Field(default="")
     sla_days: int | None
@@ -688,13 +678,9 @@ class Lender(LenderBase, ActiveRecordMixin, table=True):
     applications: list["Application"] | None = Relationship(back_populates="lender")
     users: list["User"] | None = Relationship(back_populates="lender")
     status: str = Field(default="")
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
-    updated_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
-    )
-    deleted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True), nullable=True))
+    created_at: datetime = ONCREATE_TIMESTAMP
+    updated_at: datetime = ONUPDATE_TIMESTAMP
+    deleted_at: datetime | None = Field(sa_type=DateTime(timezone=True))
     credit_products: list["CreditProduct"] | None = Relationship(back_populates="lender")
 
 
@@ -704,39 +690,35 @@ class LenderCreate(LenderBase):
 
 class AwardBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
-    borrower_id: int | None = Field(foreign_key="borrower.id", nullable=True)
+    borrower_id: int | None = Field(foreign_key="borrower.id")
     source_contract_id: str = Field(default="", index=True)
     title: str = Field(default="")
     description: str = Field(default="")
-    award_date: datetime | None = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
-    award_amount: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=False))
+    award_date: datetime | None = Field(sa_type=DateTime(timezone=False))
+    award_amount: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2), nullable=False)
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
-    contractperiod_startdate: datetime | None = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
-    contractperiod_enddate: datetime | None = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
-    payment_method: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    contractperiod_startdate: datetime | None = Field(sa_type=DateTime(timezone=False))
+    contractperiod_enddate: datetime | None = Field(sa_type=DateTime(timezone=False))
+    payment_method: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
     buyer_name: str = Field(default="")
     source_url: str = Field(default="")
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
-    source_last_updated_at: datetime | None = Field(sa_column=Column(DateTime(timezone=False), nullable=True))
+    source_last_updated_at: datetime | None = Field(sa_type=DateTime(timezone=False))
     previous: bool = Field(default=False)
     procurement_method: str = Field(default="")
     contracting_process_id: str = Field(default="")
     procurement_category: str = Field(default="")
-    missing_data: dict[str, bool] = Field(default_factory=dict, sa_column=Column(JSON))
+    missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON, nullable=True)
 
 
 class Award(AwardBase, ActiveRecordMixin, table=True):
     applications: list["Application"] | None = Relationship(back_populates="award")
     borrower: Borrower = Relationship(back_populates="awards")
-    source_data_contracts: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    source_data_awards: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
-    updated_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
-    )
+    source_data_contracts: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    source_data_awards: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    created_at: datetime = ONCREATE_TIMESTAMP
+    updated_at: datetime = ONUPDATE_TIMESTAMP
 
     @classmethod
     def last_updated(cls, session: Session) -> datetime | None:
@@ -755,13 +737,9 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
     application: Optional["Application"] = Relationship(back_populates="messages")
     external_message_id: str | None = Field(default="")
     body: str | None = Field(default="")
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
-    updated_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), onupdate=func.now())
-    )
-    lender_id: int | None = Field(default=None, foreign_key="lender.id", nullable=True)
+    created_at: datetime = ONCREATE_TIMESTAMP
+    updated_at: datetime = ONUPDATE_TIMESTAMP
+    lender_id: int | None = Field(default=None, foreign_key="lender.id")
 
     @classmethod
     def application_by_type(cls, message_type: MessageType) -> Select:
@@ -775,27 +753,23 @@ class EventLog(SQLModel, ActiveRecordMixin, table=True):
     __tablename__ = "event_log"
 
     id: int | None = Field(default=None, primary_key=True)
-    category: str = Field(nullable=False)
-    message: str = Field(nullable=False)
-    url: str = Field(default="", nullable=False)
-    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=False)
-    traceback: str = Field(nullable=False)
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
+    category: str
+    message: str
+    url: str = Field(default="")
+    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+    traceback: str
+    created_at: datetime = ONCREATE_TIMESTAMP
 
 
 class UserBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     type: UserType = Field(default=UserType.FI, nullable=True)
     language: str = Field(default="es", description="ISO 639-1 language code")
-    email: str = Field(unique=True, nullable=False)
+    email: str = Field(unique=True)
     name: str = Field(default="")
     external_id: str = Field(default="", index=True)
-    lender_id: int | None = Field(default=None, foreign_key="lender.id", nullable=True)
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
+    lender_id: int | None = Field(default=None, foreign_key="lender.id")
+    created_at: datetime = ONCREATE_TIMESTAMP
 
     def is_ocp(self) -> bool:
         return self.type == UserType.OCP
@@ -818,14 +792,12 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     type: ApplicationActionType = Field(nullable=True)
-    data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
+    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="actions")
     user_id: int | None = Field(default=None, foreign_key="credere_user.id")
     user: User | None = Relationship(back_populates="application_actions")
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
+    created_at: datetime = ONCREATE_TIMESTAMP
 
 
 class BasicUser(BaseModel):
@@ -874,8 +846,6 @@ class StatisticData(BaseModel):
 class Statistic(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: StatisticType = Field(nullable=True)
-    data: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
-    created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow(), server_default=func.now())
-    )
-    lender_id: int | None = Field(foreign_key="lender.id", nullable=True)
+    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON, nullable=True)
+    created_at: datetime = ONCREATE_TIMESTAMP
+    lender_id: int | None = Field(foreign_key="lender.id")
