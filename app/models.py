@@ -345,10 +345,6 @@ class Lender(LenderBase, ActiveRecordMixin, table=True):
     credit_products: list["CreditProduct"] | None = Relationship(back_populates="lender")
 
 
-class LenderCreate(LenderBase):
-    credit_products: list["CreditProduct"] | None = None
-
-
 class ApplicationBase(SQLModel):
     award_id: int | None = Field(foreign_key="award.id", index=True)
     uuid: str = Field(unique=True)
@@ -394,10 +390,6 @@ class ApplicationBase(SQLModel):
 
 class ApplicationPrivate(ApplicationBase):
     confirmation_email_token: str = Field(default="", index=True)
-
-
-class ApplicationRead(ApplicationBase):
-    id: int
 
 
 class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
@@ -774,11 +766,6 @@ class UserBase(SQLModel):
         return self.type == UserType.OCP
 
 
-class UserWithLender(UserBase):
-    id: int
-    lender: LenderBase | None = None
-
-
 class User(UserBase, ActiveRecordMixin, table=True):
     __tablename__ = "credere_user"
 
@@ -799,17 +786,28 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     created_at: datetime = ONCREATE_TIMESTAMP
 
 
-class ApplicationWithRelations(ApplicationRead):
-    borrower: BorrowerBase | None = None
-    award: AwardBase | None = None
+class Statistic(SQLModel, ActiveRecordMixin, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    type: StatisticType
+    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+    created_at: datetime = ONCREATE_TIMESTAMP
+    lender_id: int | None = Field(foreign_key="lender.id")
+
+
+# Classes that inherit from SQLModel but that are used as serializers only.
+
+
+class UserWithLender(UserBase):
+    id: int
     lender: LenderBase | None = None
-    credit_product: CreditProductBase | None = None
-    borrower_documents: list[BorrowerDocumentBase] | None = None
-    modified_data_fields: dict[str, Any] = Field(default_factory=dict)
 
 
 class LenderRead(LenderBase):
     id: int
+
+
+class LenderCreate(LenderBase):
+    credit_products: list["CreditProduct"] | None = None
 
 
 class LenderWithRelations(LenderRead):
@@ -821,9 +819,14 @@ class CreditProductWithLender(CreditProductBase):
     lender: LenderRead | None = None
 
 
-class Statistic(SQLModel, ActiveRecordMixin, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    type: StatisticType
-    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    created_at: datetime = ONCREATE_TIMESTAMP
-    lender_id: int | None = Field(foreign_key="lender.id")
+class ApplicationRead(ApplicationBase):
+    id: int
+
+
+class ApplicationWithRelations(ApplicationRead):
+    borrower: BorrowerBase | None = None
+    award: AwardBase | None = None
+    lender: LenderBase | None = None
+    credit_product: CreditProductBase | None = None
+    borrower_documents: list[BorrowerDocumentBase] | None = None
+    modified_data_fields: dict[str, Any] = Field(default_factory=dict)
