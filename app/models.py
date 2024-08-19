@@ -805,7 +805,7 @@ class ApplicationWithRelations(ApplicationRead):
     lender: LenderBase | None = None
     credit_product: CreditProductBase | None = None
     borrower_documents: list[BorrowerDocumentBase] | None = None
-    modified_data_fields: dict[str, Any] | None = {}
+    modified_data_fields: dict[str, Any] = Field(default_factory=dict)
 
 
 class LenderRead(LenderBase):
