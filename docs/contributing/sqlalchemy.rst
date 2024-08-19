@@ -4,14 +4,23 @@ SQLAlchemy
 Models
 ------
 
--  Use ``default=""`` or ``default_factory=dict`` for **optional** ``str``, enum and ``dict`` fields, not ``Field(nullable=True)``, ``... | None`` or ``Optional[...]``.
+-  For optional ``str``, enum and ``dict`` fields, use ``Field(default="")`` or ``Field(default_factory=dict)``, not the ``... | None`` annotation.
 
-   .. seealso::
+   .. seealso:: `Define tables <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#define-tables>`__ and `Django models <https://ocp-software-handbook.readthedocs.io/en/latest/python/django.html#models>`__
 
-      -  `Define tables <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#define-tables>`__
-      -  `Django models <https://ocp-software-handbook.readthedocs.io/en/latest/python/django.html#models>`__
+-  For nullable ``datetime``, ``int`` and ``Decimal`` fields, use the ``... | None`` annotation, not the ``Optional[...]`` annotation or ``Field(nullable=True)``.
+-  For timezone-aware datetime field, use ``Field(sa_column=Column(DateTime(timezone=True))``, to avoid the mypy error:
 
--  Use ``sa_type`` and ``sa_column_kwargs``, not ``sa_column``, to avoid SQLModel-SQLAlchemy conflicts.
+   .. code-block:: none
+
+      error: No overload variant of "Field" matches argument type "DateTime"  [call-overload]
+
+   .. attention::
+
+      ``Column()`` is ``nullable=True`` by default. If the field isn't nullable, set ``Column(..., nullable=False)``.
+
+
+-  For other fields, use ``sa_type`` and ``sa_column_kwargs``, not ``sa_column``, to avoid conflicts between SQLModel and SQLAlchemy.
 
 Sessions
 --------
