@@ -1,6 +1,21 @@
 SQLAlchemy
 ==========
 
+Models
+------
+
+-  Use ``default=""`` or ``default_factory=dict`` for **optional** ``str``, enum and ``dict`` fields, not ``Field(nullable=True)``, ``... | None`` or ``Optional[...]``.
+
+   .. seealso::
+
+      -  `Define tables <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#define-tables>`__
+      -  `Django models <https://ocp-software-handbook.readthedocs.io/en/latest/python/django.html#models>`__
+
+-  Use ``sa_type`` and ``sa_column_kwargs``, not ``sa_column``, to avoid SQLModel-SQLAlchemy conflicts.
+
+Sessions
+--------
+
 Read SQLAlchemy's `Session Basics <https://docs.sqlalchemy.org/en/20/orm/session_basics.html>`__, in particular:
 
 -  `Adding New or Existing Items <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#adding-new-or-existing-items>`__
@@ -27,7 +42,7 @@ Read SQLAlchemy's `Session Basics <https://docs.sqlalchemy.org/en/20/orm/session
 -  `My Query does not return the same number of objects as query.count() tells me - why? <https://docs.sqlalchemy.org/en/20/faq/sessions.html#my-query-does-not-return-the-same-number-of-objects-as-query-count-tells-me-why>`__
 
 Flushing
---------
+~~~~~~~~
 
 -  Use ``session.add(instance)`` to INSERT rows.
 -  Use ``instance.related = related``, not ``instance.related_id = related.id``.
@@ -39,7 +54,7 @@ Flushing
 -  Use the :meth:`app.models.ActiveRecordMixin.create` and :meth:`app.models.ActiveRecordMixin.update` methods, which call ``session.flush()`` to avoid such errors.
 
 Committing
-----------
+~~~~~~~~~~
 
 -  Credere is an email-centered service. Until an email is sent, processing is incomplete. Send emails after all database queries (other than ``Message`` creation, which depends on the message ID), *then* commit. That way, after emails are sent, only integrity errors could cause the transaction to rollback (unfortunately, sent emails can't be undone).
 -  Commit before adding `background tasks <https://fastapi.tiangolo.com/reference/background/?h=background>`__ and returning responses, to ensure changes are persisted before irreversible actions are taken.

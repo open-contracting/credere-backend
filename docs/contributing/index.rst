@@ -195,17 +195,15 @@ Either run:
 
 .. code-block:: bash
 
-   alembic revision -m "title"
+   alembic revision --autogenerate -m "migration name"
 
-This generates a file like ``2ca870aa737d_title.py``. Edit both functions, ``upgrade`` and ``downgrade``.
-
-Or run:
+This attempts to auto-detect the changes made to ``models.py``, subject to `limitations <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`__, and generates a file like ``2ca870aa737d_title.py``. Edit the functions ``upgrade`` and ``downgrade`` as needed.
 
 .. code-block:: bash
 
-   alembic revision --autogenerate -m "migration name"
+   alembic revision -m "migration name"
 
-This attempts to auto-detect the changes made to ``models.py``, subject to `limitations <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`__.
+And fill in the functions ``upgrade`` and ``downgrade``.
 
 Then, `update <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#generate-entity-relationship-diagram>`__ the :ref:`erd`. For example:
 
