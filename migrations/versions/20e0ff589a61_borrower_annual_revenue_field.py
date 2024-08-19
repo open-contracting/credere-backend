@@ -20,7 +20,7 @@ depends_on = None
 def upgrade() -> None:
     op.add_column("borrower", sa.Column("annual_revenue", sa.DECIMAL(precision=16, scale=2), nullable=True))
     op.add_column(
-        "borrower", sa.Column("currency", sqlmodel.sql.sqltypes.AutoString(), nullable=False, server_default="")
+        "borrower", sa.Column("currency", sqlmodel.sql.sqltypes.AutoString(), nullable=False, server_default="COP")
     )
 
 
