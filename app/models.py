@@ -695,7 +695,7 @@ class AwardBase(SQLModel):
     title: str = Field(default="")
     description: str = Field(default="")
     award_date: datetime | None = Field(sa_type=DateTime(timezone=False))
-    award_amount: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2), nullable=False)
+    award_amount: Decimal = Field(sa_type=DECIMAL(precision=16, scale=2))
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
     contractperiod_startdate: datetime | None = Field(sa_type=DateTime(timezone=False))
     contractperiod_enddate: datetime | None = Field(sa_type=DateTime(timezone=False))
