@@ -201,8 +201,8 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
 
     if (
         remote_borrower.get("tipo_organizacion", "").lower() == SUPPLIER_TYPE_TO_EXCLUDE
-        or remote_borrower.get("regimen_tributario", "").lower() == "Persona Natural"
-        or remote_borrower.get("tipo_de_documento") == "Cédula de Ciudadanía"
+        or remote_borrower.get("regimen_tributario", "") == "Persona Natural"
+        or remote_borrower.get("tipo_de_documento", "") == "Cédula de Ciudadanía"
     ):
         raise SkippedAwardError(
             f"Borrower is {SUPPLIER_TYPE_TO_EXCLUDE}",
