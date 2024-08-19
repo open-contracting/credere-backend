@@ -651,6 +651,8 @@ class BorrowerBase(SQLModel):
     legal_identifier: str = Field(default="")
     type: str = Field(default="")
     sector: str = Field(default="")
+    annual_revenue: Decimal | None = Field(sa_column=Column(DECIMAL(precision=16, scale=2), nullable=True))
+    currency: str = Field(default="COP", description="ISO 4217 currency code")
     # Self-reported
     size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED, nullable=True)
     # From source

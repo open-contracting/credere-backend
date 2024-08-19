@@ -278,6 +278,7 @@ async def select_credit_product(
         calculator_data.pop("uuid")
         calculator_data.pop("credit_product_id")
         calculator_data.pop("sector")
+        calculator_data.pop("annual_revenue", "")
 
         # Update application.
         application.calculator_data = calculator_data
@@ -287,6 +288,7 @@ async def select_credit_product(
         # Update application's borrower.
         application.borrower.size = payload.borrower_size
         application.borrower.sector = payload.sector
+        application.borrower.annual_revenue = payload.annual_revenue
 
         models.ApplicationAction.create(
             session,

@@ -95,6 +95,7 @@ class ApplicationCreditOptions(ApplicationBase):
 
 class ApplicationSelectCreditProduct(ApplicationCreditOptions):
     sector: str
+    annual_revenue: Decimal | None = None
     credit_product_id: int
     repayment_years: int | None = None
     repayment_months: int | None = None
