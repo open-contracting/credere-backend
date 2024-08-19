@@ -11,7 +11,6 @@ from sqlmodel import col
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
-from app.util import commit_and_refresh
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +79,7 @@ async def decline(
             application.borrower.status = models.BorrowerStatus.DECLINE_OPPORTUNITIES
             application.borrower.declined_at = current_time
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -119,7 +118,7 @@ async def rollback_decline(
             application.borrower.status = models.BorrowerStatus.ACTIVE
             application.borrower.declined_at = None
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -153,7 +152,7 @@ async def decline_feedback(
 
         application.borrower_declined_preferences_data = borrower_declined_preferences_data
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -191,7 +190,7 @@ async def access_scheme(
         application.status = models.ApplicationStatus.ACCEPTED
         application.expired_at = None
 
-        application = commit_and_refresh(session, application)
+        session.commit()
 
         background_tasks.add_task(util.get_previous_awards_from_data_source, application.borrower_id)
 
@@ -289,7 +288,7 @@ async def select_credit_product(
             application_id=application.id,
         )
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -344,7 +343,7 @@ async def rollback_select_credit_product(
             application_id=application.id,
         )
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -432,7 +431,7 @@ async def confirm_credit_product(
             application_id=application.id,
         )
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -496,7 +495,7 @@ async def rollback_confirm_credit_product(
             application_id=application.id,
         )
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -567,7 +566,7 @@ async def update_apps_send_notifications(
             external_message_id=message_id,
         )
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -613,7 +612,8 @@ async def upload_document(
             application_id=application.id,
         )
 
-        return commit_and_refresh(session, document)
+        session.commit()
+        return document
 
 
 @router.post(
@@ -645,6 +645,13 @@ async def complete_information_request(
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False
 
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+        )
+
         message_id = mail.send_upload_documents_notifications_to_lender(client.ses, application.lender.email_group)
         models.Message.create(
             session,
@@ -653,14 +660,7 @@ async def complete_information_request(
             external_message_id=message_id,
         )
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-        )
-
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -699,7 +699,8 @@ async def upload_contract(
             new_file,
         )
 
-        return commit_and_refresh(session, document)
+        session.commit()
+        return document
 
 
 @router.post(
@@ -725,6 +726,18 @@ async def confirm_upload_contract(
     :return: The application response containing the updated application and related entities.
     """
     with rollback_on_error(session):
+        application.contract_amount_submitted = payload.contract_amount_submitted
+        application.status = models.ApplicationStatus.CONTRACT_UPLOADED
+        application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_UPLOAD_CONTRACT,
+            # payload.contract_amount_submitted is a Decimal.
+            data=jsonable_encoder({"contract_amount_submitted": payload.contract_amount_submitted}),
+            application_id=application.id,
+        )
+
         lender_message_id, borrower_message_id = (
             mail.send_upload_contract_notification_to_lender(client.ses, application),
             mail.send_upload_contract_confirmation(client.ses, application),
@@ -742,19 +755,7 @@ async def confirm_upload_contract(
             external_message_id=borrower_message_id,
         )
 
-        application.contract_amount_submitted = payload.contract_amount_submitted
-        application.status = models.ApplicationStatus.CONTRACT_UPLOADED
-        application.borrower_uploaded_contract_at = datetime.now(application.created_at.tzinfo)
-
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_UPLOAD_CONTRACT,
-            # payload.contract_amount_submitted is a Decimal.
-            data=jsonable_encoder({"contract_amount_submitted": payload.contract_amount_submitted}),
-            application_id=application.id,
-        )
-
-        application = commit_and_refresh(session, application)
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, application),
             borrower=application.borrower,
@@ -826,14 +827,6 @@ async def find_alternative_credit_option(
                 detail=f"There was a problem copying the application.{e}",
             )
 
-        message_id = mail.send_copied_application_notification_to_borrower(client.ses, new_application)
-        models.Message.create(
-            session,
-            application=new_application,
-            type=models.MessageType.APPLICATION_COPIED,
-            external_message_id=message_id,
-        )
-
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.COPIED_APPLICATION,
@@ -847,7 +840,15 @@ async def find_alternative_credit_option(
             application_id=new_application.id,
         )
 
-        application = commit_and_refresh(session, application)
+        message_id = mail.send_copied_application_notification_to_borrower(client.ses, new_application)
+        models.Message.create(
+            session,
+            application=new_application,
+            type=models.MessageType.APPLICATION_COPIED,
+            external_message_id=message_id,
+        )
+
+        session.commit()
         return serializers.ApplicationResponse(
             application=cast(models.ApplicationRead, new_application),
             borrower=new_application.borrower,

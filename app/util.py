@@ -53,12 +53,6 @@ def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None 
     return getattr(col(column), sort_order)()
 
 
-def commit_and_refresh(session: Session, instance: T) -> T:
-    session.commit()
-    session.refresh(instance)
-    return instance
-
-
 def get_object_or_404(session: Session, model: type[T], field: str, value: Any) -> T:
     obj = model.first_by(session, field, value)
     if not obj:
