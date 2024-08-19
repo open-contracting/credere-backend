@@ -359,7 +359,7 @@ class ApplicationBase(SQLModel):
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     repayment_years: int | None
     repayment_months: int | None
-    payment_start_date: datetime | None = Field(sa_type=DateTime(timezone=False))
+    payment_start_date: datetime | None
     calculator_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     borrower_credit_product_selected_at: datetime | None = Field(sa_type=DateTime(timezone=True))
     pending_documents: bool = Field(default=False)
@@ -685,17 +685,17 @@ class AwardBase(SQLModel):
     source_contract_id: str = Field(default="", index=True)
     title: str = Field(default="")
     description: str = Field(default="")
-    award_date: datetime | None = Field(sa_type=DateTime(timezone=False))
+    award_date: datetime | None
     award_amount: Decimal = Field(sa_type=DECIMAL(precision=16, scale=2))
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
-    contractperiod_startdate: datetime | None = Field(sa_type=DateTime(timezone=False))
-    contractperiod_enddate: datetime | None = Field(sa_type=DateTime(timezone=False))
+    contractperiod_startdate: datetime | None
+    contractperiod_enddate: datetime | None
     payment_method: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     buyer_name: str = Field(default="")
     source_url: str = Field(default="")
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
-    source_last_updated_at: datetime | None = Field(sa_type=DateTime(timezone=False))
+    source_last_updated_at: datetime | None
     previous: bool = Field(default=False)
     procurement_method: str = Field(default="")
     contracting_process_id: str = Field(default="")
