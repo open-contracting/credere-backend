@@ -336,13 +336,13 @@ class LenderBase(SQLModel):
 
 class Lender(LenderBase, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    applications: list["Application"] | None = Relationship(back_populates="lender")
-    users: list["User"] | None = Relationship(back_populates="lender")
+    applications: list["Application"] = Relationship(back_populates="lender")
+    users: list["User"] = Relationship(back_populates="lender")
     status: str = Field(default="")
     created_at: datetime = ONCREATE_TIMESTAMP
     updated_at: datetime = ONUPDATE_TIMESTAMP
     deleted_at: datetime | None = Field(sa_type=DateTime(timezone=True))
-    credit_products: list["CreditProduct"] | None = Relationship(back_populates="lender")
+    credit_products: list["CreditProduct"] = Relationship(back_populates="lender")
 
 
 class ApplicationBase(SQLModel):
@@ -394,12 +394,12 @@ class ApplicationPrivate(ApplicationBase):
 
 class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    borrower_documents: list["BorrowerDocument"] | None = Relationship(back_populates="application")
+    borrower_documents: list["BorrowerDocument"] = Relationship(back_populates="application")
     award: "Award" = Relationship(back_populates="applications")
     borrower: "Borrower" = Relationship(back_populates="applications")
     lender: Lender | None = Relationship(back_populates="applications")
-    messages: list["Message"] | None = Relationship(back_populates="application")
-    actions: list["ApplicationAction"] | None = Relationship(back_populates="application")
+    messages: list["Message"] = Relationship(back_populates="application")
+    actions: list["ApplicationAction"] = Relationship(back_populates="application")
     credit_product: "CreditProduct" = Relationship()
 
     @classmethod
@@ -675,7 +675,7 @@ class BorrowerBase(SQLModel):
 class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
     source_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE)
-    applications: list["Application"] | None = Relationship(back_populates="borrower")
+    applications: list["Application"] = Relationship(back_populates="borrower")
     awards: list["Award"] = Relationship(back_populates="borrower")
 
 
@@ -704,7 +704,7 @@ class AwardBase(SQLModel):
 
 
 class Award(AwardBase, ActiveRecordMixin, table=True):
-    applications: list["Application"] | None = Relationship(back_populates="award")
+    applications: list["Application"] = Relationship(back_populates="award")
     borrower: Borrower = Relationship(back_populates="awards")
     source_data_contracts: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     source_data_awards: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
