@@ -46,5 +46,6 @@
   "legal_identifier": "987654321",
   "sector": "",
   "annual_revenue": null,
+  "currency": "",
   "is_msme": true
 }
