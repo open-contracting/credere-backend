@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, tzinfo
 from decimal import Decimal
 from enum import StrEnum
-from typing import Any, Optional, Self
+from typing import Any, Self
 
 from pydantic import PlainSerializer
 from sqlalchemy import DECIMAL, Boolean, DateTime, and_, desc, or_, select
@@ -325,23 +325,28 @@ class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
     updated_at: datetime = ONUPDATE_TIMESTAMP
 
 
-class BorrowerDocumentBase(SQLModel):
-    id: int | None = Field(default=None, primary_key=True)
-    application_id: int = Field(foreign_key="application.id")
+class LenderBase(SQLModel):
+    name: str = Field(default="", unique=True)
+    email_group: str = Field(default="")
+    type: str = Field(default="")
+    sla_days: int | None
+    logo_filename: str = Field(default="")
+    default_pre_approval_message: str = Field(default="")
 
-    type: BorrowerDocumentType = Field(nullable=True)
-    verified: bool = Field(default=False)
-    name: str = Field(default="")
+
+class Lender(LenderBase, ActiveRecordMixin, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    applications: list["Application"] | None = Relationship(back_populates="lender")
+    users: list["User"] | None = Relationship(back_populates="lender")
+    status: str = Field(default="")
     created_at: datetime = ONCREATE_TIMESTAMP
     updated_at: datetime = ONUPDATE_TIMESTAMP
-    submitted_at: datetime = ONCREATE_TIMESTAMP
+    deleted_at: datetime | None = Field(sa_type=DateTime(timezone=True))
+    credit_products: list["CreditProduct"] | None = Relationship(back_populates="lender")
 
 
-class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
-    __tablename__ = "borrower_document"
-
-    application: Optional["Application"] = Relationship(back_populates="borrower_documents")
-    file: bytes
+class LenderCreate(LenderBase):
+    credit_products: list["CreditProduct"] | None = None
 
 
 class ApplicationBase(SQLModel):
@@ -400,7 +405,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     borrower_documents: list["BorrowerDocument"] | None = Relationship(back_populates="application")
     award: "Award" = Relationship(back_populates="applications")
     borrower: "Borrower" = Relationship(back_populates="applications")
-    lender: Optional["Lender"] = Relationship(back_populates="applications")
+    lender: Lender | None = Relationship(back_populates="applications")
     messages: list["Message"] | None = Relationship(back_populates="application")
     actions: list["ApplicationAction"] | None = Relationship(back_populates="application")
     credit_product: "CreditProduct" = Relationship()
@@ -636,6 +641,24 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         self.overdued_at = None
 
 
+class BorrowerDocumentBase(SQLModel):
+    id: int | None = Field(default=None, primary_key=True)
+    application_id: int = Field(foreign_key="application.id")
+    type: BorrowerDocumentType = Field(nullable=True)
+    verified: bool = Field(default=False)
+    name: str = Field(default="")
+    created_at: datetime = ONCREATE_TIMESTAMP
+    updated_at: datetime = ONUPDATE_TIMESTAMP
+    submitted_at: datetime = ONCREATE_TIMESTAMP
+
+
+class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
+    __tablename__ = "borrower_document"
+
+    application: Application | None = Relationship(back_populates="borrower_documents")
+    file: bytes
+
+
 class BorrowerBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     borrower_identifier: str = Field(default="", unique=True)
@@ -662,30 +685,6 @@ class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
     status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE)
     applications: list["Application"] | None = Relationship(back_populates="borrower")
     awards: list["Award"] = Relationship(back_populates="borrower")
-
-
-class LenderBase(SQLModel):
-    name: str = Field(default="", unique=True)
-    email_group: str = Field(default="")
-    type: str = Field(default="")
-    sla_days: int | None
-    logo_filename: str = Field(default="")
-    default_pre_approval_message: str = Field(default="")
-
-
-class Lender(LenderBase, ActiveRecordMixin, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    applications: list["Application"] | None = Relationship(back_populates="lender")
-    users: list["User"] | None = Relationship(back_populates="lender")
-    status: str = Field(default="")
-    created_at: datetime = ONCREATE_TIMESTAMP
-    updated_at: datetime = ONUPDATE_TIMESTAMP
-    deleted_at: datetime | None = Field(sa_type=DateTime(timezone=True))
-    credit_products: list["CreditProduct"] | None = Relationship(back_populates="lender")
-
-
-class LenderCreate(LenderBase):
-    credit_products: list["CreditProduct"] | None = None
 
 
 class AwardBase(SQLModel):
@@ -734,7 +733,7 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: MessageType
     application_id: int = Field(foreign_key="application.id")
-    application: Optional["Application"] = Relationship(back_populates="messages")
+    application: Application | None = Relationship(back_populates="messages")
     external_message_id: str = Field(default="")
     body: str = Field(default="")
     created_at: datetime = ONCREATE_TIMESTAMP
@@ -777,14 +776,14 @@ class UserBase(SQLModel):
 
 class UserWithLender(UserBase):
     id: int
-    lender: Optional["LenderBase"] = None
+    lender: LenderBase | None = None
 
 
 class User(UserBase, ActiveRecordMixin, table=True):
     __tablename__ = "credere_user"
 
     application_actions: list["ApplicationAction"] = Relationship(back_populates="user")
-    lender: Optional["Lender"] = Relationship(back_populates="users")
+    lender: Lender | None = Relationship(back_populates="users")
 
 
 class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
@@ -794,17 +793,17 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     type: ApplicationActionType
     data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     application_id: int = Field(foreign_key="application.id")
-    application: Optional["Application"] = Relationship(back_populates="actions")
+    application: Application | None = Relationship(back_populates="actions")
     user_id: int | None = Field(default=None, foreign_key="credere_user.id")
     user: User | None = Relationship(back_populates="application_actions")
     created_at: datetime = ONCREATE_TIMESTAMP
 
 
 class ApplicationWithRelations(ApplicationRead):
-    borrower: Optional["BorrowerBase"] = None
-    award: Optional["AwardBase"] = None
-    lender: Optional["LenderBase"] = None
-    credit_product: Optional["CreditProductBase"] = None
+    borrower: BorrowerBase | None = None
+    award: AwardBase | None = None
+    lender: LenderBase | None = None
+    credit_product: CreditProductBase | None = None
     borrower_documents: list[BorrowerDocumentBase] | None = None
     modified_data_fields: dict[str, Any] | None = {}
 
@@ -814,12 +813,12 @@ class LenderRead(LenderBase):
 
 
 class LenderWithRelations(LenderRead):
-    credit_products: list["CreditProduct"] | None = None
+    credit_products: list[CreditProduct] | None = None
 
 
 class CreditProductWithLender(CreditProductBase):
     id: int
-    lender: Optional["LenderRead"] = None
+    lender: LenderRead | None = None
 
 
 class Statistic(SQLModel, ActiveRecordMixin, table=True):
