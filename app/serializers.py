@@ -60,5 +60,13 @@ class StatisticResponse(BaseModel):
     statistics_kpis: dict[Any, Any]
 
 
+class StatisticData(BaseModel):
+    name: str
+    value: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"name": self.name, "value": self.value}
+
+
 class StatisticOptInResponse(BaseModel):
     opt_in_stat: dict[Any, Any]

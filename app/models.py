@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Optional, Self
 
-from pydantic import BaseModel, PlainSerializer
+from pydantic import PlainSerializer
 from sqlalchemy import DECIMAL, Boolean, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
@@ -800,19 +800,6 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     created_at: datetime = ONCREATE_TIMESTAMP
 
 
-class BasicUser(BaseModel):
-    username: str
-    name: str | None = None
-    password: str | None = None
-    temp_password: str | None = None
-
-
-class SetupMFA(BaseModel):
-    temp_password: str
-    session: str
-    secret: str
-
-
 class ApplicationWithRelations(ApplicationRead):
     borrower: Optional["BorrowerBase"] = None
     award: Optional["AwardBase"] = None
@@ -833,14 +820,6 @@ class LenderWithRelations(LenderRead):
 class CreditProductWithLender(CreditProductBase):
     id: int
     lender: Optional["LenderRead"] = None
-
-
-class StatisticData(BaseModel):
-    name: str
-    value: int
-
-    def to_dict(self) -> dict[str, Any]:
-        return {"name": self.name, "value": self.value}
 
 
 class Statistic(SQLModel, ActiveRecordMixin, table=True):
