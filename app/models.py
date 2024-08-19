@@ -348,7 +348,7 @@ class ApplicationBase(SQLModel):
     award_id: int | None = Field(foreign_key="award.id", index=True)
     uuid: str = Field(unique=True)
     primary_email: str = Field(default="")
-    status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, nullable=True)
+    status: ApplicationStatus = Field(default=ApplicationStatus.PENDING)
     award_borrower_identifier: str = Field(default="")
     borrower_id: int | None = Field(foreign_key="borrower.id", index=True)
     lender_id: int | None = Field(foreign_key="lender.id")
@@ -388,7 +388,7 @@ class ApplicationBase(SQLModel):
 
 
 class ApplicationPrivate(ApplicationBase):
-    confirmation_email_token: str | None = Field(default="", index=True)
+    confirmation_email_token: str = Field(default="", index=True)
 
 
 class ApplicationRead(ApplicationBase):
@@ -648,7 +648,7 @@ class BorrowerBase(SQLModel):
     annual_revenue: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     # Self-reported
-    size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED, nullable=True)
+    size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
     # From source
     is_msme: bool = Field(default=True)
     missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
@@ -659,7 +659,7 @@ class BorrowerBase(SQLModel):
 
 class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
     source_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE, nullable=True)
+    status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE)
     applications: list["Application"] | None = Relationship(back_populates="borrower")
     awards: list["Award"] = Relationship(back_populates="borrower")
 
@@ -669,8 +669,8 @@ class LenderBase(SQLModel):
     email_group: str = Field(default="")
     type: str = Field(default="")
     sla_days: int | None
-    logo_filename: str = Field(default="", nullable=True)
-    default_pre_approval_message: str = Field(default="", nullable=True)
+    logo_filename: str = Field(default="")
+    default_pre_approval_message: str = Field(default="")
 
 
 class Lender(LenderBase, ActiveRecordMixin, table=True):
@@ -732,11 +732,11 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
 
 class Message(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    type: MessageType = Field(nullable=True)
+    type: MessageType
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="messages")
-    external_message_id: str | None = Field(default="")
-    body: str | None = Field(default="")
+    external_message_id: str = Field(default="")
+    body: str = Field(default="")
     created_at: datetime = ONCREATE_TIMESTAMP
     updated_at: datetime = ONUPDATE_TIMESTAMP
     lender_id: int | None = Field(default=None, foreign_key="lender.id")
@@ -763,7 +763,7 @@ class EventLog(SQLModel, ActiveRecordMixin, table=True):
 
 class UserBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
-    type: UserType = Field(default=UserType.FI, nullable=True)
+    type: UserType = Field(default=UserType.FI)
     language: str = Field(default="es", description="ISO 639-1 language code")
     email: str = Field(unique=True)
     name: str = Field(default="")
@@ -791,7 +791,7 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     __tablename__ = "application_action"
 
     id: int | None = Field(default=None, primary_key=True)
-    type: ApplicationActionType = Field(nullable=True)
+    type: ApplicationActionType
     data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     application_id: int = Field(foreign_key="application.id")
     application: Optional["Application"] = Relationship(back_populates="actions")
@@ -845,7 +845,7 @@ class StatisticData(BaseModel):
 
 class Statistic(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    type: StatisticType = Field(nullable=True)
+    type: StatisticType
     data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     created_at: datetime = ONCREATE_TIMESTAMP
     lender_id: int | None = Field(foreign_key="lender.id")
