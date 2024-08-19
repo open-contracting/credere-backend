@@ -223,6 +223,10 @@ def create_borrower_table(borrower: models.Borrower, application: models.Applica
             get_translated_string(sector_dict[borrower.sector], lang),
         ],
         [
+            get_translated_string("Annual Revenue", lang),
+            _format_currency(borrower.annual_revenue, borrower.currency),
+        ],
+        [
             get_translated_string("Business Email", lang),
             application.primary_email,
         ],

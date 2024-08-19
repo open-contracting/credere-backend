@@ -45,5 +45,7 @@
   "email": "test@gmail.com",
   "legal_identifier": "987654321",
   "sector": "",
+  "annual_revenue": null,
+  "currency": "COP",
   "is_msme": true
 }
