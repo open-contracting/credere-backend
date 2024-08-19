@@ -10,7 +10,7 @@ from sqlmodel import col
 
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
-from app.util import SortOrder, commit_and_refresh, get_order_by
+from app.util import SortOrder, get_order_by
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +61,14 @@ async def reject_application(
             .all()
         )
 
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.REJECTED_APPLICATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
         if options:
             message_id = mail.send_rejected_application_email(client.ses, application)
         else:
@@ -72,15 +80,8 @@ async def reject_application(
             external_message_id=message_id,
         )
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.REJECTED_APPLICATION,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-            user_id=user.id,
-        )
-
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.post(
@@ -111,14 +112,6 @@ async def complete_application(
         application.stage_as_completed(payload.disbursed_final_amount)
         application.completed_in_days = application.days_waiting_for_lender(session)
 
-        message_id = mail.send_application_credit_disbursed(client.ses, application)
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.CREDIT_DISBURSED,
-            external_message_id=message_id,
-        )
-
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
@@ -128,7 +121,16 @@ async def complete_application(
             user_id=user.id,
         )
 
-        return commit_and_refresh(session, application)
+        message_id = mail.send_application_credit_disbursed(client.ses, application)
+        models.Message.create(
+            session,
+            application=application,
+            type=models.MessageType.CREDIT_DISBURSED,
+            external_message_id=message_id,
+        )
+
+        session.commit()
+        return application
 
 
 @router.post(
@@ -189,14 +191,6 @@ async def approve_application(
         application.status = models.ApplicationStatus.APPROVED
         application.lender_approved_at = datetime.now(application.created_at.tzinfo)
 
-        message_id = mail.send_application_approved_email(client.ses, application)
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.APPROVED_APPLICATION,
-            external_message_id=message_id,
-        )
-
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPROVED_APPLICATION,
@@ -205,7 +199,16 @@ async def approve_application(
             user_id=user.id,
         )
 
-        return commit_and_refresh(session, application)
+        message_id = mail.send_application_approved_email(client.ses, application)
+        models.Message.create(
+            session,
+            application=application,
+            type=models.MessageType.APPROVED_APPLICATION,
+            external_message_id=message_id,
+        )
+
+        session.commit()
+        return application
 
 
 @router.put(
@@ -253,7 +256,8 @@ async def verify_data_field(
             user_id=user.id,
         )
 
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.put(
@@ -293,7 +297,7 @@ async def verify_document(
             user_id=user.id,
         )
 
-        document = commit_and_refresh(session, document)
+        session.commit()
         return document.application
 
 
@@ -335,7 +339,7 @@ async def update_application_award(
             user_id=user.id,
         )
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return util.get_modified_data_fields(session, application)
 
 
@@ -384,7 +388,7 @@ async def update_application_borrower(
             user_id=user.id,
         )
 
-        application = commit_and_refresh(session, application)
+        session.commit()
         return util.get_modified_data_fields(session, application)
 
 
@@ -487,7 +491,8 @@ async def start_application(
         application.status = models.ApplicationStatus.STARTED
         application.lender_started_at = datetime.now(application.created_at.tzinfo)
 
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.get(
@@ -569,6 +574,14 @@ async def email_borrower(
         application.information_requested_at = datetime.now(application.created_at.tzinfo)
         application.pending_documents = True
 
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.FI_REQUEST_INFORMATION,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
         try:
             message_id = mail.send_mail_request_to_borrower(client.ses, application, payload.message)
         except ClientError as e:
@@ -586,15 +599,8 @@ async def email_borrower(
             external_message_id=message_id,
         )
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.FI_REQUEST_INFORMATION,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
-            user_id=user.id,
-        )
-
-        return commit_and_refresh(session, application)
+        session.commit()
+        return application
 
 
 @router.get(

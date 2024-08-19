@@ -11,11 +11,15 @@ from app.settings import app_settings
 
 # https://docs.sqlalchemy.org/en/20/orm/session_basics.html#using-a-sessionmaker
 engine = create_engine(app_settings.test_database_url if app_settings.test_database_url else app_settings.database_url)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# https://docs.sqlalchemy.org/en/20/orm/session_api.html#sqlalchemy.orm.Session.__init__
+SessionLocal = sessionmaker(expire_on_commit=False, bind=engine)
 
 
 @contextmanager
 def rollback_on_error(session: Session) -> Generator[None, None, None]:
+    """
+    Call ``session.rollback()`` and re-raise the exception.
+    """
     try:
         yield
     except Exception:
@@ -25,6 +29,10 @@ def rollback_on_error(session: Session) -> Generator[None, None, None]:
 
 @contextmanager
 def handle_skipped_award(session: Session, msg: str) -> Generator[None, None, None]:
+    """
+    Call ``session.rollback()`` and, if the exception is :exc:`~app.exceptions.SkippedAwardError`, commit an
+    ``EventLog`` entry. Otherwise, re-raise the exception.
+    """
     try:
         yield
     except SkippedAwardError as e:
@@ -46,10 +54,7 @@ def handle_skipped_award(session: Session, msg: str) -> Generator[None, None, No
 # This is a FastAPI dependency.
 def get_db() -> Generator[Session, None, None]:
     """
-    Generator function to get a new database session. Yields a database session instance and closes the session after
-    it is used.
-
-    :return: The database session instance.
+    Get a SQLAlchemy session.
     """
     with SessionLocal() as session:
         yield session

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import aws, dependencies, mail, models, serializers
 from app.db import get_db, rollback_on_error
 from app.settings import app_settings
-from app.util import SortOrder, commit_and_refresh, get_object_or_404, get_order_by
+from app.util import SortOrder, get_object_or_404, get_order_by
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +38,6 @@ async def create_user(
     """
     with rollback_on_error(session):
         try:
-            user = models.User.create(session, **payload.model_dump())
-
             temporary_password = client.generate_password()
 
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_create_user.html
@@ -51,11 +49,14 @@ async def create_user(
                 UserAttributes=[{"Name": "email", "Value": payload.email}],
             )
 
-            mail.send_mail_to_new_user(client.ses, payload.name, payload.email, temporary_password)
-
+            user = models.User.create(session, **payload.model_dump())
             user.external_id = response["User"]["Username"]
 
-            return commit_and_refresh(session, user)
+            session.commit()
+
+            mail.send_mail_to_new_user(client.ses, payload.name, payload.email, temporary_password)
+
+            return user
         except (client.cognito.exceptions.UsernameExistsException, IntegrityError):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -386,7 +387,8 @@ async def update_user(
             user = get_object_or_404(session, models.User, "id", id)
             user = user.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
-            return commit_and_refresh(session, user)
+            session.commit()
+            return user
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
