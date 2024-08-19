@@ -5,14 +5,12 @@ from typing import Any, cast
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
-from app.sources import colombia as data_access
 
 logger = logging.getLogger(__name__)
 
@@ -224,11 +222,6 @@ async def credit_product_options(
     :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
             previous lenders are not found.
     """
-    if application.borrower.type.lower() == data_access.SUPPLIER_TYPE_TO_EXCLUDE:
-        borrower_type = models.BorrowerType.NATURAL_PERSON
-    else:
-        borrower_type = models.BorrowerType.LEGAL_PERSON
-
     base_query = (
         session.query(models.CreditProduct)
         .join(models.Lender)
@@ -239,7 +232,6 @@ async def credit_product_options(
             models.CreditProduct.upper_limit >= payload.amount_requested,
             models.CreditProduct.procurement_category_to_exclude != application.award.procurement_category,
             col(models.Lender.id).notin_(application.rejected_lenders(session)),
-            text(f"(borrower_types->>'{borrower_type}')::boolean is True"),
         )
     )
 
