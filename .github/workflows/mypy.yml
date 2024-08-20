@@ -18,4 +18,4 @@ jobs:
           mypy --strict --show-error-codes app reportlab_mods.py > error-summary.txt
           status=$?
           cat error-summary.txt
-          [ $status -eq 0 ] || [ $(tail -n1 error-summary.txt | cut -d' ' -f2) -le 65 ]
+          [ $status -eq 0 ] || [ $(tail -n1 error-summary.txt | cut -d' ' -f2) -le 50 ]
