@@ -7,6 +7,19 @@ from pydantic import BaseModel
 from app.models import BorrowerSize
 
 
+class BasicUser(BaseModel):
+    username: str
+    name: str | None = None
+    password: str | None = None
+    temp_password: str | None = None
+
+
+class SetupMFA(BaseModel):
+    temp_password: str
+    session: str
+    secret: str
+
+
 class AwardUpdate(BaseModel):
     source_contract_id: str | None = None
     title: str | None = None

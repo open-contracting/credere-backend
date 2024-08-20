@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import aws, dependencies, mail, models, serializers
+from app import aws, dependencies, mail, models, parsers, serializers
 from app.db import get_db, rollback_on_error
 from app.settings import app_settings
 from app.util import SortOrder, get_object_or_404, get_order_by
@@ -49,7 +49,7 @@ async def create_user(
                 UserAttributes=[{"Name": "email", "Value": payload.email}],
             )
 
-            user = models.User.create(session, **payload.model_dump())
+            user = models.User.create_from_object(session, payload)
             user.external_id = response["User"]["Username"]
 
             session.commit()
@@ -68,7 +68,7 @@ async def create_user(
     "/users/change-password",
 )
 def change_password(
-    user: models.BasicUser,
+    user: parsers.BasicUser,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ChangePasswordResponse | serializers.ResponseBase:
     """
@@ -130,7 +130,7 @@ def change_password(
     "/users/setup-mfa",
 )
 def setup_mfa(
-    setup_mfa: models.SetupMFA,
+    setup_mfa: parsers.SetupMFA,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """
@@ -166,7 +166,7 @@ def setup_mfa(
     "/users/login",
 )
 def login(
-    payload: models.BasicUser,
+    payload: parsers.BasicUser,
     client: aws.Client = Depends(dependencies.get_aws_client),
     session: Session = Depends(get_db),
 ) -> serializers.LoginResponse:
@@ -273,7 +273,7 @@ def me(
     "/users/forgot-password",
 )
 def forgot_password(
-    user: models.BasicUser, client: aws.Client = Depends(dependencies.get_aws_client)
+    user: parsers.BasicUser, client: aws.Client = Depends(dependencies.get_aws_client)
 ) -> serializers.ResponseBase:
     """
     Initiate the process of resetting a user's password.

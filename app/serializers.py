@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app import models
 
@@ -10,7 +10,7 @@ class ApplicationResponse(BaseModel):
     borrower: models.Borrower
     award: models.Award
     lender: models.Lender | None = None
-    documents: list[models.BorrowerDocumentBase] = []
+    documents: list[models.BorrowerDocumentBase] = Field(default_factory=list)
     creditProduct: models.CreditProduct | None = None
 
 
@@ -58,6 +58,14 @@ class LoginResponse(UserResponse):
 
 class StatisticResponse(BaseModel):
     statistics_kpis: dict[Any, Any]
+
+
+class StatisticData(BaseModel):
+    name: str
+    value: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"name": self.name, "value": self.value}
 
 
 class StatisticOptInResponse(BaseModel):

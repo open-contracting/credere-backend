@@ -227,13 +227,13 @@ pycparser==2.21
     # via
     #   -r requirements.txt
     #   cffi
-pydantic==2.5.2
+pydantic==2.8.2
     # via
     #   -r requirements.txt
     #   fastapi
     #   pydantic-settings
     #   sqlmodel
-pydantic-core==2.14.5
+pydantic-core==2.20.1
     # via
     #   -r requirements.txt
     #   pydantic
@@ -354,7 +354,7 @@ sqlalchemy[postgresql]==2.0.23
     #   sqlmodel
 sqlalchemy2-stubs==0.0.2a38
     # via -r requirements_dev.in
-sqlmodel==0.0.14
+sqlmodel==0.0.21
     # via -r requirements.txt
 starlette==0.36.3
     # via

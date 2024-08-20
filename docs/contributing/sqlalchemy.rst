@@ -1,6 +1,37 @@
 SQLAlchemy
 ==========
 
+Models
+------
+
+-  For optional ``str``, enum and ``dict`` fields, use ``Field(default="")`` or ``Field(default_factory=dict)``, not the ``... | None`` annotation.
+
+   .. seealso:: `Define tables <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#define-tables>`__ and `Django models <https://ocp-software-handbook.readthedocs.io/en/latest/python/django.html#models>`__
+
+-  For nullable ``datetime``, ``int`` and ``Decimal`` fields, use the ``... | None`` annotation, not the ``Optional[...]`` annotation or ``Field(nullable=True)``.
+-  For timezone-aware datetime field, use ``Field(sa_column=Column(DateTime(timezone=True))``, to avoid the mypy error:
+
+   .. code-block:: none
+
+      error: No overload variant of "Field" matches argument type "DateTime"  [call-overload]
+
+   .. attention::
+
+      ``Column()`` is ``nullable=True`` by default. If the field isn't nullable, set ``Column(..., nullable=False)``.
+
+   .. attention::
+
+      If needed, set ``default=`` on ``Field()``, not ``Column()``. `BaseModel.model_validate <https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel.model_validate>`__ ignores ``default=`` on ``Column()``.
+
+   .. seealso::
+
+      `SQLModel issue on timezone-aware datetime fields <https://github.com/fastapi/sqlmodel/issues/539>`__
+
+-  For other fields, use ``sa_type`` and ``sa_column_kwargs``, not ``sa_column``, to avoid conflicts between SQLModel and SQLAlchemy.
+
+Sessions
+--------
+
 Read SQLAlchemy's `Session Basics <https://docs.sqlalchemy.org/en/20/orm/session_basics.html>`__, in particular:
 
 -  `Adding New or Existing Items <https://docs.sqlalchemy.org/en/20/orm/session_basics.html#adding-new-or-existing-items>`__
@@ -27,7 +58,7 @@ Read SQLAlchemy's `Session Basics <https://docs.sqlalchemy.org/en/20/orm/session
 -  `My Query does not return the same number of objects as query.count() tells me - why? <https://docs.sqlalchemy.org/en/20/faq/sessions.html#my-query-does-not-return-the-same-number-of-objects-as-query-count-tells-me-why>`__
 
 Flushing
---------
+~~~~~~~~
 
 -  Use ``session.add(instance)`` to INSERT rows.
 -  Use ``instance.related = related``, not ``instance.related_id = related.id``.
@@ -39,7 +70,7 @@ Flushing
 -  Use the :meth:`app.models.ActiveRecordMixin.create` and :meth:`app.models.ActiveRecordMixin.update` methods, which call ``session.flush()`` to avoid such errors.
 
 Committing
-----------
+~~~~~~~~~~
 
 -  Credere is an email-centered service. Until an email is sent, processing is incomplete. Send emails after all database queries (other than ``Message`` creation, which depends on the message ID), *then* commit. That way, after emails are sent, only integrity errors could cause the transaction to rollback (unfortunately, sent emails can't be undone).
 -  Commit before adding `background tasks <https://fastapi.tiangolo.com/reference/background/?h=background>`__ and returning responses, to ensure changes are persisted before irreversible actions are taken.
