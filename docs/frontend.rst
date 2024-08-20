@@ -5,6 +5,11 @@ Frontend integration
 
 .. seealso:: `Credere frontend <https://github.com/open-contracting/credere-frontend>`__
 
+Schemas
+-------
+
+The schemas under Credere frontend's ``/src/schemas/`` directory should match the models in the ``app/parsers.py`` file.
+
 Error handling
 --------------
 
