@@ -44,6 +44,7 @@ def test_application_declined_feedback(client, declined_application):
         "already_have_acredit": False,
         "preffer_to_go_to_bank": False,
         "dont_want_access_credit": False,
+        "suspicious_email": False,
         "other": False,
         "other_comments": "comments",
     }
