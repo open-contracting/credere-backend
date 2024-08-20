@@ -304,7 +304,7 @@ class CreditProductBase(SQLModel):
     borrower_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
     procurement_category_to_exclude: str = Field(default="")
     required_document_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
-    other_fees_total_amount: Decimal = Field(sa_type=DECIMAL(precision=16, scale=2))
+    other_fees_total_amount: Decimal = Field(max_digits=16, decimal_places=2)
     other_fees_description: str = Field(default="")
     more_info_url: str = Field(default="")
     lender_id: int = Field(foreign_key="lender.id", index=True)
@@ -355,9 +355,9 @@ class ApplicationBase(SQLModel):
     award_borrower_identifier: str = Field(default="")
     borrower_id: int | None = Field(foreign_key="borrower.id", index=True)
     lender_id: int | None = Field(foreign_key="lender.id")
-    contract_amount_submitted: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
-    disbursed_final_amount: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
-    amount_requested: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
+    contract_amount_submitted: Decimal | None = Field(max_digits=16, decimal_places=2)
+    disbursed_final_amount: Decimal | None = Field(max_digits=16, decimal_places=2)
+    amount_requested: Decimal | None = Field(max_digits=16, decimal_places=2)
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     repayment_years: int | None
     repayment_months: int | None
@@ -672,7 +672,7 @@ class BorrowerBase(SQLModel):
     legal_identifier: str = Field(default="")
     type: str = Field(default="")
     sector: str = Field(default="")
-    annual_revenue: Decimal | None = Field(sa_type=DECIMAL(precision=16, scale=2))
+    annual_revenue: Decimal | None = Field(max_digits=16, decimal_places=2)
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     # Self-reported
     size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
@@ -702,7 +702,7 @@ class AwardBase(SQLModel):
     title: str = Field(default="")
     description: str = Field(default="")
     award_date: datetime | None
-    award_amount: Decimal = Field(sa_type=DECIMAL(precision=16, scale=2))
+    award_amount: Decimal = Field(max_digits=16, decimal_places=2)
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
     contractperiod_startdate: datetime | None
     contractperiod_enddate: datetime | None
