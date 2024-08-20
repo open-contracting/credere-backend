@@ -10,7 +10,6 @@ from sqlmodel import col
 
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
-from app.dependencies import ApplicationScope
 
 logger = logging.getLogger(__name__)
 
@@ -209,9 +208,7 @@ async def credit_product_options(
     payload: parsers.ApplicationCreditOptions,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
-        )
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
     ),
 ) -> serializers.CreditProductListResponse:
     """
@@ -249,9 +246,7 @@ async def select_credit_product(
     payload: parsers.ApplicationSelectCreditProduct,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
-        )
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -307,9 +302,7 @@ async def rollback_select_credit_product(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
-        )
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -359,9 +352,7 @@ async def confirm_credit_product(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
-        )
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -450,9 +441,7 @@ async def rollback_confirm_credit_product(
     payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
-        )
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -515,9 +504,7 @@ async def update_apps_send_notifications(
     session: Session = Depends(get_db),
     client: aws.Client = Depends(dependencies.get_aws_client),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.ACCEPTED,)
-        )
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
     ),
 ) -> serializers.ApplicationResponse:
     """
@@ -584,7 +571,15 @@ async def upload_document(
     file: UploadFile,
     type: str = Form(...),
     session: Session = Depends(get_db),
-    application: models.Application = Depends(dependencies.get_application_as_guest_via_form),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_as_guest_via_payload(
+            statuses=(
+                models.ApplicationStatus.ACCEPTED,
+                models.ApplicationStatus.INFORMATION_REQUESTED,
+                models.ApplicationStatus.APPROVED,
+            )
+        )
+    ),
 ) -> Any:
     """
     Upload a document for an application.

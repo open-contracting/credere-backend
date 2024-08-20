@@ -152,8 +152,8 @@ def test_approve_application_cycle(
             data={"uuid": pending_application.uuid, "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT},
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json() == {"detail": "Cannot upload document at this stage"}
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.json() == {"detail": "Application status should not be SUBMITTED"}
 
     # different lender user tries to start the application
     response = client.post(f"/applications/{appid}/start", headers=unauthorized_lender_header)
