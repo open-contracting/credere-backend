@@ -19,6 +19,13 @@ Models
 
       ``Column()`` is ``nullable=True`` by default. If the field isn't nullable, set ``Column(..., nullable=False)``.
 
+   .. attention::
+
+      If needed, set ``default=`` on ``Field()``, not ``Column()``. `BaseModel.model_validate <https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel.model_validate>`__ ignores ``default=`` on ``Column()``.
+
+   .. seealso::
+
+      `SQLModel issue on timezone-aware datetime fields <https://github.com/fastapi/sqlmodel/issues/539>`__
 
 -  For other fields, use ``sa_type`` and ``sa_column_kwargs``, not ``sa_column``, to avoid conflicts between SQLModel and SQLAlchemy.
 
