@@ -3,18 +3,14 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Self, Sequence
 
-from pydantic import PlainSerializer
-from sqlalchemy import DECIMAL, Boolean, Column, DateTime, and_, desc, or_, select
+from sqlalchemy import Boolean, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import ColumnElement, Select, func
 from sqlalchemy.sql.expression import nulls_last, true
 from sqlmodel import Field, Relationship, SQLModel, col
-from typing_extensions import Annotated
 
 from app.settings import app_settings
-
-FLOAT_DECIMAL = Annotated[Decimal, PlainSerializer(lambda x: float(x), return_type=float, when_used="json")]
 
 
 def _get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
@@ -311,8 +307,8 @@ class StatisticCustomRange(StrEnum):
 
 class CreditProductBase(SQLModel):
     borrower_size: BorrowerSize
-    lower_limit: FLOAT_DECIMAL = Field(sa_type=DECIMAL(precision=16, scale=2))
-    upper_limit: FLOAT_DECIMAL = Field(sa_type=DECIMAL(precision=16, scale=2))
+    lower_limit: Decimal = Field(max_digits=16, decimal_places=2)
+    upper_limit: Decimal = Field(max_digits=16, decimal_places=2)
     interest_rate: str = Field(default="")
     additional_information: str = Field(default="")
     type: CreditType
