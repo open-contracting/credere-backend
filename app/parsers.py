@@ -133,5 +133,6 @@ class ApplicationDeclineFeedbackPayload(ApplicationBase):
     already_have_acredit: bool
     preffer_to_go_to_bank: bool
     dont_want_access_credit: bool
+    suspicious_email: bool
     other: bool
     other_comments: str
