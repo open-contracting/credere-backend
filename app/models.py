@@ -79,9 +79,24 @@ class ActiveRecordMixin:
         :return: The inserted instance.
         """
         obj = cls(**data)
-        if hasattr(obj, "missing_data"):
+        if hasattr(obj, "missing_data"):  # Award and Borrower
             obj.missing_data = _get_missing_data_keys(data)
 
+        session.add(obj)
+        session.flush()
+        return obj
+
+    @classmethod
+    def create_from_object(cls, session: Session, obj: Any) -> Self:
+        """
+        Insert a new instance into the database.
+
+        :param session: The database session.
+        :param data: The initial instance data.
+        :return: The inserted instance.
+        """
+        # https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/
+        obj = cls.model_validate(obj)
         session.add(obj)
         session.flush()
         return obj
@@ -96,7 +111,7 @@ class ActiveRecordMixin:
         """
         for key, value in data.items():
             setattr(self, key, value)
-        if hasattr(self, "missing_data"):
+        if hasattr(self, "missing_data"):  # Award and Borrower
             self.missing_data = _get_missing_data_keys(self.model_dump())
 
         session.add(self)  # not strictly necessary

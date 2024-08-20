@@ -49,7 +49,7 @@ async def create_user(
                 UserAttributes=[{"Name": "email", "Value": payload.email}],
             )
 
-            user = models.User.create(session, **payload.model_dump())
+            user = models.User.create_from_object(session, payload)
             user.external_id = response["User"]["Username"]
 
             session.commit()
