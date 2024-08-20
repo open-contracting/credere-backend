@@ -653,7 +653,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 class BorrowerDocumentBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     application_id: int = Field(foreign_key="application.id")
-    type: BorrowerDocumentType = Field(nullable=True)
+    type: BorrowerDocumentType
     verified: bool = Field(default=False)
     name: str = Field(default="")
     created_at: datetime = Field(
