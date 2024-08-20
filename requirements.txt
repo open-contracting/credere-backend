@@ -157,7 +157,6 @@ typer-slim==0.12.3
     # via -r requirements.in
 typing-extensions==4.8.0
     # via
-    #   -r requirements.in
     #   alembic
     #   fastapi
     #   mypy-boto3-cognito-idp
