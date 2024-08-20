@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, tzinfo
 from decimal import Decimal
 from enum import StrEnum
-from typing import Any, Self, Sequence
+from typing import Any, Self
 
 from sqlalchemy import Boolean, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
@@ -871,5 +871,5 @@ class ApplicationWithRelations(ApplicationRead):
     award: AwardBase | None = None
     lender: LenderBase | None = None
     credit_product: CreditProductBase | None = None
-    borrower_documents: Sequence[BorrowerDocumentBase] = Field(default_factory=list)
+    borrower_documents: list[BorrowerDocumentBase] = Field(default_factory=list)
     modified_data_fields: dict[str, Any] = Field(default_factory=dict)
