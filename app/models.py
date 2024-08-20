@@ -305,35 +305,6 @@ class StatisticCustomRange(StrEnum):
     LAST_MONTH = "LAST_MONTH"
 
 
-class CreditProductBase(SQLModel):
-    borrower_size: BorrowerSize
-    lower_limit: Decimal = Field(max_digits=16, decimal_places=2)
-    upper_limit: Decimal = Field(max_digits=16, decimal_places=2)
-    interest_rate: str = Field(default="")
-    additional_information: str = Field(default="")
-    type: CreditType
-    borrower_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
-    procurement_category_to_exclude: str = Field(default="")
-    required_document_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
-    other_fees_total_amount: Decimal = Field(max_digits=16, decimal_places=2)
-    other_fees_description: str = Field(default="")
-    more_info_url: str = Field(default="")
-    lender_id: int = Field(foreign_key="lender.id", index=True)
-
-
-class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
-    __tablename__ = "credit_product"
-
-    id: int | None = Field(default=None, primary_key=True)
-    lender: "Lender" = Relationship(back_populates="credit_products")
-    created_at: datetime = Field(
-        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    )
-    updated_at: datetime = Field(
-        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
-    )
-
-
 class LenderBase(SQLModel):
     name: str = Field(default="", unique=True)
     email_group: str = Field(default="")
@@ -356,6 +327,113 @@ class Lender(LenderBase, ActiveRecordMixin, table=True):
     )
     deleted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
     credit_products: list["CreditProduct"] = Relationship(back_populates="lender")
+
+
+class CreditProductBase(SQLModel):
+    borrower_size: BorrowerSize
+    lower_limit: Decimal = Field(max_digits=16, decimal_places=2)
+    upper_limit: Decimal = Field(max_digits=16, decimal_places=2)
+    interest_rate: str = Field(default="")
+    additional_information: str = Field(default="")
+    type: CreditType
+    borrower_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
+    procurement_category_to_exclude: str = Field(default="")
+    required_document_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
+    other_fees_total_amount: Decimal = Field(max_digits=16, decimal_places=2)
+    other_fees_description: str = Field(default="")
+    more_info_url: str = Field(default="")
+    lender_id: int = Field(foreign_key="lender.id", index=True)
+
+
+class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
+    __tablename__ = "credit_product"
+
+    id: int | None = Field(default=None, primary_key=True)
+    lender: Lender = Relationship(back_populates="credit_products")
+    created_at: datetime = Field(
+        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    )
+    updated_at: datetime = Field(
+        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+    )
+
+
+class BorrowerBase(SQLModel):
+    id: int | None = Field(default=None, primary_key=True)
+    borrower_identifier: str = Field(default="", unique=True)
+    legal_name: str = Field(default="")
+    email: str = Field(default="")
+    address: str = Field(default="")
+    legal_identifier: str = Field(default="")
+    type: str = Field(default="")
+    sector: str = Field(default="")
+    annual_revenue: Decimal | None = Field(max_digits=16, decimal_places=2)
+    currency: str = Field(default="COP", description="ISO 4217 currency code")
+    # Self-reported
+    size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
+    # From source
+    is_msme: bool = Field(default=True)
+    missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
+    created_at: datetime = Field(
+        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    )
+    updated_at: datetime = Field(
+        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+    )
+    declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+
+class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
+    source_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+    status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE)
+    applications: list["Application"] = Relationship(back_populates="borrower")
+    awards: list["Award"] = Relationship(back_populates="borrower")
+
+
+class AwardBase(SQLModel):
+    id: int | None = Field(default=None, primary_key=True)
+    borrower_id: int | None = Field(foreign_key="borrower.id")
+    source_contract_id: str = Field(default="", index=True)
+    title: str = Field(default="")
+    description: str = Field(default="")
+    award_date: datetime | None
+    award_amount: Decimal = Field(max_digits=16, decimal_places=2)
+    award_currency: str = Field(default="COP", description="ISO 4217 currency code")
+    contractperiod_startdate: datetime | None
+    contractperiod_enddate: datetime | None
+    payment_method: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+    buyer_name: str = Field(default="")
+    source_url: str = Field(default="")
+    entity_code: str = Field(default="")
+    contract_status: str = Field(default="")
+    source_last_updated_at: datetime | None
+    previous: bool = Field(default=False)
+    procurement_method: str = Field(default="")
+    contracting_process_id: str = Field(default="")
+    procurement_category: str = Field(default="")
+    missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
+
+
+class Award(AwardBase, ActiveRecordMixin, table=True):
+    applications: list["Application"] = Relationship(back_populates="award")
+    borrower: Borrower = Relationship(back_populates="awards")
+    source_data_contracts: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+    source_data_awards: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+    created_at: datetime = Field(
+        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    )
+    updated_at: datetime = Field(
+        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
+    )
+
+    @classmethod
+    def last_updated(cls, session: Session) -> datetime | None:
+        """
+        :return: The most recent ``source_last_updated_at`` value.
+        """
+        if obj := session.query(cls).order_by(nulls_last(desc(cls.source_last_updated_at))).first():
+            return obj.source_last_updated_at
+        return None
 
 
 class ApplicationBase(SQLModel):
@@ -412,12 +490,12 @@ class ApplicationPrivate(ApplicationBase):
 class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     borrower_documents: list["BorrowerDocument"] = Relationship(back_populates="application")
-    award: "Award" = Relationship(back_populates="applications")
-    borrower: "Borrower" = Relationship(back_populates="applications")
+    award: Award = Relationship(back_populates="applications")
+    borrower: Borrower = Relationship(back_populates="applications")
     lender: Lender | None = Relationship(back_populates="applications")
     messages: list["Message"] = Relationship(back_populates="application")
     actions: list["ApplicationAction"] = Relationship(back_populates="application")
-    credit_product: "CreditProduct" = Relationship()
+    credit_product: CreditProduct = Relationship()
 
     @classmethod
     def unarchived(cls, session: Session) -> "Query[Self]":
@@ -674,84 +752,6 @@ class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
     file: bytes
 
 
-class BorrowerBase(SQLModel):
-    id: int | None = Field(default=None, primary_key=True)
-    borrower_identifier: str = Field(default="", unique=True)
-    legal_name: str = Field(default="")
-    email: str = Field(default="")
-    address: str = Field(default="")
-    legal_identifier: str = Field(default="")
-    type: str = Field(default="")
-    sector: str = Field(default="")
-    annual_revenue: Decimal | None = Field(max_digits=16, decimal_places=2)
-    currency: str = Field(default="COP", description="ISO 4217 currency code")
-    # Self-reported
-    size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
-    # From source
-    is_msme: bool = Field(default=True)
-    missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
-    created_at: datetime = Field(
-        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    )
-    updated_at: datetime = Field(
-        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
-    )
-    declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-
-
-class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
-    source_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE)
-    applications: list["Application"] = Relationship(back_populates="borrower")
-    awards: list["Award"] = Relationship(back_populates="borrower")
-
-
-class AwardBase(SQLModel):
-    id: int | None = Field(default=None, primary_key=True)
-    borrower_id: int | None = Field(foreign_key="borrower.id")
-    source_contract_id: str = Field(default="", index=True)
-    title: str = Field(default="")
-    description: str = Field(default="")
-    award_date: datetime | None
-    award_amount: Decimal = Field(max_digits=16, decimal_places=2)
-    award_currency: str = Field(default="COP", description="ISO 4217 currency code")
-    contractperiod_startdate: datetime | None
-    contractperiod_enddate: datetime | None
-    payment_method: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    buyer_name: str = Field(default="")
-    source_url: str = Field(default="")
-    entity_code: str = Field(default="")
-    contract_status: str = Field(default="")
-    source_last_updated_at: datetime | None
-    previous: bool = Field(default=False)
-    procurement_method: str = Field(default="")
-    contracting_process_id: str = Field(default="")
-    procurement_category: str = Field(default="")
-    missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
-
-
-class Award(AwardBase, ActiveRecordMixin, table=True):
-    applications: list["Application"] = Relationship(back_populates="award")
-    borrower: Borrower = Relationship(back_populates="awards")
-    source_data_contracts: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    source_data_awards: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    created_at: datetime = Field(
-        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    )
-    updated_at: datetime = Field(
-        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
-    )
-
-    @classmethod
-    def last_updated(cls, session: Session) -> datetime | None:
-        """
-        :return: The most recent ``source_last_updated_at`` value.
-        """
-        if obj := session.query(cls).order_by(nulls_last(desc(cls.source_last_updated_at))).first():
-            return obj.source_last_updated_at
-        return None
-
-
 class Message(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: MessageType
@@ -850,7 +850,7 @@ class LenderRead(LenderBase):
 
 
 class LenderCreate(LenderBase):
-    credit_products: list["CreditProduct"] | None = None
+    credit_products: list[CreditProduct] | None = None
 
 
 class LenderWithRelations(LenderRead):
