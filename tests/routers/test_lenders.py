@@ -172,15 +172,17 @@ def test_update_lender(client, admin_header, lender_header, lender):
     assert response.json() == {"detail": "Insufficient permissions"}
 
     response = client.put(f"/lenders/{lender.id}", json={"sla_days": "not_valid_value"}, headers=admin_header)
+    data = response.json()
+    data["detail"][0].pop("url")  # changes with each Pydantic version
+
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert response.json() == {
+    assert data == {
         "detail": [
             {
                 "input": "not_valid_value",
                 "loc": ["body", "sla_days"],
                 "msg": "Input should be a valid integer, unable to parse string as an integer",
                 "type": "int_parsing",
-                "url": "https://errors.pydantic.dev/2.5/v/int_parsing",
             }
         ],
     }
