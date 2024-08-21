@@ -92,11 +92,11 @@ async def get_lender(lender_id: int, session: Session = Depends(get_db)) -> Any:
 
 
 @router.put(
-    "/lenders/{id}",
+    "/lenders/{lender_id}",
     tags=["lenders"],
 )
 async def update_lender(
-    id: int,
+    lender_id: int,
     payload: models.LenderBase,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
@@ -104,14 +104,14 @@ async def update_lender(
     """
     Update an existing lender.
 
-    :param id: The ID of the lender to update.
+    :param lender_id: The ID of the lender to update.
     :param payload: The data to update the lender with.
     :return: The updated lender.
     :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     with rollback_on_error(session):
         try:
-            lender = get_object_or_404(session, models.Lender, "id", id)
+            lender = get_object_or_404(session, models.Lender, "id", lender_id)
             lender = lender.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
             session.commit()

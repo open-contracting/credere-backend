@@ -335,12 +335,12 @@ async def get_all_users(
 
 
 @router.put(
-    "/users/{id}",
+    "/users/{user_id}",
     tags=["users"],
     response_model=models.UserWithLender,
 )
 async def update_user(
-    id: int,
+    user_id: int,
     payload: models.User,
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
@@ -352,7 +352,7 @@ async def update_user(
     """
     with rollback_on_error(session):
         try:
-            user = get_object_or_404(session, models.User, "id", id)
+            user = get_object_or_404(session, models.User, "id", user_id)
             user = user.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
             session.commit()

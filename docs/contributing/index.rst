@@ -182,7 +182,9 @@ Update API
 
 .. seealso:: :doc:`../api/index`
 
-After making changes, regenerate the OpenAPI document by running the server and:
+Use the parameter ``id`` only for application IDs, to avoid accidental errors.
+
+After making changes, regenerate the OpenAPI document by :ref:`running the server<dev-server>` and:
 
 .. code-block:: bash
 

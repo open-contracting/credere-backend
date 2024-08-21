@@ -19,22 +19,22 @@ router = APIRouter()
 
 
 @router.get(
-    "/applications/documents/id/{id}",
+    "/applications/documents/id/{document_id}",
     tags=["applications"],
 )
 async def get_borrower_document(
-    id: int,
+    document_id: int,
     session: Session = Depends(get_db),
     user: models.User = Depends(dependencies.get_user),
 ) -> Response:
     """
     Retrieve a borrower document by its ID and stream the file content as a response.
 
-    :param id: The ID of the borrower document to retrieve.
+    :param document_id: The ID of the borrower document to retrieve.
     :return: A streaming response with the borrower document file content.
     """
     with rollback_on_error(session):
-        document = util.get_object_or_404(session, models.BorrowerDocument, "id", id)
+        document = util.get_object_or_404(session, models.BorrowerDocument, "id", document_id)
         dependencies.raise_if_unauthorized(document.application, user, roles=(models.UserType.OCP, models.UserType.FI))
 
         models.ApplicationAction.create(
