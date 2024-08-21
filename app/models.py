@@ -285,6 +285,29 @@ class BorrowerSize(StrEnum):
     BIG = "BIG"
 
 
+class BorrowerSector(StrEnum):
+    AGRICULTURA = "agricultura"
+    MINAS = "minas"
+    MANUFACTURA = "manufactura"
+    ELECTRICIDAD = "electricidad"
+    AGUA = "agua"
+    CONSTRUCCION = "construccion"
+    TRANSPORTE = "transporte"
+    ALOJAMIENTO = "alojamiento"
+    COMUNICACIONES = "comunicaciones"
+    ACTIVIDADES_FINANCIERAS = "actividades_financieras"
+    ACTIVIDADES_INMOBILIARIAS = "actividades_inmobiliarias"
+    ACTIVIDADES_PROFESIONALES = "actividades_profesionales"
+    ACTIVIDADES_SERVICIOS_ADMINISTRATIVOS = "actividades_servicios_administrativos"
+    ADMINISTRACION_PUBLICA = "administracion_publica"
+    EDUCACION = "educacion"
+    ATENCION_SALUD = "atencion_salud"
+    ACTIVIDADES_ARTISTICAS = "actividades_artisticas"
+    OTRAS_ACTIVIDADES = "otras_actividades"
+    ACTIVIDADES_HOGARES = "actividades_hogares"
+    ACTIVIDADES_ORGANIZACIONES_EXTRATERRITORIALES = "actividades_organizaciones_extraterritoriales"
+
+
 class CreditType(StrEnum):
     LOAN = "LOAN"
     CREDIT_LINE = "CREDIT_LINE"

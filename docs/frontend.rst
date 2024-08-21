@@ -21,22 +21,6 @@ In some cases, this callback calls ``handleRequestError``, which looks up the ``
 
 That is why some ``detail`` values are like ``util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING``.
 
-Schemas and models
-------------------
-
-Credere frontend's ``/src/schemas/`` schemas should match ``app.parsers``,  ``app.serializers`` and  ``app.models`` models.
-
-This table is contructed by running this command, and filling in information from Credere frontend's ``src/api/`` files:
-
-.. code-block:: bash
-
-   python -m app.commands dev routes --csv-format
-
-.. csv-table::
-   :file: _static/routes.csv
-   :header-rows: 1
-   :class: datatable
-
 Enumerations
 ------------
 
@@ -62,16 +46,18 @@ Credere frontend's ``src/constants/index.ts`` constants should match ``app.model
    * - UserType
      - USER_TYPES
 
-The translatable strings in three ``dict``s in ``app/utils/tables.py`` should match ``src/constants/index.ts`` constants:
+Schemas and models
+------------------
 
-.. list-table::
+Credere frontend's ``/src/schemas/`` schemas should match ``app.parsers``,  ``app.serializers`` and  ``app.models`` models.
+
+This table is contructed by running this command, and filling in information from Credere frontend's ``src/api/`` files:
+
+.. code-block:: bash
+
+   python -m app.commands dev routes --csv-format
+
+.. csv-table::
+   :file: _static/routes.csv
    :header-rows: 1
-
-   * - Backend
-     - Frontend
-   * - borrower_size
-     - MSME_TYPES_NAMES
-   * - borrower_sector
-     - SECTOR_TYPES
-   * - document_types
-     - DOCUMENT_TYPES_NAMES
+   :class: datatable

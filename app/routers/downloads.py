@@ -149,7 +149,7 @@ async def export_applications(
                 _("Legal Name", lang): application.borrower.legal_name,
                 _("Email Address", lang): application.primary_email,
                 _("Submission Date", lang): application.borrower_submitted_at,
-                _("Stage", lang): _(application.status.capitalize(), lang),
+                _("Stage", lang): _(application.status, lang),
             }
             for application in (
                 models.Application.submitted_to_lender(session, user.lender_id)

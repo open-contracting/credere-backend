@@ -22,3 +22,10 @@ disallow_untyped_defs = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+[project]
+name = "credere"
+version = "0.0.0"
+
+[project.entry-points."babel.extractors"]
+enum = "app.i18n:extract_enum"
