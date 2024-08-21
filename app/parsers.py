@@ -67,16 +67,6 @@ class UpdateDataField(BaseModel):
     type: bool | None = None
 
 
-class ApplicationUpdate(BaseModel):
-    uuid: str | None = None
-    contract_amount_submitted: Decimal | None = None
-    amount_requested: Decimal | None = None
-    currency: str | None = None
-    repayment_months: int | None = None
-    pending_documents: bool | None = None
-    completed_in_days: int | None = None
-
-
 class LenderRejectedApplication(BaseModel):
     compliance_checks_failed: bool
     poor_credit_history: bool
