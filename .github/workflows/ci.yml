@@ -20,6 +20,7 @@ jobs:
         run: |
           alembic upgrade head
           alembic check
+          pybabel compile -f -d locale
           pytest -W error --cov app --random-order --random-order-bucket=global
       - env:
           TEST_SETTINGS: True

@@ -39,6 +39,12 @@ Setup
 
       alembic upgrade head
 
+#. Compile message catalogs:
+
+   .. code-block:: bash
+
+      pybabel compile -f -d locale
+
 Repository structure
 --------------------
 
