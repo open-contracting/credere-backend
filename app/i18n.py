@@ -1,5 +1,6 @@
 import gettext
 from pathlib import Path
+from typing import Any
 
 from app.settings import app_settings
 
@@ -12,5 +13,5 @@ translators = {
 }
 
 
-def _(message: str, language: str = app_settings.email_template_lang, **kwargs) -> str:
+def _(message: str, language: str = app_settings.email_template_lang, **kwargs: Any) -> str:
     return translators[language].gettext(message) % kwargs

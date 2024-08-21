@@ -27,10 +27,7 @@ class Settings(BaseSettings):
     """
     Each setting has a corresponding uppercase environment variable.
 
-    .. seealso::
-
-       -  `Transifex credentials <https://app.transifex.com/open-contracting-partnership-1/credere/credere/>`__
-       -  `Settings Management <https://docs.pydantic.dev/latest/concepts/pydantic_settings/#usage>`__
+    .. seealso:: `Settings Management <https://docs.pydantic.dev/latest/concepts/pydantic_settings/#usage>`__
     """
 
     #: If "production", emails all recipients. Otherwise, emails lenders and
@@ -153,10 +150,6 @@ class Settings(BaseSettings):
     cognito_client_secret: str = ""
     #: Sentry DSN.
     sentry_dsn: str = ""
-    #: Transifex Native token.
-    transifex_token: str = ""
-    #: Transifex Native secret.
-    transifex_secret: str = ""
 
     model_config = SettingsConfigDict(env_file=".env")
 

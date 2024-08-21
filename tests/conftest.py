@@ -30,12 +30,6 @@ def engine():
     return create_engine(os.getenv("TEST_DATABASE_URL"))
 
 
-@pytest.fixture(scope="session", autouse=True)
-def mock_translate():
-    with patch("transifex.native.tx.translate", side_effect=lambda message, *args, **kwargs: message):
-        yield
-
-
 # http://docs.getmoto.org/en/latest/docs/getting_started.html#example-on-usage
 @pytest.fixture(scope="session", autouse=True)
 def aws_credentials():

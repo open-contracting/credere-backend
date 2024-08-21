@@ -17,11 +17,10 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
         shell: bash
-        # https://github.com/transifex/transifex-python/issues/118
         run: |
           alembic upgrade head
           alembic check
-          pytest -W error -W ignore::DeprecationWarning --cov app --random-order --random-order-bucket=global
+          pytest -W error --cov app --random-order --random-order-bucket=global
       - env:
           TEST_SETTINGS: True
         run: pytest -W error settings_tests/test_settings.py
