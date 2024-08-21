@@ -244,7 +244,7 @@ msgid "actividades_hogares"
 msgstr ""
 "Actividades de los hogares individuales en calidad de empleadores; "
 "actividades no diferenciadas de los hogares individuales como productores"
-" de bienes yservicios para uso propio"
+" de bienes y servicios para uso propio"
 
 #. BorrowerSector
 #: README.rst:308
@@ -253,52 +253,52 @@ msgstr "Actividades de organizaciones y entidades extraterritoriales"
 
 #: app/auth.py:56
 msgid "JWK public key not found"
-msgstr ""
+msgstr "La clave pública JWK no fue encontrada"
 
 #: app/auth.py:80
 msgid "Wrong authentication method"
-msgstr ""
+msgstr "Método de autenticación equivocado"
 
 #: app/auth.py:96 app/auth.py:99
 msgid "JWK invalid"
-msgstr ""
+msgstr "JWK inválido"
 
 #: app/auth.py:105
 msgid "Not authenticated"
-msgstr ""
+msgstr "No autenticado"
 
 #: app/dependencies.py:41
 msgid "Username missing"
-msgstr ""
+msgstr "Falta el nombre de usuario"
 
 #: app/dependencies.py:55
 msgid "User not found"
-msgstr ""
+msgstr "Usuario no encontrado"
 
 #: app/dependencies.py:63
 msgid "Insufficient permissions"
-msgstr ""
+msgstr "Permisos insuficientes"
 
 #: app/dependencies.py:89
 msgid "User is not authorized"
-msgstr ""
+msgstr "Usuario no autorizado"
 
 #: app/dependencies.py:94
 msgid "Application expired"
-msgstr ""
+msgstr "La aplicación ha expirado"
 
 #: app/dependencies.py:100
 #, python-format
 msgid "Application status should not be %(status)s"
-msgstr ""
+msgstr "El estado de la aplicación no debe ser %(status)s"
 
 #: app/dependencies.py:111 app/dependencies.py:148
 msgid "Application not found"
-msgstr ""
+msgstr "La aplicación no ha sido encontrada"
 
 #: app/dependencies.py:153
 msgid "Application lapsed"
-msgstr ""
+msgstr "La aplicación ha caducado"
 
 #: app/mail.py:99
 msgid "Your credit application has been prequalified"
@@ -318,7 +318,7 @@ msgstr "Bienvenido/a"
 
 #: app/mail.py:190
 msgid "New contract submission"
-msgstr "Una MIPYME ha subido su contrato"
+msgstr "Una empresa ha subido su contrato"
 
 #: app/mail.py:212
 msgid "Thank you for uploading the signed contract"
@@ -335,7 +335,7 @@ msgstr "Restablecer contraseña"
 #: app/mail.py:307 app/mail.py:325
 msgid "Opportunity to access MSME credit for being awarded a public contract"
 msgstr ""
-"Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato "
+"Oportunidad de acceso a crédito por ser adjudicatario de contrato "
 "estatal"
 
 #: app/mail.py:343
@@ -343,7 +343,7 @@ msgid ""
 "Reminder - Opportunity to access MSME credit for being awarded a public "
 "contract"
 msgstr ""
-"Recordatorio - Oportunidad de acceso a crédito MIPYME por ser "
+"Recordatorio - Oportunidad de acceso a crédito por ser "
 "adjudicatario de contrato estatal"
 
 #: app/mail.py:368 app/mail.py:387
@@ -377,19 +377,19 @@ msgstr "Aplicación actualizada"
 #: app/util.py:53
 #, python-format
 msgid "%(model_name)s not found"
-msgstr ""
+msgstr "%(model_name)s no encontrado"
 
 #: app/util.py:111
 msgid "Format not allowed. It must be a PNG, JPEG, or PDF file"
-msgstr ""
+msgstr "Formato no permitido. El formato debe ser un PNG, JPEG or archivo PDF"
 
 #: app/util.py:117
 msgid "File is too large"
-msgstr ""
+msgstr "El archivo es muy grande"
 
 #: app/routers/applications.py:175
 msgid "Some borrower data field are not verified"
-msgstr "Algunos campos de datos de la MIPYME no están verificados"
+msgstr "Algunos campos de datos de la empresa no fueron verificados"
 
 #: app/routers/applications.py:186
 msgid "Some documents are not verified"
@@ -397,19 +397,19 @@ msgstr "Algunos documentos no fueron verificados"
 
 #: app/routers/applications.py:330
 msgid "Award not found"
-msgstr ""
+msgstr "La adjudicación no ha sido encontrada"
 
 #: app/routers/applications.py:372
 msgid "Borrower not found"
-msgstr ""
+msgstr "La empresa no ha sido encontrada"
 
 #: app/routers/applications.py:380
 msgid "This column cannot be updated"
-msgstr ""
+msgstr "Esta columna no puede ser actualizada"
 
 #: app/routers/applications.py:579
 msgid "There was an error"
-msgstr ""
+msgstr "Ocurrió un error"
 
 #: app/routers/downloads.py:88 app/routers/downloads.py:106
 msgid "Application Details"
@@ -417,7 +417,7 @@ msgstr "Detalles de la aplicación"
 
 #: app/routers/downloads.py:99
 msgid "Previous Public Sector Contracts"
-msgstr "Anteriores contratos con el sector público"
+msgstr "Contratos anteriores con el sector público"
 
 #: app/routers/downloads.py:148 app/utils/tables.py:209
 msgid "National Tax ID"
@@ -441,77 +441,77 @@ msgstr "Etapa"
 
 #: app/routers/lenders.py:48 app/routers/lenders.py:125
 msgid "Lender already exists"
-msgstr ""
+msgstr "La entidad financiera ya existe"
 
 #: app/routers/guest/applications.py:378 app/routers/guest/applications.py:467
 #: app/routers/lenders.py:189
 msgid "Credit product not found"
-msgstr ""
+msgstr "Producto crediticio no encontrado"
 
 #: app/routers/users.py:60
 msgid "Username already exists"
-msgstr ""
+msgstr "El nombre de usuario ya existe"
 
 #: app/routers/users.py:103
 msgid "Password changed with MFA setup required"
-msgstr ""
+msgstr "Cambio de contraseña con configuración de MFA requerido"
 
 #: app/routers/users.py:112 app/routers/users.py:192
 msgid "Temporal password is expired, please request a new one"
-msgstr ""
+msgstr "La contraseña temporal ha expirado, por favor solicite una nueva"
 
 #: app/routers/users.py:116
 msgid "There was an error trying to update the password"
-msgstr ""
+msgstr "Ocurrió un error al tratar de actualizar la contraseña"
 
 #: app/routers/users.py:119
 msgid "Password changed"
-msgstr ""
+msgstr "Contraseña cambiada"
 
 #: app/routers/users.py:144
 msgid "Invalid session for the user, session is expired"
-msgstr ""
+msgstr "Sesión inválida para el usuario, la sesión ha expirado"
 
 #: app/routers/users.py:148
 msgid "There was an error trying to setup mfa"
-msgstr ""
+msgstr "Ocurrió un error tratando de configurar el MFA"
 
 #: app/routers/users.py:151
 msgid "MFA configured successfully"
-msgstr ""
+msgstr "El MFA fue configurado correctamente"
 
 #: app/routers/users.py:236
 msgid "User logged out successfully"
-msgstr ""
+msgstr "Usuario deslogueado correctamente"
 
 #: app/routers/users.py:285
 msgid "An email with a reset link was sent to end user"
-msgstr ""
+msgstr "Se envió un correo con el enlace de reseteo de contraseña."
 
 #: app/routers/users.py:366
 msgid "User already exists"
-msgstr ""
+msgstr "El usuario ya existe"
 
 #: app/routers/guest/applications.py:321 app/routers/guest/applications.py:371
 #: app/routers/guest/applications.py:460 app/routers/guest/applications.py:526
 msgid "Credit product not selected"
-msgstr ""
+msgstr "El producto crediticio no fue seleccionado"
 
 #: app/routers/guest/applications.py:327
 msgid "Cannot rollback at this stage"
-msgstr ""
+msgstr "No se puede retroceder en esta etapa"
 
 #: app/routers/guest/applications.py:532
 msgid "Lender not selected"
-msgstr ""
+msgstr "No se ha seleccionado la entidad financiera"
 
 #: app/routers/guest/applications.py:548
 msgid "There was an error submitting the application"
-msgstr ""
+msgstr "Ocurrió un error enviando la aplicación"
 
 #: app/routers/guest/applications.py:597
 msgid "Cannot upload document at this stage"
-msgstr ""
+msgstr "No se pueden subir documentos en esta etapa"
 
 #: app/routers/guest/applications.py:804
 msgid "A new application has alredy been created from this one"
@@ -520,19 +520,19 @@ msgstr "Una nueva aplicación ya ha sido creada desde esta"
 #: app/routers/guest/applications.py:823
 #, python-format
 msgid "There was a problem copying the application. %(exception)s"
-msgstr ""
+msgstr "Ocurrió un problema copiando la aplicación. %(exception)s"
 
 #: app/routers/guest/emails.py:33
 msgid "New email is not valid"
-msgstr ""
+msgstr "El nuevo correo no es válido"
 
 #: app/routers/guest/emails.py:80
 msgid "Application is not pending an email confirmation"
-msgstr ""
+msgstr "La aplicación no tiene la confirmación de correo pendiente"
 
 #: app/routers/guest/emails.py:87
 msgid "Not authorized to modify this application"
-msgstr ""
+msgstr "No autorizado a modificar la aplicación en esta etapa"
 
 #: app/utils/tables.py:41
 msgid "Financing Options"
@@ -638,7 +638,7 @@ msgstr "Tipo de contrato"
 
 #: app/utils/tables.py:197
 msgid "MSME Data"
-msgstr "Datos de la MIPYME"
+msgstr "Datos de la empresa"
 
 #: app/utils/tables.py:205
 msgid "Address"
@@ -666,5 +666,5 @@ msgstr "Correo institucional"
 
 #: app/utils/tables.py:247
 msgid "MSME Documents"
-msgstr "Documentos de la MIPYME"
+msgstr "Documentos de la empresa"
 
