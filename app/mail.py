@@ -75,10 +75,6 @@ TEMPLATE_FILES = {
         "en": "Thank you for uploading the signed contract",
         "es": "Gracias por subir tu contrato firmado",
     },
-    "Credit_application_submitted": {
-        "en": "Your credit application has been submitted",
-        "es": "Tu solicitud de crédito ha sido enviada",
-    },
     "FI_Documents_Updated_FI_user": {
         "en": "Application updated",
         "es": "Aplicación actualizada",
@@ -109,10 +105,6 @@ TEMPLATE_FILES = {
         "es": "Nuevo mensaje de una institución financiera",
     },
     "Reset_password": {"en": "Reset password", "es": "Restablecer contraseña"},
-    "Upload_contract": {
-        "en": "Please upload your contract",
-        "es": "Por favor sube tu contrato",
-    },
 }
 
 
