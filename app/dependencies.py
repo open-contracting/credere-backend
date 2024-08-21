@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, defaultload, joinedload
 
 from app import auth, aws, models, parsers
 from app.db import get_db
+from app.i18n import _
 
 USER_CAN_EDIT_AWARD_BORROWER_DATA = (
     models.ApplicationStatus.SUBMITTED,
@@ -38,7 +39,10 @@ async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depen
     try:
         return credentials.claims["username"]
     except KeyError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Username missing")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=_("Username missing"),
+        )
 
 
 async def get_user(username: str = Depends(get_current_user), session: Session = Depends(get_db)) -> models.User:
@@ -52,7 +56,10 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
     """
     user = models.User.first_by(session, "external_id", username)
     if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=_("User not found"),
+        )
     return user
 
 
@@ -60,7 +67,7 @@ async def get_admin_user(user: models.User = Depends(get_user)) -> models.User:
     if not user.is_ocp():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Insufficient permissions",
+            detail=_("Insufficient permissions"),
         )
     return user
 
@@ -86,18 +93,24 @@ def raise_if_unauthorized(
                 case _:
                     raise NotImplementedError
         else:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not authorized")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=_("User is not authorized"),
+            )
 
     if ApplicationScope.UNEXPIRED in scopes:
         expired_at = application.expired_at
         if expired_at and expired_at < datetime.now(expired_at.tzinfo):
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Application expired")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=_("Application expired"),
+            )
 
     if statuses:
         if application.status not in statuses:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Application status should not be {application.status}",
+                detail=_("Application status should not be %(status)s", status=application.status),
             )
 
 
@@ -108,7 +121,10 @@ def get_application_as_user(id: int, session: Session = Depends(get_db)) -> mode
         .first()
     )
     if not application:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=_("Application not found"),
+        )
 
     return application
 
@@ -145,12 +161,15 @@ def _get_application_as_guest_via_uuid(session: Session, uuid: str) -> models.Ap
         .first()
     )
     if not application:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=_("Application not found"),
+        )
 
     if application.status == models.ApplicationStatus.LAPSED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Application lapsed",
+            detail=_("Application lapsed"),
         )
 
     return application

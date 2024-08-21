@@ -327,7 +327,10 @@ async def update_application_award(
     """
     with rollback_on_error(session):
         if not application.award:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Award not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=_("Award not found"),
+            )
 
         # Update the award.
         application.award.update(session, **jsonable_encoder(payload, exclude_unset=True))
@@ -369,7 +372,10 @@ async def update_application_borrower(
     """
     with rollback_on_error(session):
         if not application.borrower:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Borrower not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=_("Borrower not found"),
+            )
 
         # Update the borrower.
         update_dict = jsonable_encoder(payload, exclude_unset=True)
@@ -377,7 +383,7 @@ async def update_application_borrower(
             if not application.borrower.missing_data[field]:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="This column cannot be updated",
+                    detail=_("This column cannot be updated"),
                 )
         application.borrower.update(session, **update_dict)
 
@@ -576,7 +582,7 @@ async def email_borrower(
             logger.exception(e)
             return HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="There was an error",
+                detail=_("There was an error"),
             )
         models.Message.create(
             session,

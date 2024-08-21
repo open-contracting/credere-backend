@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import dependencies, models, serializers
 from app.db import get_db, rollback_on_error
+from app.i18n import _
 from app.sources import colombia as data_access
 from app.util import get_object_or_404
 
@@ -45,7 +46,7 @@ async def create_lender(
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Lender already exists",
+                detail=_("Lender already exists"),
             )
 
 
@@ -122,7 +123,7 @@ async def update_lender(
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Lender already exists",
+                detail=_("Lender already exists"),
             )
 
 
@@ -186,7 +187,10 @@ async def get_credit_product(
         .first()
     )
     if not credit_product:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Credit product not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=_("Credit product not found"),
+        )
 
     return credit_product
 

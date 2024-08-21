@@ -7,6 +7,7 @@ from fastapi.security import HTTPBearer
 from jwt.utils import base64url_decode
 from pydantic import BaseModel
 
+from app.i18n import _
 from app.settings import app_settings
 
 JWK = dict[str, str]
@@ -53,7 +54,10 @@ class JWTAuthorization(HTTPBearer):
         try:
             public_key = self.kid_to_jwk[jwt_credentials.header["kid"]]
         except KeyError:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="JWK public key not found")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=_("JWK public key not found"),
+            )
 
         msg = jwt_credentials.message.encode()
         sig = base64url_decode(jwt_credentials.signature.encode())
@@ -77,7 +81,7 @@ class JWTAuthorization(HTTPBearer):
             if not credentials.scheme == "Bearer":
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Wrong authentication method",
+                    detail=_("Wrong authentication method"),
                 )
 
             jwt_token = credentials.credentials
@@ -93,16 +97,22 @@ class JWTAuthorization(HTTPBearer):
                     message=message,
                 )
             except jwt.InvalidTokenError:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=_("JWK invalid"),
+                )
 
             if not self.verify_jwk_token(jwt_credentials):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="JWK invalid")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=_("JWK invalid"),
+                )
 
             return jwt_credentials
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authenticated",
+                detail=_("Not authenticated"),
             )
 
 

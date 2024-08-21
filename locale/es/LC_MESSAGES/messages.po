@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-21 17:16-0400\n"
+"POT-Creation-Date: 2024-08-21 17:40-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -251,6 +251,55 @@ msgstr ""
 msgid "actividades_organizaciones_extraterritoriales"
 msgstr "Actividades de organizaciones y entidades extraterritoriales"
 
+#: app/auth.py:56
+msgid "JWK public key not found"
+msgstr ""
+
+#: app/auth.py:80
+msgid "Wrong authentication method"
+msgstr ""
+
+#: app/auth.py:96 app/auth.py:99
+msgid "JWK invalid"
+msgstr ""
+
+#: app/auth.py:105
+msgid "Not authenticated"
+msgstr ""
+
+#: app/dependencies.py:41
+msgid "Username missing"
+msgstr ""
+
+#: app/dependencies.py:55
+msgid "User not found"
+msgstr ""
+
+#: app/dependencies.py:63
+msgid "Insufficient permissions"
+msgstr ""
+
+#: app/dependencies.py:89
+msgid "User is not authorized"
+msgstr ""
+
+#: app/dependencies.py:94
+msgid "Application expired"
+msgstr ""
+
+#: app/dependencies.py:100
+#, python-format
+msgid "Application status should not be %(status)s"
+msgstr ""
+
+#: app/dependencies.py:111 app/dependencies.py:148
+msgid "Application not found"
+msgstr ""
+
+#: app/dependencies.py:153
+msgid "Application lapsed"
+msgstr ""
+
 #: app/mail.py:99
 msgid "Your credit application has been prequalified"
 msgstr "Revisión de tu aplicación completada exitosamente"
@@ -325,13 +374,42 @@ msgstr "Opción de crédito alternativa"
 msgid "Application updated"
 msgstr "Aplicación actualizada"
 
-#: app/routers/applications.py:174
+#: app/util.py:53
+#, python-format
+msgid "%(model_name)s not found"
+msgstr ""
+
+#: app/util.py:111
+msgid "Format not allowed. It must be a PNG, JPEG, or PDF file"
+msgstr ""
+
+#: app/util.py:117
+msgid "File is too large"
+msgstr ""
+
+#: app/routers/applications.py:175
 msgid "Some borrower data field are not verified"
 msgstr "Algunos campos de datos de la MIPYME no están verificados"
 
-#: app/routers/applications.py:185
+#: app/routers/applications.py:186
 msgid "Some documents are not verified"
 msgstr "Algunos documentos no fueron verificados"
+
+#: app/routers/applications.py:330
+msgid "Award not found"
+msgstr ""
+
+#: app/routers/applications.py:372
+msgid "Borrower not found"
+msgstr ""
+
+#: app/routers/applications.py:380
+msgid "This column cannot be updated"
+msgstr ""
+
+#: app/routers/applications.py:579
+msgid "There was an error"
+msgstr ""
 
 #: app/routers/downloads.py:88 app/routers/downloads.py:106
 msgid "Application Details"
@@ -361,9 +439,100 @@ msgstr "Fecha de envío"
 msgid "Stage"
 msgstr "Etapa"
 
-#: app/routers/guest/applications.py:803
+#: app/routers/lenders.py:48 app/routers/lenders.py:125
+msgid "Lender already exists"
+msgstr ""
+
+#: app/routers/guest/applications.py:378 app/routers/guest/applications.py:467
+#: app/routers/lenders.py:189
+msgid "Credit product not found"
+msgstr ""
+
+#: app/routers/users.py:60
+msgid "Username already exists"
+msgstr ""
+
+#: app/routers/users.py:103
+msgid "Password changed with MFA setup required"
+msgstr ""
+
+#: app/routers/users.py:112 app/routers/users.py:192
+msgid "Temporal password is expired, please request a new one"
+msgstr ""
+
+#: app/routers/users.py:116
+msgid "There was an error trying to update the password"
+msgstr ""
+
+#: app/routers/users.py:119
+msgid "Password changed"
+msgstr ""
+
+#: app/routers/users.py:144
+msgid "Invalid session for the user, session is expired"
+msgstr ""
+
+#: app/routers/users.py:148
+msgid "There was an error trying to setup mfa"
+msgstr ""
+
+#: app/routers/users.py:151
+msgid "MFA configured successfully"
+msgstr ""
+
+#: app/routers/users.py:236
+msgid "User logged out successfully"
+msgstr ""
+
+#: app/routers/users.py:285
+msgid "An email with a reset link was sent to end user"
+msgstr ""
+
+#: app/routers/users.py:366
+msgid "User already exists"
+msgstr ""
+
+#: app/routers/guest/applications.py:321 app/routers/guest/applications.py:371
+#: app/routers/guest/applications.py:460 app/routers/guest/applications.py:526
+msgid "Credit product not selected"
+msgstr ""
+
+#: app/routers/guest/applications.py:327
+msgid "Cannot rollback at this stage"
+msgstr ""
+
+#: app/routers/guest/applications.py:532
+msgid "Lender not selected"
+msgstr ""
+
+#: app/routers/guest/applications.py:548
+msgid "There was an error submitting the application"
+msgstr ""
+
+#: app/routers/guest/applications.py:597
+msgid "Cannot upload document at this stage"
+msgstr ""
+
+#: app/routers/guest/applications.py:804
 msgid "A new application has alredy been created from this one"
 msgstr "Una nueva aplicación ya ha sido creada desde esta"
+
+#: app/routers/guest/applications.py:823
+#, python-format
+msgid "There was a problem copying the application. %(exception)s"
+msgstr ""
+
+#: app/routers/guest/emails.py:33
+msgid "New email is not valid"
+msgstr ""
+
+#: app/routers/guest/emails.py:80
+msgid "Application is not pending an email confirmation"
+msgstr ""
+
+#: app/routers/guest/emails.py:87
+msgid "Not authorized to modify this application"
+msgstr ""
 
 #: app/utils/tables.py:41
 msgid "Financing Options"

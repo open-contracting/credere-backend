@@ -18,6 +18,7 @@ from sqlmodel import SQLModel, col
 from app import models
 from app.db import get_db, handle_skipped_award
 from app.exceptions import SkippedAwardError
+from app.i18n import _
 from app.settings import app_settings
 from app.sources import colombia as data_access
 
@@ -49,7 +50,9 @@ def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None 
 def get_object_or_404(session: Session, model: type[T], field: str, value: Any) -> T:
     obj = model.first_by(session, field, value)
     if not obj:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{model.__name__} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=_("%(model_name)s not found", model_name=model.__name__)
+        )
     return obj
 
 
@@ -106,13 +109,13 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     if os.path.splitext(filename)[1].lower() not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Format not allowed. It must be a PNG, JPEG, or PDF file",
+            detail=_("Format not allowed. It must be a PNG, JPEG, or PDF file"),
         )
     new_file = file.file.read()
     if len(new_file) >= MAX_FILE_SIZE:  # 10MB in bytes
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="File is too large",
+            detail=_("File is too large"),
         )
     return new_file, filename
 

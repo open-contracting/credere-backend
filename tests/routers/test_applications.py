@@ -246,7 +246,7 @@ def test_approve_application_cycle(
     # lender tries to approve the application without verifying legal_name
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": "BORROWER_FIELD_VERIFICATION_MISSING"}
+    assert response.json() == {"detail": "Some borrower data field are not verified"}
 
     # verify legal_name
     response = client.put(f"/applications/{appid}/verify-data-field", json={"legal_name": True}, headers=lender_header)
@@ -264,7 +264,7 @@ def test_approve_application_cycle(
     # lender tries to approve the application without verifying INCORPORATION_DOCUMENT
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": "DOCUMENT_VERIFICATION_MISSING"}
+    assert response.json() == {"detail": "Some documents are not verified"}
 
     # verify borrower document
     response = client.put(
@@ -345,7 +345,7 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
 
     response = client.get(f"/applications/uuid/{pending_application.uuid}")
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": "APPLICATION_LAPSED"}
+    assert response.json() == {"detail": "Application lapsed"}
 
     response = client.get("/applications/uuid/123-456")
     assert response.status_code == status.HTTP_404_NOT_FOUND
