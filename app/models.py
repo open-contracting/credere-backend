@@ -308,7 +308,7 @@ class StatisticCustomRange(StrEnum):
 class LenderBase(SQLModel):
     name: str = Field(default="", unique=True)
     email_group: str = Field(default="")
-    type: str = Field(default="")
+    type: str = Field(default="")  # LENDER_TYPES
     sla_days: int | None
     logo_filename: str = Field(default="")
     default_pre_approval_message: str = Field(default="")
@@ -366,7 +366,7 @@ class BorrowerBase(SQLModel):
     address: str = Field(default="")
     legal_identifier: str = Field(default="")
     type: str = Field(default="")
-    sector: str = Field(default="")
+    sector: str = Field(default="")  # SECTOR_TYPES
     annual_revenue: Decimal | None = Field(max_digits=16, decimal_places=2)
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     # Self-reported
