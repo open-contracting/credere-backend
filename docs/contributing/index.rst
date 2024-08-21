@@ -49,9 +49,9 @@ Repository structure
    email_templates/         # HTML fragments
    app/
    ├── __init__.py
+   ├── __main__.py          # Typer commands
    ├── auth.py              # Permissions and JWT token verification
    ├── aws.py               # Amazon Web Services API clients
-   ├── commands.py          # Typer commands
    ├── db.py                # SQLAlchemy database operations and session management
    ├── dependencies.py      # FastAPI dependencies
    ├── exceptions.py        # Definitions of exceptions raised by this application
@@ -59,7 +59,7 @@ Repository structure
    ├── mail.py              # Email sending
    ├── main.py              # FastAPI application entry point
    ├── models.py            # SQLAlchemy models
-   ├── parsers.py           # Pydantic models to parse query string arguments
+   ├── parsers.py           # Pydantic models to parse query strings and request bodies
    ├── routers              # FastAPI routers
    │   ├── __init__.py
    │   ├── guest            # FastAPI routers for passwordless URLs
@@ -69,7 +69,6 @@ Repository structure
    ├── settings.py          # Environment settings and Sentry configuration
    ├── sources              # Data sources for contracts, awards, and borrowers
    │   ├── __init__.py
-   │   ├── util.py
    │   └── colombia.py
    ├── util.py              # Utilities used by routers, background tasks and commands
    └── utils

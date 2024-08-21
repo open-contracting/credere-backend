@@ -84,8 +84,8 @@ When deploying for the first time, and after changing these files:
 
    .. code-block:: bash
 
-      python -m app.commands dev cli-input-json credere-main-en email_templates/aws_main.html > credere-main-en.json
-      python -m app.commands dev cli-input-json credere-main-es email_templates/aws_main_es.html > credere-main-es.json
+      python -m app dev cli-input-json credere-main-en email_templates/aws_main.html > credere-main-en.json
+      python -m app dev cli-input-json credere-main-es email_templates/aws_main_es.html > credere-main-es.json
 
 #. Run the `ses create-template <https://docs.aws.amazon.com/cli/latest/reference/ses/create-template.html>`__ command with the administrative user:
 
