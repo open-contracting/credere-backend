@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 from mypy_boto3_ses.client import SESClient
 
-from app.i18n import get_translated_string
+from app.i18n import _
 from app.models import Application
 from app.settings import app_settings
 
@@ -18,10 +18,6 @@ BASE_TEMPLATES_PATH = os.path.join(Path(__file__).absolute().parent.parent, "ema
 LOCALIZED_IMAGES_BASE_URL = app_settings.images_base_url
 if app_settings.email_template_lang != "":
     LOCALIZED_IMAGES_BASE_URL = f"{LOCALIZED_IMAGES_BASE_URL}/{app_settings.email_template_lang}"
-
-
-def t(message: str) -> str:
-    return get_translated_string(message, app_settings.email_template_lang)
 
 
 def get_template_data(template_name: str, subject: str, parameters: dict[str, Any]) -> dict[str, str]:
@@ -100,7 +96,7 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
     return send_email(
         ses,
         application.primary_email,
-        get_template_data("Application_approved", t("Your credit application has been prequalified"), parameters),
+        get_template_data("Application_approved", _("Your credit application has been prequalified"), parameters),
     )
 
 
@@ -116,7 +112,7 @@ def send_application_submission_completed(ses: SESClient, application: Applicati
         application.primary_email,
         get_template_data(
             "Application_submitted",
-            t("Application Submission Complete"),
+            _("Application Submission Complete"),
             {
                 "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -137,7 +133,7 @@ def send_application_credit_disbursed(ses: SESClient, application: Application) 
         application.primary_email,
         get_template_data(
             "Application_credit_disbursed",
-            t("Your credit application has been approved"),
+            _("Your credit application has been approved"),
             {
                 "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -164,7 +160,7 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_pa
         username,
         get_template_data(
             "New_Account_Created",
-            t("Welcome"),
+            _("Welcome"),
             {
                 "USER": name,
                 "SET_PASSWORD_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/set_password.png",
@@ -191,7 +187,7 @@ def send_upload_contract_notification_to_lender(ses: SESClient, application: App
         application.lender.email_group,
         get_template_data(
             "New_contract_submission",
-            t("New contract submission"),
+            _("New contract submission"),
             {
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
@@ -213,7 +209,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application) 
         application.primary_email,
         get_template_data(
             "Contract_upload_confirmation",
-            t("Thank you for uploading the signed contract"),
+            _("Thank you for uploading the signed contract"),
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "TENDER_TITLE": application.award.title,
@@ -237,7 +233,7 @@ def send_new_email_confirmation(
     """
     data = get_template_data(
         "Confirm_email_address_change",
-        t("Confirm email address change"),
+        _("Confirm email address change"),
         {
             "NEW_MAIL": new_email,
             "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -268,7 +264,7 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temporary_passwor
         username,
         get_template_data(
             "Reset_password",
-            t("Reset password"),
+            _("Reset password"),
             {
                 "USER_ACCOUNT": username,
                 "RESET_PASSWORD_URL": (
@@ -308,7 +304,7 @@ def send_invitation_email(ses: SESClient, application: Application) -> str:
         application.primary_email,
         get_template_data(
             "Access_to_credit_scheme_for_MSMEs",
-            t("Opportunity to access MSME credit for being awarded a public contract"),
+            _("Opportunity to access MSME credit for being awarded a public contract"),
             get_invitation_email_parameters(application),
         ),
     )
@@ -326,7 +322,7 @@ def send_mail_intro_reminder(ses: SESClient, application: Application) -> str:
         application.primary_email,
         get_template_data(
             "Access_to_credit_reminder",
-            t("Opportunity to access MSME credit for being awarded a public contract"),
+            _("Opportunity to access MSME credit for being awarded a public contract"),
             get_invitation_email_parameters(application),
         ),
     )
@@ -344,7 +340,7 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
         application.primary_email,
         get_template_data(
             "Complete_application_reminder",
-            t("Reminder - Opportunity to access MSME credit for being awarded a public contract"),
+            _("Reminder - Opportunity to access MSME credit for being awarded a public contract"),
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "TENDER_TITLE": application.award.title,
@@ -369,7 +365,7 @@ def send_notification_new_app_to_lender(ses: SESClient, application: Application
         application.lender.email_group,
         get_template_data(
             "FI_New_application_submission_FI_user",
-            t("New application submission"),
+            _("New application submission"),
             {
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
@@ -388,7 +384,7 @@ def send_notification_new_app_to_ocp(ses: SESClient, application: Application) -
         app_settings.ocp_email_group,
         get_template_data(
             "New_application_submission_OCP_user",
-            t("New application submission"),
+            _("New application submission"),
             {
                 "LENDER_NAME": application.lender.name,
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
@@ -410,7 +406,7 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
         application.primary_email,
         get_template_data(
             "Request_data_to_SME",
-            t("New message from a financial institution"),
+            _("New message from a financial institution"),
             {
                 "LENDER_NAME": application.lender.name,
                 "LENDER_MESSAGE": email_message,
@@ -434,7 +430,7 @@ def send_overdue_application_email_to_lender(ses: SESClient, lender_name: str, l
         lender_email,
         get_template_data(
             "Overdue_application_FI",
-            t("You have credit applications that need processing"),
+            _("You have credit applications that need processing"),
             {
                 "USER": lender_name,
                 "NUMBER_APPLICATIONS": amount,
@@ -455,7 +451,7 @@ def send_overdue_application_email_to_ocp(ses: SESClient, application: Applicati
         app_settings.ocp_email_group,
         get_template_data(
             "Overdue_application_OCP_admin",
-            t("New overdue application"),
+            _("New overdue application"),
             {
                 "USER": application.lender.name,
                 "LENDER_NAME": application.lender.name,
@@ -476,7 +472,7 @@ def send_rejected_application_email(ses: SESClient, application: Application) ->
         application.primary_email,
         get_template_data(
             "Application_declined",
-            t("Your credit application has been declined"),
+            _("Your credit application has been declined"),
             {
                 "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -499,7 +495,7 @@ def send_rejected_application_email_without_alternatives(ses: SESClient, applica
         application.primary_email,
         get_template_data(
             "Application_declined_without_alternative",
-            t("Your credit application has been declined"),
+            _("Your credit application has been declined"),
             {
                 "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
@@ -518,7 +514,7 @@ def send_copied_application_notification_to_borrower(ses: SESClient, application
         application.primary_email,
         get_template_data(
             "alternative_credit_msme",
-            t("Alternative credit option"),
+            _("Alternative credit option"),
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "CONTINUE_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/continueInCredere.png",
@@ -538,7 +534,7 @@ def send_upload_documents_notifications_to_lender(ses: SESClient, application: A
         application.lender.email_group,
         get_template_data(
             "FI_Documents_Updated_FI_user",
-            t("Application updated"),
+            _("Application updated"),
             {
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",

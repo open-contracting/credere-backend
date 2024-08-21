@@ -1,16 +1,16 @@
-from typing import Any
+import gettext
+from pathlib import Path
 
 from app.settings import app_settings
 
-if app_settings.transifex_token and app_settings.transifex_secret:
-    # https://developers.transifex.com/docs/python-sdk#initialization
-    from transifex.native import init, tx
+localedir = Path(__file__).absolute().parent.parent / "locale"
 
-    init(app_settings.transifex_token, ["es", "en"], app_settings.transifex_secret)
-    tx.fetch_translations()
+translators = {
+    path.name: gettext.translation("messages", localedir, languages=[path.name])
+    for path in localedir.iterdir()
+    if path.is_dir()
+}
 
 
-def get_translated_string(key: str, lang: str, params: dict[str, Any] | None = None) -> str:
-    from transifex.native import tx
-
-    return tx.translate(key, lang, params=params)
+def _(message: str, language: str = app_settings.email_template_lang, **kwargs) -> str:
+    return translators[language].gettext(message) % kwargs

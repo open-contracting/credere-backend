@@ -179,6 +179,26 @@ Update requirements
 
 See `Requirements <https://ocp-software-handbook.readthedocs.io/en/latest/python/requirements.html>`__ in the OCP Software Development Handbook.
 
+Update translations
+~~~~~~~~~~~~~~~~~~~
+
+#. Update the message catalogs:
+
+   .. code-block:: bash
+
+      pybabel extract -F babel.cfg -o messages.pot .
+      pybabel update -i messages.pot -d locale
+
+#. Compile the message catalogs (in development):
+
+   .. code-block:: bash
+
+      pybabel compile -f -d locale
+
+.. admonition:: Reference
+
+   ``pybabel`` commands in `Translate with Transifex <https://ocp-software-handbook.readthedocs.io/en/latest/python/i18n.html#translate-with-transifex>`__
+
 Update API
 ~~~~~~~~~~
 
