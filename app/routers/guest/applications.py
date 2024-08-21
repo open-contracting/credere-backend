@@ -572,7 +572,7 @@ async def upload_document(
     type: str = Form(...),
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
+        dependencies.get_scoped_application_as_guest_via_form(
             statuses=(
                 models.ApplicationStatus.ACCEPTED,
                 models.ApplicationStatus.INFORMATION_REQUESTED,
