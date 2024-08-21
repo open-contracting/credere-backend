@@ -15,6 +15,7 @@ import minify_html
 import typer
 import typer.cli
 from fastapi.params import Depends, Header
+from fastapi.routing import APIRoute
 from rich.console import Console
 from rich.table import Table
 from sqlalchemy import Date, cast
@@ -402,7 +403,7 @@ def remove_dated_application_data() -> None:
 # The openapi.json file can't be used, because it doesn't track Python modules.
 @dev.command()
 def routes(csv_format: bool = False) -> None:
-    def _pretty(model, expected):
+    def _pretty(model: Any, expected: str) -> str:
         if model is None:
             return ""
         if isinstance(model, types.UnionType):
@@ -410,7 +411,7 @@ def routes(csv_format: bool = False) -> None:
 
         module, name = model.__module__, model.__name__
         if module == expected:
-            return name
+            return str(name)
         if module == "fastapi._compat":
             return ", ".join(model.model_fields)
         if module == "builtins":
@@ -419,6 +420,8 @@ def routes(csv_format: bool = False) -> None:
 
     rows = []
     for route in main.app.routes:
+        assert isinstance(route, APIRoute)
+
         # Skip default OpenAPI routes.
         if route.endpoint.__module__.startswith("fastapi."):
             continue
