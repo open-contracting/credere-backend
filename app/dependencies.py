@@ -5,7 +5,7 @@ from typing import Any, Callable, Generator
 from fastapi import Depends, Form, HTTPException, Request, status
 from sqlalchemy.orm import Session, defaultload, joinedload
 
-from app import auth, aws, models, parsers, util
+from app import auth, aws, models, parsers
 from app.db import get_db
 
 USER_CAN_EDIT_AWARD_BORROWER_DATA = (
@@ -150,7 +150,7 @@ def _get_application_as_guest_via_uuid(session: Session, uuid: str) -> models.Ap
     if application.status == models.ApplicationStatus.LAPSED:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=util.ERROR_CODES.APPLICATION_LAPSED,
+            detail="Application lapsed",
         )
 
     return application

@@ -10,6 +10,7 @@ from sqlmodel import col
 
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
+from app.i18n import _
 from app.util import SortOrder, get_order_by
 
 logger = logging.getLogger(__name__)
@@ -171,7 +172,7 @@ async def approve_application(
         if not_validated_fields:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=util.ERROR_CODES.BORROWER_FIELD_VERIFICATION_MISSING,
+                detail=_("Some borrower data field are not verified"),
             )
 
         # Check all documents are verified.
@@ -182,7 +183,7 @@ async def approve_application(
         if not_validated_documents:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING,
+                detail=_("Some documents are not verified"),
             )
 
         # Approve the application.

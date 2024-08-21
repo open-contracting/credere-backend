@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-21 16:46-0400\n"
+"POT-Creation-Date: 2024-08-21 17:16-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -167,7 +167,9 @@ msgstr "Suministro de electricidad, gas, vapor y aire acondicionado"
 #. BorrowerSector
 #: README.rst:293
 msgid "agua"
-msgstr "Distribución de agua; evacuación y tratamiento de aguas residuales, gestión de desechos y actividades de saneamiento ambiental"
+msgstr ""
+"Distribución de agua; evacuación y tratamiento de aguas residuales, "
+"gestión de desechos y actividades de saneamiento ambiental"
 
 #. BorrowerSector
 #: README.rst:294
@@ -212,7 +214,9 @@ msgstr "Actividades de servicios administrativos y de apoyo"
 #. BorrowerSector
 #: README.rst:302
 msgid "administracion_publica"
-msgstr "Administración pública y defensa; planes de seguridad social de afiliación obligatoria"
+msgstr ""
+"Administración pública y defensa; planes de seguridad social de "
+"afiliación obligatoria"
 
 #. BorrowerSector
 #: README.rst:303
@@ -237,7 +241,10 @@ msgstr "Otras actividades de servicios"
 #. BorrowerSector
 #: README.rst:307
 msgid "actividades_hogares"
-msgstr "Actividades de los hogares individuales en calidad de empleadores; actividades no diferenciadas de los hogares individuales como productores de bienes yservicios para uso propio"
+msgstr ""
+"Actividades de los hogares individuales en calidad de empleadores; "
+"actividades no diferenciadas de los hogares individuales como productores"
+" de bienes yservicios para uso propio"
 
 #. BorrowerSector
 #: README.rst:308
@@ -318,6 +325,14 @@ msgstr "Opción de crédito alternativa"
 msgid "Application updated"
 msgstr "Aplicación actualizada"
 
+#: app/routers/applications.py:174
+msgid "Some borrower data field are not verified"
+msgstr "Algunos campos de datos de la MIPYME no están verificados"
+
+#: app/routers/applications.py:185
+msgid "Some documents are not verified"
+msgstr "Algunos documentos no fueron verificados"
+
 #: app/routers/downloads.py:88 app/routers/downloads.py:106
 msgid "Application Details"
 msgstr "Detalles de la aplicación"
@@ -345,6 +360,10 @@ msgstr "Fecha de envío"
 #: app/routers/downloads.py:152
 msgid "Stage"
 msgstr "Etapa"
+
+#: app/routers/guest/applications.py:803
+msgid "A new application has alredy been created from this one"
+msgstr "Una nueva aplicación ya ha sido creada desde esta"
 
 #: app/utils/tables.py:41
 msgid "Financing Options"
@@ -479,3 +498,4 @@ msgstr "Correo institucional"
 #: app/utils/tables.py:247
 msgid "MSME Documents"
 msgstr "Documentos de la MIPYME"
+

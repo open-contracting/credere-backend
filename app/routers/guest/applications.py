@@ -10,6 +10,7 @@ from sqlmodel import col
 
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
+from app.i18n import _
 
 logger = logging.getLogger(__name__)
 
@@ -800,7 +801,7 @@ async def find_alternative_credit_option(
         if app_action:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=util.ERROR_CODES.APPLICATION_ALREADY_COPIED,
+                detail=_("A new application has alredy been created from this one"),
             )
 
         # Copy the application, changing the uuid, status, and borrower_accepted_at.
