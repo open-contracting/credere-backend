@@ -3,8 +3,6 @@
 Frontend integration
 ====================
 
-.. note:: This page is a stub.
-
 .. seealso:: `Credere frontend <https://github.com/open-contracting/credere-frontend>`__
 
 Enumerations
