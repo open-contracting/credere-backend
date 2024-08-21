@@ -63,6 +63,7 @@ Repository structure
    ├── __init__.py
    ├── auth.py              # Permissions and JWT token verification
    ├── aws.py               # Amazon Web Services API clients
+   ├── babel.py             # Babel extractors
    ├── commands.py          # Typer commands
    ├── db.py                # SQLAlchemy database operations and session management
    ├── dependencies.py      # FastAPI dependencies
