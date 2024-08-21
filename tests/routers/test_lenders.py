@@ -1,3 +1,4 @@
+import uuid
 import warnings
 
 from fastapi import status
@@ -81,7 +82,7 @@ def test_create_credit_product(client, admin_header, lender_header, lender):
 
 def test_create_lender(client, admin_header, lender_header, lender):
     payload = {
-        "name": "John Doe",
+        "name": str(uuid.uuid4()),
         "email_group": "lenders@noreply.open-contracting.org",
         "type": "Some Type",
         "sla_days": 5,
@@ -103,7 +104,7 @@ def test_create_lender(client, admin_header, lender_header, lender):
 
 def test_create_lender_with_credit_product(client, admin_header, lender_header, lender):
     payload = {
-        "name": "test lender",
+        "name": str(uuid.uuid4()),
         "email_group": "test@noreply.open-contracting.org",
         "type": "Some Type",
         "sla_days": 5,
@@ -157,7 +158,7 @@ def test_get_lender(client, admin_header, lender_header, unauthorized_lender_hea
 
 def test_update_lender(client, admin_header, lender_header, lender):
     payload = {
-        "name": "John smith",
+        "name": str(uuid.uuid4()),
         "email_group": "lenders@noreply.open-contracting.org",
         "type": "Some Type",
         "sla_days": 5,

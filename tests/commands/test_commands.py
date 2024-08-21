@@ -57,7 +57,7 @@ def test_set_lapsed_applications_no_lapsed(pending_application):
     assert_success(result)
 
 
-def test_send_overdue_reminders(session, mock_send_templated_email, started_application):
+def test_send_overdue_reminders(reset_database, session, mock_send_templated_email, started_application):
     started_application.lender_started_at = datetime.now(started_application.tz) - timedelta(
         days=started_application.lender.sla_days + 1
     )
