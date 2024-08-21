@@ -80,7 +80,10 @@ async def create_credit_products(
     tags=["lenders"],
     response_model=models.LenderWithRelations,
 )
-async def get_lender(lender_id: int, session: Session = Depends(get_db)) -> Any:
+async def get_lender(
+    lender_id: int,
+    session: Session = Depends(get_db),
+) -> Any:
     """
     Retrieve a lender by its ID.
 

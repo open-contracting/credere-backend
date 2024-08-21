@@ -65,7 +65,7 @@ async def create_user(
     "/users/change-password",
 )
 def change_password(
-    user: parsers.BasicUser,
+    payload: parsers.BasicUser,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ChangePasswordResponse | serializers.ResponseBase:
     """
@@ -76,20 +76,20 @@ def change_password(
     """
     try:
         # This endpoint is only called for new users, to replace the generated password.
-        response = client.initiate_auth(user.username, user.temp_password)
+        response = client.initiate_auth(payload.username, payload.temp_password)
         if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
             response = client.respond_to_auth_challenge(
-                username=user.username,
+                username=payload.username,
                 session=response["Session"],
                 challenge_name="NEW_PASSWORD_REQUIRED",
-                new_password=user.password,
+                new_password=payload.password,
             )
 
         # Verify the user's email.
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_update_user_attributes.html
         client.cognito.admin_update_user_attributes(
             UserPoolId=app_settings.cognito_pool_id,
-            Username=user.username,
+            Username=payload.username,
             UserAttributes=[
                 {"Name": "email_verified", "Value": "true"},
             ],
@@ -103,7 +103,7 @@ def change_password(
                 detail="Password changed with MFA setup required",
                 secret_code=associate_response["SecretCode"],
                 session=associate_response["Session"],
-                username=user.username,
+                username=payload.username,
             )
     except ClientError as e:
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
@@ -123,7 +123,7 @@ def change_password(
     "/users/setup-mfa",
 )
 def setup_mfa(
-    setup_mfa: parsers.SetupMFA,
+    payload: parsers.SetupMFA,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """
@@ -135,7 +135,7 @@ def setup_mfa(
     try:
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/verify_software_token.html
         client.cognito.verify_software_token(
-            AccessToken=setup_mfa.secret, Session=setup_mfa.session, UserCode=setup_mfa.temp_password
+            AccessToken=payload.secret, Session=payload.session, UserCode=payload.temp_password
         )
     except ClientError as e:
         if e.response["Error"]["Code"] == "NotAuthorizedException":
@@ -258,7 +258,8 @@ def me(
     "/users/forgot-password",
 )
 def forgot_password(
-    user: parsers.BasicUser, client: aws.Client = Depends(dependencies.get_aws_client)
+    payload: parsers.BasicUser,
+    client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """
     Initiate the process of resetting a user's password.
@@ -272,12 +273,12 @@ def forgot_password(
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_set_user_password.html
         client.cognito.admin_set_user_password(
             UserPoolId=app_settings.cognito_pool_id,
-            Username=user.username,
+            Username=payload.username,
             Password=temporary_password,
             Permanent=False,
         )
 
-        mail.send_mail_to_reset_password(client.ses, user.username, temporary_password)
+        mail.send_mail_to_reset_password(client.ses, payload.username, temporary_password)
     except Exception:
         logger.exception("Error resetting password")
 
@@ -289,7 +290,10 @@ def forgot_password(
     "/users/{user_id}",
     tags=["users"],
 )
-async def get_user(user_id: int, session: Session = Depends(get_db)) -> models.User:
+async def get_user(
+    user_id: int,
+    session: Session = Depends(get_db),
+) -> models.User:
     """
     Retrieve information about a user.
 

@@ -211,11 +211,21 @@ Or, create a blank migration file:
 
    alembic revision -m "migration name"
 
-Both generate a file like ``2ca870aa737d_migration_name.py``. Edit the functions ``upgrade`` and ``downgrade`` as needed.
+Both generate a file like ``migrations/versions/2ca870aa737d_migration_name.py``. Edit the ``upgrade`` and ``downgrade`` functions, as needed.
 
 .. tip::
 
-   Need to undo your migration, in development? Find the previous revision using ``alembic history`` and revert with ``alembic downgrade``.
+   Need to undo your migration in development? Find the previous revision:
+
+   .. code-block:: bash
+
+      alembic history
+
+   And revert, for example:
+
+   .. code-block:: bash
+
+      alembic downgrade 20e0ff589a61
 
 Then, `update <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#generate-entity-relationship-diagram>`__ the :ref:`erd`. For example:
 
