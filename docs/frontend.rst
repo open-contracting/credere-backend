@@ -36,3 +36,28 @@ This table is contructed by running this command, and filling in information fro
    :file: _static/routes.csv
    :header-rows: 1
    :class: datatable
+
+Enumerations
+------------
+
+Credere frontend's ``src/constants/index.ts`` constants should match ``app.models`` enumerations.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Backend
+     - Frontend
+   * - ApplicationStatus
+     - APPLICATION_STATUS
+   * - BorrowerType
+     - BORROWER_TYPE
+   * - CreditType
+     - CREDIT_PRODUCT_TYPE
+   * - BorrowerDocumentType
+     - DOCUMENTS_TYPE
+   * - BorrowerSize
+     - MSME_TYPES
+   * - StatisticCustomRange
+     - STATISTICS_DATE_FILTER
+   * - UserType
+     - USER_TYPES
