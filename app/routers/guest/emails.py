@@ -37,6 +37,13 @@ async def change_email(
         application.confirmation_email_token = f"{new_email}---{confirmation_email_token}"
         application.pending_email_confirmation = True
 
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_CHANGE_EMAIL,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+        )
+
         message_id = mail.send_new_email_confirmation(
             client.ses, application, payload.new_email, confirmation_email_token
         )
@@ -45,13 +52,6 @@ async def change_email(
             application=application,
             type=models.MessageType.EMAIL_CHANGE_CONFIRMATION,
             external_message_id=message_id,
-        )
-
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_CHANGE_EMAIL,
-            data=jsonable_encoder(payload, exclude_unset=True),
-            application_id=application.id,
         )
 
         session.commit()

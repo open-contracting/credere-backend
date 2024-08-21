@@ -38,6 +38,14 @@ html_additional_pages = {
     "api/redoc": "redoc.html",
     "api/swagger-ui": "swagger-ui.html",
 }
+html_css_files = [
+    "https://cdn.datatables.net/v/dt/jq-3.7.0/dt-2.1.4/cr-2.0.4/fc-5.0.1/fh-4.0.1/datatables.min.css",
+    "custom.css",
+]
+html_js_files = [
+    "https://cdn.datatables.net/v/dt/jq-3.7.0/dt-2.1.4/cr-2.0.4/fc-5.0.1/fh-4.0.1/datatables.min.js",
+    "custom.js",
+]
 
 # -- Extension configuration -------------------------------------------------
 

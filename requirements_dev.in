@@ -17,6 +17,4 @@ pytest-random-order
 reportlab-stubs
 sphinx-autobuild
 sqlalchemy2-stubs
-# typer-slim omits stubs
-typer
 types-requests

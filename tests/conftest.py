@@ -144,7 +144,7 @@ def client(app: FastAPI, engine, aws_client) -> Generator[TestClient, Any, None]
 def lender(session):
     instance = models.Lender.create(
         session,
-        name=uuid.uuid4(),
+        name=str(uuid.uuid4()),
         email_group="test@example.com",
         type="Some Type",
         sla_days=7,
@@ -158,7 +158,7 @@ def lender(session):
 def unauthorized_lender(session):
     instance = models.Lender.create(
         session,
-        name=uuid.uuid4(),
+        name=str(uuid.uuid4()),
         email_group="test@example.com",
         type="Some Type",
         sla_days=7,
@@ -248,7 +248,7 @@ def award(session):
 def borrower(session):
     instance = models.Borrower.create(
         session,
-        borrower_identifier=uuid.uuid4(),
+        borrower_identifier=str(uuid.uuid4()),
         legal_name="",  # tests expect this to be in missing_data
         email="test@example.com",
         address="Direccion: Test Address\nCiudad: Test City\nProvincia: No provisto\nEstado: No provisto",
@@ -291,7 +291,7 @@ def borrower(session):
 
 @pytest.fixture
 def application_uuid():
-    return uuid.uuid4()
+    return str(uuid.uuid4())
 
 
 @pytest.fixture

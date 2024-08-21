@@ -2,6 +2,7 @@
 This file is required, because reportlab/__init__.py runs `import reportlab_mods`.
 """
 
+import os
 from typing import Any
 
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
@@ -13,10 +14,12 @@ from reportlab.platypus import Table, TableStyle
 
 from app.models import BorrowerDocumentType, BorrowerSize
 
-pdfmetrics.registerFont(TTFont("GTEestiProDisplay", "./fonts/GTEestiProDisplay-Regular.ttf"))
-pdfmetrics.registerFont(TTFont("GTEestiProDisplayBd", "./fonts/GTEestiProDisplay-Bold.ttf"))
-pdfmetrics.registerFont(TTFont("GTEestiProDisplayIt", "./fonts/GTEestiProDisplay-RegularItalic.ttf"))
-pdfmetrics.registerFont(TTFont("GTEestiProDisplayBI", "./fonts/GTEestiProDisplay-BoldItalic.ttf"))
+fontsdir = os.path.join(os.path.dirname(__file__), "fonts")
+
+pdfmetrics.registerFont(TTFont("GTEestiProDisplay", os.path.join(fontsdir, "GTEestiProDisplay-Regular.ttf")))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayBd", os.path.join(fontsdir, "GTEestiProDisplay-Bold.ttf")))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayIt", os.path.join(fontsdir, "GTEestiProDisplay-RegularItalic.ttf")))
+pdfmetrics.registerFont(TTFont("GTEestiProDisplayBI", os.path.join(fontsdir, "GTEestiProDisplay-BoldItalic.ttf")))
 pdfmetrics.registerFontFamily(
     "GTEestiProDisplay",
     normal="GTEestiProDisplay",

@@ -1,6 +1,10 @@
+import csv
+import inspect
+import itertools
 import json
 import logging
 import sys
+import types
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -10,12 +14,16 @@ import click
 import minify_html
 import typer
 import typer.cli
+from fastapi.params import Depends, Header
+from fastapi.routing import APIRoute
+from rich.console import Console
+from rich.table import Table
 from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
 import app.utils.statistics as statistics_utils
-from app import aws, mail, models, util
+from app import aws, mail, main, models, util
 from app.db import get_db, handle_skipped_award, rollback_on_error
 from app.exceptions import SkippedAwardError, SourceFormatError
 from app.settings import app_settings
@@ -32,6 +40,7 @@ class OrderedGroup(typer.cli.TyperCLIGroup):
         return list(self.commands)
 
 
+console = Console()
 app = typer.Typer(cls=OrderedGroup)
 dev = typer.Typer()
 app.add_typer(dev, name="dev", help="Commands for maintainers of Credere.")
@@ -39,65 +48,60 @@ app.add_typer(dev, name="dev", help="Commands for maintainers of Credere.")
 
 # Called by fetch-award* commands.
 def _create_complete_application(
-    award_entry: dict[str, str], db_provider: Callable[[], Generator[Session, None, None]]
+    session: Session, award_entry: dict[str, str], db_provider: Callable[[], Generator[Session, None, None]]
 ) -> None:
-    with contextmanager(db_provider)() as session:
-        with handle_skipped_award(session, "Error creating application"):
-            # Create the award. If it exists, skip this award.
-            award = util.create_award_from_data_source(session, award_entry)
+    with handle_skipped_award(session, "Error creating application"):
+        # Create the award. If it exists, skip this award.
+        award = util.create_award_from_data_source(session, award_entry)
 
-            # Create a new borrower or update an existing borrower based on the entry data.
-            documento_proveedor = data_access.get_documento_proveedor(award_entry)
-            borrower_identifier = util.get_secret_hash(documento_proveedor)
-            data = data_access.get_borrower(borrower_identifier, documento_proveedor, award_entry)
-            if borrower := models.Borrower.first_by(session, "borrower_identifier", borrower_identifier):
-                if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
-                    raise SkippedAwardError(
-                        "Borrower opted to not receive any new opportunity",
-                        data={"borrower_identifier": borrower_identifier},
-                    )
-                borrower = borrower.update(session, **data)
-            else:
-                borrower = models.Borrower.create(session, **data)
-
-            award.borrower_id = borrower.id
-
-            # Create a new application and insert it into the database.
-            award_borrower_identifier: str = util.get_secret_hash(
-                f"{borrower.legal_identifier}{award.source_contract_id}"
-            )
-            if application := models.Application.first_by(
-                session, "award_borrower_identifier", award_borrower_identifier
-            ):
+        # Create a new borrower or update an existing borrower based on the entry data.
+        documento_proveedor = data_access.get_documento_proveedor(award_entry)
+        borrower_identifier = util.get_secret_hash(documento_proveedor)
+        data = data_access.get_borrower(borrower_identifier, documento_proveedor, award_entry)
+        if borrower := models.Borrower.first_by(session, "borrower_identifier", borrower_identifier):
+            if borrower.status == models.BorrowerStatus.DECLINE_OPPORTUNITIES:
                 raise SkippedAwardError(
-                    "Application already exists",
-                    data={
-                        "found": application.id,
-                        "lookup": {
-                            "legal_identifier": borrower.legal_identifier,
-                            "sources_contract_id": award.source_contract_id,
-                        },
-                    },
+                    "Borrower opted to not receive any new opportunity",
+                    data={"borrower_identifier": borrower_identifier},
                 )
-            application = models.Application.create(
-                session,
-                award_id=award.id,
-                borrower_id=borrower.id,
-                primary_email=borrower.email,
-                award_borrower_identifier=award_borrower_identifier,
-                uuid=util.generate_uuid(award_borrower_identifier),
-                expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
-            )
+            borrower = borrower.update(session, **data)
+        else:
+            borrower = models.Borrower.create(session, **data)
 
-            message_id = mail.send_invitation_email(aws.ses_client, application)
-            models.Message.create(
-                session,
-                application=application,
-                type=models.MessageType.BORROWER_INVITATION,
-                external_message_id=message_id,
-            )
+        award.borrower = borrower
 
-            session.commit()
+        # Create a new application and insert it into the database.
+        award_borrower_identifier: str = util.get_secret_hash(f"{borrower.legal_identifier}{award.source_contract_id}")
+        if application := models.Application.first_by(session, "award_borrower_identifier", award_borrower_identifier):
+            raise SkippedAwardError(
+                "Application already exists",
+                data={
+                    "found": application.id,
+                    "lookup": {
+                        "legal_identifier": borrower.legal_identifier,
+                        "sources_contract_id": award.source_contract_id,
+                    },
+                },
+            )
+        application = models.Application.create(
+            session,
+            award=award,
+            borrower=borrower,
+            primary_email=borrower.email,
+            award_borrower_identifier=award_borrower_identifier,
+            uuid=util.generate_uuid(award_borrower_identifier),
+            expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
+        )
+
+        message_id = mail.send_invitation_email(aws.ses_client, application)
+        models.Message.create(
+            session,
+            application=application,
+            type=models.MessageType.BORROWER_INVITATION,
+            external_message_id=message_id,
+        )
+
+        session.commit()
 
 
 @app.command()
@@ -123,35 +127,35 @@ def fetch_awards(
     if from_date and until_date and from_date > until_date:
         raise click.UsageError("--from-date must be earlier than --until-date.")
 
-    if from_date is None:
-        with contextmanager(get_db)() as session:
+    with contextmanager(get_db)() as session:
+        if from_date is None:
             from_date = models.Award.last_updated(session)
 
-    index = 0
-    awards_response = data_access.get_new_awards(index, from_date, until_date)
-    awards_response_json = util.loads(awards_response)
-
-    if not awards_response_json:
-        logger.info("No new contracts")
-        return
-
-    total = 0
-    while awards_response_json:
-        total += len(awards_response_json)
-
-        for entry in awards_response_json:
-            if not all(key in entry for key in ("id_del_portafolio", "nit_del_proveedor_adjudicado")):
-                raise SourceFormatError(
-                    "Source contract is missing required fields:"
-                    f" url={awards_response.url}, data={awards_response_json}"
-                )
-            _create_complete_application(entry, get_db)
-
-        index += 1
+        index = 0
         awards_response = data_access.get_new_awards(index, from_date, until_date)
         awards_response_json = util.loads(awards_response)
 
-    logger.info("Total fetched contracts: %d", total)
+        if not awards_response_json:
+            logger.info("No new contracts")
+            return
+
+        total = 0
+        while awards_response_json:
+            total += len(awards_response_json)
+
+            for entry in awards_response_json:
+                if not all(key in entry for key in ("id_del_portafolio", "nit_del_proveedor_adjudicado")):
+                    raise SourceFormatError(
+                        "Source contract is missing required fields:"
+                        f" url={awards_response.url}, data={awards_response_json}"
+                    )
+                _create_complete_application(session, entry, get_db)
+
+            index += 1
+            awards_response = data_access.get_new_awards(index, from_date, until_date)
+            awards_response_json = util.loads(awards_response)
+
+        logger.info("Total fetched contracts: %d", total)
 
 
 @app.command()
@@ -164,7 +168,9 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
     if not award_response_json:
         logger.info(f"The award with id {award_id} and supplier id {supplier_id} was not found")
         return
-    _create_complete_application(award_response_json[0], get_db)
+
+    with contextmanager(get_db)() as session:
+        _create_complete_application(session, award_response_json[0], get_db)
 
 
 @app.command()
@@ -182,27 +188,24 @@ def send_reminders() -> None:
             .all()
         )
 
-    length = len(applications_to_send_intro_reminder)
-    logger.info("Quantity of mails to send intro reminder %s", length)
-    if not length:
-        logger.info("No new intro reminder to be sent")
-    else:
-        for application in applications_to_send_intro_reminder:
-            with contextmanager(get_db)() as session:
-                with rollback_on_error(session):
-                    message_id = mail.send_mail_intro_reminder(aws.ses_client, application)
-                    models.Message.create(
-                        session,
-                        application=application,
-                        type=models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
-                        external_message_id=message_id,
-                    )
+        length = len(applications_to_send_intro_reminder)
+        logger.info("Quantity of mails to send intro reminder %s", length)
+        if not length:
+            logger.info("No new intro reminder to be sent")
+        else:
+            for application in applications_to_send_intro_reminder:
+                message_id = mail.send_mail_intro_reminder(aws.ses_client, application)
+                models.Message.create(
+                    session,
+                    application=application,
+                    type=models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
+                    external_message_id=message_id,
+                )
 
-                    logger.info("Mail sent and status updated")
+                logger.info("Mail sent and status updated")
 
-                    session.commit()
+                session.commit()
 
-    with contextmanager(get_db)() as session:
         applications_to_send_submit_reminder = (
             models.Application.pending_submission_reminder(session)
             .options(
@@ -212,25 +215,23 @@ def send_reminders() -> None:
             .all()
         )
 
-    length = len(applications_to_send_submit_reminder)
-    logger.info("Quantity of mails to send submit reminder %s", length)
-    if not length:
-        logger.info("No new submit reminder to be sent")
-    else:
-        for application in applications_to_send_submit_reminder:
-            with contextmanager(get_db)() as session:
-                with rollback_on_error(session):
-                    message_id = mail.send_mail_submit_reminder(aws.ses_client, application)
-                    models.Message.create(
-                        session,
-                        application=application,
-                        type=models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
-                        external_message_id=message_id,
-                    )
+        length = len(applications_to_send_submit_reminder)
+        logger.info("Quantity of mails to send submit reminder %s", length)
+        if not length:
+            logger.info("No new submit reminder to be sent")
+        else:
+            for application in applications_to_send_submit_reminder:
+                message_id = mail.send_mail_submit_reminder(aws.ses_client, application)
+                models.Message.create(
+                    session,
+                    application=application,
+                    type=models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
+                    external_message_id=message_id,
+                )
 
-                    logger.info("Mail sent and status updated")
+                logger.info("Mail sent and status updated")
 
-                    session.commit()
+                session.commit()
 
 
 @app.command()
@@ -239,15 +240,15 @@ def update_applications_to_lapsed() -> None:
     Lapse applications that have been waiting for the borrower to respond for some time.
     """
     with contextmanager(get_db)() as session:
-        for application in models.Application.lapseable(session).options(
-            joinedload(models.Application.borrower),
-            joinedload(models.Application.borrower_documents),
-        ):
-            with rollback_on_error(session):
+        with rollback_on_error(session):
+            for application in models.Application.lapseable(session).options(
+                joinedload(models.Application.borrower),
+                joinedload(models.Application.borrower_documents),
+            ):
                 application.status = models.ApplicationStatus.LAPSED
                 application.application_lapsed_at = datetime.utcnow()
 
-                session.commit()
+            session.commit()
 
 
 @app.command()
@@ -343,7 +344,7 @@ def sla_overdue_applications() -> None:
                             external_message_id=message_id,
                         )
 
-                session.commit()
+                        session.commit()
 
         for lender_id, lender_data in overdue_lenders.items():
             message_id = mail.send_overdue_application_email_to_lender(
@@ -357,7 +358,7 @@ def sla_overdue_applications() -> None:
                 external_message_id=message_id,
             )
 
-        session.commit()
+            session.commit()
 
 
 @app.command()
@@ -367,11 +368,11 @@ def remove_dated_application_data() -> None:
     If the borrower has no other active applications, clear the borrower's personal data.
     """
     with contextmanager(get_db)() as session:
-        for application in models.Application.archivable(session).options(
-            joinedload(models.Application.borrower),
-            joinedload(models.Application.borrower_documents),
-        ):
-            with rollback_on_error(session):
+        with rollback_on_error(session):
+            for application in models.Application.archivable(session).options(
+                joinedload(models.Application.borrower),
+                joinedload(models.Application.borrower_documents),
+            ):
                 application.award.previous = True
                 application.primary_email = ""
                 application.archived_at = datetime.utcnow()
@@ -394,7 +395,59 @@ def remove_dated_application_data() -> None:
                     application.borrower.legal_identifier = ""
                     application.borrower.source_data = {}
 
-                session.commit()
+            session.commit()
+
+
+# The openapi.json file can't be used, because it doesn't track Python modules.
+@dev.command()
+def routes(csv_format: bool = False) -> None:
+    def _pretty(model: Any, expected: str) -> str:
+        if model is None:
+            return ""
+        if isinstance(model, types.UnionType):
+            return str(model).replace(f"{expected}.", "")
+
+        module, name = model.__module__, model.__name__
+        if module == expected:
+            return str(name)
+        if module == "fastapi._compat":
+            return ", ".join(model.model_fields)
+        if module == "builtins":
+            return str(model).replace("app.", "")
+        return f"{module.replace('app.', '')}.{name}"
+
+    rows = []
+    for route in main.app.routes:
+        assert isinstance(route, APIRoute)
+
+        # Skip default OpenAPI routes.
+        if route.endpoint.__module__.startswith("fastapi."):
+            continue
+
+        if body_field := getattr(route, "body_field", None):  # POST, PUT
+            request = _pretty(body_field.type_, "app.parsers")
+        else:  # GET
+            spec = inspect.getfullargspec(route.endpoint)
+            request = ", ".join(
+                arg
+                for arg, default in itertools.zip_longest(reversed(spec.args), reversed(spec.defaults or []))
+                # Note: Depends() can contain application `id` and `uuid` args, under many layers.
+                if not isinstance(default, (Depends, Header))
+            )
+
+        response = _pretty(getattr(route, "response_model", None), "app.serializers")
+        rows.append([", ".join(route.methods), route.path, request, response])
+
+    fieldnames = "Methods", "Path", "Request format", "Response format"
+    if csv_format:
+        writer = csv.writer(sys.stdout, lineterminator="\n")
+        writer.writerow(fieldnames)
+        writer.writerows(rows)
+    else:
+        table = Table(*fieldnames)
+        for row in rows:
+            table.add_row(*row)
+        console.print(table)
 
 
 @dev.command()

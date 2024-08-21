@@ -5,17 +5,8 @@ from sqlalchemy import Integer, distinct, func, text, true
 from sqlalchemy.orm import Query, Session
 from sqlmodel import col
 
-from app.models import (
-    Application,
-    ApplicationStatus,
-    Award,
-    Borrower,
-    BorrowerSize,
-    CreditProduct,
-    CreditType,
-    Lender,
-    StatisticData,
-)
+from app.models import Application, ApplicationStatus, Award, Borrower, BorrowerSize, CreditProduct, CreditType, Lender
+from app.serializers import StatisticData
 
 
 def _get_base_query(

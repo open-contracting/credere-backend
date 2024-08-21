@@ -7,6 +7,19 @@ from pydantic import BaseModel
 from app.models import BorrowerSize
 
 
+class BasicUser(BaseModel):
+    username: str
+    name: str | None = None
+    password: str | None = None
+    temp_password: str | None = None
+
+
+class SetupMFA(BaseModel):
+    temp_password: str
+    session: str
+    secret: str
+
+
 class AwardUpdate(BaseModel):
     source_contract_id: str | None = None
     title: str | None = None
@@ -54,16 +67,6 @@ class UpdateDataField(BaseModel):
     type: bool | None = None
 
 
-class ApplicationUpdate(BaseModel):
-    uuid: str | None = None
-    contract_amount_submitted: Decimal | None = None
-    amount_requested: Decimal | None = None
-    currency: str | None = None
-    repayment_months: int | None = None
-    pending_documents: bool | None = None
-    completed_in_days: int | None = None
-
-
 class LenderRejectedApplication(BaseModel):
     compliance_checks_failed: bool
     poor_credit_history: bool
@@ -95,6 +98,7 @@ class ApplicationCreditOptions(ApplicationBase):
 
 class ApplicationSelectCreditProduct(ApplicationCreditOptions):
     sector: str
+    annual_revenue: Decimal | None = None
     credit_product_id: int
     repayment_years: int | None = None
     repayment_months: int | None = None
@@ -119,5 +123,6 @@ class ApplicationDeclineFeedbackPayload(ApplicationBase):
     already_have_acredit: bool
     preffer_to_go_to_bank: bool
     dont_want_access_credit: bool
+    suspicious_email: bool
     other: bool
     other_comments: str

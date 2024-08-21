@@ -109,7 +109,8 @@ async def get_ocp_statistics_opt_in(
     tags=["statistics"],
 )
 async def get_lender_statistics(
-    session: Session = Depends(get_db), user: User = Depends(dependencies.get_user)
+    session: Session = Depends(get_db),
+    user: User = Depends(dependencies.get_user),
 ) -> serializers.StatisticResponse:
     """
     Retrieve statistics for a lender.

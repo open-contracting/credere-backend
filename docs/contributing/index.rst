@@ -184,7 +184,9 @@ Update API
 
 .. seealso:: :doc:`../api/index`
 
-After making changes, regenerate the OpenAPI document by running the server and:
+Use the parameter ``id`` only for application IDs, to avoid accidental errors.
+
+After making changes, regenerate the OpenAPI document by :ref:`running the server<dev-server>` and:
 
 .. code-block:: bash
 
@@ -193,21 +195,39 @@ After making changes, regenerate the OpenAPI document by running the server and:
 Update models
 ~~~~~~~~~~~~~
 
-Either run:
+Check whether a migration is needed:
 
 .. code-block:: bash
 
-   alembic revision -m "title"
+   alembic check
 
-This generates a file like ``2ca870aa737d_title.py``. Edit both functions, ``upgrade`` and ``downgrade``.
-
-Or run:
+If so, either auto-detect the changes made to ``models.py``, subject to `limitations <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`__:
 
 .. code-block:: bash
 
    alembic revision --autogenerate -m "migration name"
 
-This attempts to auto-detect the changes made to ``models.py``, subject to `limitations <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`__.
+Or, create a blank migration file:
+
+.. code-block:: bash
+
+   alembic revision -m "migration name"
+
+Both generate a file like ``migrations/versions/2ca870aa737d_migration_name.py``. Edit the ``upgrade`` and ``downgrade`` functions, as needed.
+
+.. tip::
+
+   Need to undo your migration in development? Find the previous revision:
+
+   .. code-block:: bash
+
+      alembic history
+
+   And revert, for example:
+
+   .. code-block:: bash
+
+      alembic downgrade 20e0ff589a61
 
 Then, `update <https://ocp-software-handbook.readthedocs.io/en/latest/services/postgresql.html#generate-entity-relationship-diagram>`__ the :ref:`erd`. For example:
 

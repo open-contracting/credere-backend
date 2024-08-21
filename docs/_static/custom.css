@@ -1,0 +1,6 @@
+.content:has(+ .no-toc) {
+  width: 61em;
+}
+.datatable {
+  font-size: 14px;
+}
