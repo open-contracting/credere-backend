@@ -369,9 +369,9 @@ class BorrowerBase(SQLModel):
     sector: str = Field(default="")  # SECTOR_TYPES
     annual_revenue: Decimal | None = Field(max_digits=16, decimal_places=2)
     currency: str = Field(default="COP", description="ISO 4217 currency code")
-    # Self-reported
+    # size is self-reported.
     size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
-    # From source
+    # is_msme is from source. This is always set when querying the sources.
     is_msme: bool = Field(default=True)
     missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
     created_at: datetime = Field(
