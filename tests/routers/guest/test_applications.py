@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import status
 
 from app import models
+from app.i18n import _
 from tests import assert_ok
 
 
@@ -18,7 +19,7 @@ def test_application_declined(client, pending_application):
     response = client.post("/applications/access-scheme", json={"uuid": pending_application.uuid})
 
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": "Application status should not be DECLINED"}
+    assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("DECLINED"))}
 
 
 def test_application_rollback_declined(client, session, declined_application):
@@ -34,7 +35,7 @@ def test_application_rollback_declined(client, session, declined_application):
     response = client.post("/applications/rollback-decline", json={"uuid": declined_application.uuid})
 
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": "Application status should not be PENDING"}
+    assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("PENDING"))}
 
 
 def test_application_declined_feedback(client, declined_application):
@@ -65,7 +66,7 @@ def test_access_expired_application(client, session, pending_application):
     response = client.get(f"/applications/uuid/{pending_application.uuid}")
 
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": "Application expired"}
+    assert response.json() == {"detail": _("Application expired")}
 
 
 def test_rollback_credit_product(client, accepted_application):

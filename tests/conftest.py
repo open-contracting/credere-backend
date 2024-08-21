@@ -20,6 +20,12 @@ from app.settings import app_settings
 from tests import create_user, get_test_db
 
 
+@pytest.fixture(scope="session", autouse=True, params=["es", "en"])
+def language(request):
+    app_settings.email_template_lang = request.param
+    yield
+
+
 @pytest.fixture(scope="session")
 def app() -> Generator[FastAPI, Any, None]:
     yield main.app
@@ -107,7 +113,7 @@ def aws_client(mock_aws):
 
     ses_client = boto3.client("ses", config=config)
     ses_client.verify_email_identity(EmailAddress=app_settings.email_sender_address)
-    for key in ("-es", ""):
+    for key in ("-es", "-en"):
         ses_client.create_template(
             Template={
                 "TemplateName": f"credere-main{key}",

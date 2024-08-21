@@ -110,7 +110,7 @@ def raise_if_unauthorized(
         if application.status not in statuses:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=_("Application status should not be %(status)s", status=application.status),
+                detail=_("Application status should not be %(status)s", status=_(application.status)),
             )
 
 
