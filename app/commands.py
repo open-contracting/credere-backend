@@ -2,7 +2,6 @@ import csv
 import inspect
 import itertools
 import json
-import logging
 import sys
 import types
 from collections import defaultdict
@@ -29,7 +28,7 @@ from app.exceptions import SkippedAwardError, SourceFormatError
 from app.settings import app_settings
 from app.sources import colombia as data_access
 
-logger = logging.getLogger(__name__)
+state = {"quiet": False}
 
 
 class OrderedGroup(typer.cli.TyperCLIGroup):
@@ -135,10 +134,6 @@ def fetch_awards(
         awards_response = data_access.get_new_awards(index, from_date, until_date)
         awards_response_json = util.loads(awards_response)
 
-        if not awards_response_json:
-            logger.info("No new contracts")
-            return
-
         total = 0
         while awards_response_json:
             total += len(awards_response_json)
@@ -155,7 +150,8 @@ def fetch_awards(
             awards_response = data_access.get_new_awards(index, from_date, until_date)
             awards_response_json = util.loads(awards_response)
 
-        logger.info("Total fetched contracts: %d", total)
+        if not state["quiet"]:
+            print(f"Fetched {total} contracts")
 
 
 @app.command()
@@ -166,7 +162,7 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
     """
     award_response_json = util.loads(data_access.get_award_by_id_and_supplier(award_id, supplier_id))
     if not award_response_json:
-        logger.info(f"The award with id {award_id} and supplier id {supplier_id} was not found")
+        print(f"No award found with ID {award_id} and supplier ID {supplier_id}")
         return
 
     with contextmanager(get_db)() as session:
@@ -179,7 +175,7 @@ def send_reminders() -> None:
     Send reminders to borrowers about PENDING and ACCEPTED applications.
     """
     with contextmanager(get_db)() as session:
-        applications_to_send_intro_reminder = (
+        pending_introduction_reminder = (
             models.Application.pending_introduction_reminder(session)
             .options(
                 joinedload(models.Application.borrower),
@@ -187,26 +183,20 @@ def send_reminders() -> None:
             )
             .all()
         )
+        if not state["quiet"]:
+            print(f"Sending {len(pending_introduction_reminder)} BORROWER_PENDING_APPLICATION_REMINDER...")
+        for application in pending_introduction_reminder:
+            message_id = mail.send_mail_intro_reminder(aws.ses_client, application)
+            models.Message.create(
+                session,
+                application=application,
+                type=models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
+                external_message_id=message_id,
+            )
 
-        length = len(applications_to_send_intro_reminder)
-        logger.info("Quantity of mails to send intro reminder %s", length)
-        if not length:
-            logger.info("No new intro reminder to be sent")
-        else:
-            for application in applications_to_send_intro_reminder:
-                message_id = mail.send_mail_intro_reminder(aws.ses_client, application)
-                models.Message.create(
-                    session,
-                    application=application,
-                    type=models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
-                    external_message_id=message_id,
-                )
+            session.commit()
 
-                logger.info("Mail sent and status updated")
-
-                session.commit()
-
-        applications_to_send_submit_reminder = (
+        pending_submission_reminder = (
             models.Application.pending_submission_reminder(session)
             .options(
                 joinedload(models.Application.borrower),
@@ -214,24 +204,18 @@ def send_reminders() -> None:
             )
             .all()
         )
+        if not state["quiet"]:
+            print(f"Sending {len(pending_submission_reminder)} BORROWER_PENDING_SUBMIT_REMINDER...")
+        for application in pending_submission_reminder:
+            message_id = mail.send_mail_submit_reminder(aws.ses_client, application)
+            models.Message.create(
+                session,
+                application=application,
+                type=models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
+                external_message_id=message_id,
+            )
 
-        length = len(applications_to_send_submit_reminder)
-        logger.info("Quantity of mails to send submit reminder %s", length)
-        if not length:
-            logger.info("No new submit reminder to be sent")
-        else:
-            for application in applications_to_send_submit_reminder:
-                message_id = mail.send_mail_submit_reminder(aws.ses_client, application)
-                models.Message.create(
-                    session,
-                    application=application,
-                    type=models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
-                    external_message_id=message_id,
-                )
-
-                logger.info("Mail sent and status updated")
-
-                session.commit()
+            session.commit()
 
 
 @app.command()
@@ -474,6 +458,13 @@ def cli_input_json(name: str, file: typer.FileText) -> None:
         indent=4,
         ensure_ascii=False,
     )
+
+
+# https://typer.tiangolo.com/tutorial/commands/callback/
+@app.callback()
+def cli(quiet: bool = typer.Option(False, "--quiet", "-q")):
+    if quiet:
+        state["quiet"] = True
 
 
 if __name__ == "__main__":

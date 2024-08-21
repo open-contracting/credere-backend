@@ -80,9 +80,9 @@ def assert_ok(response):
     assert response.status_code == status.HTTP_200_OK, f"{response.status_code}: {response.json()}"
 
 
-def assert_success(result):
+def assert_success(result, stdout=""):
     assert result.exit_code == 0, result.exc_info
-    assert result.stdout == ""  # CliRunner(mix_stderr=True) by default
+    assert result.stdout == stdout, f"{result.stdout!r} != {stdout!r}"  # CliRunner(mix_stderr=True) by default
 
 
 @contextmanager

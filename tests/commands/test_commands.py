@@ -16,7 +16,9 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
     with assert_change(mock_send_templated_email, "call_count", 1):
         result = runner.invoke(commands.app, ["send-reminders"])
 
-    assert_success(result)
+    assert_success(
+        result, "Sending 1 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+    )
 
 
 def test_send_reminders_submit(session, mock_send_templated_email, accepted_application):
@@ -30,14 +32,18 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
     with assert_change(mock_send_templated_email, "call_count", 1):
         result = runner.invoke(commands.app, ["send-reminders"])
 
-    assert_success(result)
+    assert_success(
+        result, "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 1 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+    )
 
 
 def test_send_reminders_no_applications_to_remind(mock_send_templated_email, pending_application):
     with assert_change(mock_send_templated_email, "call_count", 0):
         result = runner.invoke(commands.app, ["send-reminders"])
 
-    assert_success(result)
+    assert_success(
+        result, "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+    )
 
 
 def test_set_lapsed_applications(session, pending_application):

@@ -151,14 +151,11 @@ def test_fetch_previous_borrower_awards(reset_database, sessionmaker, session):
         assert session.query(models.EventLog).count() == 0, session.query(models.EventLog).one()
 
 
-def test_fetch_empty_contracts(reset_database, caplog):
-    with caplog.at_level("INFO"):
-        with mock_response(200, [], "app.sources.colombia.get_new_awards"):
-            result = runner.invoke(commands.app, ["fetch-awards"])
+def test_fetch_empty_contracts(reset_database):
+    with mock_response(200, [], "app.sources.colombia.get_new_awards"):
+        result = runner.invoke(commands.app, ["fetch-awards"])
 
-            assert_success(result)
-
-    assert "No new contracts" in caplog.text
+        assert_success(result, "Fetched 0 contracts\n")
 
 
 def test_fetch_new_awards_from_date(reset_database, session):
@@ -185,30 +182,27 @@ def test_fetch_new_awards_from_date(reset_database, session):
         inserted_borrower = session.query(models.Borrower).one()
         inserted_application = session.query(models.Application).one()
 
-        assert_success(result)
+        assert_success(result, "Fetched 1 contracts\n")
         compare_objects(inserted_award, expected_award)
         compare_objects(inserted_borrower, expected_borrower)
         compare_objects(inserted_application, expected_application)
 
 
-def test_fetch_award_by_contract_and_supplier_empty(reset_database, session, caplog):
-    with caplog.at_level("INFO"):
-        with (
-            mock_function_response(
-                session,
-                "app.db.get_db",
-            ),
-            mock_response(
-                200,
-                [],
-                "app.sources.colombia.get_award_by_id_and_supplier",
-            ),
-        ):
-            result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
+def test_fetch_award_by_contract_and_supplier_empty(reset_database, session):
+    with (
+        mock_function_response(
+            session,
+            "app.db.get_db",
+        ),
+        mock_response(
+            200,
+            [],
+            "app.sources.colombia.get_award_by_id_and_supplier",
+        ),
+    ):
+        result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
 
-            assert_success(result)
-
-    assert f"The award with id {AWARD_ID} and supplier id {SUPPLIER_ID} was not found" in caplog.text
+        assert_success(result, "No award found with ID TEST_AWARD_ID and supplier ID 987654321\n")
 
 
 def test_fetch_award_by_id_and_supplier(reset_database, session):
