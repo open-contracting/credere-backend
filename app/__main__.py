@@ -320,9 +320,7 @@ def sla_overdue_applications() -> None:
                     if days_passed > application.lender.sla_days:
                         application.overdued_at = datetime.now(application.created_at.tzinfo)
 
-                        message_id = mail.send_overdue_application_email_to_ocp(
-                            aws.ses_client, application.lender.name
-                        )
+                        message_id = mail.send_overdue_application_email_to_ocp(aws.ses_client, application)
                         models.Message.create(
                             session,
                             application=application,

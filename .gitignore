@@ -34,3 +34,4 @@ coverage_re
 /schemaspy
 /credere-main-*.json
 /test.json
+/messages.pot

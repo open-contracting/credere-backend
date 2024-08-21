@@ -5,8 +5,8 @@ from decimal import Decimal
 from reportlab.platypus import Paragraph, Table
 
 from app import models
-from app.i18n import get_translated_string
-from reportlab_mods import borrower_size_dict, create_table, document_type_dict, sector_dict, styleN
+from app.i18n import _
+from reportlab_mods import create_table, styleN
 
 
 def _format_currency(number: Decimal | None, currency: str) -> str:
@@ -38,15 +38,15 @@ def create_application_table(application: models.Application, lang: str) -> Tabl
 
     data = [
         [
-            get_translated_string("Financing Options", lang),
-            get_translated_string("Data", lang),
+            _("Financing Options", lang),
+            _("Data", lang),
         ],
         [
-            get_translated_string("Lender", lang),
+            _("Lender", lang),
             application.lender.name,
         ],
         [
-            get_translated_string("Amount requested", lang),
+            _("Amount requested", lang),
             _format_currency(application.amount_requested, application.currency),
         ],
     ]
@@ -54,50 +54,49 @@ def create_application_table(application: models.Application, lang: str) -> Tabl
     if application.credit_product.type == models.CreditType.LOAN:
         data.append(
             [
-                get_translated_string("Type", lang),
-                get_translated_string("Loan", lang),
+                _("Type", lang),
+                _("Loan", lang),
             ],
         )
         data.append(
             [
-                get_translated_string("Payment start date", lang),
+                _("Payment start date", lang),
                 _format_date(str(application.payment_start_date)),
             ],
         )
         data.append(
             [
-                get_translated_string("Repayment terms", lang),
-                get_translated_string(
-                    "{repayment_years} year(s), {repayment_months} month(s)",
+                _("Repayment terms", lang),
+                _(
+                    "%(repayment_years)s year(s), %(repayment_months)s month(s)",
                     lang,
-                    {
-                        "repayment_years": application.repayment_years,
-                        "repayment_months": application.repayment_months,
-                    },
+                    repayment_years=application.repayment_years,
+                    repayment_months=application.repayment_months,
                 ),
             ],
         )
     else:
         data.append(
             [
-                get_translated_string("Type", lang),
-                get_translated_string("Credit Line", lang),
+                _("Type", lang),
+                _("Credit Line", lang),
             ],
         )
 
     if application.status == models.ApplicationStatus.COMPLETED:
         data.append(
             [
-                get_translated_string("Contract amount", lang),
+                _("Contract amount", lang),
                 _format_currency(application.contract_amount_submitted, application.currency),
             ]
         )
         data.append(
             [
-                get_translated_string("Credit amount", lang),
+                _("Credit amount", lang),
                 _format_currency(application.disbursed_final_amount, application.currency),
             ]
         )
+
     return create_table(data)
 
 
@@ -121,67 +120,66 @@ def create_award_table(award: models.Award, lang: str) -> Table:
     }\nValor Pagado: {
         _format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
     }\n"""
-    secop_link = f"""<link href="{award.source_url}">{award.source_url}</link>"""
 
-    data = [
+    return create_table(
         [
-            get_translated_string("Award Data", lang),
-            get_translated_string("Data", lang),
-        ],
-        [
-            get_translated_string("View data in SECOP II", lang),
-            Paragraph(secop_link, styleN),
-        ],
-        [
-            get_translated_string("Award Title", lang),
-            Paragraph(award.title, styleN),
-        ],
-        [
-            get_translated_string("Contracting Process ID", lang),
-            Paragraph(award.contracting_process_id, styleN),
-        ],
-        [
-            get_translated_string("Award Description", lang),
-            Paragraph(award.description, styleN),
-        ],
-        [
-            get_translated_string("Award Date", lang),
-            _format_date(str(award.award_date)),
-        ],
-        [
-            get_translated_string("Award Value Currency & Amount", lang),
-            _format_currency(award.award_amount, award.award_currency),
-        ],
-        [
-            get_translated_string("Contract Start Date", lang),
-            _format_date(str(award.contractperiod_startdate)),
-        ],
-        [
-            get_translated_string("Contract End Date", lang),
-            _format_date(str(award.contractperiod_enddate)),
-        ],
-        [
-            get_translated_string("Payment Method", lang),
-            payment_method_text,
-        ],
-        [
-            get_translated_string("Buyer Name", lang),
-            Paragraph(
-                award.buyer_name,
-                styleN,
-            ),
-        ],
-        [
-            get_translated_string("Procurement Method", lang),
-            Paragraph(award.procurement_method, styleN),
-        ],
-        [
-            get_translated_string("Contract Type", lang),
-            Paragraph(award.procurement_category, styleN),
-        ],
-    ]
-
-    return create_table(data)
+            [
+                _("Award Data", lang),
+                _("Data", lang),
+            ],
+            [
+                _("View data in SECOP II", lang),
+                Paragraph(f'<link href="{award.source_url}">{award.source_url}</link>', styleN),
+            ],
+            [
+                _("Award Title", lang),
+                Paragraph(award.title, styleN),
+            ],
+            [
+                _("Contracting Process ID", lang),
+                Paragraph(award.contracting_process_id, styleN),
+            ],
+            [
+                _("Award Description", lang),
+                Paragraph(award.description, styleN),
+            ],
+            [
+                _("Award Date", lang),
+                _format_date(str(award.award_date)),
+            ],
+            [
+                _("Award Value Currency & Amount", lang),
+                _format_currency(award.award_amount, award.award_currency),
+            ],
+            [
+                _("Contract Start Date", lang),
+                _format_date(str(award.contractperiod_startdate)),
+            ],
+            [
+                _("Contract End Date", lang),
+                _format_date(str(award.contractperiod_enddate)),
+            ],
+            [
+                _("Payment Method", lang),
+                payment_method_text,
+            ],
+            [
+                _("Buyer Name", lang),
+                Paragraph(
+                    award.buyer_name,
+                    styleN,
+                ),
+            ],
+            [
+                _("Procurement Method", lang),
+                Paragraph(award.procurement_method, styleN),
+            ],
+            [
+                _("Contract Type", lang),
+                Paragraph(award.procurement_category, styleN),
+            ],
+        ]
+    )
 
 
 def create_borrower_table(borrower: models.Borrower, application: models.Application, lang: str) -> Table:
@@ -193,45 +191,89 @@ def create_borrower_table(borrower: models.Borrower, application: models.Applica
     :return: The generated table.
     """
 
-    data = [
+    # Keep in sync with MSME_TYPES_NAMES in credere-frontend
+    borrower_size = {
+        models.BorrowerSize.NOT_INFORMED: _("Not informed", lang),
+        models.BorrowerSize.MICRO: _("0 to 10", lang),
+        models.BorrowerSize.SMALL: _("11 to 50", lang),
+        models.BorrowerSize.MEDIUM: _("51 to 200", lang),
+        models.BorrowerSize.BIG: _("+ 200", lang),
+    }[borrower.size]
+
+    # Keep in sync with SECTOR_TYPES in credere-frontend
+    borrower_sector = {
+        "agricultura": _("Agricultura, ganadería, caza, silvicultura y pesca"),
+        "minas": _("Explotación de minas y canteras"),
+        "manufactura": _("Industrias manufactureras"),
+        "electricidad": _("Suministro de electricidad, gas, vapor y aire acondicionado"),
+        "agua": _(
+            "Distribución de agua; evacuación y tratamiento de aguas residuales, gestión de desechos y actividades de "
+            "saneamiento ambiental"
+        ),
+        "construccion": _("Construcción"),
+        "transporte": _("Transporte y almacenamiento"),
+        "alojamiento": _("Alojamiento y servicios de comida"),
+        "comunicaciones": _("Información y comunicaciones"),
+        "actividades_financieras": _("Actividades financieras y de seguros"),
+        "actividades_inmobiliarias": _("Actividades inmobiliarias"),
+        "actividades_profesionales": _("Actividades profesionales, científicas y técnicas"),
+        "actividades_servicios_administrativos": _("Actividades de servicios administrativos y de apoyo"),
+        "administracion_publica": _(
+            "Administración pública y defensa; planes de seguridad social de afiliación obligatoria"
+        ),
+        "educacion": _("Educación"),
+        "atencion_salud": _("Actividades de atención de la salud humana y de asistencia social"),
+        "actividades_artisticas": _("Actividades artísticas, de entretenimiento y recreación"),
+        "otras_actividades": _("Otras actividades de servicios"),
+        "actividades_hogares": _(
+            "Actividades de los hogares individuales en calidad de empleadores; actividades no diferenciadas de los "
+            "hogares individuales como productores de bienes yservicios para uso propio"
+        ),
+        "actividades_organizaciones_extraterritoriales": _(
+            "Actividades de organizaciones y entidades extraterritoriales"
+        ),
+    }[borrower.sector]
+
+    return create_table(
         [
-            get_translated_string("MSME Data", lang),
-            get_translated_string("Data", lang),
-        ],
-        [
-            get_translated_string("Legal Name", lang),
-            Paragraph(borrower.legal_name, styleN),
-        ],
-        [
-            get_translated_string("Address", lang),
-            Paragraph(borrower.address, styleN),
-        ],
-        [
-            get_translated_string("National Tax ID", lang),
-            borrower.legal_identifier,
-        ],
-        [
-            get_translated_string("Registration Type", lang),
-            borrower.type,
-        ],
-        [
-            get_translated_string("Size", lang),
-            get_translated_string(borrower_size_dict[borrower.size], lang),
-        ],
-        [
-            get_translated_string("Sector", lang),
-            get_translated_string(sector_dict[borrower.sector], lang),
-        ],
-        [
-            get_translated_string("Annual Revenue", lang),
-            _format_currency(borrower.annual_revenue, borrower.currency),
-        ],
-        [
-            get_translated_string("Business Email", lang),
-            application.primary_email,
-        ],
-    ]
-    return create_table(data)
+            [
+                _("MSME Data", lang),
+                _("Data", lang),
+            ],
+            [
+                _("Legal Name", lang),
+                Paragraph(borrower.legal_name, styleN),
+            ],
+            [
+                _("Address", lang),
+                Paragraph(borrower.address, styleN),
+            ],
+            [
+                _("National Tax ID", lang),
+                borrower.legal_identifier,
+            ],
+            [
+                _("Registration Type", lang),
+                borrower.type,
+            ],
+            [
+                _("Size", lang),
+                borrower_size,
+            ],
+            [
+                _("Sector", lang),
+                borrower_sector,
+            ],
+            [
+                _("Annual Revenue", lang),
+                _format_currency(borrower.annual_revenue, borrower.currency),
+            ],
+            [
+                _("Business Email", lang),
+                application.primary_email,
+            ],
+        ]
+    )
 
 
 def create_documents_table(documents: list[models.BorrowerDocument], lang: str) -> Table:
@@ -243,16 +285,29 @@ def create_documents_table(documents: list[models.BorrowerDocument], lang: str) 
     :return: The generated table.
     """
 
+    # Keep in sync with DOCUMENT_TYPES_NAMES in credere-frontend
+    document_types = {
+        models.BorrowerDocumentType.INCORPORATION_DOCUMENT: _("Incorporation document"),
+        models.BorrowerDocumentType.SUPPLIER_REGISTRATION_DOCUMENT: _("Supplier registration document"),
+        models.BorrowerDocumentType.BANK_NAME: _("Bank name"),
+        models.BorrowerDocumentType.BANK_CERTIFICATION_DOCUMENT: _("Bank certification document"),
+        models.BorrowerDocumentType.FINANCIAL_STATEMENT: _("Financial statement"),
+        models.BorrowerDocumentType.SIGNED_CONTRACT: _("Signed contract"),
+        models.BorrowerDocumentType.SHAREHOLDER_COMPOSITION: _("Shareholder composition"),
+        models.BorrowerDocumentType.CHAMBER_OF_COMMERCE: _("Chamber of Commerce"),
+        models.BorrowerDocumentType.THREE_LAST_BANK_STATEMENT: _("Three last bank statement"),
+    }
+
     data = [
         [
-            get_translated_string("MSME Documents", lang),
-            get_translated_string("Data", lang),
+            _("MSME Documents", lang),
+            _("Data", lang),
         ]
     ]
     for document in documents:
         data.append(
             [
-                get_translated_string(document_type_dict[document.type], lang),
+                document_types[document.type],
                 document.name,
             ]
         )

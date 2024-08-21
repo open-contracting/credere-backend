@@ -34,6 +34,6 @@ jobs:
       - run: pip install -r requirements_dev.txt
       - env:
           # https://fastapi.tiangolo.com/tutorial/request-files/
-          # uvicorn is run as a command in a Dockerfile.
-          STANDARD_MAINTENANCE_SCRIPTS_IGNORE: python-multipart,typer,uvicorn
+          # babel and uvicorn are run as commands in a Dockerfile.
+          STANDARD_MAINTENANCE_SCRIPTS_IGNORE: babel,python-multipart,uvicorn
         run: pytest /tmp/test_requirements.py

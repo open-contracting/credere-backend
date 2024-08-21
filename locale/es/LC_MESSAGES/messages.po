@@ -1,0 +1,407 @@
+# Spanish translations for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-08-21 00:55-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: app/mail.py:99
+msgid "Your credit application has been prequalified"
+msgstr "Revisión de tu aplicación completada exitosamente"
+
+#: app/mail.py:115
+msgid "Application Submission Complete"
+msgstr "Envío de aplicación completada"
+
+#: app/mail.py:136
+msgid "Your credit application has been approved"
+msgstr "Tu solicitud de crédito ha sido aprobada"
+
+#: app/mail.py:163
+msgid "Welcome"
+msgstr "Bienvenido/a"
+
+#: app/mail.py:190
+msgid "New contract submission"
+msgstr "Una MIPYME ha subido su contrato"
+
+#: app/mail.py:212
+msgid "Thank you for uploading the signed contract"
+msgstr "Gracias por subir tu contrato firmado"
+
+#: app/mail.py:236
+msgid "Confirm email address change"
+msgstr "Confirmar cambio de dirección de correo electrónico"
+
+#: app/mail.py:267
+msgid "Reset password"
+msgstr "Restablecer contraseña"
+
+#: app/mail.py:307 app/mail.py:325
+msgid "Opportunity to access MSME credit for being awarded a public contract"
+msgstr ""
+"Oportunidad de acceso a crédito MIPYME por ser adjudicatario de contrato "
+"estatal"
+
+#: app/mail.py:343
+msgid ""
+"Reminder - Opportunity to access MSME credit for being awarded a public "
+"contract"
+msgstr ""
+"Recordatorio - Oportunidad de acceso a crédito MIPYME por ser "
+"adjudicatario de contrato estatal"
+
+#: app/mail.py:368 app/mail.py:387
+msgid "New application submission"
+msgstr "Nueva aplicación recibida"
+
+#: app/mail.py:409
+msgid "New message from a financial institution"
+msgstr "Nuevo mensaje de una institución financiera"
+
+#: app/mail.py:433
+msgid "You have credit applications that need processing"
+msgstr "Tienes solicitudes de crédito que necesitan procesamiento"
+
+#: app/mail.py:454
+msgid "New overdue application"
+msgstr "Nueva solicitud vencida"
+
+#: app/mail.py:475 app/mail.py:498
+msgid "Your credit application has been declined"
+msgstr "Tu solicitud de crédito ha sido rechazada"
+
+#: app/mail.py:517
+msgid "Alternative credit option"
+msgstr "Opción de crédito alternativa"
+
+#: app/mail.py:537
+msgid "Application updated"
+msgstr "Aplicación actualizada"
+
+#: app/routers/downloads.py:88 app/routers/downloads.py:106
+msgid "Application Details"
+msgstr "Detalles de la aplicación"
+
+#: app/routers/downloads.py:99
+msgid "Previous Public Sector Contracts"
+msgstr "Anteriores contratos con el sector público"
+
+#: app/routers/downloads.py:148 app/utils/tables.py:252
+msgid "National Tax ID"
+msgstr "Identificación fiscal nacional"
+
+#: app/routers/downloads.py:149 app/utils/tables.py:244
+msgid "Legal Name"
+msgstr "Nombre legal"
+
+#: app/routers/downloads.py:150
+msgid "Email Address"
+msgstr "Dirección de correo electrónico"
+
+#: app/routers/downloads.py:151
+msgid "Submission Date"
+msgstr "Fecha de envío"
+
+#: app/routers/downloads.py:152
+msgid "Stage"
+msgstr "Etapa"
+
+#: app/utils/tables.py:41
+msgid "Financing Options"
+msgstr "Opciones crediticias"
+
+#: app/utils/tables.py:42 app/utils/tables.py:127 app/utils/tables.py:241
+#: app/utils/tables.py:304
+msgid "Data"
+msgstr "Datos"
+
+#: app/utils/tables.py:45
+msgid "Lender"
+msgstr "Entidad financiera"
+
+#: app/utils/tables.py:49
+msgid "Amount requested"
+msgstr "Monto solicitado"
+
+#: app/utils/tables.py:57 app/utils/tables.py:81
+msgid "Type"
+msgstr "Tipo"
+
+#: app/utils/tables.py:58
+msgid "Loan"
+msgstr "Préstamo"
+
+#: app/utils/tables.py:63
+msgid "Payment start date"
+msgstr "Fecha de inicio de pago"
+
+#: app/utils/tables.py:69
+msgid "Repayment terms"
+msgstr "Periodo de pago"
+
+#: app/utils/tables.py:70
+#, python-format
+msgid "%(repayment_years)s year(s), %(repayment_months)s month(s)"
+msgstr "%(repayment_years)s año(s), %(repayment_months)s mes(es)"
+
+#: app/utils/tables.py:82
+msgid "Credit Line"
+msgstr "Línea de crédito"
+
+#: app/utils/tables.py:89
+msgid "Contract amount"
+msgstr "Monto del contrato"
+
+#: app/utils/tables.py:95
+msgid "Credit amount"
+msgstr "Monto del crédito"
+
+#: app/utils/tables.py:126
+msgid "Award Data"
+msgstr "Datos de la adjudicación"
+
+#: app/utils/tables.py:130
+msgid "View data in SECOP II"
+msgstr "Ver datos en SECOP II"
+
+#: app/utils/tables.py:134
+msgid "Award Title"
+msgstr "Título de la adjudicación"
+
+#: app/utils/tables.py:138
+msgid "Contracting Process ID"
+msgstr "Identificador del proceso de contratación"
+
+#: app/utils/tables.py:142
+msgid "Award Description"
+msgstr "Descripción de la adjudicación"
+
+#: app/utils/tables.py:146
+msgid "Award Date"
+msgstr "Fecha de la adjudicación"
+
+#: app/utils/tables.py:150
+msgid "Award Value Currency & Amount"
+msgstr "Monto y moneda de la adjudicación"
+
+#: app/utils/tables.py:154
+msgid "Contract Start Date"
+msgstr "Fecha de inicio del contrato"
+
+#: app/utils/tables.py:158
+msgid "Contract End Date"
+msgstr "Fecha de fin del contrato"
+
+#: app/utils/tables.py:162
+msgid "Payment Method"
+msgstr "Método de pago"
+
+#: app/utils/tables.py:166
+msgid "Buyer Name"
+msgstr "Nombre de la entidad compradora"
+
+#: app/utils/tables.py:173
+msgid "Procurement Method"
+msgstr "Método de contratación"
+
+#: app/utils/tables.py:177
+msgid "Contract Type"
+msgstr "Tipo de contrato"
+
+#: app/utils/tables.py:196
+msgid "Not informed"
+msgstr "No informado"
+
+#: app/utils/tables.py:197
+msgid "0 to 10"
+msgstr "0 a 10"
+
+#: app/utils/tables.py:198
+msgid "11 to 50"
+msgstr "11 a 50"
+
+#: app/utils/tables.py:199
+msgid "51 to 200"
+msgstr "51 a 200"
+
+#: app/utils/tables.py:200
+msgid "+ 200"
+msgstr "+ 200"
+
+#: app/utils/tables.py:205
+msgid "Agricultura, ganadería, caza, silvicultura y pesca"
+msgstr "Agricultura, ganadería, caza, silvicultura y pesca"
+
+#: app/utils/tables.py:206
+msgid "Explotación de minas y canteras"
+msgstr "Explotación de minas y canteras"
+
+#: app/utils/tables.py:207
+msgid "Industrias manufactureras"
+msgstr "Industrias manufactureras"
+
+#: app/utils/tables.py:208
+msgid "Suministro de electricidad, gas, vapor y aire acondicionado"
+msgstr "Suministro de electricidad, gas, vapor y aire acondicionado"
+
+#: app/utils/tables.py:209
+msgid ""
+"Distribución de agua; evacuación y tratamiento de aguas residuales, "
+"gestión de desechos y actividades de saneamiento ambiental"
+msgstr ""
+"Distribución de agua; evacuación y tratamiento de aguas residuales, "
+"gestión de desechos y actividades de saneamiento ambiental"
+
+#: app/utils/tables.py:213
+msgid "Construcción"
+msgstr "Construcción"
+
+#: app/utils/tables.py:214
+msgid "Transporte y almacenamiento"
+msgstr "Transporte y almacenamiento"
+
+#: app/utils/tables.py:215
+msgid "Alojamiento y servicios de comida"
+msgstr "Alojamiento y servicios de comida"
+
+#: app/utils/tables.py:216
+msgid "Información y comunicaciones"
+msgstr "Información y comunicaciones"
+
+#: app/utils/tables.py:217
+msgid "Actividades financieras y de seguros"
+msgstr "Actividades financieras y de seguros"
+
+#: app/utils/tables.py:218
+msgid "Actividades inmobiliarias"
+msgstr "Actividades inmobiliarias"
+
+#: app/utils/tables.py:219
+msgid "Actividades profesionales, científicas y técnicas"
+msgstr "Actividades profesionales, científicas y técnicas"
+
+#: app/utils/tables.py:220
+msgid "Actividades de servicios administrativos y de apoyo"
+msgstr "Actividades de servicios administrativos y de apoyo"
+
+#: app/utils/tables.py:221
+msgid ""
+"Administración pública y defensa; planes de seguridad social de "
+"afiliación obligatoria"
+msgstr ""
+"Administración pública y defensa; planes de seguridad social de "
+"afiliación obligatoria"
+
+#: app/utils/tables.py:224
+msgid "Educación"
+msgstr "Educación"
+
+#: app/utils/tables.py:225
+msgid "Actividades de atención de la salud humana y de asistencia social"
+msgstr "Actividades de atención de la salud humana y de asistencia social"
+
+#: app/utils/tables.py:226
+msgid "Actividades artísticas, de entretenimiento y recreación"
+msgstr "Actividades artísticas, de entretenimiento y recreación"
+
+#: app/utils/tables.py:227
+msgid "Otras actividades de servicios"
+msgstr "Otras actividades de servicios"
+
+#: app/utils/tables.py:228
+msgid ""
+"Actividades de los hogares individuales en calidad de empleadores; "
+"actividades no diferenciadas de los hogares individuales como productores"
+" de bienes yservicios para uso propio"
+msgstr ""
+"Actividades de los hogares individuales en calidad de empleadores; "
+"actividades no diferenciadas de los hogares individuales como productores"
+" de bienes y servicios para uso propio"
+
+#: app/utils/tables.py:232
+msgid "Actividades de organizaciones y entidades extraterritoriales"
+msgstr "Actividades de organizaciones y entidades extraterritoriales"
+
+#: app/utils/tables.py:240
+msgid "MSME Data"
+msgstr "Datos de la MIPYME"
+
+#: app/utils/tables.py:248
+msgid "Address"
+msgstr "Dirección"
+
+#: app/utils/tables.py:256
+msgid "Registration Type"
+msgstr "Tipo de registro"
+
+#: app/utils/tables.py:260
+msgid "Size"
+msgstr "Tamaño"
+
+#: app/utils/tables.py:264
+msgid "Sector"
+msgstr "Sector"
+
+#: app/utils/tables.py:268
+msgid "Annual Revenue"
+msgstr "Valor estimado de facturación anual de su empresa"
+
+#: app/utils/tables.py:272
+msgid "Business Email"
+msgstr "Correo institucional"
+
+#: app/utils/tables.py:290
+msgid "Incorporation document"
+msgstr "Documento de incorporación"
+
+#: app/utils/tables.py:291
+msgid "Supplier registration document"
+msgstr "Documento de registro de proveedor"
+
+#: app/utils/tables.py:292
+msgid "Bank name"
+msgstr "Nombre del banco"
+
+#: app/utils/tables.py:293
+msgid "Bank certification document"
+msgstr "Certificado bancario"
+
+#: app/utils/tables.py:294
+msgid "Financial statement"
+msgstr "Estados financieros"
+
+#: app/utils/tables.py:295
+msgid "Signed contract"
+msgstr "Contrato firmado"
+
+#: app/utils/tables.py:296
+msgid "Shareholder composition"
+msgstr "Composición accionaria"
+
+#: app/utils/tables.py:297
+msgid "Chamber of Commerce"
+msgstr "Cámara de comercio"
+
+#: app/utils/tables.py:298
+msgid "Three last bank statement"
+msgstr "Últimos tres extractos bancarios"
+
+#: app/utils/tables.py:303
+msgid "MSME Documents"
+msgstr "Documentos de la MIPYME"
+
