@@ -32,9 +32,6 @@ async def create_user(
     Email the user a temporary password.
 
     Accessible only to users with the OCP role.
-
-    :param payload: The user data for creating the new user.
-    :return: The created user.
     """
     with rollback_on_error(session):
         try:
@@ -76,10 +73,6 @@ def change_password(
 
     This endpoint allows users to change their password. It initiates the password change process
     and handles different scenarios such as new password requirement, MFA setup, and error handling.
-
-    :param user: The user data including the username, temporary password, and new password.
-    :param response: The response object used to modify the response headers (automatically injected).
-    :return: The change password response or an error response.
     """
     try:
         # This endpoint is only called for new users, to replace the generated password.
@@ -138,10 +131,6 @@ def setup_mfa(
 
     This endpoint allows users to set up MFA using a software token. It verifies the software
     token with the provided secret, session, and temporary password.
-
-    :param setup_mfa: The user data including the secret code, session, and temporary password.
-    :param response: The response object used to modify the response headers (automatically injected).
-    :return: The response indicating successful MFA setup or an error response.
     """
     try:
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/verify_software_token.html
@@ -225,7 +214,6 @@ def logout(
     Logout the user from all devices in AWS Cognito.
 
     :param authorization: The Authorization header, like "Bearer ACCESS_TOKEN".
-    :return: The response indicating successful logout.
     """
 
     # The Authorization header is not set if the user is already logged out.
@@ -261,9 +249,6 @@ def me(
     This endpoint retrieves the details of the currently authenticated user.
     It uses the username extracted from the JWT token to query the database
     and retrieve the user details.
-
-    :param username_from_token: The username extracted from the JWT token.
-    :return: The response containing the details of the authenticated user.
     """
     user = get_object_or_404(session, models.User, "external_id", username_from_token)
     return serializers.UserResponse(user=user)
@@ -279,9 +264,6 @@ def forgot_password(
     Initiate the process of resetting a user's password.
 
     Email the user a temporary password and a reset link.
-
-    :param user: The user information containing the username or email address of the user.
-    :return: The response indicating that an email with a reset link was sent to the user.
     """
     detail = "An email with a reset link was sent to end user"
     try:
@@ -312,10 +294,6 @@ async def get_user(user_id: int, session: Session = Depends(get_db)) -> models.U
     Retrieve information about a user.
 
     This endpoint retrieves information about a user based on their user_id.
-
-    :param user_id: The ID of the user.
-    :return: The user information.
-    :raises HTTPException 404: If the user is not found.
     """
     return get_object_or_404(session, models.User, "id", user_id)
 
@@ -336,12 +314,6 @@ async def get_all_users(
     Retrieve a list of users.
 
     This endpoint retrieves a list of users, paginated and sorted based on the provided parameters.
-
-    :param page: The page number (0-based) to retrieve.
-    :param page_size: The number of users to retrieve per page.
-    :param sort_field: The field to sort the users by. Defaults to "created_at".
-    :param sort_order: The sort order. Must be either "asc" or "desc". Defaults to "asc".
-    :return: The paginated and sorted list of users.
     """
     list_query = (
         session.query(models.User)
@@ -377,10 +349,6 @@ async def update_user(
     Update a user's information.
 
     This endpoint updates the information of a specific user identified by the provided ID.
-
-    :param id: The ID of the user to update.
-    :param payload: The updated user information.
-    :return: The updated user information.
     """
     with rollback_on_error(session):
         try:

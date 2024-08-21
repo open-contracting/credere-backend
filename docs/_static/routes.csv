@@ -1,0 +1,56 @@
+Methods,Path,Backend parsers,Backend serializers,Frontend request,Frontend response
+POST,/users,models.User,models.User,CreateUserInput,IUser
+PUT,/users/change-password,BasicUser,ChangePasswordResponse | ResponseBase,UpdatePasswordPayload,IUpdatePasswordResponse
+PUT,/users/setup-mfa,SetupMFA,ResponseBase,SetupMFAInput,IResponse
+POST,/users/login,BasicUser,LoginResponse,LoginInput,ILoginResponse
+GET,/users/logout,,ResponseBase,,IResponse
+GET,/users/me,,UserResponse,,IUserResponse
+POST,/users/forgot-password,BasicUser,ResponseBase,ResetPasswordInput,IResponse
+GET,/users/{user_id},user_id,models.User,id,IUser
+GET,/users,"page, page_size, sort_field, sort_order",UserListResponse,PaginationInput,IUsersListResponse
+PUT,/users/{id},models.User,models.UserWithLender,UpdateUserInput,IUser
+POST,/applications/{id}/reject-application,LenderRejectedApplication,models.ApplicationWithRelations,RejectApplicationInput,IApplication
+POST,/applications/{id}/complete-application,LenderReviewContract,models.ApplicationWithRelations,CompleteApplicationInput,IApplication
+POST,/applications/{id}/approve-application,LenderApprovedData,models.ApplicationWithRelations,ApproveApplicationInput,IApplication
+PUT,/applications/{id}/verify-data-field,UpdateDataField,models.ApplicationWithRelations,IUpdateBorrower,IApplication
+PUT,/applications/documents/{document_id}/verify-document,VerifyBorrowerDocument,models.ApplicationWithRelations,IVerifyDocument,IApplication
+PUT,/applications/{id}/award,AwardUpdate,models.ApplicationWithRelations,IUpdateAward,IApplication
+PUT,/applications/{id}/borrower,BorrowerUpdate,models.ApplicationWithRelations,IUpdateBorrower,IApplication
+GET,/applications/admin-list,"page, page_size, sort_field, sort_order",ApplicationListResponse,PaginationInput,IApplicationsListResponse
+GET,/applications/id/{id},,models.ApplicationWithRelations,id,IApplication
+POST,/applications/{id}/start,,models.ApplicationWithRelations,id,IApplication
+GET,/applications,"page, page_size, sort_field, sort_order",ApplicationListResponse,PaginationInput,IApplicationsListResponse
+POST,/applications/email-sme/{id},ApplicationEmailBorrower,models.ApplicationWithRelations,EmailToSMEInput,IApplication
+GET,/applications/{id}/previous-awards,,list[models.Award],id,IAward[]
+GET,/applications/uuid/{uuid},,ApplicationResponse,uuid,IApplicationResponse
+POST,/applications/decline,ApplicationDeclinePayload,ApplicationResponse,DeclineApplicationInput,IApplicationResponse
+POST,/applications/rollback-decline,ApplicationBase,ApplicationResponse,ApplicationBaseInput,IApplicationResponse
+POST,/applications/decline-feedback,ApplicationDeclineFeedbackPayload,ApplicationResponse,DeclineFeedbackInput,IApplicationResponse
+POST,/applications/access-scheme,ApplicationBase,ApplicationResponse,ApplicationBaseInput,IApplicationResponse
+POST,/applications/credit-product-options,ApplicationCreditOptions,CreditProductListResponse,GetCreditProductsOptionsInput,IApplicationCreditOptions
+POST,/applications/select-credit-product,ApplicationSelectCreditProduct,ApplicationResponse,SelectCreditProductInput,IApplicationResponse
+POST,/applications/rollback-select-credit-product,ApplicationBase,ApplicationResponse,ApplicationBaseInput,IApplicationResponse
+POST,/applications/confirm-credit-product,ApplicationBase,ApplicationResponse,ApplicationBaseInput,IApplicationResponse
+POST,/applications/rollback-confirm-credit-product,ApplicationBase,ApplicationResponse,ApplicationBaseInput,IApplicationResponse
+POST,/applications/submit,ApplicationBase,ApplicationResponse,ApplicationBaseInput,IApplicationResponse
+POST,/applications/upload-document,"file, type, uuid",models.BorrowerDocumentBase,UploadFileInput,IBorrowerDocument
+POST,/applications/complete-information-request,ApplicationBase,ApplicationResponse,ApplicationBaseInput,IApplicationResponse
+POST,/applications/upload-contract,"file, uuid",models.BorrowerDocumentBase,UploadContractInput,IBorrowerDocument
+POST,/applications/confirm-upload-contract,UploadContractConfirmation,ApplicationResponse,ContractAmountInput,IApplicationResponse
+POST,/applications/find-alternative-credit-option,ApplicationBase,ApplicationResponse,ApplicationBaseInput,IApplicationResponse
+POST,/applications/change-email,ChangeEmail,parsers.ChangeEmail,ChangeEmailInput,ChangeEmailInput
+POST,/applications/confirm-change-email,ConfirmNewEmail,parsers.ChangeEmail,ConfirmChangeEmailInput,ChangeEmailInput
+GET,/applications/documents/id/{id},id,,id,blob
+GET,/applications/{id}/download-application/{lang},lang,,"id, lang",blob
+GET,/applications/export/{lang},lang,,lang,blob
+POST,/lenders,models.LenderCreate,models.Lender,ILenderBase,ILender
+POST,/lenders/{lender_id}/credit-products,models.CreditProduct,models.CreditProduct,ICreditProductBase,ICreditProduct
+GET,/lenders/{lender_id},lender_id,models.LenderWithRelations,id,ILender
+PUT,/lenders/{id},models.LenderBase,models.Lender,ILenderUpdate,ILender
+GET,/lenders,,LenderListResponse,,ILenderListResponse
+GET,/procurement-categories,,list[str],,string[]
+GET,/credit-products/{credit_product_id},credit_product_id,models.CreditProductWithLender,id,ICreditProduct
+PUT,/credit-products/{credit_product_id},models.CreditProduct,models.CreditProduct,ICreditProductUpdate,ICreditProduct
+GET,/statistics-ocp,"initial_date, final_date, lender_id, custom_range",StatisticResponse,StatisticsParmsInput,StatisticsFI
+GET,/statistics-ocp/opt-in,,StatisticOptInResponse,,StatisticsOCPoptIn
+GET,/statistics-fi,,StatisticResponse,,StatisticsFI

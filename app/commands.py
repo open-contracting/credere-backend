@@ -1,6 +1,10 @@
+import csv
+import inspect
+import itertools
 import json
 import logging
 import sys
+import types
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -10,12 +14,15 @@ import click
 import minify_html
 import typer
 import typer.cli
+from fastapi.params import Depends, Header
+from rich.console import Console
+from rich.table import Table
 from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 
 import app.utils.statistics as statistics_utils
-from app import aws, mail, models, util
+from app import aws, mail, main, models, util
 from app.db import get_db, handle_skipped_award, rollback_on_error
 from app.exceptions import SkippedAwardError, SourceFormatError
 from app.settings import app_settings
@@ -32,6 +39,7 @@ class OrderedGroup(typer.cli.TyperCLIGroup):
         return list(self.commands)
 
 
+console = Console()
 app = typer.Typer(cls=OrderedGroup)
 dev = typer.Typer()
 app.add_typer(dev, name="dev", help="Commands for maintainers of Credere.")
@@ -389,6 +397,56 @@ def remove_dated_application_data() -> None:
                     application.borrower.source_data = {}
 
             session.commit()
+
+
+# The openapi.json file can't be used, because it doesn't track Python modules.
+@dev.command()
+def routes(csv_format: bool = False) -> None:
+    def _pretty(model, expected):
+        if model is None:
+            return ""
+        if isinstance(model, types.UnionType):
+            return str(model).replace(f"{expected}.", "")
+
+        module, name = model.__module__, model.__name__
+        if module == expected:
+            return name
+        if module == "fastapi._compat":
+            return ", ".join(model.model_fields)
+        if module == "builtins":
+            return str(model).replace("app.", "")
+        return f"{module.replace('app.', '')}.{name}"
+
+    rows = []
+    for route in main.app.routes:
+        # Skip default OpenAPI routes.
+        if route.endpoint.__module__.startswith("fastapi."):
+            continue
+
+        if body_field := getattr(route, "body_field", None):  # POST, PUT
+            request = _pretty(body_field.type_, "app.parsers")
+        else:  # GET
+            spec = inspect.getfullargspec(route.endpoint)
+            request = ", ".join(
+                arg
+                for arg, default in itertools.zip_longest(reversed(spec.args), reversed(spec.defaults or []))
+                # Note: Depends() can contain application `id` and `uuid` args, under many layers.
+                if not isinstance(default, (Depends, Header))
+            )
+
+        response = _pretty(getattr(route, "response_model", None), "app.serializers")
+        rows.append([", ".join(route.methods), route.path, request, response])
+
+    fieldnames = "Methods", "Path", "Request format", "Response format"
+    if csv_format:
+        writer = csv.writer(sys.stdout, lineterminator="\n")
+        writer.writerow(fieldnames)
+        writer.writerows(rows)
+    else:
+        table = Table(*fieldnames)
+        for row in rows:
+            table.add_row(*row)
+        console.print(table)
 
 
 @dev.command()

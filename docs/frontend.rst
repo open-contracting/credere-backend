@@ -1,14 +1,11 @@
+:hide-toc:
+
 Frontend integration
 ====================
 
 .. note:: This page is a stub.
 
 .. seealso:: `Credere frontend <https://github.com/open-contracting/credere-frontend>`__
-
-Schemas
--------
-
-The schemas under Credere frontend's ``/src/schemas/`` directory should match the models in the ``app/parsers.py`` file.
 
 Error handling
 --------------
@@ -23,3 +20,19 @@ An endpoint can return HTTP error status codes. The error response is JSON text 
 In some cases, this callback calls ``handleRequestError``, which looks up the ``detail`` value in ``ERRORS_MESSAGES``, and, if there's a match, it uses that message.
 
 That is why some ``detail`` values are like ``util.ERROR_CODES.DOCUMENT_VERIFICATION_MISSING``.
+
+Schemas and models
+------------------
+
+Credere frontend's ``/src/schemas/`` schemas should match ``app.parsers``,  ``app.serializers`` and  ``app.models`` models.
+
+This table is contructed by running this command, and filling in information from Credere frontend's ``src/api/`` files:
+
+.. code-block:: bash
+
+   python -m app.commands dev routes --csv-format
+
+.. csv-table::
+   :file: _static/routes.csv
+   :header-rows: 1
+   :class: datatable

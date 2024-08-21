@@ -3,8 +3,8 @@ API reference
 
 .. toctree::
 
-   redoc
    swagger-ui
+   redoc
    settings
    models
    enums

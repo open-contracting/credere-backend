@@ -406,13 +406,6 @@ async def get_applications_list(
 ) -> serializers.ApplicationListResponse:
     """
     Get a paginated list of submitted applications for administrative purposes.
-
-    :param page: The page number of the application list (default: 0).
-    :param page_size: The number of applications per page (default: 10).
-    :param sort_field: The field to sort the applications by (default: "application.created_at").
-    :param sort_order: The sort order of the applications ("asc" or "desc", default: "asc").
-    :return: The paginated list of applications.
-    :raise: lumache.OCPOnlyError if the current user is not authorized.
     """
     applications_query = (
         models.Application.submitted(session)
@@ -509,12 +502,6 @@ async def get_applications(
 ) -> serializers.ApplicationListResponse:
     """
     Get a paginated list of submitted applications for a specific lender user.
-
-    :param page: The page number of the application list (default: 0).
-    :param page_size: The number of applications per page (default: 10).
-    :param sort_field: The field to sort the applications by (default: "application.created_at").
-    :param sort_order: The sort order of the applications ("asc" or "desc", default: "asc").
-    :return: The paginated list of applications for the specific user.
     """
     applications_query = (
         models.Application.submitted_to_lender(session, user.lender_id)
