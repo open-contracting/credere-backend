@@ -61,3 +61,17 @@ Credere frontend's ``src/constants/index.ts`` constants should match ``app.model
      - STATISTICS_DATE_FILTER
    * - UserType
      - USER_TYPES
+
+The translatable strings in three ``dict``s in ``app/utils/tables.py`` should match ``src/constants/index.ts`` constants:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Backend
+     - Frontend
+   * - borrower_size
+     - MSME_TYPES_NAMES
+   * - borrower_sector
+     - SECTOR_TYPES
+   * - document_types
+     - DOCUMENT_TYPES_NAMES

@@ -17,12 +17,10 @@ anyio==3.7.1
     #   -r requirements.txt
     #   httpcore
     #   starlette
-asttokens==2.2.1
+babel==2.16.0
     # via
     #   -r requirements.txt
-    #   transifex-python
-babel==2.16.0
-    # via sphinx
+    #   sphinx
 black==24.3.0
     # via -r requirements_dev.in
 boto3==1.26.136
@@ -63,7 +61,6 @@ click==8.1.3
     #   -r requirements.txt
     #   black
     #   pip-tools
-    #   transifex-python
     #   typer
     #   uvicorn
 colorama==0.4.6
@@ -100,10 +97,6 @@ filelock==3.12.0
     # via virtualenv
 flake8==6.0.0
     # via -r requirements_dev.in
-future==0.18.3
-    # via
-    #   -r requirements.txt
-    #   pyseeyou
 greenlet==3.0.3
     # via -r requirements.txt
 h11==0.14.0
@@ -198,10 +191,6 @@ pandas==2.1.0
     # via -r requirements.txt
 pandas-stubs==2.2.2.240807
     # via -r requirements_dev.in
-parsimonious==0.10.0
-    # via
-    #   -r requirements.txt
-    #   pyseeyou
 pathspec==0.11.1
     # via black
 pillow==10.3.0
@@ -253,10 +242,6 @@ pyjwt[crypto]==2.8.0
     # via -r requirements.txt
 pyproject-hooks==1.0.0
     # via build
-pyseeyou==1.0.2
-    # via
-    #   -r requirements.txt
-    #   transifex-python
 pytest==7.3.1
     # via
     #   -r requirements_dev.in
@@ -285,15 +270,10 @@ pytz==2023.3
     # via
     #   -r requirements.txt
     #   pandas
-    #   transifex-python
 pyyaml==6.0
     # via
     #   pre-commit
     #   responses
-regex==2023.6.3
-    # via
-    #   -r requirements.txt
-    #   parsimonious
 reportlab==4.0.4
     # via
     #   -r requirements.txt
@@ -308,7 +288,6 @@ requests==2.32.3
     #   py-html-checker
     #   responses
     #   sphinx
-    #   transifex-python
 responses==0.23.1
     # via moto
 rich==13.7.1
@@ -328,7 +307,6 @@ shellingham==1.5.4
 six==1.16.0
     # via
     #   -r requirements.txt
-    #   asttokens
     #   py-html-checker
     #   python-dateutil
 sniffio==1.3.0
@@ -368,14 +346,8 @@ starlette==0.36.3
     # via
     #   -r requirements.txt
     #   fastapi
-toolz==0.12.0
-    # via
-    #   -r requirements.txt
-    #   pyseeyou
 tornado==6.4.1
     # via livereload
-transifex-python==3.4.0
-    # via -r requirements.txt
 typer==0.12.4
     # via -r requirements.txt
 types-awscrt==0.19.17

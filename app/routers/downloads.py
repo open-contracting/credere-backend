@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import dependencies, models, util
 from app.db import get_db, rollback_on_error
 from app.dependencies import ApplicationScope
-from app.i18n import get_translated_string
+from app.i18n import _
 from app.utils import tables
 from reportlab_mods import styleSubTitle, styleTitle
 
@@ -85,7 +85,7 @@ async def download_application(
         doc = SimpleDocTemplate(buffer, pagesize=letter)
 
         elements: list[Any] = []
-        elements.append(Paragraph(get_translated_string("Application Details", lang), styleTitle))
+        elements.append(Paragraph(_("Application Details", lang), styleTitle))
         elements.append(tables.create_application_table(application, lang))
         elements.append(Spacer(1, 20))
         elements.append(tables.create_borrower_table(borrower, application, lang))
@@ -96,14 +96,14 @@ async def download_application(
 
         if previous_awards:
             elements.append(Spacer(1, 20))
-            elements.append(Paragraph(get_translated_string("Previous Public Sector Contracts", lang), styleSubTitle))
+            elements.append(Paragraph(_("Previous Public Sector Contracts", lang), styleSubTitle))
             for award in previous_awards:
                 elements.append(tables.create_award_table(award, lang))
                 elements.append(Spacer(1, 20))
 
         doc.build(elements)
 
-        name = get_translated_string("Application Details", lang).replace(" ", "_")
+        name = _("Application Details", lang).replace(" ", "_")
         filename = f"{name}-{application.borrower.legal_identifier}-{application.award.source_contract_id}.pdf"
 
         in_memory_zip = io.BytesIO()
@@ -145,11 +145,11 @@ async def export_applications(
     pd.DataFrame(
         [
             {
-                get_translated_string("National Tax ID", lang): application.borrower.legal_identifier,
-                get_translated_string("Legal Name", lang): application.borrower.legal_name,
-                get_translated_string("Email Address", lang): application.primary_email,
-                get_translated_string("Submission Date", lang): application.borrower_submitted_at,
-                get_translated_string("Stage", lang): get_translated_string(application.status.capitalize(), lang),
+                _("National Tax ID", lang): application.borrower.legal_identifier,
+                _("Legal Name", lang): application.borrower.legal_name,
+                _("Email Address", lang): application.primary_email,
+                _("Submission Date", lang): application.borrower_submitted_at,
+                _("Stage", lang): _(application.status.capitalize(), lang),
             }
             for application in (
                 models.Application.submitted_to_lender(session, user.lender_id)

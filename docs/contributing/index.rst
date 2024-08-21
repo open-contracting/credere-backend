@@ -39,6 +39,12 @@ Setup
 
       alembic upgrade head
 
+#. Compile message catalogs:
+
+   .. code-block:: bash
+
+      pybabel compile -f -d locale
+
 Repository structure
 --------------------
 
@@ -163,6 +169,8 @@ Read the next pages in this section to learn about style guides, and the :doc:`.
 Style guide
 ~~~~~~~~~~~
 
+-  Use lowercase filenames, including ``email_templates/`` files.
+
 In Python code and documentation:
 
 -  Use "lender", not "FI" or "financial institution".
@@ -170,12 +178,32 @@ In Python code and documentation:
 
 .. note::
 
-   Some endpoints, enums and template names cannot be made to conform to this style guide, without migrating the database, updating the frontend or updating the email templates in :doc:`../aws/ses`.
+   Some endpoints and enums cannot be made to conform to this style guide, without migrating the database or updating the frontend.
 
 Update requirements
 ~~~~~~~~~~~~~~~~~~~
 
 See `Requirements <https://ocp-software-handbook.readthedocs.io/en/latest/python/requirements.html>`__ in the OCP Software Development Handbook.
+
+Update translations
+~~~~~~~~~~~~~~~~~~~
+
+#. Update the message catalogs:
+
+   .. code-block:: bash
+
+      pybabel extract -F babel.cfg -o messages.pot .
+      pybabel update -i messages.pot -d locale
+
+#. Compile the message catalogs (in development):
+
+   .. code-block:: bash
+
+      pybabel compile -f -d locale
+
+.. admonition:: Reference
+
+   ``pybabel`` commands in `Translate with Transifex <https://ocp-software-handbook.readthedocs.io/en/latest/python/i18n.html#translate-with-transifex>`__
 
 Update API
 ~~~~~~~~~~
