@@ -96,6 +96,7 @@ def create_application_table(application: models.Application, lang: str) -> Tabl
                 _format_currency(application.disbursed_final_amount, application.currency),
             ]
         )
+
     return create_table(data)
 
 
@@ -119,67 +120,66 @@ def create_award_table(award: models.Award, lang: str) -> Table:
     }\nValor Pagado: {
         _format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
     }\n"""
-    secop_link = f"""<link href="{award.source_url}">{award.source_url}</link>"""
 
-    data = [
+    return create_table(
         [
-            _("Award Data", lang),
-            _("Data", lang),
-        ],
-        [
-            _("View data in SECOP II", lang),
-            Paragraph(secop_link, styleN),
-        ],
-        [
-            _("Award Title", lang),
-            Paragraph(award.title, styleN),
-        ],
-        [
-            _("Contracting Process ID", lang),
-            Paragraph(award.contracting_process_id, styleN),
-        ],
-        [
-            _("Award Description", lang),
-            Paragraph(award.description, styleN),
-        ],
-        [
-            _("Award Date", lang),
-            _format_date(str(award.award_date)),
-        ],
-        [
-            _("Award Value Currency & Amount", lang),
-            _format_currency(award.award_amount, award.award_currency),
-        ],
-        [
-            _("Contract Start Date", lang),
-            _format_date(str(award.contractperiod_startdate)),
-        ],
-        [
-            _("Contract End Date", lang),
-            _format_date(str(award.contractperiod_enddate)),
-        ],
-        [
-            _("Payment Method", lang),
-            payment_method_text,
-        ],
-        [
-            _("Buyer Name", lang),
-            Paragraph(
-                award.buyer_name,
-                styleN,
-            ),
-        ],
-        [
-            _("Procurement Method", lang),
-            Paragraph(award.procurement_method, styleN),
-        ],
-        [
-            _("Contract Type", lang),
-            Paragraph(award.procurement_category, styleN),
-        ],
-    ]
-
-    return create_table(data)
+            [
+                _("Award Data", lang),
+                _("Data", lang),
+            ],
+            [
+                _("View data in SECOP II", lang),
+                Paragraph(f'<link href="{award.source_url}">{award.source_url}</link>', styleN),
+            ],
+            [
+                _("Award Title", lang),
+                Paragraph(award.title, styleN),
+            ],
+            [
+                _("Contracting Process ID", lang),
+                Paragraph(award.contracting_process_id, styleN),
+            ],
+            [
+                _("Award Description", lang),
+                Paragraph(award.description, styleN),
+            ],
+            [
+                _("Award Date", lang),
+                _format_date(str(award.award_date)),
+            ],
+            [
+                _("Award Value Currency & Amount", lang),
+                _format_currency(award.award_amount, award.award_currency),
+            ],
+            [
+                _("Contract Start Date", lang),
+                _format_date(str(award.contractperiod_startdate)),
+            ],
+            [
+                _("Contract End Date", lang),
+                _format_date(str(award.contractperiod_enddate)),
+            ],
+            [
+                _("Payment Method", lang),
+                payment_method_text,
+            ],
+            [
+                _("Buyer Name", lang),
+                Paragraph(
+                    award.buyer_name,
+                    styleN,
+                ),
+            ],
+            [
+                _("Procurement Method", lang),
+                Paragraph(award.procurement_method, styleN),
+            ],
+            [
+                _("Contract Type", lang),
+                Paragraph(award.procurement_category, styleN),
+            ],
+        ]
+    )
 
 
 def create_borrower_table(borrower: models.Borrower, application: models.Application, lang: str) -> Table:
@@ -234,45 +234,46 @@ def create_borrower_table(borrower: models.Borrower, application: models.Applica
         ),
     }[borrower.sector]
 
-    data = [
+    return create_table(
         [
-            _("MSME Data", lang),
-            _("Data", lang),
-        ],
-        [
-            _("Legal Name", lang),
-            Paragraph(borrower.legal_name, styleN),
-        ],
-        [
-            _("Address", lang),
-            Paragraph(borrower.address, styleN),
-        ],
-        [
-            _("National Tax ID", lang),
-            borrower.legal_identifier,
-        ],
-        [
-            _("Registration Type", lang),
-            borrower.type,
-        ],
-        [
-            _("Size", lang),
-            borrower_size,
-        ],
-        [
-            _("Sector", lang),
-            borrower_sector,
-        ],
-        [
-            _("Annual Revenue", lang),
-            _format_currency(borrower.annual_revenue, borrower.currency),
-        ],
-        [
-            _("Business Email", lang),
-            application.primary_email,
-        ],
-    ]
-    return create_table(data)
+            [
+                _("MSME Data", lang),
+                _("Data", lang),
+            ],
+            [
+                _("Legal Name", lang),
+                Paragraph(borrower.legal_name, styleN),
+            ],
+            [
+                _("Address", lang),
+                Paragraph(borrower.address, styleN),
+            ],
+            [
+                _("National Tax ID", lang),
+                borrower.legal_identifier,
+            ],
+            [
+                _("Registration Type", lang),
+                borrower.type,
+            ],
+            [
+                _("Size", lang),
+                borrower_size,
+            ],
+            [
+                _("Sector", lang),
+                borrower_sector,
+            ],
+            [
+                _("Annual Revenue", lang),
+                _format_currency(borrower.annual_revenue, borrower.currency),
+            ],
+            [
+                _("Business Email", lang),
+                application.primary_email,
+            ],
+        ]
+    )
 
 
 def create_documents_table(documents: list[models.BorrowerDocument], lang: str) -> Table:
