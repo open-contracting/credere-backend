@@ -10,10 +10,10 @@ from reportlab_mods import create_table, styleN
 
 
 def _format_currency(number: Decimal | None, currency: str) -> str:
-    if isinstance(number, str):
+    if isinstance(number, str) or not number:
         try:
             number = int(number)
-        except ValueError:
+        except (ValueError, TypeError):
             return "-"
 
     locale.setlocale(locale.LC_ALL, "")
