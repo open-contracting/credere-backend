@@ -415,22 +415,35 @@ class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
 
 class BorrowerBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
+    #: The hashed borrower ID, for privacy-preserving long-term identification.
     borrower_identifier: str = Field(default="", unique=True)
+    #: The time at which the borrower opted out of Credere entirely.
+    #:
+    #: .. seealso:: :attr:`app.models.Borrower.status`
+    declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    # From data source
+
     legal_name: str = Field(default="")
+    #: The email address with which the application's :attr:`~app.models.Application.primary_email` is initialized.
     email: str = Field(default="")
     address: str = Field(default="")
+    #: The ID of the borrower in the data source.
     legal_identifier: str = Field(default="")
+    #: The type of the borrower in the data source.
     type: str = Field(default="")
-    sector: str = Field(default="")  # SECTOR_TYPES
-    annual_revenue: Decimal | None = Field(max_digits=16, decimal_places=2)
-    currency: str = Field(default="COP", description="ISO 4217 currency code")
-    # size is self-reported.
-    size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
-    # is_msme is from source. This is always set when querying the sources.
+    #: Whether the borrower is a MSME in the data source.
     is_msme: bool = Field(default=True)
     #: .. seealso:: :attr:`app.models.ActiveRecordMixin.create` and :attr:`~app.models.ActiveRecordMixin.update`.
     missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
-    declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    # From borrower input
+
+    #: .. seealso:: :attr:`app.models.CreditProduct.borrower_size`
+    size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
+    sector: str = Field(default="")  # SECTOR_TYPES
+    annual_revenue: Decimal | None = Field(max_digits=16, decimal_places=2)
+    currency: str = Field(default="COP", description="ISO 4217 currency code")
 
     # Timestamps
     created_at: datetime = Field(
@@ -442,7 +455,15 @@ class BorrowerBase(SQLModel):
 
 
 class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
+    """
+    Most fields are derived from the data source. In terms of application logic, those fields are (or can be) used in
+    emails to the borrower, like the ``legal_identifier`` and ``legal_name``.
+    """
+
+    # From data source
     source_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+
+    #: The status of the borrower.
     status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE)
 
     # Relationships
@@ -453,7 +474,7 @@ class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
 class AwardBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
 
-    # From data source, some of which are/can be used in emails to identify the award for the borrower.
+    # From data source
 
     #: The ID of the award (contract) in the data source.
     source_contract_id: str = Field(default="", index=True)
@@ -497,7 +518,8 @@ class AwardBase(SQLModel):
 
 class Award(AwardBase, ActiveRecordMixin, table=True):
     """
-    All fields, other than relationships and timestamps, are derived from the data source.
+    All fields, other than relationships and timestamps, are derived from the data source. In terms of application
+    logic, the fields are (or can be) used in emails to identify the award, like the ``buyer_name`` and ``title``.
     """
 
     # From data source
@@ -531,7 +553,7 @@ class ApplicationBase(SQLModel):
     uuid: str = Field(unique=True)
     #: The email address at which the borrower is contacted.
     primary_email: str = Field(default="")
-    #: The hashed award and borrower identifiers, for privacy-preserving long-term identification.
+    #: The hashed borrower ID and award ID, for privacy-preserving long-term identification.
     award_borrower_identifier: str = Field(default="")
 
     # Request
@@ -893,9 +915,13 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
 class BorrowerDocumentBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
+    #: The type of document.
     type: BorrowerDocumentType
+    #: Whether the document has been verified by the lender.
     verified: bool = Field(default=False)
+    #: The filename of the document.
     name: str = Field(default="")
+    #: The time at which the document was most recently uploaded by the borrower.
     submitted_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
@@ -915,6 +941,7 @@ class BorrowerDocumentBase(SQLModel):
 class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
     __tablename__ = "borrower_document"
 
+    #: The content of the document.
     file: bytes
 
     # Relationships
