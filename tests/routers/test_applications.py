@@ -325,7 +325,7 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
 
     response = client.get(f"/applications/id/{appid}")
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json() == {"detail": _("Not authenticated")}
+    assert response.json() == {"detail": "Not authenticated"}
 
     # tries to get a non existing application
     response = client.get("/applications/id/999", headers=lender_header)
@@ -337,7 +337,7 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
 
     response = client.get("/applications")
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json() == {"detail": _("Not authenticated")}
+    assert response.json() == {"detail": "Not authenticated"}
 
     response = client.get(f"/applications/uuid/{pending_application.uuid}")
     assert_ok(response)
