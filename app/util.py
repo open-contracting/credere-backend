@@ -67,15 +67,12 @@ def generate_uuid(string: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, string))
 
 
-def get_secret_hash(nit_entidad: str) -> str:
+def get_secret_hash(string: str) -> str:
     """
-    Get the secret hash based on the given entity's NIT (National Taxpayer's ID).
-
-    :param nit_entidad: The NIT (National Taxpayer's ID) of the entity.
-    :return: The secret hash generated from the NIT.
+    Calculate the hash of a string.
     """
 
-    message = nit_entidad.encode()
+    message = string.encode()
     key = app_settings.hash_key.encode()
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
@@ -160,7 +157,7 @@ def get_modified_data_fields(session: Session, application: models.Application) 
 
 
 def create_award_from_data_source(
-    session: Session, entry: dict[str, Any], borrower_id: int | None = None, previous: bool = False
+    session: Session, entry: dict[str, Any], borrower_id: int | None = None, *, previous: bool = False
 ) -> models.Award:
     """
     Create a new award and insert it into the database.
@@ -205,7 +202,7 @@ def get_previous_awards_from_data_source(
     for entry in awards_response_json:
         with contextmanager(db_provider)() as session:
             with handle_skipped_award(session, "Error creating award"):
-                create_award_from_data_source(session, entry, borrower.id, True)
+                create_award_from_data_source(session, entry, borrower.id, previous=True)
 
                 session.commit()
 
@@ -216,6 +213,7 @@ def create_or_update_borrower_document(
     application: models.Application,
     type: models.BorrowerDocumentType,
     file: bytes,
+    *,
     verified: bool | None = False,
 ) -> models.BorrowerDocument:
     """
