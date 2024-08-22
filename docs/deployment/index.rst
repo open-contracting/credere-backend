@@ -14,8 +14,8 @@ Issues and `performance <https://open-contracting-partnership.sentry.io/performa
 
 
 -  ``/applications/access-scheme`` is in *Slow HTTP Ops*, because Sentry measures the entire request, which including the background task, and not the response time.
--  Sort the *All Transactions* tab by the **Failure Rate** column, then click on a transaction and look at the *Status Breakdown* in the right sidebar, to check for potential issues to correct. Infrequently accessed endpoints are more likely to have a high failure rate, since a single error can cause a double-digit rate.
+-  Sort the *All Transactions* tab by the *Failure Rate* column, then click on a transaction and look at the *Status Breakdown* in the right sidebar, to check for potential issues to correct.
 
-.. seealso::
+   .. note:: Infrequently accessed endpoints are likely to have a high rate, since a single error can cause a double-digit rate.
 
-   `Performance Metrics <https://docs.sentry.io/product/performance/metrics/>`__
+.. seealso:: `Performance Metrics <https://docs.sentry.io/product/performance/metrics/>`__

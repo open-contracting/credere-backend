@@ -209,11 +209,11 @@ Update translations
 
 .. note::
 
-   The ``babel.cfg`` file indicates from which ``StrEnum`` classes to extract messages. If Credere is deployed in English, we must add an ``en`` locale to translate these. Otherwise, the translations will be the database values, like "MICRO" instead of "0 to 10".
+   The ``babel.cfg`` file lists from which ``StrEnum`` classes to extract messages. If Credere is deployed in English, we need to add an ``en`` locale to translate these. Otherwise, the translations will be database values like "MICRO", not "0 to 10".
 
 .. admonition:: Reference
 
-   ``pybabel`` commands in `Translate with Transifex <https://ocp-software-handbook.readthedocs.io/en/latest/python/i18n.html#translate-with-transifex>`__
+   The ``pybabel`` commands are from `Translate with Transifex <https://ocp-software-handbook.readthedocs.io/en/latest/python/i18n.html#translate-with-transifex>`__.
 
 Update API
 ~~~~~~~~~~

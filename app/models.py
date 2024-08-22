@@ -154,7 +154,7 @@ class ApplicationStatus(StrEnum):
 
     #: Credere sends an invitation to the borrower.
     #:
-    #: (:doc:`fetch-awards</commands>`)
+    #: (:typer:`python-m-app-fetch-awards`)
     PENDING = "PENDING"
     #: Borrower declines the invitation.
     #:
@@ -183,7 +183,7 @@ class ApplicationStatus(StrEnum):
     INFORMATION_REQUESTED = "INFORMATION_REQUESTED"
     #: Borrower doesn't accept, or doesn't submit the application or information requested.
     #:
-    #: (:doc:`update-applications-to-lapsed</commands>`)
+    #: (:typer:`python-m-app-update-applications-to-lapsed`)
     LAPSED = "LAPSED"
     #: Lender pre-approves the application, and Credere asks the borrower to upload its contract.
     #:
@@ -207,11 +207,11 @@ class BorrowerStatus(StrEnum):
 
 
 class MessageType(StrEnum):
-    #: PENDING (:doc:`fetch-awards</commands>`)
+    #: PENDING (:typer:`python-m-app-fetch-awards`)
     BORROWER_INVITATION = "BORROWER_INVITATION"
-    #: PENDING (:doc:`send-reminders</commands>`)
+    #: PENDING (:typer:`python-m-app-send-reminders`)
     BORROWER_PENDING_APPLICATION_REMINDER = "BORROWER_PENDING_APPLICATION_REMINDER"
-    #: ACCEPTED (:doc:`send-reminders</commands>`)
+    #: ACCEPTED (:typer:`python-m-app-send-reminders`)
     BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
     #: ACCEPTED → SUBMITTED (``/applications/submit``)
     SUBMISSION_COMPLETED = "SUBMISSION_COMPLETED"
@@ -235,7 +235,7 @@ class MessageType(StrEnum):
     CONTRACT_UPLOAD_CONFIRMATION_TO_FI = "CONTRACT_UPLOAD_CONFIRMATION_TO_FI"
     #: CONTRACT_UPLOADED → COMPLETED (``/applications/{id}/complete-application``)
     CREDIT_DISBURSED = "CREDIT_DISBURSED"
-    #: STARTED | CONTRACT_UPLOADED (:doc:`sla-overdue-applications</commands>`)
+    #: STARTED | CONTRACT_UPLOADED (:typer:`python-m-app-sla-overdue-applications`)
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
     #: ACCEPTED (``/applications/find-alternative-credit-option``)
     APPLICATION_COPIED = "APPLICATION_COPIED"
@@ -645,7 +645,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             :attr:`~app.settings.Settings.reminder_days_before_expiration` days from now, and whose
             borrower hasn't already received a reminder to accept and may receive Credere invitations.
 
-        .. seealso:: :doc:`send-reminders</commands>`
+        .. seealso:: :typer:`python-m-app-send-reminders`
         """
         return (
             session.query(cls)
@@ -666,7 +666,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             :attr:`~app.settings.Settings.reminder_days_before_lapsed` days from now, and whose
             borrower hasn't already received a reminder to submit.
 
-        .. seealso:: :doc:`send-reminders</commands>`
+        .. seealso:: :typer:`python-m-app-send-reminders`
         """
         lapsed_at = col(cls.borrower_accepted_at) + timedelta(days=app_settings.days_to_change_to_lapsed)
 
@@ -684,7 +684,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             borrower to respond (PENDING, ACCEPTED, INFORMATION_REQUESTED) for
             :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
 
-        .. seealso:: :doc:`update-applications-to-lapsed</commands>`
+        .. seealso:: :typer:`python-m-app-update-applications-to-lapsed`
         """
         delta = timedelta(days=app_settings.days_to_change_to_lapsed)
 
@@ -739,7 +739,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             (DECLINED, REJECTED, COMPLETED, LAPSED) for
             :attr:`~app.settings.Settings.days_to_erase_borrowers_data` days.
 
-        .. seealso:: :doc:`remove-dated-application-data</commands>`
+        .. seealso:: :typer:`python-m-app-remove-dated-application-data`
         """
         delta = timedelta(days=app_settings.days_to_erase_borrowers_data)
 

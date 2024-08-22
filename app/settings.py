@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     #: .. seealso::
     #:
     #:    -  :attr:`~app.settings.Settings.reminder_days_before_expiration`
-    #:    -   :doc:`fetch-awards</commands>`
+    #:    -   :typer:`python-m-app-fetch-awards`
     application_expiration_days: int = 7
     #: The number of days before a PENDING application's expiration date, past which the borrower is sent a reminder.
     #:
@@ -89,7 +89,7 @@ class Settings(BaseSettings):
     #:
     #: .. seealso::
     #:
-    #:    -  :doc:`sla-overdue-applications</commands>`
+    #:    -  :typer:`python-m-app-sla-overdue-applications`
     #:    -  :meth:`app.models.Application.days_waiting_for_lender`
     progress_to_remind_started_applications: float = 0.7
     #: The number of days for which to wait for the borrower to respond, after which an application becomes LAPSED.
@@ -105,9 +105,9 @@ class Settings(BaseSettings):
 
     #: The application token to the `SECOP API <https://datos.gov.co/profile/edit/developer_settings>`__.
     colombia_secop_app_token: str = ""
-    #: The number of items to retrieve at once in :doc:`fetch-awards</commands>`.
+    #: The number of items to retrieve at once in :typer:`python-m-app-fetch-awards`.
     secop_pagination_limit: int = 5
-    #: The number of days of past items to retrieve the first time :doc:`fetch-awards</commands>` runs.
+    #: The number of days of past items to retrieve the first time :typer:`python-m-app-fetch-awards` runs.
     secop_default_days_from_ultima_actualizacion: int = 365
 
     # Email addresses
