@@ -33,7 +33,7 @@ Credere frontend's ``src/constants/index.ts`` constants should match ``app.model
 Schemas and models
 ------------------
 
-Credere frontend's ``/src/schemas/`` schemas should match ``app.parsers``,  ``app.serializers`` and  ``app.models`` models.
+Credere frontend's ``src/schemas/`` schemas should match ``app.parsers``,  ``app.serializers`` and  ``app.models`` models.
 
 This table is contructed by running this command, and filling in information from Credere frontend's ``src/api/`` files:
 
