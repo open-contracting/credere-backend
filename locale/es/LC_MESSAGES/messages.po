@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-21 17:40-0400\n"
+"POT-Creation-Date: 2024-08-22 12:34-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -251,52 +251,52 @@ msgstr ""
 msgid "actividades_organizaciones_extraterritoriales"
 msgstr "Actividades de organizaciones y entidades extraterritoriales"
 
-#: app/auth.py:56
+#: app/auth.py:59
 msgid "JWK public key not found"
 msgstr "La clave pública JWK no fue encontrada"
 
-#: app/auth.py:80
+#: app/auth.py:84
 msgid "Wrong authentication method"
 msgstr "Método de autenticación equivocado"
 
-#: app/auth.py:96 app/auth.py:99
+#: app/auth.py:102 app/auth.py:108
 msgid "JWK invalid"
 msgstr "JWK inválido"
 
-#: app/auth.py:105
+#: app/auth.py:115
 msgid "Not authenticated"
 msgstr "No autenticado"
 
-#: app/dependencies.py:41
+#: app/dependencies.py:44
 msgid "Username missing"
 msgstr "Falta el nombre de usuario"
 
-#: app/dependencies.py:55
+#: app/dependencies.py:61
 msgid "User not found"
 msgstr "Usuario no encontrado"
 
-#: app/dependencies.py:63
+#: app/dependencies.py:70
 msgid "Insufficient permissions"
 msgstr "Permisos insuficientes"
 
-#: app/dependencies.py:89
+#: app/dependencies.py:98
 msgid "User is not authorized"
 msgstr "Usuario no autorizado"
 
-#: app/dependencies.py:94
+#: app/dependencies.py:106
 msgid "Application expired"
 msgstr "La aplicación ha expirado"
 
-#: app/dependencies.py:100
+#: app/dependencies.py:113
 #, python-format
 msgid "Application status should not be %(status)s"
 msgstr "El estado de la aplicación no debe ser %(status)s"
 
-#: app/dependencies.py:111 app/dependencies.py:148
+#: app/dependencies.py:126 app/dependencies.py:166
 msgid "Application not found"
 msgstr "La aplicación no ha sido encontrada"
 
-#: app/dependencies.py:153
+#: app/dependencies.py:172
 msgid "Application lapsed"
 msgstr "La aplicación ha caducado"
 
@@ -334,17 +334,15 @@ msgstr "Restablecer contraseña"
 
 #: app/mail.py:307 app/mail.py:325
 msgid "Opportunity to access MSME credit for being awarded a public contract"
-msgstr ""
-"Oportunidad de acceso a crédito por ser adjudicatario de contrato "
-"estatal"
+msgstr "Oportunidad de acceso a crédito por ser adjudicatario de contrato estatal"
 
 #: app/mail.py:343
 msgid ""
 "Reminder - Opportunity to access MSME credit for being awarded a public "
 "contract"
 msgstr ""
-"Recordatorio - Oportunidad de acceso a crédito por ser "
-"adjudicatario de contrato estatal"
+"Recordatorio - Oportunidad de acceso a crédito por ser adjudicatario de "
+"contrato estatal"
 
 #: app/mail.py:368 app/mail.py:387
 msgid "New application submission"
@@ -374,16 +372,16 @@ msgstr "Opción de crédito alternativa"
 msgid "Application updated"
 msgstr "Aplicación actualizada"
 
-#: app/util.py:53
+#: app/util.py:54
 #, python-format
 msgid "%(model_name)s not found"
 msgstr "%(model_name)s no encontrado"
 
-#: app/util.py:111
+#: app/util.py:112
 msgid "Format not allowed. It must be a PNG, JPEG, or PDF file"
 msgstr "Formato no permitido. El formato debe ser un PNG, JPEG or archivo PDF"
 
-#: app/util.py:117
+#: app/util.py:118
 msgid "File is too large"
 msgstr "El archivo es muy grande"
 
@@ -395,19 +393,19 @@ msgstr "Algunos campos de datos de la empresa no fueron verificados"
 msgid "Some documents are not verified"
 msgstr "Algunos documentos no fueron verificados"
 
-#: app/routers/applications.py:330
+#: app/routers/applications.py:332
 msgid "Award not found"
 msgstr "La adjudicación no ha sido encontrada"
 
-#: app/routers/applications.py:372
+#: app/routers/applications.py:377
 msgid "Borrower not found"
 msgstr "La empresa no ha sido encontrada"
 
-#: app/routers/applications.py:380
+#: app/routers/applications.py:386
 msgid "This column cannot be updated"
 msgstr "Esta columna no puede ser actualizada"
 
-#: app/routers/applications.py:579
+#: app/routers/applications.py:585
 msgid "There was an error"
 msgstr "Ocurrió un error"
 
@@ -439,56 +437,56 @@ msgstr "Fecha de envío"
 msgid "Stage"
 msgstr "Etapa"
 
-#: app/routers/lenders.py:48 app/routers/lenders.py:125
+#: app/routers/lenders.py:49 app/routers/lenders.py:126
 msgid "Lender already exists"
 msgstr "La entidad financiera ya existe"
 
 #: app/routers/guest/applications.py:378 app/routers/guest/applications.py:467
-#: app/routers/lenders.py:189
+#: app/routers/lenders.py:192
 msgid "Credit product not found"
 msgstr "Producto crediticio no encontrado"
 
-#: app/routers/users.py:60
+#: app/routers/users.py:61
 msgid "Username already exists"
 msgstr "El nombre de usuario ya existe"
 
-#: app/routers/users.py:103
+#: app/routers/users.py:104
 msgid "Password changed with MFA setup required"
 msgstr "Cambio de contraseña con configuración de MFA requerido"
 
-#: app/routers/users.py:112 app/routers/users.py:192
+#: app/routers/users.py:113 app/routers/users.py:193
 msgid "Temporal password is expired, please request a new one"
 msgstr "La contraseña temporal ha expirado, por favor solicite una nueva"
 
-#: app/routers/users.py:116
+#: app/routers/users.py:117
 msgid "There was an error trying to update the password"
 msgstr "Ocurrió un error al tratar de actualizar la contraseña"
 
-#: app/routers/users.py:119
+#: app/routers/users.py:120
 msgid "Password changed"
 msgstr "Contraseña cambiada"
 
-#: app/routers/users.py:144
+#: app/routers/users.py:145
 msgid "Invalid session for the user, session is expired"
 msgstr "Sesión inválida para el usuario, la sesión ha expirado"
 
-#: app/routers/users.py:148
+#: app/routers/users.py:149
 msgid "There was an error trying to setup mfa"
 msgstr "Ocurrió un error tratando de configurar el MFA"
 
-#: app/routers/users.py:151
+#: app/routers/users.py:152
 msgid "MFA configured successfully"
 msgstr "El MFA fue configurado correctamente"
 
-#: app/routers/users.py:236
+#: app/routers/users.py:237
 msgid "User logged out successfully"
 msgstr "Usuario deslogueado correctamente"
 
-#: app/routers/users.py:285
+#: app/routers/users.py:286
 msgid "An email with a reset link was sent to end user"
 msgstr "Se envió un correo con el enlace de reseteo de contraseña."
 
-#: app/routers/users.py:366
+#: app/routers/users.py:367
 msgid "User already exists"
 msgstr "El usuario ya existe"
 
@@ -522,15 +520,15 @@ msgstr "Una nueva aplicación ya ha sido creada desde esta"
 msgid "There was a problem copying the application. %(exception)s"
 msgstr "Ocurrió un problema copiando la aplicación. %(exception)s"
 
-#: app/routers/guest/emails.py:33
+#: app/routers/guest/emails.py:34
 msgid "New email is not valid"
 msgstr "El nuevo correo no es válido"
 
-#: app/routers/guest/emails.py:80
+#: app/routers/guest/emails.py:81
 msgid "Application is not pending an email confirmation"
 msgstr "La aplicación no tiene la confirmación de correo pendiente"
 
-#: app/routers/guest/emails.py:87
+#: app/routers/guest/emails.py:88
 msgid "Not authorized to modify this application"
 msgstr "No autorizado a modificar la aplicación en esta etapa"
 
