@@ -88,6 +88,9 @@ async def confirm_email(
                 detail=_("Not authorized to modify this application"),
             )
 
+        # The email address for the Borrower instance is not updated, because, between invitations, the borrower might
+        # have updated their email address in the data source. Borrowers typically change the email address to direct
+        # messages to the responsible person (who might be different from the general contact in the data source).
         application.primary_email = new_email
         application.pending_email_confirmation = False
         application.confirmation_email_token = ""
