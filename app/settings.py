@@ -59,7 +59,10 @@ class Settings(BaseSettings):
     #: The number of days after the application is created, after which a PENDING or DECLINED application becomes
     #: inaccessible to the borrower.
     #:
-    #: .. seealso:: :doc:`fetch-awards</commands>`
+    #: .. seealso::
+    #:
+    #:    -  :attr:`~app.settings.Settings.reminder_days_before_expiration`
+    #:    -   :doc:`fetch-awards</commands>`
     application_expiration_days: int = 7
     #: The number of days before a PENDING application's expiration date, past which the borrower is sent a reminder.
     #:
@@ -76,7 +79,7 @@ class Settings(BaseSettings):
     #:    -  :attr:`app.models.Application.pending_submission_reminder`
     reminder_days_before_lapsed: int = 3
     #: Lenders agree to respond to application changes (STARTED, CONTRACT_UPLOADED) within a number of days, known as
-    #: Service Level Agreement (SLA) days.
+    #: Service Level Agreement (SLA) days (:attr:`app.models.Lender.sla_days`).
     #:
     #: This is the ratio of SLA days for which to wait for the lender to respond, after which an application is
     #: overdue, and the lender is sent a reminder.

@@ -8,6 +8,7 @@ API reference
    settings
    models
    enums
+   parsers
    util
    exceptions
 

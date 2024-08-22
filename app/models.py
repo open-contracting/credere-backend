@@ -311,8 +311,14 @@ class LenderBase(SQLModel):
     name: str = Field(default="", unique=True)
     email_group: str = Field(default="")
     type: str = Field(default="")  # LENDER_TYPES
-    sla_days: int | None
     logo_filename: str = Field(default="")
+
+    #: The number of days within which the lender agrees to respond to application changes.
+    #:
+    #: .. seealso:: :attr:`~app.settings.Settings.progress_to_remind_started_applications`
+    sla_days: int | None
+    #: Additional HTML content to include in a :attr:`app.models.MessageType.APPROVED_APPLICATION` message, if the
+    #: "additional_comments" key in the application's :attr:`app.models.APplication.lender_approved_data` isn't set.
     default_pre_approval_message: str = Field(default="")
 
 
@@ -469,40 +475,107 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
 
 
 class ApplicationBase(SQLModel):
+    #: The secure identifier for the application, for passwordless login.
     uuid: str = Field(unique=True)
+    #: The email address at which the borrower is contacted.
     primary_email: str = Field(default="")
-    status: ApplicationStatus = Field(default=ApplicationStatus.PENDING)
+    #: The hashed award and borrower identifiers, for privacy-preserving long-term identification.
     award_borrower_identifier: str = Field(default="")
-    contract_amount_submitted: Decimal | None = Field(max_digits=16, decimal_places=2)
-    disbursed_final_amount: Decimal | None = Field(max_digits=16, decimal_places=2)
+
+    # Request
+
     amount_requested: Decimal | None = Field(max_digits=16, decimal_places=2)
     currency: str = Field(default="COP", description="ISO 4217 currency code")
     repayment_years: int | None
     repayment_months: int | None
     payment_start_date: datetime | None
     calculator_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    borrower_credit_product_selected_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    # Status
+
+    #: The status of the application.
+    status: ApplicationStatus = Field(default=ApplicationStatus.PENDING)
+    #: Whether the borrower has confirmed the credit product but not yet submitted the application, or
+    #: the lender has requested information and the borrower has not yet uploaded documents.
     pending_documents: bool = Field(default=False)
+    #: Whether the borrower has changed the primary email for the application, but hasn't confirmed it.
     pending_email_confirmation: bool = Field(default=False)
-    borrower_submitted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    borrower_accepted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    borrower_declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    overdued_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    borrower_declined_preferences_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    borrower_declined_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    lender_started_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    secop_data_verification: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    lender_approved_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    lender_approved_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    lender_rejected_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    lender_rejected_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    borrower_uploaded_contract_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    lender_completed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    completed_in_days: int | None
+
+    # Timeline
+
+    #: The time at which the application expires.
+    #:
+    #: .. seealso:: :attr:`~app.settings.Settings.application_expiration_days`
     expired_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    archived_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.DECLINED`.
+    borrower_declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    #: The reason(s) for which the borrower declined the invitation.
+    #:
+    #: .. seealso:: :class:`app.parsers.ApplicationDeclineFeedbackPayload`
+    borrower_declined_preferences_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+    #: Whether the borrower declined only this invitation or all invitations.
+    #:
+    #: .. seealso:: :class:`app.parsers.ApplicationDeclinePayload`
+    borrower_declined_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.ACCEPTED`.
+    borrower_accepted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    #: The time at which the borrower most recently selected a credit product.
+    borrower_credit_product_selected_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    #: The time at which the application transitioned from :attr:`~app.models.ApplicationStatus.SUBMITTED`.
+    borrower_submitted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.STARTED`,
+    #: from :attr:`~app.models.ApplicationStatus.SUBMITTED`.
+    lender_started_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.INFORMATION_REQUESTED`.
     information_requested_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.REJECTED`.
+    lender_rejected_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    #: The reason(s) for which the application was rejected.
+    #:
+    #: .. seealso:: :class:`app.parsers.LenderRejectedApplication`
+    lender_rejected_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.APPROVED`.
+    lender_approved_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    #: The reason(s) for which the application was approved.
+    #:
+    #: .. seealso:: :class:`app.parsers.LenderApprovedData`
+    lender_approved_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+    #: Whether the borrower fields (keys) have been verified (``bool`` values) by the lender.
+    secop_data_verification: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.CONTRACT_UPLOADED`.
+    borrower_uploaded_contract_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    #: The amount of the contract submitted by the borrower.
+    contract_amount_submitted: Decimal | None = Field(max_digits=16, decimal_places=2)
+
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.COMPLETED`.
+    lender_completed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    #: The amount of the loan disbursed by the lender.
+    disbursed_final_amount: Decimal | None = Field(max_digits=16, decimal_places=2)
+    #: The total number of days waiting for the lender.
+    #:
+    #: .. seealso:: :meth:`app.models.Application.days_waiting_for_lender`
+    completed_in_days: int | None
+
+    #: The time at which the application was most recently overdue (reset once completed).
+    #:
+    #: .. seealso:: :attr:`~app.settings.Settings.progress_to_remind_started_applications`
+    overdued_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.LAPSED`.
+    #:
+    #: .. seealso:: :meth:`app.models.Application.lapseable`
     application_lapsed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    #: The time at which the application was archived.
+    #:
+    #: .. seealso:: :meth:`app.models.Application.archivable`
+    archived_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
 
     # Relationships
     award_id: int | None = Field(foreign_key="award.id", index=True)
@@ -798,8 +871,11 @@ class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
 
 class Message(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    #: The type of email message.
     type: MessageType
+    #: The SES ``MessageId``.
     external_message_id: str = Field(default="")
+    #: The body of the email message, if directly provided by a lender.
     body: str = Field(default="")
 
     # Relationships
@@ -841,10 +917,14 @@ class EventLog(SQLModel, ActiveRecordMixin, table=True):
 
 class UserBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
+    #: The authorization group of the user.
     type: UserType = Field(default=UserType.FI)
     language: str = Field(default="es", description="ISO 639-1 language code")
+    #: The email address with which the user logs in and is contacted.
     email: str = Field(unique=True)
+    #: The name by which the user is addressed in emails and identified in application action histories.
     name: str = Field(default="")
+    #: The Cognito ``Username``.
     external_id: str = Field(default="", index=True)
 
     # Relationships
