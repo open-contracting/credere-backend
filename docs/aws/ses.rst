@@ -25,7 +25,7 @@ Configuration sets
             -  **Sending and delivery:** Check all
          Specify destination
             -  **Destination type:** Check "Amazon CloudWatch"
-            -  **Name:** ``crede-metrics-to-cloudwatch``
+            -  **Name:** ``crede-metrics-to-cloudwatch`` (*sic*)
             -  **Value source:** Select "Message tag"
             -  **Dimension name:** ``ses:configuration-set``
             -  **Default value:** ``crede-metrics-to-cloudwatch`` (*sic*)
