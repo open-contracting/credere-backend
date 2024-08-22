@@ -389,7 +389,7 @@ async def confirm_credit_product(
         # that shares the same award borrower identifier as the application. The documents
         # to be copied are only those whose types are required by the credit product of the
         # application.
-        if lastest_application_id := (
+        if latest_application_id := (
             session.query(models.Application.id)
             .filter(
                 models.Application.status == models.ApplicationStatus.REJECTED,
@@ -401,7 +401,7 @@ async def confirm_credit_product(
         ):
             # Copy the documents into the database for the provided application.
             for document in session.query(models.BorrowerDocument).filter(
-                models.BorrowerDocument.application_id == lastest_application_id,
+                models.BorrowerDocument.application_id == latest_application_id,
                 col(models.BorrowerDocument.type).in_(
                     [key for key, value in application.credit_product.required_document_types.items() if value]
                 ),
