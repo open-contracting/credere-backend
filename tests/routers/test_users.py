@@ -24,7 +24,7 @@ def test_create_and_get_user(client, admin_header, lender_header, user_payload):
     # try to get a non-existing user
     response = client.get("/users/200")
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": _("User not found")}
+    assert response.json() == {"detail": _("%(model_name)s not found", model_name="User")}
 
     # try to get all users
     response = client.get("/users?page=0&page_size=5&sort_field=created_at&sort_order=desc", headers=admin_header)
