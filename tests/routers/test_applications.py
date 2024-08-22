@@ -314,7 +314,8 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
 
     response = client.get("/applications/admin-list/?page=1&page_size=4&sort_field=borrower.legal_name&sort_order=asc")
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json() == {"detail": _("Not authenticated")}
+    # This error comes from fastapi and therefore is not translated
+    assert response.json() == {"detail": "Not authenticated"}
 
     response = client.get(f"/applications/id/{appid}", headers=admin_header)
     assert_ok(response)
