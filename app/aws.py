@@ -50,7 +50,7 @@ def get_secret_hash(username: str) -> str:
 
 class Client:
     """
-    A client for AWS Cognito and SES services.
+    A client for Cognito and SES services.
     """
 
     def __init__(
@@ -68,7 +68,7 @@ class Client:
 
     def initiate_auth(self, username: str, password: str) -> type_defs.InitiateAuthResponseTypeDef:
         """
-        Initiates an authentication request for a user in AWS Cognito.
+        Initiates an authentication request for a user in Cognito.
 
         :param username: The username (typically an email) of the user initiating authentication.
         :param password: The password of the user initiating the authentication.
@@ -104,7 +104,7 @@ class Client:
         mfa_code: str = "",
     ) -> type_defs.RespondToAuthChallengeResponseTypeDef | dict[str, str]:
         """
-        Responds to the authentication challenge provided by AWS Cognito.
+        Responds to the authentication challenge provided by Cognito.
 
         :param username: The username (email) of the user.
         :param session: The session in which the user is currently authenticated.
@@ -118,7 +118,7 @@ class Client:
 
         Notes:
             The 'respond_to_auth_challenge' method allows the application to respond to different types of
-            authentication challenges issued by AWS Cognito.
+            authentication challenges issued by Cognito.
         """
         secret_hash = get_secret_hash(username)
 
