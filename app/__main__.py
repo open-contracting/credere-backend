@@ -20,6 +20,7 @@ from rich.table import Table
 from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
+from starlette.routing import Route
 
 import app.utils.statistics as statistics_utils
 from app import aws, mail, main, models, util
@@ -385,6 +386,10 @@ def remove_dated_application_data() -> None:
 # The openapi.json file can't be used, because it doesn't track Python modules.
 @dev.command()
 def routes(csv_format: bool = False) -> None:
+    """
+    Print a table of routes.
+    """
+
     def _pretty(model: Any, expected: str) -> str:
         if model is None:
             return ""
@@ -402,7 +407,7 @@ def routes(csv_format: bool = False) -> None:
 
     rows = []
     for route in main.app.routes:
-        assert isinstance(route, APIRoute)
+        assert isinstance(route, (APIRoute, Route))
 
         # Skip default OpenAPI routes.
         if route.endpoint.__module__.startswith("fastapi."):
@@ -420,7 +425,7 @@ def routes(csv_format: bool = False) -> None:
             )
 
         response = _pretty(getattr(route, "response_model", None), "app.serializers")
-        rows.append([", ".join(route.methods), route.path, request, response])
+        rows.append([", ".join(route.methods or []), route.path, request, response])
 
     fieldnames = "Methods", "Path", "Request format", "Response format"
     if csv_format:
@@ -462,7 +467,7 @@ def cli_input_json(name: str, file: typer.FileText) -> None:
 
 # https://typer.tiangolo.com/tutorial/commands/callback/
 @app.callback()
-def cli(quiet: bool = typer.Option(False, "--quiet", "-q")):
+def cli(quiet: bool = typer.Option(False, "--quiet", "-q")) -> None:
     if quiet:
         state["quiet"] = True
 

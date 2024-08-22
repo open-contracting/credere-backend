@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
-from app import commands, models, util
+from app import __main__, models, util
 from tests import MockResponse, assert_success, load_json_file
 
 AWARD_ID = "TEST_AWARD_ID"
@@ -106,7 +106,7 @@ def test_fetch_previous_borrower_awards_empty(reset_database, sessionmaker, sess
             "app.sources.make_request_with_retry",
         ),
     ):
-        result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
+        result = runner.invoke(__main__.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
         util.get_previous_awards_from_data_source(expected_borrower["id"], sessionmaker)
 
         assert_success(result)
@@ -153,7 +153,7 @@ def test_fetch_previous_borrower_awards(reset_database, sessionmaker, session):
 
 def test_fetch_empty_contracts(reset_database):
     with mock_response(200, [], "app.sources.colombia.get_new_awards"):
-        result = runner.invoke(commands.app, ["fetch-awards"])
+        result = runner.invoke(__main__.app, ["fetch-awards"])
 
         assert_success(result, "Fetched 0 contracts\n")
 
@@ -177,7 +177,7 @@ def test_fetch_new_awards_from_date(reset_database, session):
             "app.sources.make_request_with_retry",
         ),
     ):
-        result = runner.invoke(commands.app, ["fetch-awards"])
+        result = runner.invoke(__main__.app, ["fetch-awards"])
         inserted_award = session.query(models.Award).one()
         inserted_borrower = session.query(models.Borrower).one()
         inserted_application = session.query(models.Application).one()
@@ -200,7 +200,7 @@ def test_fetch_award_by_contract_and_supplier_empty(reset_database, session):
             "app.sources.colombia.get_award_by_id_and_supplier",
         ),
     ):
-        result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
+        result = runner.invoke(__main__.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
 
         assert_success(result, "No award found with ID TEST_AWARD_ID and supplier ID 987654321\n")
 
@@ -228,7 +228,7 @@ def test_fetch_award_by_id_and_supplier(reset_database, session):
             "app.sources.make_request_with_retry",
         ),
     ):
-        result = runner.invoke(commands.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
+        result = runner.invoke(__main__.app, ["fetch-award-by-id-and-supplier", AWARD_ID, SUPPLIER_ID])
         inserted_award = session.query(models.Award).one()
         inserted_borrower = session.query(models.Borrower).one()
         inserted_application = session.query(models.Application).one()
