@@ -213,14 +213,16 @@ def credit_product(session, lender):
         borrower_size=models.BorrowerSize.SMALL,
         lower_limit=5000.00,
         upper_limit=500000.00,
-        interest_rate=3.75,
         type=models.CreditType.LOAN,
         required_document_types={
             "INCORPORATION_DOCUMENT": True,
         },
+        # Descriptive
+        interest_rate=3.75,
         other_fees_total_amount=1000,
         other_fees_description="Other test fees",
         more_info_url="www.moreinfo.test",
+        # Relationships
         lender=lender,
     )
     session.commit()
@@ -250,8 +252,6 @@ def borrower(session):
         type="Test Organization Type",
         sector="",
         size=models.BorrowerSize.NOT_INFORMED,
-        created_at=datetime.utcnow(),
-        updated_at="2023-06-22T17:48:05.381251",
         declined_at=None,
         source_data={
             "nombre_entidad": "Test Entity",
@@ -278,6 +278,9 @@ def borrower(session):
             "pais": "CO",
         },
         status=models.BorrowerStatus.ACTIVE,
+        # Timestamps
+        created_at=datetime.utcnow(),
+        updated_at="2023-06-22T17:48:05.381251",
     )
     session.commit()
     return instance
@@ -291,11 +294,9 @@ def application_uuid():
 @pytest.fixture
 def application_payload(application_uuid, award, borrower):
     return {
-        "award_id": award.id,
         "uuid": application_uuid,
         "primary_email": "test@example.com",
         "award_borrower_identifier": "test_hash_12345678",
-        "borrower": borrower,
         "contract_amount_submitted": None,
         "amount_requested": 10000,
         "currency": "COP",
@@ -324,9 +325,13 @@ def application_payload(application_uuid, award, borrower):
         "repayment_months": None,
         "borrower_uploaded_contract_at": None,
         "completed_in_days": None,
+        "archived_at": None,
+        # Relationships
+        "award_id": award.id,
+        "borrower": borrower,
+        # Timestamps
         "created_at": datetime.utcnow(),
         "updated_at": "2023-06-26T03:14:31.572553+00:00",
-        "archived_at": None,
     }
 
 

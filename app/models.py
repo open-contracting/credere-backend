@@ -244,7 +244,9 @@ class MessageType(StrEnum):
 
 
 class UserType(StrEnum):
+    #: Administrators have full access to all endpoints.
     OCP = "OCP"
+    #: Lenders have access to applications they received.
     FI = "FI"
 
 
@@ -316,32 +318,48 @@ class LenderBase(SQLModel):
 
 class Lender(LenderBase, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    status: str = Field(default="")
+    deleted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    # Relationships
     applications: list["Application"] = Relationship(back_populates="lender")
     users: list["User"] = Relationship(back_populates="lender")
-    status: str = Field(default="")
+    credit_products: list["CreditProduct"] = Relationship(back_populates="lender")
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
     updated_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
     )
-    deleted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    credit_products: list["CreditProduct"] = Relationship(back_populates="lender")
 
 
 class CreditProductBase(SQLModel):
+    #: The size of the borrower to which this credit product is applicable.
+    #: (The same credit product can be configured for each applicable borrower size.)
     borrower_size: BorrowerSize
+    # The types of borrower to which this credit product is applicable.
+    borrower_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
+    #: The lower limit for the amount requested, below which this credit product is inapplicable.
     lower_limit: Decimal = Field(max_digits=16, decimal_places=2)
+    #: The upper limit for the amount requested, above which this credit product is inapplicable.
     upper_limit: Decimal = Field(max_digits=16, decimal_places=2)
+    #: A single procurement category, to which this credit product is inapplicable.
+    procurement_category_to_exclude: str = Field(default="")
+    #: The type of credit product, which mainly controls which descriptive fields are displayed.
+    type: CreditType
+    #: The document types that the borrower is prompted to upload.
+    required_document_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
+
+    # Descriptive
     interest_rate: str = Field(default="")
     additional_information: str = Field(default="")
-    type: CreditType
-    borrower_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
-    procurement_category_to_exclude: str = Field(default="")
-    required_document_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
     other_fees_total_amount: Decimal = Field(max_digits=16, decimal_places=2)
     other_fees_description: str = Field(default="")
     more_info_url: str = Field(default="")
+
+    # Relationships
     lender_id: int = Field(foreign_key="lender.id", index=True)
 
 
@@ -349,7 +367,11 @@ class CreditProduct(CreditProductBase, ActiveRecordMixin, table=True):
     __tablename__ = "credit_product"
 
     id: int | None = Field(default=None, primary_key=True)
+
+    # Relationships
     lender: Lender = Relationship(back_populates="credit_products")
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
@@ -374,25 +396,28 @@ class BorrowerBase(SQLModel):
     # is_msme is from source. This is always set when querying the sources.
     is_msme: bool = Field(default=True)
     missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
+    declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
     updated_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
     )
-    declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
 
 
 class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
     source_data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     status: BorrowerStatus = Field(default=BorrowerStatus.ACTIVE)
+
+    # Relationships
     applications: list["Application"] = Relationship(back_populates="borrower")
     awards: list["Award"] = Relationship(back_populates="borrower")
 
 
 class AwardBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
-    borrower_id: int | None = Field(foreign_key="borrower.id")
     source_contract_id: str = Field(default="", index=True)
     title: str = Field(default="")
     description: str = Field(default="")
@@ -413,12 +438,19 @@ class AwardBase(SQLModel):
     procurement_category: str = Field(default="")
     missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
 
+    # Relationships
+    borrower_id: int | None = Field(foreign_key="borrower.id")
+
 
 class Award(AwardBase, ActiveRecordMixin, table=True):
-    applications: list["Application"] = Relationship(back_populates="award")
-    borrower: Borrower = Relationship(back_populates="awards")
     source_data_contracts: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     source_data_awards: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+
+    # Relationships
+    applications: list["Application"] = Relationship(back_populates="award")
+    borrower: Borrower = Relationship(back_populates="awards")
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
@@ -437,13 +469,10 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
 
 
 class ApplicationBase(SQLModel):
-    award_id: int | None = Field(foreign_key="award.id", index=True)
     uuid: str = Field(unique=True)
     primary_email: str = Field(default="")
     status: ApplicationStatus = Field(default=ApplicationStatus.PENDING)
     award_borrower_identifier: str = Field(default="")
-    borrower_id: int | None = Field(foreign_key="borrower.id", index=True)
-    lender_id: int | None = Field(foreign_key="lender.id")
     contract_amount_submitted: Decimal | None = Field(max_digits=16, decimal_places=2)
     disbursed_final_amount: Decimal | None = Field(max_digits=16, decimal_places=2)
     amount_requested: Decimal | None = Field(max_digits=16, decimal_places=2)
@@ -470,17 +499,24 @@ class ApplicationBase(SQLModel):
     borrower_uploaded_contract_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
     lender_completed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
     completed_in_days: int | None
+    expired_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    archived_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    information_requested_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+    application_lapsed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    # Relationships
+    award_id: int | None = Field(foreign_key="award.id", index=True)
+    borrower_id: int | None = Field(foreign_key="borrower.id", index=True)
+    lender_id: int | None = Field(foreign_key="lender.id")
+    credit_product_id: int | None = Field(foreign_key="credit_product.id")
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
     updated_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
     )
-    expired_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    archived_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    information_requested_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    application_lapsed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    credit_product_id: int | None = Field(foreign_key="credit_product.id")
 
 
 class ApplicationPrivate(ApplicationBase):
@@ -489,6 +525,8 @@ class ApplicationPrivate(ApplicationBase):
 
 class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
+
+    # Relationships
     borrower_documents: list["BorrowerDocument"] = Relationship(back_populates="application")
     award: Award = Relationship(back_populates="applications")
     borrower: Borrower = Relationship(back_populates="applications")
@@ -730,42 +768,52 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
 class BorrowerDocumentBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
-    application_id: int = Field(foreign_key="application.id")
     type: BorrowerDocumentType
     verified: bool = Field(default=False)
     name: str = Field(default="")
+    submitted_at: datetime = Field(
+        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    )
+
+    # Relationships
+    application_id: int = Field(foreign_key="application.id")
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
     updated_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
-    )
-    submitted_at: datetime = Field(
-        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
 
 
 class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
     __tablename__ = "borrower_document"
 
-    application: Application | None = Relationship(back_populates="borrower_documents")
     file: bytes
+
+    # Relationships
+    application: Application | None = Relationship(back_populates="borrower_documents")
 
 
 class Message(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: MessageType
-    application_id: int = Field(foreign_key="application.id")
-    application: Application | None = Relationship(back_populates="messages")
     external_message_id: str = Field(default="")
     body: str = Field(default="")
+
+    # Relationships
+    application_id: int = Field(foreign_key="application.id")
+    application: Application | None = Relationship(back_populates="messages")
+    lender_id: int | None = Field(default=None, foreign_key="lender.id")
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
     updated_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, onupdate=func.now())
     )
-    lender_id: int | None = Field(default=None, foreign_key="lender.id")
 
     @classmethod
     def application_by_type(cls, message_type: MessageType) -> Select:
@@ -784,6 +832,8 @@ class EventLog(SQLModel, ActiveRecordMixin, table=True):
     url: str = Field(default="")
     data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     traceback: str
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
@@ -796,7 +846,11 @@ class UserBase(SQLModel):
     email: str = Field(unique=True)
     name: str = Field(default="")
     external_id: str = Field(default="", index=True)
+
+    # Relationships
     lender_id: int | None = Field(default=None, foreign_key="lender.id")
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
@@ -808,6 +862,7 @@ class UserBase(SQLModel):
 class User(UserBase, ActiveRecordMixin, table=True):
     __tablename__ = "credere_user"
 
+    # Relationships
     application_actions: list["ApplicationAction"] = Relationship(back_populates="user")
     lender: Lender | None = Relationship(back_populates="users")
 
@@ -818,10 +873,14 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     type: ApplicationActionType
     data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
+
+    # Relationships
     application_id: int = Field(foreign_key="application.id")
     application: Application | None = Relationship(back_populates="actions")
     user_id: int | None = Field(default=None, foreign_key="credere_user.id")
     user: User | None = Relationship(back_populates="application_actions")
+
+    # Timestamps
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
