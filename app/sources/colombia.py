@@ -69,7 +69,7 @@ def get_award(
     Create a new award and insert it into the database.
 
     :param entry: The dictionary containing the award data.
-    :param borrower_id: The ID of the borrower associated with the award. (default: None)
+    :param borrower_id: The database ID of the borrower associated with the award. (default: None)
     :param previous: Whether the award is a previous award or not. (default: False)
     :return: The newly created award data as a dictionary.
     """
@@ -161,31 +161,29 @@ def get_award_by_id_and_supplier(award_id: str, supplier_id: str) -> httpx.Respo
     return sources.make_request_with_retry(url, HEADERS)
 
 
-def get_previous_awards(documento_proveedor: str) -> httpx.Response:
+def get_previous_awards(supplier_id: str) -> httpx.Response:
     """
     Get previous contracts data for the given document provider from the source API.
 
-    :param documento_proveedor: The document provider to get previous contracts data for.
+    :param supplier_id: The document provider to get previous contracts data for.
     :return: The response object containing the previous awards data.
     """
 
-    url = f"{URLS['AWARDS']}?$where=nit_del_proveedor_adjudicado = '{documento_proveedor}'"
+    url = f"{URLS['AWARDS']}?$where=nit_del_proveedor_adjudicado = '{supplier_id}'"
     return sources.make_request_with_retry(url, HEADERS)
 
 
-def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict[str, str]) -> dict[str, str]:
+def get_borrower(borrower_identifier: str, supplier_id: str, entry: dict[str, str]) -> dict[str, str]:
     """
     Get the borrower information from the source
 
     :param borrower_identifier: The unique identifier for the borrower.
-    :param documento_proveedor: The document provider for the borrower.
+    :param supplier_id: The document provider for the borrower.
     :param entry: The dictionary containing the borrower data.
     :return: The newly created borrower data as a dictionary.
     """
 
-    borrower_url = (
-        f"{URLS['BORROWER']}?nit_entidad={documento_proveedor}&codigo_entidad={entry.get('codigoproveedor', '')}"
-    )
+    borrower_url = f"{URLS['BORROWER']}?nit_entidad={supplier_id}&codigo_entidad={entry.get('codigoproveedor', '')}"
     borrower_response_json = util.loads(sources.make_request_with_retry(borrower_url, HEADERS))
     len_borrower_response_json = len(borrower_response_json)
 
@@ -197,7 +195,7 @@ def get_borrower(borrower_identifier: str, documento_proveedor: str, entry: dict
         )
 
     remote_borrower = borrower_response_json[0]
-    email = get_email(documento_proveedor)
+    email = get_email(supplier_id)
 
     if (
         remote_borrower.get("tipo_organizacion", "").lower() == SUPPLIER_TYPE_TO_EXCLUDE
@@ -233,15 +231,15 @@ def _get_email(borrower_response: dict[str, str]) -> str:
     return borrower_response.get("correo_electr_nico", "")
 
 
-def get_email(documento_proveedor: str) -> str:
+def get_email(supplier_id: str) -> str:
     """
     Get the email address for the borrower based on the given document provider.
 
-    :param documento_proveedor: The document provider for the borrower.
+    :param supplier_id: The document provider for the borrower.
     :return: The email address of the borrower.
     """
 
-    email_url = f"{URLS['BORROWER_EMAIL']}?nit={documento_proveedor}"
+    email_url = f"{URLS['BORROWER_EMAIL']}?nit={supplier_id}"
     email_response_json = util.loads(sources.make_request_with_retry(email_url, HEADERS))
     len_email_response_json = len(email_response_json)
 
@@ -264,7 +262,7 @@ def get_email(documento_proveedor: str) -> str:
     return email
 
 
-def get_documento_proveedor(entry: dict[str, str]) -> str:
+def get_supplier_id(entry: dict[str, str]) -> str:
     """
     Get the document provider from the given entry data.
 
@@ -272,8 +270,8 @@ def get_documento_proveedor(entry: dict[str, str]) -> str:
     :return: The document provider for the borrower.
     """
 
-    documento_proveedor = entry.get("nit_del_proveedor_adjudicado", None)
-    if not documento_proveedor or documento_proveedor == "No Definido":
-        raise SkippedAwardError("Missing documento_proveedor", data=entry)
+    supplier_id = entry.get("nit_del_proveedor_adjudicado", None)
+    if not supplier_id or supplier_id == "No Definido":
+        raise SkippedAwardError("Missing supplier_id", data=entry)
 
-    return documento_proveedor
+    return supplier_id
