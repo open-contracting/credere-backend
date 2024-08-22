@@ -18,4 +18,7 @@ Issues and `performance <https://open-contracting-partnership.sentry.io/performa
 
    .. note:: Infrequently accessed endpoints are likely to have a high rate, since a single error can cause a double-digit rate.
 
-.. seealso:: `Performance Metrics <https://docs.sentry.io/product/performance/metrics/>`__
+.. seealso::
+
+   -  ``status`` `values <https://develop.sentry.dev/sdk/event-payloads/span/>`__
+   -  `Performance Metrics <https://docs.sentry.io/product/performance/metrics/>`__
