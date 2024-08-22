@@ -1,6 +1,8 @@
 Enumerations
 ============
 
+.. autoclass:: app.models.UserType
+
 .. autoclass:: app.models.BorrowerStatus
 
 .. autoclass:: app.models.ApplicationStatus

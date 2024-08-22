@@ -52,6 +52,7 @@ html_js_files = [
 autodoc_default_options = {
     "members": None,
     "member-order": "bysource",
+    "exclude-members": "model_computed_fields,model_config,model_fields",
 }
 # autodoc_typehints = "description"
 
