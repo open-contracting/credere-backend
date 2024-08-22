@@ -13,7 +13,7 @@ from sqlmodel import Field, Relationship, SQLModel, col
 from app.settings import app_settings
 
 
-def _get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
+def get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
     """
     Get a dictionary indicating whether each key in the input dictionary has missing data (empty or None).
 
@@ -70,13 +70,15 @@ class ActiveRecordMixin:
         """
         Insert a new instance into the database.
 
+        If the model has a ``missing_data`` field, indicate which fields are missing in ``data``.
+
         :param session: The database session.
         :param data: The initial instance data.
         :return: The inserted instance.
         """
         obj = cls(**data)
         if hasattr(obj, "missing_data"):  # Award and Borrower
-            obj.missing_data = _get_missing_data_keys(data)
+            obj.missing_data = get_missing_data_keys(data)
 
         session.add(obj)
         session.flush()
@@ -86,6 +88,8 @@ class ActiveRecordMixin:
     def create_from_object(cls, session: Session, obj: Any) -> Self:
         """
         Insert a new instance into the database.
+
+        If the model has a ``missing_data`` field, indicate which fields are missing in the instance.
 
         :param session: The database session.
         :param data: The initial instance data.
@@ -108,7 +112,7 @@ class ActiveRecordMixin:
         for key, value in data.items():
             setattr(self, key, value)
         if hasattr(self, "missing_data"):  # Award and Borrower
-            self.missing_data = _get_missing_data_keys(self.model_dump())
+            self.missing_data = get_missing_data_keys(self.model_dump())
 
         session.add(self)  # not strictly necessary
         session.flush()
@@ -424,6 +428,7 @@ class BorrowerBase(SQLModel):
     size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
     # is_msme is from source. This is always set when querying the sources.
     is_msme: bool = Field(default=True)
+    #: .. seealso:: :attr:`app.models.ActiveRecordMixin.create` and :attr:`~app.models.ActiveRecordMixin.update`.
     missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
     declined_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
 
@@ -447,24 +452,43 @@ class Borrower(BorrowerBase, ActiveRecordMixin, table=True):
 
 class AwardBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
+
+    # From data source, some of which are/can be used in emails to identify the award for the borrower.
+
+    #: The ID of the award (contract) in the data source.
     source_contract_id: str = Field(default="", index=True)
     title: str = Field(default="")
     description: str = Field(default="")
     award_date: datetime | None
     award_amount: Decimal = Field(max_digits=16, decimal_places=2)
     award_currency: str = Field(default="COP", description="ISO 4217 currency code")
+    #: .. seealso:: :meth:`app.models.Application.previous_awards`
     contractperiod_startdate: datetime | None
     contractperiod_enddate: datetime | None
     payment_method: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     buyer_name: str = Field(default="")
+    #: The human-readable web page of the award.
     source_url: str = Field(default="")
     entity_code: str = Field(default="")
     contract_status: str = Field(default="")
+    #: The time at which the award was last updated in the data source.
+    #:
+    #: .. seealso:: :meth:`app.models.Award.last_updated`
     source_last_updated_at: datetime | None
+    #: Whether this award was retrieved when the invitation was :attr:`accepted<app.models.ApplicationStatus.ACCEPTED>`
+    #: (to display to the lender, as context), or is related to an archived application (again, to display in future
+    #: applications).
+    #:
+    #: .. seealso::
+    #:
+    #:    - :meth:`app.models.Application.previous_awards`
+    #:    - :typer:`python-m-app-remove-dated-application-data`
     previous: bool = Field(default=False)
     procurement_method: str = Field(default="")
     contracting_process_id: str = Field(default="")
+    #: .. seealso:: :attr:`app.models.CreditProduct.procurement_category_to_exclude`
     procurement_category: str = Field(default="")
+    #: .. seealso:: :attr:`app.models.ActiveRecordMixin.create` and :attr:`~app.models.ActiveRecordMixin.update`.
     missing_data: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
 
     # Relationships
@@ -472,6 +496,11 @@ class AwardBase(SQLModel):
 
 
 class Award(AwardBase, ActiveRecordMixin, table=True):
+    """
+    All fields, other than relationships and timestamps, are derived from the data source.
+    """
+
+    # From data source
     source_data_contracts: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
     source_data_awards: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
 
