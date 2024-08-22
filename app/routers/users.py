@@ -28,7 +28,7 @@ async def create_user(
     admin: models.User = Depends(dependencies.get_admin_user),
 ) -> models.User:
     """
-    Create a new user in AWS Cognito.
+    Create a new user in Cognito.
 
     Email the user a temporary password.
 
@@ -212,7 +212,7 @@ def logout(
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """
-    Logout the user from all devices in AWS Cognito.
+    Logout the user from all devices in Cognito.
 
     :param authorization: The Authorization header, like "Bearer ACCESS_TOKEN".
     """
