@@ -242,7 +242,7 @@ def test_approve_application_cycle(
         # OCP ask for a file that does not exist
         response = client.get("/applications/documents/id/999", headers=admin_header)
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json() == {"detail": _("BorrowerDocument not found")}
+        assert response.json() == {"detail": _("%(model_name)s not found", model_name="BorrowerDocument")}
 
     # lender tries to approve the application without verifying legal_name
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
