@@ -10,6 +10,7 @@ from sqlmodel import col
 
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
+from app.i18n import _
 
 logger = logging.getLogger(__name__)
 
@@ -317,13 +318,13 @@ async def rollback_select_credit_product(
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Credit product not selected",
+                detail=_("Credit product not selected"),
             )
 
         if application.lender_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot rollback at this stage",
+                detail=_("Cannot rollback at this stage"),
             )
 
         application.credit_product_id = None
@@ -367,14 +368,14 @@ async def confirm_credit_product(
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Credit product not selected",
+                detail=_("Credit product not selected"),
             )
 
         credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
         if not credit_product:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Credit product not found",
+                detail=_("Credit product not found"),
             )
 
         application.lender_id = credit_product.lender_id
@@ -456,14 +457,14 @@ async def rollback_confirm_credit_product(
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Credit product not selected",
+                detail=_("Credit product not selected"),
             )
 
         credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
         if not credit_product:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Credit product not found",
+                detail=_("Credit product not found"),
             )
 
         application.lender_id = None
@@ -522,13 +523,13 @@ async def update_apps_send_notifications(
         if not application.credit_product_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Credit product not selected",
+                detail=_("Credit product not selected"),
             )
 
         if not application.lender:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Lender not selected",
+                detail=_("Lender not selected"),
             )
 
         application.status = models.ApplicationStatus.SUBMITTED
@@ -544,7 +545,7 @@ async def update_apps_send_notifications(
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="There was an error submitting the application",
+                detail=_("There was an error submitting the application"),
             )
         models.Message.create(
             session,
@@ -593,7 +594,7 @@ async def upload_document(
         if not application.pending_documents:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot upload document at this stage",
+                detail=_("Cannot upload document at this stage"),
             )
 
         document = util.create_or_update_borrower_document(
@@ -800,7 +801,7 @@ async def find_alternative_credit_option(
         if app_action:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=util.ERROR_CODES.APPLICATION_ALREADY_COPIED,
+                detail=_("A new application has alredy been created from this one"),
             )
 
         # Copy the application, changing the uuid, status, and borrower_accepted_at.
@@ -819,7 +820,7 @@ async def find_alternative_credit_option(
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"There was a problem copying the application.{e}",
+                detail=_("There was a problem copying the application. %(exception)s", exception=e),
             )
 
         models.ApplicationAction.create(

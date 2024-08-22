@@ -2,6 +2,7 @@ import logging
 
 from fastapi import status
 
+from app.i18n import _
 from tests import assert_ok
 
 
@@ -23,7 +24,7 @@ def test_create_and_get_user(client, admin_header, lender_header, user_payload):
     # try to get a non-existing user
     response = client.get("/users/200")
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "User not found"}
+    assert response.json() == {"detail": _("%(model_name)s not found", model_name="User")}
 
     # try to get all users
     response = client.get("/users?page=0&page_size=5&sort_field=created_at&sort_order=desc", headers=admin_header)
@@ -31,7 +32,7 @@ def test_create_and_get_user(client, admin_header, lender_header, user_payload):
 
     response = client.get("/users?page=0&page_size=5&sort_field=created_at&sort_order=desc", headers=lender_header)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Insufficient permissions"}
+    assert response.json() == {"detail": _("Insufficient permissions")}
 
 
 def test_update_user(client, admin_header, lender_header, user_payload):
@@ -54,7 +55,7 @@ def test_update_user(client, admin_header, lender_header, user_payload):
         headers=lender_header,
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Insufficient permissions"}
+    assert response.json() == {"detail": _("Insufficient permissions")}
 
 
 def test_duplicate_user(client, admin_header, user_payload):
@@ -64,7 +65,7 @@ def test_duplicate_user(client, admin_header, user_payload):
     # duplicate user
     response = client.post("/users", json=user_payload, headers=admin_header)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert response.json() == {"detail": "Username already exists"}
+    assert response.json() == {"detail": _("Username already exists")}
 
 
 def test_logout_invalid_authorization_header(client, caplog):
@@ -73,7 +74,7 @@ def test_logout_invalid_authorization_header(client, caplog):
     response = client.get("/users/logout", headers={"Authorization": "Bearer ACCESS_TOKEN"})
 
     assert_ok(response)
-    assert response.json() == {"detail": "User logged out successfully"}
+    assert response.json() == {"detail": _("User logged out successfully")}
     assert not caplog.records
 
 
@@ -83,5 +84,5 @@ def test_logout_no_authorization_header(client, caplog):
     response = client.get("/users/logout")
 
     assert_ok(response)
-    assert response.json() == {"detail": "User logged out successfully"}
+    assert response.json() == {"detail": _("User logged out successfully")}
     assert not caplog.records

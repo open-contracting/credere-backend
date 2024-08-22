@@ -1,11 +1,14 @@
+# Filesystem
+.DS_Store
+
 # Editor
 *.swp
 *~
+.vscode/launch.json
 
 # Virtual environment
 /.ve
 /venv
-.env
 
 # Bytecode
 __pycache__
@@ -15,23 +18,16 @@ __pycache__
 /.coverage
 /htmlcov
 
-# Sphinx
-/docs/_build
-
 # I18n
 *.mo
 
-# Node
-node_modules
-npm-debug.log
+# Environment
+.env
 
-#test dbs
-*.db
-.vscode/launch.json
-.coverage
-coverage_re
-.DS_Store
+# Documentation
+/docs/_build
 /schemaspy
 /credere-main-*.json
 /test.json
+/*.egg-info
 /messages.pot

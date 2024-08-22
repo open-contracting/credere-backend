@@ -39,6 +39,12 @@ Setup
 
       alembic upgrade head
 
+#. Install the entry point for Babel:
+
+   .. code-block:: bash
+
+      pip install -e .
+
 #. Compile message catalogs:
 
    .. code-block:: bash
@@ -58,6 +64,7 @@ Repository structure
    ├── __main__.py          # Typer commands
    ├── auth.py              # Permissions and JWT token verification
    ├── aws.py               # Amazon Web Services API clients
+   ├── babel.py             # Babel extractors
    ├── db.py                # SQLAlchemy database operations and session management
    ├── dependencies.py      # FastAPI dependencies
    ├── exceptions.py        # Definitions of exceptions raised by this application
@@ -192,13 +199,17 @@ Update translations
    .. code-block:: bash
 
       pybabel extract -F babel.cfg -o messages.pot .
-      pybabel update -i messages.pot -d locale
+      pybabel update -N -i messages.pot -d locale
 
 #. Compile the message catalogs (in development):
 
    .. code-block:: bash
 
       pybabel compile -f -d locale
+
+.. note::
+
+   The ``babel.cfg`` file indicates from which ``StrEnum`` classes to extract messages. If Credere is deployed in English, we must add an ``en`` locale to translate these. Otherwise, the translations will be the database values, like "MICRO" instead of "0 to 10".
 
 .. admonition:: Reference
 

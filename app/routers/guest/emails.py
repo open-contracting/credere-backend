@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app import aws, dependencies, mail, models, parsers, util
 from app.db import get_db, rollback_on_error
+from app.i18n import _
 
 router = APIRouter()
 
@@ -30,7 +31,7 @@ async def change_email(
         if not util.is_valid_email(new_email):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="New email is not valid",
+                detail=_("New email is not valid"),
             )
 
         confirmation_email_token = util.generate_uuid(new_email)
@@ -77,14 +78,14 @@ async def confirm_email(
         if not application.pending_email_confirmation:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Application is not pending an email confirmation",
+                detail=_("Application is not pending an email confirmation"),
             )
 
         new_email, token = application.confirmation_email_token.split("---")[:2]
         if token != payload.confirmation_email_token:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Not authorized to modify this application",
+                detail=_("Not authorized to modify this application"),
             )
 
         application.primary_email = new_email

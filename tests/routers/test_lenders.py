@@ -1,8 +1,10 @@
+import uuid
 import warnings
 
 from fastapi import status
 
 from app import models
+from app.i18n import _
 from tests import assert_ok
 
 
@@ -43,7 +45,7 @@ def test_create_credit_product(client, admin_header, lender_header, lender):
     # Lender tries to create credit product
     response = client.post(f"/lenders/{lender.id}/credit-products", json=create_payload, headers=lender_header)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Insufficient permissions"}
+    assert response.json() == {"detail": _("Insufficient permissions")}
 
     with warnings.catch_warnings():
         # "Pydantic serializer warnings" "Expected `decimal` but got `float` - serialized value may not be as expected"
@@ -57,7 +59,7 @@ def test_create_credit_product(client, admin_header, lender_header, lender):
     # OCP user tries to create a credit product for a non existent lender
     response = client.post("/lenders/999/credit-products", json=create_payload, headers=admin_header)
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "Lender not found"}
+    assert response.json() == {"detail": _("%(model_name)s not found", model_name="Lender")}
 
     with warnings.catch_warnings():
         # "Pydantic serializer warnings" "Expected `decimal` but got `int` - serialized value may not be as expected"
@@ -72,7 +74,7 @@ def test_create_credit_product(client, admin_header, lender_header, lender):
     # tries to update a credit product that does not exist
     response = client.put("/credit-products/999", json=update_payload, headers=admin_header)
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "CreditProduct not found"}
+    assert response.json() == {"detail": _("%(model_name)s not found", model_name="CreditProduct")}
 
     response = client.get(f"/credit-products/{credit_product_id}")
     assert_ok(response)
@@ -80,7 +82,7 @@ def test_create_credit_product(client, admin_header, lender_header, lender):
 
 def test_create_lender(client, admin_header, lender_header, lender):
     payload = {
-        "name": "John Doe",
+        "name": str(uuid.uuid4()),
         "email_group": "lenders@noreply.open-contracting.org",
         "type": "Some Type",
         "sla_days": 5,
@@ -93,16 +95,16 @@ def test_create_lender(client, admin_header, lender_header, lender):
     # tries to create same lender twice
     response = client.post("/lenders", json=payload, headers=admin_header)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert response.json() == {"detail": "Lender already exists"}
+    assert response.json() == {"detail": _("Lender already exists")}
 
     response = client.post("/lenders", json=payload, headers=lender_header)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Insufficient permissions"}
+    assert response.json() == {"detail": _("Insufficient permissions")}
 
 
 def test_create_lender_with_credit_product(client, admin_header, lender_header, lender):
     payload = {
-        "name": "test lender",
+        "name": str(uuid.uuid4()),
         "email_group": "test@noreply.open-contracting.org",
         "type": "Some Type",
         "sla_days": 5,
@@ -136,7 +138,7 @@ def test_create_lender_with_credit_product(client, admin_header, lender_header, 
     # lender user tries to create lender
     response = client.post("/lenders", json=payload, headers=lender_header)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Insufficient permissions"}
+    assert response.json() == {"detail": _("Insufficient permissions")}
 
 
 def test_get_lender(client, admin_header, lender_header, unauthorized_lender_header, lender):
@@ -151,12 +153,12 @@ def test_get_lender(client, admin_header, lender_header, unauthorized_lender_hea
 
     response = client.get("/lenders/999", headers=admin_header)
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "Lender not found"}
+    assert response.json() == {"detail": _("%(model_name)s not found", model_name="Lender")}
 
 
 def test_update_lender(client, admin_header, lender_header, lender):
     payload = {
-        "name": "John smith",
+        "name": str(uuid.uuid4()),
         "email_group": "lenders@noreply.open-contracting.org",
         "type": "Some Type",
         "sla_days": 5,
@@ -169,7 +171,7 @@ def test_update_lender(client, admin_header, lender_header, lender):
     # Lender user tries to update lender
     response = client.put(f"/lenders/{lender.id}", json=payload, headers=lender_header)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Insufficient permissions"}
+    assert response.json() == {"detail": _("Insufficient permissions")}
 
     response = client.put(f"/lenders/{lender.id}", json={"sla_days": "not_valid_value"}, headers=admin_header)
     data = response.json()

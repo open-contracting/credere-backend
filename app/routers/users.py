@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app import aws, dependencies, mail, models, parsers, serializers
 from app.db import get_db, rollback_on_error
+from app.i18n import _
 from app.settings import app_settings
 from app.util import SortOrder, get_object_or_404, get_order_by
 
@@ -57,7 +58,7 @@ async def create_user(
         except (client.cognito.exceptions.UsernameExistsException, IntegrityError):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Username already exists",
+                detail=_("Username already exists"),
             )
 
 
@@ -100,7 +101,7 @@ def change_password(
             associate_response = client.cognito.associate_software_token(Session=response["Session"])
 
             return serializers.ChangePasswordResponse(
-                detail="Password changed with MFA setup required",
+                detail=_("Password changed with MFA setup required"),
                 secret_code=associate_response["SecretCode"],
                 session=associate_response["Session"],
                 username=payload.username,
@@ -109,14 +110,14 @@ def change_password(
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Temporal password is expired, please request a new one",
+                detail=_("Temporal password is expired, please request a new one"),
             )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="There was an error trying to update the password",
+            detail=_("There was an error trying to update the password"),
         )
 
-    return serializers.ResponseBase(detail="Password changed")
+    return serializers.ResponseBase(detail=_("Password changed"))
 
 
 @router.put(
@@ -141,14 +142,14 @@ def setup_mfa(
         if e.response["Error"]["Code"] == "NotAuthorizedException":
             raise HTTPException(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT,
-                detail="Invalid session for the user, session is expired",
+                detail=_("Invalid session for the user, session is expired"),
             )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="There was an error trying to setup mfa",
+            detail=_("There was an error trying to setup mfa"),
         )
 
-    return serializers.ResponseBase(detail="MFA configured successfully")
+    return serializers.ResponseBase(detail=_("MFA configured successfully"))
 
 
 @router.post(
@@ -189,7 +190,7 @@ def login(
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Temporal password is expired, please request a new one",
+                detail=_("Temporal password is expired, please request a new one"),
             )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -233,7 +234,7 @@ def logout(
         except ClientError as e:
             logger.exception(e)
 
-    return serializers.ResponseBase(detail="User logged out successfully")
+    return serializers.ResponseBase(detail=_("User logged out successfully"))
 
 
 @router.get(
@@ -266,7 +267,6 @@ def forgot_password(
 
     Email the user a temporary password and a reset link.
     """
-    detail = "An email with a reset link was sent to end user"
     try:
         temporary_password = client.generate_password()
 
@@ -283,7 +283,7 @@ def forgot_password(
         logger.exception("Error resetting password")
 
     # always return 200 to avoid user enumeration
-    return serializers.ResponseBase(detail=detail)
+    return serializers.ResponseBase(detail=_("An email with a reset link was sent to end user"))
 
 
 @router.get(
@@ -364,5 +364,5 @@ async def update_user(
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="User already exists",
+                detail=_("User already exists"),
             )
