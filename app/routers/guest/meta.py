@@ -1,5 +1,3 @@
-from typing import Any
-
 from fastapi import APIRouter, HTTPException, status
 
 from app import models
@@ -12,26 +10,27 @@ router = APIRouter()
     "/meta/{domain}",
     tags=["meta"],
 )
-async def get_settings_by_domain(domain: str) -> list[dict[str, str | Any]]:
+async def get_settings_by_domain(domain: str) -> list[dict[str, str]]:
     """
     Get the keys and localized descriptions of a specific domain, where a domain can be:
+
+        - BorrowerDocumentType
+        - BorrowerSector
+        - BorrowerSize
         - BorrowerType
         - CreditType
-        - BorrowerDocumentType
-        - BorrowerSize
-        - BorrowerSector,
 
     :return: A dict of the domain key and localized value.
     """
-    if domain not in [
+    if domain not in (
+        "BorrowerDocumentType",
+        "BorrowerSector",
+        "BorrowerSize",
         "BorrowerType",
         "CreditType",
-        "BorrowerDocumentType",
-        "BorrowerSize",
-        "BorrowerSector",
-    ]:
+    ):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=_("Domain doesn't exist"),
         )
     return [{"label": _(name), "value": name} for name in getattr(models, domain)]
