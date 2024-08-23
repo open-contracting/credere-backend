@@ -20,7 +20,7 @@ jobs:
       - run: pip install -r requirements.txt .
       - name: Update catalogs
         run: |
-          pybabel extract -F babel.cfg -o messages.pot .
+          pybabel extract -k '_ i' -o messages.pot .
           pybabel update -N -i messages.pot -d locale
       - name: Count incomplete translations
         shell: bash
