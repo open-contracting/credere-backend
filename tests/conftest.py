@@ -254,7 +254,7 @@ def borrower(session):
         legal_name="",  # tests expect this to be in missing_data
         email="test@example.com",
         address="Direccion: Test Address\nCiudad: Test City\nProvincia: No provisto\nEstado: No provisto",
-        legal_identifier="",
+        legal_identifier="Test NIT",
         type="Test Organization Type",
         sector="",
         size=models.BorrowerSize.NOT_INFORMED,

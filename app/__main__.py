@@ -311,6 +311,8 @@ def sla_overdue_applications() -> None:
         ):
             with rollback_on_error(session):
                 days_passed = application.days_waiting_for_lender(session)
+
+                # Email lenders if the SLA days are dwindling.
                 if days_passed > application.lender.sla_days * app_settings.progress_to_remind_started_applications:
                     if "email" not in overdue_lenders[application.lender.id]:
                         overdue_lenders[application.lender.id]["email"] = application.lender.email_group
@@ -318,6 +320,7 @@ def sla_overdue_applications() -> None:
 
                     overdue_lenders[application.lender.id]["count"] += 1
 
+                    # Email administrators if the SLA days are exceeded.
                     if days_passed > application.lender.sla_days:
                         application.overdued_at = datetime.now(application.created_at.tzinfo)
 
@@ -333,7 +336,10 @@ def sla_overdue_applications() -> None:
 
         for lender_id, lender_data in overdue_lenders.items():
             message_id = mail.send_overdue_application_email_to_lender(
-                aws.ses_client, lender_data["name"], lender_data["count"], lender_data["email"]
+                aws.ses_client,
+                lender_name=lender_data["name"],
+                lender_email=lender_data["email"],
+                amount=lender_data["count"],
             )
             models.Message.create(
                 session,
