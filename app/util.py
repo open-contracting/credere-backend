@@ -112,7 +112,7 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     new_file = file.file.read()
     if len(new_file) >= MAX_FILE_SIZE:  # 10MB in bytes
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=_("File is too large"),
         )
     return new_file, filename

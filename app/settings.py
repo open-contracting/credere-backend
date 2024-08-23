@@ -195,10 +195,10 @@ if app_settings.sentry_dsn:
         # FastAPI uses 400 for request validation errors, which shouldn't occur unless the frontend is misimplemented.
         integrations=[
             StarletteIntegration(
-                failed_request_status_codes=[400, range(500, 599)],
+                failed_request_status_codes=[400, 413, range(500, 599)],
             ),
             FastApiIntegration(
-                failed_request_status_codes=[400, range(500, 599)],
+                failed_request_status_codes=[400, 413, range(500, 599)],
             ),
         ],
     )
