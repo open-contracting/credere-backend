@@ -177,7 +177,7 @@ Update translations
 
    .. code-block:: bash
 
-      pybabel extract -k '_ i' -o messages.pot .
+      pybabel extract -k '_ i' -o messages.pot app
       pybabel update -N -i messages.pot -d locale
 
 #. Compile the message catalogs (in development):
