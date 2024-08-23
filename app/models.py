@@ -86,7 +86,7 @@ class ActiveRecordMixin:
         return obj
 
     @classmethod
-    def create_from_object(cls, session: Session, obj: Any) -> Self:
+    def create_from_object(cls, session: Session, obj: Self) -> Self:
         """
         Insert a new instance into the database.
 
@@ -529,7 +529,7 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
 
     # Relationships
     applications: list["Application"] = Relationship(back_populates="award")
-    borrower: Borrower = Relationship(back_populates="awards")
+    borrower: Borrower | None = Relationship(back_populates="awards")
 
     # Timestamps
     created_at: datetime = Field(
@@ -678,9 +678,10 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     borrower_documents: list["BorrowerDocument"] = Relationship(back_populates="application")
     award: Award = Relationship(back_populates="applications")
     borrower: Borrower = Relationship(back_populates="applications")
-    lender: Lender | None = Relationship(back_populates="applications")
+    lender: Lender = Relationship(back_populates="applications")
     messages: list["Message"] = Relationship(back_populates="application")
     actions: list["ApplicationAction"] = Relationship(back_populates="application")
+    # no back_populates, because models.CreditProduct is used as a request and response format. :issue:`376`
     credit_product: CreditProduct = Relationship()
 
     @classmethod
@@ -946,7 +947,7 @@ class BorrowerDocument(BorrowerDocumentBase, ActiveRecordMixin, table=True):
     file: bytes
 
     # Relationships
-    application: Application | None = Relationship(back_populates="borrower_documents")
+    application: Application = Relationship(back_populates="borrower_documents")
 
 
 class Message(SQLModel, ActiveRecordMixin, table=True):
@@ -960,7 +961,7 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
 
     # Relationships
     application_id: int = Field(foreign_key="application.id")
-    application: Application | None = Relationship(back_populates="messages")
+    application: Application = Relationship(back_populates="messages")
     lender_id: int | None = Field(default=None, foreign_key="lender.id")
 
     # Timestamps
@@ -1036,7 +1037,7 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
 
     # Relationships
     application_id: int = Field(foreign_key="application.id")
-    application: Application | None = Relationship(back_populates="actions")
+    application: Application = Relationship(back_populates="actions")
     user_id: int | None = Field(default=None, foreign_key="credere_user.id")
     user: User | None = Relationship(back_populates="application_actions")
 
