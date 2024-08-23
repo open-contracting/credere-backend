@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -26,5 +26,5 @@ app.include_router(statistics.router)
 
 
 @app.exception_handler(500)
-async def http_exception_handler(request, exc):
+async def http_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse({"detail": _("An unexpected error occurred")}, status_code=500)

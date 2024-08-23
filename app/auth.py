@@ -68,7 +68,7 @@ class JWTAuthorization(HTTPBearer):
 
         return alg_obj.verify(msg, prepared_key, sig)
 
-    async def __call__(self, request: Request) -> JWTAuthorizationCredentials | None:
+    async def __call__(self, request: Request) -> JWTAuthorizationCredentials:
         """
         Authenticate and verify the provided JWT token in the request.
 

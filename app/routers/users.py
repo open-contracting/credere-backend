@@ -87,9 +87,7 @@ def change_password(
         client.cognito.admin_update_user_attributes(
             UserPoolId=app_settings.cognito_pool_id,
             Username=payload.username,
-            UserAttributes=[
-                {"Name": "email_verified", "Value": "true"},
-            ],
+            UserAttributes=[{"Name": "email_verified", "Value": "true"}],
         )
 
         if "ChallengeName" in response and response["ChallengeName"] == "MFA_SETUP":
