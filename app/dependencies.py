@@ -64,7 +64,7 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
 
 
 async def get_admin_user(user: models.User = Depends(get_user)) -> models.User:
-    if not user.is_ocp():
+    if not user.is_admin():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=_("Insufficient permissions"),
@@ -85,7 +85,7 @@ def raise_if_unauthorized(
         for role in roles:
             match role:
                 case models.UserType.OCP:
-                    if user.is_ocp():
+                    if user.is_admin():
                         break
                 case models.UserType.FI:
                     if user.lender_id == application.lender_id:

@@ -16,7 +16,7 @@ router = APIRouter()
     "/statistics-ocp",
     tags=["statistics"],
 )
-async def get_ocp_statistics_by_lender(
+async def get_admin_statistics_by_lender(
     initial_date: str | None = None,
     final_date: str | None = None,
     lender_id: int | None = None,
@@ -75,7 +75,7 @@ async def get_ocp_statistics_by_lender(
     "/statistics-ocp/opt-in",
     tags=["statistics"],
 )
-async def get_ocp_statistics_opt_in(
+async def get_admin_statistics_opt_in(
     admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.StatisticOptInResponse:
