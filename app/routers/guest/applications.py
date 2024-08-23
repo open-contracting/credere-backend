@@ -30,7 +30,7 @@ async def application_by_uuid(
     Retrieve an application by its UUID.
 
     :return: The application with the specified UUID and its associated entities.
-    :raise: HTTPException with status code 404 if the application is expired.
+    :raise: HTTPException if the application is expired.
     """
     return serializers.ApplicationResponse(
         application=cast(models.ApplicationRead, application),
@@ -182,7 +182,7 @@ async def access_scheme(
 
     :param payload: The application data.
     :return: The application response containing the updated application, borrower, and award.
-    :raise: HTTPException with status code 404 if the application is expired or not in the PENDING status.
+    :raise: HTTPException if the application is expired or not in the PENDING status.
     """
     with rollback_on_error(session):
         application.borrower_accepted_at = datetime.now(application.created_at.tzinfo)
@@ -216,7 +216,7 @@ async def credit_product_options(
 
     :param payload: The application credit options.
     :return: The credit product list response containing the available loans and credit lines.
-    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
+    :raise: HTTPException if the application is expired, not in the ACCEPTED status, or if the
             previous lenders are not found.
     """
     base_query = (
@@ -255,7 +255,7 @@ async def select_credit_product(
     :param payload: The application credit product selection payload.
     :return: The application response containing the updated application, borrower, award, lender, documents, and
              credit product.
-    :raise: HTTPException with status code 404 if the application is expired, not in the ACCEPTED status, or if the
+    :raise: HTTPException if the application is expired, not in the ACCEPTED status, or if the
             calculator data is invalid.
     """
     with rollback_on_error(session):

@@ -57,7 +57,7 @@ async def create_user(
             return user
         except (client.cognito.exceptions.UsernameExistsException, IntegrityError):
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=_("Username already exists"),
             )
 
@@ -109,7 +109,7 @@ def change_password(
     except ClientError as e:
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=_("Temporal password is expired, please request a new one"),
             )
         raise HTTPException(
@@ -141,7 +141,7 @@ def setup_mfa(
     except ClientError as e:
         if e.response["Error"]["Code"] == "NotAuthorizedException":
             raise HTTPException(
-                status_code=status.HTTP_408_REQUEST_TIMEOUT,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=_("Invalid session for the user, session is expired"),
             )
         raise
@@ -186,11 +186,11 @@ def login(
         # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#parsing-error-responses-and-catching-exceptions-from-aws-services
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=_("Temporal password is expired, please request a new one"),
             )
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=e.response["Error"]["Message"],
         )
 
@@ -360,6 +360,6 @@ async def update_user(
             return user
         except IntegrityError:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=_("User already exists"),
             )

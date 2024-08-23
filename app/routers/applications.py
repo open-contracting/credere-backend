@@ -170,7 +170,7 @@ async def approve_application(
                 not_validated_fields.append(key)
         if not_validated_fields:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Some borrower data field are not verified"),
             )
 
@@ -181,7 +181,7 @@ async def approve_application(
                 not_validated_documents.append(document.type)
         if not_validated_documents:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Some documents are not verified"),
             )
 
@@ -457,7 +457,7 @@ async def get_application(
     Retrieve an application by its ID.
 
     :return: The application with the specified ID and its associated relations.
-    :raise: HTTPException with status code 401 if the user is not authorized to view the application.
+    :raise: HTTPException if the user is not authorized to view the application.
     """
     return util.get_modified_data_fields(session, application)
 
@@ -484,7 +484,7 @@ async def start_application(
 
     :param id: The ID of the application to start.
     :return: The started application with its associated relations.
-    :raise: HTTPException with status code 401 if the user is not authorized to start the application.
+    :raise: HTTPException if the user is not authorized to start the application.
     """
     with rollback_on_error(session):
         application.status = models.ApplicationStatus.STARTED
@@ -604,6 +604,6 @@ async def previous_contracts(
     Get the previous awards associated with an application.
 
     :return: A list of previous awards associated with the application.
-    :raise: HTTPException with status code 401 if the user is not authorized to access the application.
+    :raise: HTTPException if the user is not authorized to access the application.
     """
     return application.previous_awards(session)

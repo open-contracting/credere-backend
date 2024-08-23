@@ -45,7 +45,7 @@ async def create_lender(
             return lender
         except IntegrityError:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=_("Lender already exists"),
             )
 
@@ -90,7 +90,7 @@ async def get_lender(
 
     :param lender_id: The ID of the lender to retrieve.
     :return: The lender with the specified ID.
-    :raise: HTTPException with status code 404 if the lender is not found.
+    :raise: HTTPException if the lender is not found.
     """
     return get_object_or_404(session, models.Lender, "id", lender_id)
 
@@ -122,7 +122,7 @@ async def update_lender(
             return lender
         except IntegrityError:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=_("Lender already exists"),
             )
 
@@ -178,7 +178,7 @@ async def get_credit_product(
 
     :param credit_product_id: The ID of the credit product to retrieve.
     :return: The credit product with the specified ID and its associated lender information.
-    :raise: HTTPException with status code 404 if the credit product is not found.
+    :raise: HTTPException if the credit product is not found.
     """
     credit_product = (
         models.CreditProduct.filter_by(session, "id", credit_product_id)

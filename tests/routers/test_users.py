@@ -31,7 +31,7 @@ def test_create_and_get_user(client, admin_header, lender_header, user_payload):
     assert_ok(response)
 
     response = client.get("/users?page=0&page_size=5&sort_field=created_at&sort_order=desc", headers=lender_header)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Insufficient permissions")}
 
 
@@ -64,7 +64,7 @@ def test_duplicate_user(client, admin_header, user_payload):
 
     # duplicate user
     response = client.post("/users", json=user_payload, headers=admin_header)
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json() == {"detail": _("Username already exists")}
 
 

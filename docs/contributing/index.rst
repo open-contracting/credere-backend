@@ -4,6 +4,7 @@ Contributing
 .. toctree::
    :caption: contents
 
+   api
    sqlalchemy
 
 .. seealso::
@@ -167,25 +168,7 @@ To delete the image (e.g. when recreating it), run:
 Make changes
 ------------
 
-Read the next pages in this section to learn about style guides, and the :doc:`../api/index` about helper methods and application logic. See also the `OCP Software Development Handbook <https://ocp-software-handbook.readthedocs.io/en/latest/>`__, in particular:
-
--  `Library and Web API <https://ocp-software-handbook.readthedocs.io/en/latest/general/api.html#web-api>`__
--  `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__
-
-Style guide
-~~~~~~~~~~~
-
--  Use lowercase filenames, including ``email_templates/`` files.
-
-In Python code and documentation:
-
--  Use "lender", not "FI" or "financial institution".
--  Use "borrower", not "MSME", "SME" or "small and medium-sized enterprises".
--  Use "administrator" or "admin", not "OCP".
-
-.. note::
-
-   Some endpoints and enums cannot be made to conform to this style guide, without migrating the database or updating the frontend.
+Read the next pages in this section to learn about style guides, and the :doc:`../api/index` about helper methods and application logic. Read the `OCP Software Development Handbook <https://ocp-software-handbook.readthedocs.io/en/latest/>`__: in particular, `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__.
 
 Update requirements
 ~~~~~~~~~~~~~~~~~~~
@@ -218,16 +201,6 @@ Update translations
 
 Update API
 ~~~~~~~~~~
-
-.. seealso:: :doc:`../api/index`
-
--  Use the parameter ``id`` only for application IDs, to avoid accidental errors.
--  Don't use ``status.HTTP_400_BAD_REQUEST``. FastAPI uses it for `request validation errors <https://fastapi.tiangolo.com/tutorial/handling-errors/?h=#override-request-validation-exceptions>`__, which are reported to Sentry. In general, use ``status.HTTP_422_UNPROCESSABLE_ENTITY``, instead.
-
-   .. seealso::
-
-      -  `422 Unprocessable Content <https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422>`__ (MDN)
-      -  Choosing an HTTP Status Code <https://www.codetinkerer.com/2015/12/04/choosing-an-http-status-code.html>`__
 
 After making changes, regenerate the OpenAPI document by :ref:`running the server<dev-server>` and:
 
