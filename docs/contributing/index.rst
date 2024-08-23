@@ -4,6 +4,7 @@ Contributing
 .. toctree::
    :caption: contents
 
+   style
    api
    sqlalchemy
 
