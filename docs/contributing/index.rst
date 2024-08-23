@@ -170,6 +170,8 @@ Make changes
 
 Read the next pages in this section to learn about style guides, and the :doc:`../api/index` about helper methods and application logic. Read the `OCP Software Development Handbook <https://ocp-software-handbook.readthedocs.io/en/latest/>`__: in particular, `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__.
 
+.. seealso:: `Parsing error responses and catching exceptions from AWS services <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#parsing-error-responses-and-catching-exceptions-from-aws-services>`__
+
 Update requirements
 ~~~~~~~~~~~~~~~~~~~
 

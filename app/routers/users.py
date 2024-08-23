@@ -1,4 +1,3 @@
-from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
@@ -71,42 +70,34 @@ def change_password(
     This endpoint allows users to change their password. It initiates the password change process
     and handles different scenarios such as new password requirement, MFA setup, and error handling.
     """
-    try:
-        # This endpoint is only called for new users, to replace the generated password.
-        response = client.initiate_auth(payload.username, payload.temp_password)
-        if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
-            response = client.respond_to_auth_challenge(
-                username=payload.username,
-                session=response["Session"],
-                challenge_name="NEW_PASSWORD_REQUIRED",
-                new_password=payload.password,
-            )
-
-        # Verify the user's email.
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_update_user_attributes.html
-        client.cognito.admin_update_user_attributes(
-            UserPoolId=app_settings.cognito_pool_id,
-            Username=payload.username,
-            UserAttributes=[{"Name": "email_verified", "Value": "true"}],
+    # This endpoint is only called for new users, to replace the generated password.
+    response = client.initiate_auth(payload.username, payload.temp_password)
+    if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
+        response = client.respond_to_auth_challenge(
+            username=payload.username,
+            session=response["Session"],
+            challenge_name="NEW_PASSWORD_REQUIRED",
+            new_password=payload.password,
         )
 
-        if "ChallengeName" in response and response["ChallengeName"] == "MFA_SETUP":
-            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/associate_software_token.html
-            associate_response = client.cognito.associate_software_token(Session=response["Session"])
+    # Verify the user's email.
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_update_user_attributes.html
+    client.cognito.admin_update_user_attributes(
+        UserPoolId=app_settings.cognito_pool_id,
+        Username=payload.username,
+        UserAttributes=[{"Name": "email_verified", "Value": "true"}],
+    )
 
-            return serializers.ChangePasswordResponse(
-                detail=_("Password changed with MFA setup required"),
-                secret_code=associate_response["SecretCode"],
-                session=associate_response["Session"],
-                username=payload.username,
-            )
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=_("Temporal password is expired, please request a new one"),
-            )
-        raise
+    if "ChallengeName" in response and response["ChallengeName"] == "MFA_SETUP":
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/associate_software_token.html
+        associate_response = client.cognito.associate_software_token(Session=response["Session"])
+
+        return serializers.ChangePasswordResponse(
+            detail=_("Password changed with MFA setup required"),
+            secret_code=associate_response["SecretCode"],
+            session=associate_response["Session"],
+            username=payload.username,
+        )
 
     return serializers.ResponseBase(detail=_("Password changed"))
 
@@ -129,13 +120,16 @@ def setup_mfa(
         client.cognito.verify_software_token(
             AccessToken=payload.secret, Session=payload.session, UserCode=payload.temp_password
         )
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "NotAuthorizedException":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=_("Invalid session for the user, session is expired"),
-            )
-        raise
+    except client.cognito.exceptions.NotAuthorizedException:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=_("Invalid session for the user, session is expired"),
+        )
+    except client.cognito.exceptions.EnableSoftwareTokenMFAException:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=_("Invalid MFA code"),
+        )
 
     return serializers.ResponseBase(detail=_("MFA configured successfully"))
 
@@ -178,14 +172,17 @@ def login(
             )
         else:
             raise NotImplementedError  # Missing MFA challenge
-    except ClientError as e:
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#parsing-error-responses-and-catching-exceptions-from-aws-services
-        if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=_("Temporal password is expired, please request a new one"),
-            )
-        raise
+    # The user failed to sign in ("Incorrect username or password", etc.).
+    except client.cognito.exceptions.NotAuthorizedException:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=_("Invalid username or password"),
+        )
+    except client.cognito.exceptions.CodeMismatchException:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=_("Invalid MFA code"),
+        )
 
     return serializers.LoginResponse(
         user=user,
