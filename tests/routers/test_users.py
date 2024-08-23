@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from fastapi import status
 
@@ -36,25 +37,21 @@ def test_create_and_get_user(client, admin_header, lender_header, user_payload):
 
 
 def test_update_user(client, admin_header, lender_header, user_payload):
+    new_email = f"new-name-{uuid.uuid4()}@example.com"
+
     response = client.post("/users", json=user_payload, headers=admin_header)
-    assert_ok(response)
-    assert response.json()["name"] == user_payload["name"]
+    data = response.json()
+    user_id = data["id"]
 
-    # update user 3 since 1 is ocp test user and 2 lender test user
-    response = client.put(
-        "/users/3",
-        json={"email": "new_name@noreply.open-contracting.org"},
-        headers=admin_header,
-    )
     assert_ok(response)
-    assert response.json()["email"] == "new_name@noreply.open-contracting.org"
+    assert data["name"] == user_payload["name"]
 
-    response = client.put(
-        "/users/3",
-        json={"email": "anoter_email@noreply.open-contracting.org"},
-        headers=lender_header,
-    )
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    response = client.put(f"/users/{user_id}", json={"email": new_email}, headers=admin_header)
+    assert_ok(response)
+    assert response.json()["email"] == new_email
+
+    response = client.put(f"/users/{user_id}", json={"email": "another-email@example.com"}, headers=lender_header)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Insufficient permissions")}
 
 

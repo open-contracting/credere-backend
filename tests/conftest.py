@@ -169,11 +169,16 @@ def unauthorized_lender(session):
 
 
 @pytest.fixture
-def admin_header(session, aws_client):
+def admin_email():
+    return f"ocp-test-{uuid.uuid4()}@open-contracting.org"
+
+
+@pytest.fixture
+def admin_header(session, aws_client, admin_email):
     return create_user(
         session,
         aws_client,
-        email=f"ocp-test-{uuid.uuid4()}@open-contracting.org",
+        email=admin_email,
         name="OCP Test User",
         type=models.UserType.OCP,
     )
