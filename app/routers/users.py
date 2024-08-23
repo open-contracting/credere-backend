@@ -112,10 +112,7 @@ def change_password(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=_("Temporal password is expired, please request a new one"),
             )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=_("There was an error trying to update the password"),
-        )
+        raise
 
     return serializers.ResponseBase(detail=_("Password changed"))
 
@@ -189,10 +186,7 @@ def login(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=_("Temporal password is expired, please request a new one"),
             )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=e.response["Error"]["Message"],
-        )
+        raise
 
     return serializers.LoginResponse(
         user=user,
@@ -264,20 +258,17 @@ def forgot_password(
 
     Email the user a temporary password and a reset link.
     """
-    try:
-        temporary_password = client.generate_password()
+    temporary_password = client.generate_password()
 
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_set_user_password.html
-        client.cognito.admin_set_user_password(
-            UserPoolId=app_settings.cognito_pool_id,
-            Username=payload.username,
-            Password=temporary_password,
-            Permanent=False,
-        )
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_set_user_password.html
+    client.cognito.admin_set_user_password(
+        UserPoolId=app_settings.cognito_pool_id,
+        Username=payload.username,
+        Password=temporary_password,
+        Permanent=False,
+    )
 
-        mail.send_mail_to_reset_password(client.ses, payload.username, temporary_password)
-    except Exception:
-        logger.exception("Error resetting password")
+    mail.send_mail_to_reset_password(client.ses, payload.username, temporary_password)
 
     # always return 200 to avoid user enumeration
     return serializers.ResponseBase(detail=_("An email with a reset link was sent to end user"))

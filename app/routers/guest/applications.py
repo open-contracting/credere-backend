@@ -797,23 +797,17 @@ async def find_alternative_credit_option(
             )
 
         # Copy the application, changing the uuid, status, and borrower_accepted_at.
-        try:
-            new_application = models.Application.create(
-                session,
-                award_id=application.award_id,
-                uuid=util.generate_uuid(application.uuid),
-                primary_email=application.primary_email,
-                status=models.ApplicationStatus.ACCEPTED,
-                award_borrower_identifier=application.award_borrower_identifier,
-                borrower_id=application.borrower.id,
-                calculator_data=application.calculator_data,
-                borrower_accepted_at=datetime.now(application.created_at.tzinfo),
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=_("There was a problem copying the application. %(exception)s", exception=e),
-            )
+        new_application = models.Application.create(
+            session,
+            award_id=application.award_id,
+            uuid=util.generate_uuid(application.uuid),
+            primary_email=application.primary_email,
+            status=models.ApplicationStatus.ACCEPTED,
+            award_borrower_identifier=application.award_borrower_identifier,
+            borrower_id=application.borrower.id,
+            calculator_data=application.calculator_data,
+            borrower_accepted_at=datetime.now(application.created_at.tzinfo),
+        )
 
         models.ApplicationAction.create(
             session,
