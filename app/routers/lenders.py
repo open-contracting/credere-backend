@@ -46,7 +46,7 @@ async def create_lender(
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=_("Lender already exists"),
+                detail=_("Lender with that name already exists"),
             )
 
 
@@ -123,7 +123,7 @@ async def update_lender(
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=_("Lender already exists"),
+                detail=_("Lender with that name already exists"),
             )
 
 

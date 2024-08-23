@@ -438,17 +438,17 @@ msgid "Stage"
 msgstr "Etapa"
 
 #: app/routers/lenders.py:49 app/routers/lenders.py:126
-msgid "Lender already exists"
-msgstr "La entidad financiera ya existe"
+msgid "Lender with that name already exists"
+msgstr "La entidad financiera con ese nombre ya existe"
 
 #: app/routers/guest/applications.py:378 app/routers/guest/applications.py:467
 #: app/routers/lenders.py:192
 msgid "Credit product not found"
 msgstr "Producto crediticio no encontrado"
 
-#: app/routers/users.py:61
-msgid "Username already exists"
-msgstr "El nombre de usuario ya existe"
+#: app/routers/users.py:61 app/routers/users.py:367
+msgid "User with that email already exists"
+msgstr "El usuario con ese correo ya existe"
 
 #: app/routers/users.py:104
 msgid "Password changed with MFA setup required"
@@ -485,10 +485,6 @@ msgstr "Usuario deslogueado correctamente"
 #: app/routers/users.py:286
 msgid "An email with a reset link was sent to end user"
 msgstr "Se envió un correo con el enlace de reseteo de contraseña."
-
-#: app/routers/users.py:367
-msgid "User already exists"
-msgstr "El usuario ya existe"
 
 #: app/routers/guest/applications.py:321 app/routers/guest/applications.py:371
 #: app/routers/guest/applications.py:460 app/routers/guest/applications.py:526

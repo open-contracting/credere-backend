@@ -58,7 +58,7 @@ async def create_user(
         except (client.cognito.exceptions.UsernameExistsException, IntegrityError):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=_("Username already exists"),
+                detail=_("User with that email already exists"),
             )
 
 
@@ -352,5 +352,5 @@ async def update_user(
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=_("User already exists"),
+                detail=_("User with that email already exists"),
             )
