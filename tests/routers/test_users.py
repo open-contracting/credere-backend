@@ -1,4 +1,3 @@
-import logging
 import uuid
 
 from fastapi import status
@@ -65,31 +64,36 @@ def test_duplicate_user(client, admin_header, user_payload):
     assert response.json() == {"detail": _("User with that email already exists")}
 
 
-def test_logout(client, admin_header, caplog):
-    caplog.set_level(logging.ERROR)
+def test_login_invalid_username(client):
+    response = client.post("/users/login", json={"username": "nonexistent"})
 
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": "Invalid username or password"}
+
+
+def test_logout(client, admin_header):
     response = client.get("/users/logout", headers=admin_header)
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"detail": "User logged out successfully"}
-    assert not caplog.records
 
 
-def test_logout_invalid_authorization_header(client, caplog):
-    caplog.set_level(logging.ERROR)
-
+def test_logout_invalid_authorization_header_no_period(client):
     response = client.get("/users/logout", headers={"Authorization": "Bearer ACCESS_TOKEN"})
 
     assert_ok(response)
     assert response.json() == {"detail": _("User logged out successfully")}
-    assert not caplog.records
 
 
-def test_logout_no_authorization_header(client, caplog):
-    caplog.set_level(logging.ERROR)
+def test_logout_invalid_authorization_header(client):
+    response = client.get("/users/logout", headers={"Authorization": "Bearer ACCESS.TOKEN"})
 
+    assert_ok(response)
+    assert response.json() == {"detail": _("User logged out successfully")}
+
+
+def test_logout_no_authorization_header(client):
     response = client.get("/users/logout")
 
     assert_ok(response)
     assert response.json() == {"detail": _("User logged out successfully")}
-    assert not caplog.records

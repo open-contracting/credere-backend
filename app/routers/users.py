@@ -161,7 +161,12 @@ def login(
     :param payload: The user data including the username, password, and MFA code.
     :return: The response containing the user information and tokens if the login is successful.
     """
-    user = get_object_or_404(session, models.User, "email", payload.username)
+    user = models.User.first_by(session, "email", payload.username)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,  # prevent user enumeration
+            detail=_("Invalid username or password"),
+        )
 
     try:
         response = client.initiate_auth(payload.username, payload.password)
