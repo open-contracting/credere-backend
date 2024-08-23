@@ -1,7 +1,6 @@
 alembic
 babel
 boto3
-botocore
 click
 email_validator
 fastapi

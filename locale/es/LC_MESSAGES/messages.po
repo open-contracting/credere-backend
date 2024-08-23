@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-23 00:49-0400\n"
+"POT-Creation-Date: 2024-08-23 03:32-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -446,39 +446,39 @@ msgstr "Ya existe un entidad financiera con ese nombre"
 msgid "Credit product not found"
 msgstr "Producto crediticio no encontrado"
 
-#: app/routers/users.py:57 app/routers/users.py:347
+#: app/routers/users.py:56 app/routers/users.py:342
 msgid "User with that email already exists"
 msgstr "Ya existe un usuario con ese correo"
 
-#: app/routers/users.py:100
+#: app/routers/users.py:96
 msgid "Password changed with MFA setup required"
 msgstr "Cambio de contraseña con configuración de MFA requerido"
 
-#: app/routers/users.py:109 app/routers/users.py:188
-msgid "Temporal password is expired, please request a new one"
-msgstr "La contraseña temporal ha expirado, por favor solicite una nueva"
-
-#: app/routers/users.py:113
+#: app/routers/users.py:102
 msgid "Password changed"
 msgstr "Contraseña cambiada"
 
-#: app/routers/users.py:138
+#: app/routers/users.py:126
 msgid "Invalid session for the user, session is expired"
 msgstr "Sesión inválida para el usuario, la sesión ha expirado"
 
-#: app/routers/users.py:142
+#: app/routers/users.py:131 app/routers/users.py:184
+msgid "Invalid MFA code"
+msgstr "Código MFA no válido"
+
+#: app/routers/users.py:134
 msgid "MFA configured successfully"
 msgstr "El MFA fue configurado correctamente"
 
-#: app/routers/users.py:168
+#: app/routers/users.py:160 app/routers/users.py:179
 msgid "Invalid username or password"
 msgstr "Nombre de usuario o contraseña no válidos"
 
-#: app/routers/users.py:220
+#: app/routers/users.py:215
 msgid "User logged out successfully"
 msgstr "Usuario deslogueado correctamente"
 
-#: app/routers/users.py:266
+#: app/routers/users.py:261
 msgid "An email with a reset link was sent to end user"
 msgstr "Se envió un correo con el enlace de reseteo de contraseña."
 
@@ -648,4 +648,7 @@ msgstr "Correo institucional"
 #: app/utils/tables.py:249
 msgid "MSME Documents"
 msgstr "Documentos de la empresa"
+
+#~ msgid "Temporal password is expired, please request a new one"
+#~ msgstr "La contraseña temporal ha expirado, por favor solicite una nueva"
 

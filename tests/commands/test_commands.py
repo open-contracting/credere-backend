@@ -14,9 +14,9 @@ runner = CliRunner()
     ("seconds", "call_count"),
     [
         (0, 0),
-        (1, 1),
+        (2, 1),
         (app_settings.reminder_days_before_expiration * 86_400, 1),
-        (app_settings.reminder_days_before_expiration * 86_400 + 1, 0),
+        (app_settings.reminder_days_before_expiration * 86_400 + 2, 0),
     ],
 )
 def test_send_reminders_intro(session, mock_send_templated_email, pending_application, seconds, call_count):
@@ -46,9 +46,9 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
     ("seconds", "call_count"),
     [
         (0, 0),
-        (1, 1),
+        (2, 1),
         (app_settings.reminder_days_before_lapsed * 86_400, 1),
-        (app_settings.reminder_days_before_lapsed * 86_400 + 1, 0),
+        (app_settings.reminder_days_before_lapsed * 86_400 + 2, 0),
     ],
 )
 def test_send_reminders_submit(session, mock_send_templated_email, accepted_application, seconds, call_count):

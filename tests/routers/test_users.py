@@ -68,14 +68,14 @@ def test_login_invalid_username(client):
     response = client.post("/users/login", json={"username": "nonexistent"})
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json() == {"detail": "Invalid username or password"}
+    assert response.json() == {"detail": _("Invalid username or password")}
 
 
 def test_logout(client, admin_header):
     response = client.get("/users/logout", headers=admin_header)
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == {"detail": "User logged out successfully"}
+    assert response.json() == {"detail": _("User logged out successfully")}
 
 
 def test_logout_invalid_authorization_header_no_period(client):
