@@ -62,7 +62,17 @@ def test_duplicate_user(client, admin_header, user_payload):
     # duplicate user
     response = client.post("/users", json=user_payload, headers=admin_header)
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": _("Username already exists")}
+    assert response.json() == {"detail": _("User with that email already exists")}
+
+
+def test_logout(client, admin_header, caplog):
+    caplog.set_level(logging.ERROR)
+
+    response = client.get("/users/logout", headers=admin_header)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"detail": "User logged out successfully"}
+    assert not caplog.records
 
 
 def test_logout_invalid_authorization_header(client, caplog):

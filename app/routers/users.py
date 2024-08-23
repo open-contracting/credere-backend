@@ -1,12 +1,12 @@
 import logging
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import aws, dependencies, mail, models, parsers, serializers
+from app import auth, aws, dependencies, mail, models, parsers, serializers
 from app.db import get_db, rollback_on_error
 from app.i18n import _
 from app.settings import app_settings
@@ -198,32 +198,23 @@ def login(
 @router.get(
     "/users/logout",
 )
-def logout(
-    authorization: str | None = Header(None),
+async def logout(
+    request: Request,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """
     Logout the user from all devices in Cognito.
-
-    :param authorization: The Authorization header, like "Bearer ACCESS_TOKEN".
     """
-
-    # The Authorization header is not set if the user is already logged out.
-    if authorization is not None:
-        try:
-            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/get_user.html
-            response = client.cognito.get_user(AccessToken=authorization.split(" ")[1])
-            # "If `username` isn’t an alias attribute in your user pool, this value must be the `sub` of a local user
-            # or the username of a user from a third-party IdP."
-            # https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html
-            sub = next(attribute["Value"] for attribute in response["UserAttributes"] if attribute["Name"] == "sub")
-            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_user_global_sign_out.html
-            client.cognito.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=sub)
-        # The user is not signed in ("Access Token has expired", "Invalid token", etc.).
-        except client.cognito.exceptions.NotAuthorizedException:
-            pass
-        except ClientError as e:
-            logger.exception(e)
+    try:
+        # get_auth_credentials()
+        credentials = await auth.JWTAuthorization()(request)
+        # get_current_user()
+        username = credentials.claims["username"]
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_user_global_sign_out.html
+        client.cognito.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=username)
+    # The user is not signed in.
+    except (HTTPException, KeyError):
+        pass
 
     return serializers.ResponseBase(detail=_("User logged out successfully"))
 

@@ -25,7 +25,7 @@ def get_aws_client() -> Generator[aws.Client, None, None]:
 
 
 async def get_auth_credentials(request: Request) -> auth.JWTAuthorizationCredentials | None:
-    return await auth.JWTAuthorization().__call__(request)
+    return await auth.JWTAuthorization()(request)
 
 
 async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials)) -> str:

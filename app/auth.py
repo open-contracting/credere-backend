@@ -86,7 +86,13 @@ class JWTAuthorization(HTTPBearer):
 
             jwt_token = credentials.credentials
 
-            message, signature = jwt_token.rsplit(".", 1)
+            if "." in jwt_token:
+                message, signature = jwt_token.rsplit(".", 1)
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=_("JWK invalid"),
+                )
 
             try:
                 jwt_credentials = JWTAuthorizationCredentials(
