@@ -29,6 +29,12 @@ Setup
 
       pre-commit install
 
+#. Compile message catalogs:
+
+   .. code-block:: bash
+
+      pybabel compile -f -d locale
+
 #. Create development and test databases. To use the default ``DATABASE_URL``, create a database named ``credere_backend`` to which your shell user has access.
 
    To customize settings (for example, to use a different ``DATABASE_URL``), create a ``.env`` file based on the ``.env.example`` file.
@@ -38,12 +44,6 @@ Setup
    .. code-block:: bash
 
       alembic upgrade head
-
-#. Compile message catalogs:
-
-   .. code-block:: bash
-
-      pybabel compile -f -d locale
 
 Repository structure
 --------------------
