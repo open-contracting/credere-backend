@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-23 11:37-0400\n"
+"POT-Creation-Date: 2024-08-23 16:41-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -43,45 +43,28 @@ msgstr "Falta el nombre de usuario"
 msgid "User not found"
 msgstr "Usuario no encontrado"
 
-#: app/dependencies.py:70 tests/routers/test_lenders.py:48
-#: tests/routers/test_lenders.py:102 tests/routers/test_lenders.py:141
-#: tests/routers/test_lenders.py:174 tests/routers/test_users.py:35
-#: tests/routers/test_users.py:58
+#: app/dependencies.py:70
 msgid "Insufficient permissions"
 msgstr "Permisos insuficientes"
 
-#: app/dependencies.py:98 tests/routers/test_applications.py:104
-#: tests/routers/test_applications.py:109
-#: tests/routers/test_applications.py:162
-#: tests/routers/test_applications.py:167
-#: tests/routers/test_applications.py:172
-#: tests/routers/test_applications.py:182
-#: tests/routers/test_applications.py:187
+#: app/dependencies.py:98
 msgid "User is not authorized"
 msgstr "Usuario no autorizado"
 
-#: app/dependencies.py:106 tests/routers/guest/test_applications.py:69
+#: app/dependencies.py:106
 msgid "Application expired"
 msgstr "La aplicación ha expirado"
 
-#: app/dependencies.py:113 tests/routers/guest/test_applications.py:22
-#: tests/routers/guest/test_applications.py:38
-#: tests/routers/test_applications.py:24 tests/routers/test_applications.py:67
-#: tests/routers/test_applications.py:157
+#: app/dependencies.py:113
 #, python-format
 msgid "Application status should not be %(status)s"
 msgstr "El estado de la aplicación no debe ser %(status)s"
 
 #: app/dependencies.py:126 app/dependencies.py:166
-#: tests/routers/test_applications.py:192
-#: tests/routers/test_applications.py:197
-#: tests/routers/test_applications.py:333
-#: tests/routers/test_applications.py:354
-#: tests/routers/test_applications.py:358
 msgid "Application not found"
 msgstr "La aplicación no ha sido encontrada"
 
-#: app/dependencies.py:172 tests/routers/test_applications.py:350
+#: app/dependencies.py:172
 msgid "Application lapsed"
 msgstr "La aplicación ha caducado"
 
@@ -193,21 +176,19 @@ msgstr "Cámara de comercio"
 msgid "THREE_LAST_BANK_STATEMENT"
 msgstr "Últimos tres extractos bancarios"
 
-#: app/models.py:163 tests/routers/guest/test_applications.py:38
-#: tests/routers/test_applications.py:24 tests/test_i18n.py:11
-#: tests/test_i18n.py:16
+#: app/models.py:163
 msgid "PENDING"
 msgstr "Pendiente"
 
-#: app/models.py:167 tests/routers/guest/test_applications.py:22
+#: app/models.py:167
 msgid "DECLINED"
 msgstr "Declinado"
 
-#: app/models.py:171 tests/routers/test_applications.py:67
+#: app/models.py:171
 msgid "ACCEPTED"
 msgstr "Aceptado"
 
-#: app/models.py:175 tests/routers/test_applications.py:157
+#: app/models.py:175
 msgid "SUBMITTED"
 msgstr "Enviado"
 
@@ -346,14 +327,28 @@ msgstr ""
 msgid "actividades_organizaciones_extraterritoriales"
 msgstr "Actividades de organizaciones y entidades extraterritoriales"
 
-#: app/util.py:54 tests/routers/test_applications.py:245
-#: tests/routers/test_lenders.py:62 tests/routers/test_lenders.py:77
-#: tests/routers/test_lenders.py:156 tests/routers/test_users.py:27
+#: app/models.py:319
+msgid "LOAN"
+msgstr "Préstamo"
+
+#: app/models.py:320
+msgid "CREDIT_LINE"
+msgstr "Línea de crédito"
+
+#: app/models.py:324
+msgid "NATURAL_PERSON"
+msgstr "Persona natural"
+
+#: app/models.py:325
+msgid "LEGAL_PERSON"
+msgstr "Persona jurídica"
+
+#: app/util.py:54
 #, python-format
 msgid "%(model_name)s not found"
 msgstr "%(model_name)s no encontrado"
 
-#: app/util.py:109 tests/routers/test_applications.py:221
+#: app/util.py:109
 msgid "Format not allowed. It must be a PNG, JPEG, or PDF file"
 msgstr "Formato no permitido. El formato debe ser un PNG, JPEG or archivo PDF"
 
@@ -361,11 +356,11 @@ msgstr "Formato no permitido. El formato debe ser un PNG, JPEG or archivo PDF"
 msgid "File is too large"
 msgstr "El archivo es muy grande"
 
-#: app/routers/applications.py:175 tests/routers/test_applications.py:250
+#: app/routers/applications.py:175
 msgid "Some borrower data field are not verified"
 msgstr "Algunos campos de datos de la empresa no fueron verificados"
 
-#: app/routers/applications.py:186 tests/routers/test_applications.py:268
+#: app/routers/applications.py:186
 msgid "Some documents are not verified"
 msgstr "Algunos documentos no fueron verificados"
 
@@ -414,7 +409,6 @@ msgid "Stage"
 msgstr "Etapa"
 
 #: app/routers/lenders.py:49 app/routers/lenders.py:126
-#: tests/routers/test_lenders.py:98
 msgid "Lender already exists"
 msgstr "La entidad financiera ya existe"
 
@@ -423,7 +417,7 @@ msgstr "La entidad financiera ya existe"
 msgid "Credit product not found"
 msgstr "Producto crediticio no encontrado"
 
-#: app/routers/users.py:61 tests/routers/test_users.py:68
+#: app/routers/users.py:61
 msgid "Username already exists"
 msgstr "El nombre de usuario ya existe"
 
@@ -455,8 +449,7 @@ msgstr "Ocurrió un error tratando de configurar el MFA"
 msgid "MFA configured successfully"
 msgstr "El MFA fue configurado correctamente"
 
-#: app/routers/users.py:237 tests/routers/test_users.py:77
-#: tests/routers/test_users.py:87
+#: app/routers/users.py:237
 msgid "User logged out successfully"
 msgstr "Usuario deslogueado correctamente"
 
@@ -498,17 +491,21 @@ msgstr "Una nueva aplicación ya ha sido creada desde esta"
 msgid "There was a problem copying the application. %(exception)s"
 msgstr "Ocurrió un problema copiando la aplicación. %(exception)s"
 
-#: app/routers/guest/emails.py:34 tests/routers/test_applications.py:117
+#: app/routers/guest/emails.py:34
 msgid "New email is not valid"
 msgstr "El nuevo correo no es válido"
 
-#: app/routers/guest/emails.py:81 tests/routers/test_applications.py:143
+#: app/routers/guest/emails.py:81
 msgid "Application is not pending an email confirmation"
 msgstr "La aplicación no tiene la confirmación de correo pendiente"
 
 #: app/routers/guest/emails.py:88
 msgid "Not authorized to modify this application"
 msgstr "No autorizado a modificar la aplicación en esta etapa"
+
+#: app/routers/guest/meta.py:35
+msgid "Domain doesn't exist"
+msgstr "El dominio no existe"
 
 #: app/utils/tables.py:43
 msgid "Financing Options"

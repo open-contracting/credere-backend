@@ -17,14 +17,8 @@ Credere frontend's ``src/constants/index.ts`` constants should match ``app.model
      - Frontend
    * - ApplicationStatus
      - APPLICATION_STATUS
-   * - BorrowerType
-     - BORROWER_TYPE
-   * - CreditType
-     - CREDIT_PRODUCT_TYPE
-   * - BorrowerDocumentType
-     - DOCUMENTS_TYPE
-   * - BorrowerSize
-     - MSME_TYPES
+   * - BorrowerSize.NOT_INFORMED
+     - DEFAULT_BORROWER_SIZE
    * - StatisticCustomRange
      - STATISTICS_DATE_FILTER
    * - UserType
