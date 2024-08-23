@@ -8,15 +8,18 @@ from app.settings import app_settings
 from tests import assert_change, assert_success
 
 runner = CliRunner()
+# Do 1-2 seconds off the minimum offset, to avoid test failures due to timing issues.
+negative_offset = -2  # min 0
+positive_offset = 2  # min 1
 
 
 @pytest.mark.parametrize(
     ("seconds", "call_count"),
     [
-        (0, 0),
-        (2, 1),
-        (app_settings.reminder_days_before_expiration * 86_400, 1),
-        (app_settings.reminder_days_before_expiration * 86_400 + 2, 0),
+        (negative_offset, 0),
+        (positive_offset, 1),
+        (app_settings.reminder_days_before_expiration * 86_400 + negative_offset, 1),
+        (app_settings.reminder_days_before_expiration * 86_400 + positive_offset, 0),
     ],
 )
 def test_send_reminders_intro(session, mock_send_templated_email, pending_application, seconds, call_count):
@@ -45,10 +48,10 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
 @pytest.mark.parametrize(
     ("seconds", "call_count"),
     [
-        (0, 0),
-        (2, 1),
-        (app_settings.reminder_days_before_lapsed * 86_400, 1),
-        (app_settings.reminder_days_before_lapsed * 86_400 + 2, 0),
+        (negative_offset, 0),
+        (positive_offset, 1),
+        (app_settings.reminder_days_before_lapsed * 86_400 + negative_offset, 1),
+        (app_settings.reminder_days_before_lapsed * 86_400 + positive_offset, 0),
     ],
 )
 def test_send_reminders_submit(session, mock_send_templated_email, accepted_application, seconds, call_count):
@@ -78,7 +81,7 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
         )
 
 
-@pytest.mark.parametrize(("seconds", "lapsed"), [(0, True), (1, False)])
+@pytest.mark.parametrize(("seconds", "lapsed"), [(negative_offset, True), (positive_offset, False)])
 def test_set_lapsed_applications(session, pending_application, seconds, lapsed):
     pending_application.created_at = (
         datetime.now(pending_application.tz)
