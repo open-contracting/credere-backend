@@ -25,7 +25,7 @@ def get_aws_client() -> Generator[aws.Client, None, None]:
 
 
 async def get_auth_credentials(request: Request) -> auth.JWTAuthorizationCredentials | None:
-    return await auth.JWTAuthorization().__call__(request)
+    return await auth.JWTAuthorization()(request)
 
 
 async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials)) -> str:
@@ -57,16 +57,16 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
     user = models.User.first_by(session, "external_id", username)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=_("User not found"),
         )
     return user
 
 
 async def get_admin_user(user: models.User = Depends(get_user)) -> models.User:
-    if not user.is_ocp():
+    if not user.is_admin():
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=_("Insufficient permissions"),
         )
     return user
@@ -85,13 +85,16 @@ def raise_if_unauthorized(
         for role in roles:
             match role:
                 case models.UserType.OCP:
-                    if user.is_ocp():
+                    if user.is_admin():
                         break
                 case models.UserType.FI:
                     if user.lender_id == application.lender_id:
                         break
                 case _:
-                    raise NotImplementedError
+                    raise HTTPException(
+                        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                        detail=_("Authorization group not implemented"),
+                    )
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -102,14 +105,14 @@ def raise_if_unauthorized(
         expired_at = application.expired_at
         if expired_at and expired_at < datetime.now(expired_at.tzinfo):
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Application expired"),
             )
 
     if statuses:
         if application.status not in statuses:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Application status should not be %(status)s", status=_(application.status)),
             )
 
@@ -168,7 +171,7 @@ def _get_application_as_guest_via_uuid(session: Session, uuid: str) -> models.Ap
 
     if application.status == models.ApplicationStatus.LAPSED:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=_("Application lapsed"),
         )
 

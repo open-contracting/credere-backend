@@ -6,6 +6,8 @@ from typing import Any
 
 import sentry_sdk
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 
 
 def sentry_filter_transactions(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
@@ -184,9 +186,19 @@ logging.config.dictConfig(
 )
 
 if app_settings.sentry_dsn:
+    # https://docs.sentry.io/platforms/python/integrations/fastapi/
     sentry_sdk.init(
         dsn=app_settings.sentry_dsn,
         before_send=sentry_filter_transactions,
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
         traces_sample_rate=1.0,
+        # FastAPI uses 400 for request validation errors, which shouldn't occur unless the frontend is misimplemented.
+        integrations=[
+            StarletteIntegration(
+                failed_request_status_codes=[400, 413, range(500, 599)],
+            ),
+            FastApiIntegration(
+                failed_request_status_codes=[400, 413, range(500, 599)],
+            ),
+        ],
     )

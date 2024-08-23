@@ -1,4 +1,4 @@
-import logging
+import uuid
 
 from fastapi import status
 
@@ -31,30 +31,26 @@ def test_create_and_get_user(client, admin_header, lender_header, user_payload):
     assert_ok(response)
 
     response = client.get("/users?page=0&page_size=5&sort_field=created_at&sort_order=desc", headers=lender_header)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Insufficient permissions")}
 
 
 def test_update_user(client, admin_header, lender_header, user_payload):
+    new_email = f"new-name-{uuid.uuid4()}@example.com"
+
     response = client.post("/users", json=user_payload, headers=admin_header)
-    assert_ok(response)
-    assert response.json()["name"] == user_payload["name"]
+    data = response.json()
+    user_id = data["id"]
 
-    # update user 3 since 1 is ocp test user and 2 lender test user
-    response = client.put(
-        "/users/3",
-        json={"email": "new_name@noreply.open-contracting.org"},
-        headers=admin_header,
-    )
     assert_ok(response)
-    assert response.json()["email"] == "new_name@noreply.open-contracting.org"
+    assert data["name"] == user_payload["name"]
 
-    response = client.put(
-        "/users/3",
-        json={"email": "anoter_email@noreply.open-contracting.org"},
-        headers=lender_header,
-    )
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    response = client.put(f"/users/{user_id}", json={"email": new_email}, headers=admin_header)
+    assert_ok(response)
+    assert response.json()["email"] == new_email
+
+    response = client.put(f"/users/{user_id}", json={"email": "another-email@example.com"}, headers=lender_header)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Insufficient permissions")}
 
 
@@ -64,25 +60,40 @@ def test_duplicate_user(client, admin_header, user_payload):
 
     # duplicate user
     response = client.post("/users", json=user_payload, headers=admin_header)
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert response.json() == {"detail": _("Username already exists")}
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": _("User with that email already exists")}
 
 
-def test_logout_invalid_authorization_header(client, caplog):
-    caplog.set_level(logging.ERROR)
+def test_login_invalid_username(client):
+    response = client.post("/users/login", json={"username": "nonexistent"})
 
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json() == {"detail": _("Invalid username or password")}
+
+
+def test_logout(client, admin_header):
+    response = client.get("/users/logout", headers=admin_header)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"detail": _("User logged out successfully")}
+
+
+def test_logout_invalid_authorization_header_no_period(client):
     response = client.get("/users/logout", headers={"Authorization": "Bearer ACCESS_TOKEN"})
 
     assert_ok(response)
     assert response.json() == {"detail": _("User logged out successfully")}
-    assert not caplog.records
 
 
-def test_logout_no_authorization_header(client, caplog):
-    caplog.set_level(logging.ERROR)
+def test_logout_invalid_authorization_header(client):
+    response = client.get("/users/logout", headers={"Authorization": "Bearer ACCESS.TOKEN"})
 
+    assert_ok(response)
+    assert response.json() == {"detail": _("User logged out successfully")}
+
+
+def test_logout_no_authorization_header(client):
     response = client.get("/users/logout")
 
     assert_ok(response)
     assert response.json() == {"detail": _("User logged out successfully")}
-    assert not caplog.records

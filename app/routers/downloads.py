@@ -41,7 +41,7 @@ async def get_borrower_document(
             session,
             type=(
                 models.ApplicationActionType.OCP_DOWNLOAD_DOCUMENT
-                if user.is_ocp()
+                if user.is_admin()
                 else models.ApplicationActionType.FI_DOWNLOAD_DOCUMENT
             ),
             data={"file_name": document.name},
@@ -116,7 +116,7 @@ async def download_application(
             session,
             type=(
                 models.ApplicationActionType.OCP_DOWNLOAD_APPLICATION
-                if user.is_ocp()
+                if user.is_admin()
                 else models.ApplicationActionType.FI_DOWNLOAD_APPLICATION
             ),
             application_id=application.id,

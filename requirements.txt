@@ -18,7 +18,6 @@ boto3==1.26.136
     # via -r requirements.in
 botocore==1.29.136
     # via
-    #   -r requirements.in
     #   boto3
     #   s3transfer
 certifi==2024.7.4

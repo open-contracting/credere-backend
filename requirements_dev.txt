@@ -32,6 +32,7 @@ boto3-stubs==1.29.7
 botocore==1.29.136
     # via
     #   -r requirements.txt
+    #   -r requirements_dev.in
     #   boto3
     #   moto
     #   s3transfer
@@ -160,7 +161,7 @@ mdurl==0.1.2
     #   markdown-it-py
 minify-html==0.15.0
     # via -r requirements.txt
-moto[cognitoidp]==5.0.6
+moto[cognitoidp]==5.0.13
     # via -r requirements_dev.in
 mypy==1.11.1
     # via -r requirements_dev.in

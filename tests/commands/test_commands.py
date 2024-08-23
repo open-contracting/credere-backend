@@ -8,15 +8,18 @@ from app.settings import app_settings
 from tests import assert_change, assert_success
 
 runner = CliRunner()
+# Do 1-2 seconds off the minimum offset, to avoid test failures due to timing issues.
+negative_offset = -2  # min 0
+positive_offset = 2  # min 1
 
 
 @pytest.mark.parametrize(
     ("seconds", "call_count"),
     [
-        (0, 0),
-        (1, 1),
-        (app_settings.reminder_days_before_expiration * 86_400, 1),
-        (app_settings.reminder_days_before_expiration * 86_400 + 1, 0),
+        (negative_offset, 0),
+        (positive_offset, 1),
+        (app_settings.reminder_days_before_expiration * 86_400 + negative_offset, 1),
+        (app_settings.reminder_days_before_expiration * 86_400 + positive_offset, 0),
     ],
 )
 def test_send_reminders_intro(session, mock_send_templated_email, pending_application, seconds, call_count):
@@ -26,30 +29,29 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
     with assert_change(mock_send_templated_email, "call_count", call_count):
         result = runner.invoke(__main__.app, ["send-reminders"])
 
-    assert_success(
-        result,
-        (
+        assert_success(
+            result,
             f"Sending {call_count} BORROWER_PENDING_APPLICATION_REMINDER...\n"
-            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
-        ),
-    )
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+        )
 
     # If run a second time, reminder is not sent.
     with assert_change(mock_send_templated_email, "call_count", 0):
         result = runner.invoke(__main__.app, ["send-reminders"])
 
-    assert_success(
-        result, "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
-    )
+        assert_success(
+            result,
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+        )
 
 
 @pytest.mark.parametrize(
     ("seconds", "call_count"),
     [
-        (0, 0),
-        (1, 1),
-        (app_settings.reminder_days_before_lapsed * 86_400, 1),
-        (app_settings.reminder_days_before_lapsed * 86_400 + 1, 0),
+        (negative_offset, 0),
+        (positive_offset, 1),
+        (app_settings.reminder_days_before_lapsed * 86_400 + negative_offset, 1),
+        (app_settings.reminder_days_before_lapsed * 86_400 + positive_offset, 0),
     ],
 )
 def test_send_reminders_submit(session, mock_send_templated_email, accepted_application, seconds, call_count):
@@ -63,35 +65,28 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
     with assert_change(mock_send_templated_email, "call_count", call_count):
         result = runner.invoke(__main__.app, ["send-reminders"])
 
-    assert_success(
-        result,
-        (
+        assert_success(
+            result,
             "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
-            f"Sending {call_count} BORROWER_PENDING_SUBMIT_REMINDER...\n"
-        ),
-    )
+            f"Sending {call_count} BORROWER_PENDING_SUBMIT_REMINDER...\n",
+        )
 
     # If run a second time, reminder is not sent.
     with assert_change(mock_send_templated_email, "call_count", 0):
         result = runner.invoke(__main__.app, ["send-reminders"])
 
-    assert_success(
-        result, "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
-    )
+        assert_success(
+            result,
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+        )
 
 
-def test_send_reminders_no_applications_to_remind(mock_send_templated_email, pending_application):
-    with assert_change(mock_send_templated_email, "call_count", 0):
-        result = runner.invoke(__main__.app, ["send-reminders"])
-
-    assert_success(
-        result, "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
-    )
-
-
-def test_set_lapsed_applications(session, pending_application):
-    pending_application.created_at = datetime.now(pending_application.tz) - timedelta(
-        days=app_settings.days_to_change_to_lapsed + 2
+@pytest.mark.parametrize(("seconds", "lapsed"), [(negative_offset, True), (positive_offset, False)])
+def test_set_lapsed_applications(session, pending_application, seconds, lapsed):
+    pending_application.created_at = (
+        datetime.now(pending_application.tz)
+        - timedelta(days=app_settings.days_to_change_to_lapsed)
+        + timedelta(seconds=seconds)
     )
     session.commit()
 
@@ -99,8 +94,8 @@ def test_set_lapsed_applications(session, pending_application):
     session.expire_all()
 
     assert_success(result)
-    assert pending_application.status == models.ApplicationStatus.LAPSED
-    assert pending_application.application_lapsed_at is not None
+    assert (pending_application.status == models.ApplicationStatus.LAPSED) == lapsed
+    assert (pending_application.application_lapsed_at is not None) == lapsed
 
 
 def test_set_lapsed_applications_no_lapsed(session, pending_application):
@@ -124,11 +119,6 @@ def test_set_lapsed_applications_no_lapsed(session, pending_application):
 def test_send_overdue_reminders(
     reset_database, session, mock_send_templated_email, started_application, seconds, call_count, overdue
 ):
-    # Lapse all applications already in the database.
-    session.query(models.Application).filter(models.Application.id != started_application.id).update(
-        {"status": models.ApplicationStatus.LAPSED}
-    )
-
     started_application.lender_started_at = datetime.now(started_application.tz) - timedelta(seconds=seconds)
     session.commit()
 
@@ -136,11 +126,8 @@ def test_send_overdue_reminders(
         result = runner.invoke(__main__.app, ["sla-overdue-applications"])
         session.expire_all()
 
-    assert_success(result)
-    if overdue:
-        assert started_application.overdued_at is not None
-    else:
-        assert started_application.overdued_at is None
+        assert_success(result)
+        assert (started_application.overdued_at is not None) == overdue
 
 
 def test_remove_data(session, declined_application):

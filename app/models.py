@@ -1015,7 +1015,7 @@ class UserBase(SQLModel):
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
 
-    def is_ocp(self) -> bool:
+    def is_admin(self) -> bool:
         return self.type == UserType.OCP
 
 
