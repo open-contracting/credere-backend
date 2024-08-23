@@ -30,6 +30,12 @@ Setup
 
       pre-commit install
 
+#. Compile message catalogs:
+
+   .. code-block:: bash
+
+      pybabel compile -f -d locale
+
 #. Create development and test databases. To use the default ``DATABASE_URL``, create a database named ``credere_backend`` to which your shell user has access.
 
    To customize settings (for example, to use a different ``DATABASE_URL``), create a ``.env`` file based on the ``.env.example`` file.
@@ -39,18 +45,6 @@ Setup
    .. code-block:: bash
 
       alembic upgrade head
-
-#. Install the entry point for Babel:
-
-   .. code-block:: bash
-
-      pip install -e .
-
-#. Compile message catalogs:
-
-   .. code-block:: bash
-
-      pybabel compile -f -d locale
 
 Repository structure
 --------------------
@@ -65,7 +59,6 @@ Repository structure
    ├── __main__.py          # Typer commands
    ├── auth.py              # Permissions and JWT token verification
    ├── aws.py               # Amazon Web Services API clients
-   ├── babel.py             # Babel extractors
    ├── db.py                # SQLAlchemy database operations and session management
    ├── dependencies.py      # FastAPI dependencies
    ├── exceptions.py        # Definitions of exceptions raised by this application
@@ -184,7 +177,7 @@ Update translations
 
    .. code-block:: bash
 
-      pybabel extract -F babel.cfg -o messages.pot .
+      pybabel extract -k '_ i' -o messages.pot .
       pybabel update -N -i messages.pot -d locale
 
 #. Compile the message catalogs (in development):
@@ -195,7 +188,7 @@ Update translations
 
 .. note::
 
-   The ``babel.cfg`` file lists from which ``StrEnum`` classes to extract messages. If Credere is deployed in English, we need to add an ``en`` locale to translate these. Otherwise, the translations will be database values like "MICRO", not "0 to 10".
+   Some messags are extracted from ``StrEnum`` classes. If Credere is deployed in English, we need to add an ``en`` locale to translate these. Otherwise, the translations will be database values like "MICRO", not "0 to 10".
 
 .. admonition:: Reference
 

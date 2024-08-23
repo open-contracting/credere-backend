@@ -16,3 +16,10 @@ translators = {
 def _(message: str, language: str | None = None, **kwargs: Any) -> str:
     translator = translators.get(language or app_settings.email_template_lang, gettext.NullTranslations())
     return translator.gettext(message) % kwargs
+
+
+def i(message: str) -> str:
+    """
+    An identity function, used to extract messages only.
+    """
+    return message

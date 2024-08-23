@@ -10,6 +10,7 @@ from sqlalchemy.sql import ColumnElement, Select, func
 from sqlalchemy.sql.expression import nulls_last, true
 from sqlmodel import Field, Relationship, SQLModel, col
 
+from app.i18n import i
 from app.settings import app_settings
 
 
@@ -126,15 +127,15 @@ class ActiveRecordMixin:
 
 
 class BorrowerDocumentType(StrEnum):
-    INCORPORATION_DOCUMENT = "INCORPORATION_DOCUMENT"
-    SUPPLIER_REGISTRATION_DOCUMENT = "SUPPLIER_REGISTRATION_DOCUMENT"
-    BANK_NAME = "BANK_NAME"
-    BANK_CERTIFICATION_DOCUMENT = "BANK_CERTIFICATION_DOCUMENT"
-    FINANCIAL_STATEMENT = "FINANCIAL_STATEMENT"
-    SIGNED_CONTRACT = "SIGNED_CONTRACT"
-    SHAREHOLDER_COMPOSITION = "SHAREHOLDER_COMPOSITION"
-    CHAMBER_OF_COMMERCE = "CHAMBER_OF_COMMERCE"
-    THREE_LAST_BANK_STATEMENT = "THREE_LAST_BANK_STATEMENT"
+    INCORPORATION_DOCUMENT = i("INCORPORATION_DOCUMENT")
+    SUPPLIER_REGISTRATION_DOCUMENT = i("SUPPLIER_REGISTRATION_DOCUMENT")
+    BANK_NAME = i("BANK_NAME")
+    BANK_CERTIFICATION_DOCUMENT = i("BANK_CERTIFICATION_DOCUMENT")
+    FINANCIAL_STATEMENT = i("FINANCIAL_STATEMENT")
+    SIGNED_CONTRACT = i("SIGNED_CONTRACT")
+    SHAREHOLDER_COMPOSITION = i("SHAREHOLDER_COMPOSITION")
+    CHAMBER_OF_COMMERCE = i("CHAMBER_OF_COMMERCE")
+    THREE_LAST_BANK_STATEMENT = i("THREE_LAST_BANK_STATEMENT")
 
 
 # https://github.com/open-contracting/credere-backend/issues/39
@@ -159,48 +160,48 @@ class ApplicationStatus(StrEnum):
     #: Credere sends an invitation to the borrower.
     #:
     #: (:typer:`python-m-app-fetch-awards`)
-    PENDING = "PENDING"
+    PENDING = i("PENDING")
     #: Borrower declines the invitation.
     #:
     #: (``/applications/decline``)
-    DECLINED = "DECLINED"
+    DECLINED = i("DECLINED")
     #: Borrower accepts the invitation.
     #:
     #: (``/applications/access-scheme``)
-    ACCEPTED = "ACCEPTED"
+    ACCEPTED = i("ACCEPTED")
     #: Borrower submits its application.
     #:
     #: (``/applications/submit``)
-    SUBMITTED = "SUBMITTED"
+    SUBMITTED = i("SUBMITTED")
     #: Lender start reviewing the application.
     #:
     #: (``/applications/{id}/start``)
-    STARTED = "STARTED"
+    STARTED = i("STARTED")
     #: Lender rejects the application, after the borrower either submits its application, updates a document,
     #: or uploads its contract and final contract amount.
     #:
     #: (``/applications/{id}/reject-application``)
-    REJECTED = "REJECTED"
+    REJECTED = i("REJECTED")
     #: Lender requests the borrower to update a document.
     #:
     #: (``/applications/email-sme/{id}``)
-    INFORMATION_REQUESTED = "INFORMATION_REQUESTED"
+    INFORMATION_REQUESTED = i("INFORMATION_REQUESTED")
     #: Borrower doesn't accept, or doesn't submit the application or information requested.
     #:
     #: (:typer:`python-m-app-update-applications-to-lapsed`)
-    LAPSED = "LAPSED"
+    LAPSED = i("LAPSED")
     #: Lender pre-approves the application, and Credere asks the borrower to upload its contract.
     #:
     #: (``/applications/{id}/approve-application``)
-    APPROVED = "APPROVED"
+    APPROVED = i("APPROVED")
     #: Borrower uploads its contract and final contract amount.
     #:
     #: (``/applications/confirm-upload-contract``)
-    CONTRACT_UPLOADED = "CONTRACT_UPLOADED"
+    CONTRACT_UPLOADED = i("CONTRACT_UPLOADED")
     #: Lender sets the final credit disbursed.
     #:
     #: (``/applications/{id}/complete-application``)
-    COMPLETED = "COMPLETED"
+    COMPLETED = i("COMPLETED")
 
 
 class BorrowerStatus(StrEnum):
@@ -284,34 +285,34 @@ class ApplicationActionType(StrEnum):
 
 
 class BorrowerSize(StrEnum):
-    NOT_INFORMED = "NOT_INFORMED"
-    MICRO = "MICRO"
-    SMALL = "SMALL"
-    MEDIUM = "MEDIUM"
-    BIG = "BIG"
+    NOT_INFORMED = i("NOT_INFORMED")
+    MICRO = i("MICRO")
+    SMALL = i("SMALL")
+    MEDIUM = i("MEDIUM")
+    BIG = i("BIG")
 
 
 class BorrowerSector(StrEnum):
-    AGRICULTURA = "agricultura"
-    MINAS = "minas"
-    MANUFACTURA = "manufactura"
-    ELECTRICIDAD = "electricidad"
-    AGUA = "agua"
-    CONSTRUCCION = "construccion"
-    TRANSPORTE = "transporte"
-    ALOJAMIENTO = "alojamiento"
-    COMUNICACIONES = "comunicaciones"
-    ACTIVIDADES_FINANCIERAS = "actividades_financieras"
-    ACTIVIDADES_INMOBILIARIAS = "actividades_inmobiliarias"
-    ACTIVIDADES_PROFESIONALES = "actividades_profesionales"
-    ACTIVIDADES_SERVICIOS_ADMINISTRATIVOS = "actividades_servicios_administrativos"
-    ADMINISTRACION_PUBLICA = "administracion_publica"
-    EDUCACION = "educacion"
-    ATENCION_SALUD = "atencion_salud"
-    ACTIVIDADES_ARTISTICAS = "actividades_artisticas"
-    OTRAS_ACTIVIDADES = "otras_actividades"
-    ACTIVIDADES_HOGARES = "actividades_hogares"
-    ACTIVIDADES_ORGANIZACIONES_EXTRATERRITORIALES = "actividades_organizaciones_extraterritoriales"
+    AGRICULTURA = i("agricultura")
+    MINAS = i("minas")
+    MANUFACTURA = i("manufactura")
+    ELECTRICIDAD = i("electricidad")
+    AGUA = i("agua")
+    CONSTRUCCION = i("construccion")
+    TRANSPORTE = i("transporte")
+    ALOJAMIENTO = i("alojamiento")
+    COMUNICACIONES = i("comunicaciones")
+    ACTIVIDADES_FINANCIERAS = i("actividades_financieras")
+    ACTIVIDADES_INMOBILIARIAS = i("actividades_inmobiliarias")
+    ACTIVIDADES_PROFESIONALES = i("actividades_profesionales")
+    ACTIVIDADES_SERVICIOS_ADMINISTRATIVOS = i("actividades_servicios_administrativos")
+    ADMINISTRACION_PUBLICA = i("administracion_publica")
+    EDUCACION = i("educacion")
+    ATENCION_SALUD = i("atencion_salud")
+    ACTIVIDADES_ARTISTICAS = i("actividades_artisticas")
+    OTRAS_ACTIVIDADES = i("otras_actividades")
+    ACTIVIDADES_HOGARES = i("actividades_hogares")
+    ACTIVIDADES_ORGANIZACIONES_EXTRATERRITORIALES = i("actividades_organizaciones_extraterritoriales")
 
 
 class CreditType(StrEnum):
