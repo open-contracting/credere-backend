@@ -27,7 +27,7 @@ pdfmetrics.registerFontFamily(
 )
 
 width, height = A4
-styles = getSampleStyleSheet()
+styles = getSampleStyleSheet()  # type: ignore[no-untyped-call]
 styleN = styles["BodyText"]
 styleN.fontName = "GTEestiProDisplay"
 styleN.alignment = TA_LEFT
