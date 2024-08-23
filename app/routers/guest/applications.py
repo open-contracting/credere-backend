@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from typing import Any, cast
 
@@ -10,8 +9,6 @@ from sqlmodel import col
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.i18n import _
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

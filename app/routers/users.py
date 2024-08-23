@@ -1,5 +1,3 @@
-import logging
-
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -11,8 +9,6 @@ from app.db import get_db, rollback_on_error
 from app.i18n import _
 from app.settings import app_settings
 from app.util import SortOrder, get_object_or_404, get_order_by
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
