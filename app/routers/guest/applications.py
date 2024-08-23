@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 from typing import Any, cast
 
-from botocore.exceptions import ClientError
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, joinedload
@@ -536,17 +535,10 @@ async def update_apps_send_notifications(
         application.borrower_submitted_at = datetime.now(application.created_at.tzinfo)
         application.pending_documents = False
 
-        try:
-            mail.send_notification_new_app_to_lender(client.ses, application)
-            mail.send_notification_new_app_to_ocp(client.ses, application)
+        mail.send_notification_new_app_to_lender(client.ses, application)
+        mail.send_notification_new_app_to_ocp(client.ses, application)
 
-            message_id = mail.send_application_submission_completed(client.ses, application)
-        except ClientError as e:
-            logger.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=_("There was an error submitting the application"),
-            )
+        message_id = mail.send_application_submission_completed(client.ses, application)
         models.Message.create(
             session,
             application=application,

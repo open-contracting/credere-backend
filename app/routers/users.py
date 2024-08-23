@@ -144,10 +144,7 @@ def setup_mfa(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT,
                 detail=_("Invalid session for the user, session is expired"),
             )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=_("There was an error trying to setup mfa"),
-        )
+        raise
 
     return serializers.ResponseBase(detail=_("MFA configured successfully"))
 
@@ -184,7 +181,7 @@ def login(
                 mfa_code=payload.temp_password,
             )
         else:
-            raise NotImplementedError
+            raise NotImplementedError  # Missing MFA challenge
     except ClientError as e:
         # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#parsing-error-responses-and-catching-exceptions-from-aws-services
         if e.response["Error"]["Code"] == "ExpiredTemporaryPasswordException":

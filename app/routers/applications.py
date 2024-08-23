@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 from typing import Any, cast
 
-from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, joinedload
@@ -576,14 +575,7 @@ async def email_borrower(
             user_id=user.id,
         )
 
-        try:
-            message_id = mail.send_mail_request_to_borrower(client.ses, application, payload.message)
-        except ClientError as e:
-            logger.exception(e)
-            return HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=_("There was an error"),
-            )
+        message_id = mail.send_mail_request_to_borrower(client.ses, application, payload.message)
         models.Message.create(
             session,
             application_id=application.id,
