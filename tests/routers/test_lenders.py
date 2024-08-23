@@ -44,7 +44,7 @@ def test_create_credit_product(client, admin_header, lender_header, lender):
 
     # Lender tries to create credit product
     response = client.post(f"/lenders/{lender.id}/credit-products", json=create_payload, headers=lender_header)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Insufficient permissions")}
 
     with warnings.catch_warnings():
@@ -94,11 +94,11 @@ def test_create_lender(client, admin_header, lender_header, lender):
 
     # tries to create same lender twice
     response = client.post("/lenders", json=payload, headers=admin_header)
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert response.json() == {"detail": _("Lender already exists")}
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": _("Lender with that name already exists")}
 
     response = client.post("/lenders", json=payload, headers=lender_header)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Insufficient permissions")}
 
 
@@ -137,7 +137,7 @@ def test_create_lender_with_credit_product(client, admin_header, lender_header, 
 
     # lender user tries to create lender
     response = client.post("/lenders", json=payload, headers=lender_header)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Insufficient permissions")}
 
 
@@ -170,7 +170,7 @@ def test_update_lender(client, admin_header, lender_header, lender):
 
     # Lender user tries to update lender
     response = client.put(f"/lenders/{lender.id}", json=payload, headers=lender_header)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Insufficient permissions")}
 
     response = client.put(f"/lenders/{lender.id}", json={"sla_days": "not_valid_value"}, headers=admin_header)

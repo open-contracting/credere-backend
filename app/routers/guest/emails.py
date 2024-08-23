@@ -77,14 +77,14 @@ async def confirm_email(
     with rollback_on_error(session):
         if not application.pending_email_confirmation:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Application is not pending an email confirmation"),
             )
 
         new_email, token = application.confirmation_email_token.split("---")[:2]
         if token != payload.confirmation_email_token:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=_("Not authorized to modify this application"),
             )
 

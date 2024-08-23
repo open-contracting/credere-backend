@@ -20,7 +20,7 @@ def test_reject_application(client, session, lender_header, pending_application)
 
     # tries to reject the application before its started
     response = client.post(f"/applications/{appid}/reject-application", json=payload, headers=lender_header)
-    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("PENDING"))}
 
     pending_application.status = models.ApplicationStatus.STARTED
@@ -63,7 +63,7 @@ def test_approve_application_cycle(
 
         # Application should be accepted now so it cannot be accepted again
         response = client.post("/applications/access-scheme", json={"uuid": pending_application.uuid})
-        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("ACCEPTED"))}
 
     response = client.post(
@@ -139,7 +139,7 @@ def test_approve_application_cycle(
         "/applications/confirm-change-email",
         json={"uuid": pending_application.uuid, "confirmation_email_token": "confirmation_email_token"},
     )
-    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert response.json() == {"detail": _("Application is not pending an email confirmation")}
 
     response = client.post("/applications/submit", json={"uuid": pending_application.uuid})
@@ -153,7 +153,7 @@ def test_approve_application_cycle(
             data={"uuid": pending_application.uuid, "type": models.BorrowerDocumentType.INCORPORATION_DOCUMENT},
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
-        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("SUBMITTED"))}
 
     # different lender user tries to start the application
@@ -246,7 +246,7 @@ def test_approve_application_cycle(
 
     # lender tries to approve the application without verifying legal_name
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
-    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert response.json() == {"detail": _("Some borrower data field are not verified")}
 
     # verify legal_name
@@ -264,7 +264,7 @@ def test_approve_application_cycle(
 
     # lender tries to approve the application without verifying INCORPORATION_DOCUMENT
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
-    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert response.json() == {"detail": _("Some documents are not verified")}
 
     # verify borrower document
@@ -346,7 +346,7 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
     session.commit()
 
     response = client.get(f"/applications/uuid/{pending_application.uuid}")
-    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert response.json() == {"detail": _("Application lapsed")}
 
     response = client.get("/applications/uuid/123-456")

@@ -1,5 +1,6 @@
 -r requirements.txt
 black
+botocore
 boto3-stubs
 coveralls
 flake8

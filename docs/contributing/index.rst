@@ -4,6 +4,7 @@ Contributing
 .. toctree::
    :caption: contents
 
+   api
    sqlalchemy
 
 .. seealso::
@@ -160,24 +161,9 @@ To delete the image (e.g. when recreating it), run:
 Make changes
 ------------
 
-Read the next pages in this section to learn about style guides, and the :doc:`../api/index` about helper methods and application logic. See also the `OCP Software Development Handbook <https://ocp-software-handbook.readthedocs.io/en/latest/>`__, in particular:
+Read the next pages in this section to learn about style guides, and the :doc:`../api/index` about helper methods and application logic. Read the `OCP Software Development Handbook <https://ocp-software-handbook.readthedocs.io/en/latest/>`__: in particular, `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__.
 
--  `Library and Web API <https://ocp-software-handbook.readthedocs.io/en/latest/general/api.html#web-api>`__
--  `Python <https://ocp-software-handbook.readthedocs.io/en/latest/python/>`__
-
-Style guide
-~~~~~~~~~~~
-
--  Use lowercase filenames, including ``email_templates/`` files.
-
-In Python code and documentation:
-
--  Use "lender", not "FI" or "financial institution".
--  Use "borrower", not "MSME", "SME" or "small and medium-sized enterprises".
-
-.. note::
-
-   Some endpoints and enums cannot be made to conform to this style guide, without migrating the database or updating the frontend.
+.. seealso:: `Parsing error responses and catching exceptions from AWS services <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/error-handling.html#parsing-error-responses-and-catching-exceptions-from-aws-services>`__
 
 Update requirements
 ~~~~~~~~~~~~~~~~~~~
@@ -191,7 +177,7 @@ Update translations
 
    .. code-block:: bash
 
-      pybabel extract -k '_ i' -o messages.pot .
+      pybabel extract -k '_ i' -o messages.pot app
       pybabel update -N -i messages.pot -d locale
 
 #. Compile the message catalogs (in development):
@@ -210,10 +196,6 @@ Update translations
 
 Update API
 ~~~~~~~~~~
-
-.. seealso:: :doc:`../api/index`
-
-Use the parameter ``id`` only for application IDs, to avoid accidental errors.
 
 After making changes, regenerate the OpenAPI document by :ref:`running the server<dev-server>` and:
 

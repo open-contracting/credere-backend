@@ -1,8 +1,6 @@
-import logging
 from datetime import datetime
 from typing import Any, cast
 
-from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, joinedload
@@ -12,8 +10,6 @@ from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.i18n import _
 from app.util import SortOrder, get_order_by
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -171,7 +167,7 @@ async def approve_application(
                 not_validated_fields.append(key)
         if not_validated_fields:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Some borrower data field are not verified"),
             )
 
@@ -182,7 +178,7 @@ async def approve_application(
                 not_validated_documents.append(document.type)
         if not_validated_documents:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Some documents are not verified"),
             )
 
@@ -458,7 +454,7 @@ async def get_application(
     Retrieve an application by its ID.
 
     :return: The application with the specified ID and its associated relations.
-    :raise: HTTPException with status code 401 if the user is not authorized to view the application.
+    :raise: HTTPException if the user is not authorized to view the application.
     """
     return util.get_modified_data_fields(session, application)
 
@@ -485,7 +481,7 @@ async def start_application(
 
     :param id: The ID of the application to start.
     :return: The started application with its associated relations.
-    :raise: HTTPException with status code 401 if the user is not authorized to start the application.
+    :raise: HTTPException if the user is not authorized to start the application.
     """
     with rollback_on_error(session):
         application.status = models.ApplicationStatus.STARTED
@@ -576,14 +572,7 @@ async def email_borrower(
             user_id=user.id,
         )
 
-        try:
-            message_id = mail.send_mail_request_to_borrower(client.ses, application, payload.message)
-        except ClientError as e:
-            logger.exception(e)
-            return HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=_("There was an error"),
-            )
+        message_id = mail.send_mail_request_to_borrower(client.ses, application, payload.message)
         models.Message.create(
             session,
             application_id=application.id,
@@ -612,6 +601,6 @@ async def previous_contracts(
     Get the previous awards associated with an application.
 
     :return: A list of previous awards associated with the application.
-    :raise: HTTPException with status code 401 if the user is not authorized to access the application.
+    :raise: HTTPException if the user is not authorized to access the application.
     """
     return application.previous_awards(session)
