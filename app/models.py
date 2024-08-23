@@ -653,8 +653,8 @@ class ApplicationBase(SQLModel):
     archived_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
 
     # Relationships
-    award_id: int | None = Field(foreign_key="award.id", index=True)
-    borrower_id: int | None = Field(foreign_key="borrower.id", index=True)
+    award_id: int = Field(foreign_key="award.id", index=True)
+    borrower_id: int = Field(foreign_key="borrower.id", index=True)
     lender_id: int | None = Field(foreign_key="lender.id")
     credit_product_id: int | None = Field(foreign_key="credit_product.id")
 
