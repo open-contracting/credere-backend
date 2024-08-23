@@ -95,7 +95,7 @@ def test_create_lender(client, admin_header, lender_header, lender):
     # tries to create same lender twice
     response = client.post("/lenders", json=payload, headers=admin_header)
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": _("Lender already exists")}
+    assert response.json() == {"detail": _("Lender with that name already exists")}
 
     response = client.post("/lenders", json=payload, headers=lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
