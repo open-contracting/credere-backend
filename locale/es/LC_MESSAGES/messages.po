@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-22 12:34-0400\n"
+"POT-Creation-Date: 2024-08-22 23:59-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -20,226 +20,226 @@ msgstr ""
 "Generated-By: Babel 2.16.0\n"
 
 #. BorrowerDocumentType
-#: README.rst:125
+#: README.rst:129
 msgid "INCORPORATION_DOCUMENT"
 msgstr "Documento de incorporación"
 
 #. BorrowerDocumentType
-#: README.rst:126
+#: README.rst:130
 msgid "SUPPLIER_REGISTRATION_DOCUMENT"
 msgstr "Documento de registro de proveedor"
 
 #. BorrowerDocumentType
-#: README.rst:127
+#: README.rst:131
 msgid "BANK_NAME"
 msgstr "Nombre del banco"
 
 #. BorrowerDocumentType
-#: README.rst:128
+#: README.rst:132
 msgid "BANK_CERTIFICATION_DOCUMENT"
 msgstr "Certificado bancario"
 
 #. BorrowerDocumentType
-#: README.rst:129
+#: README.rst:133
 msgid "FINANCIAL_STATEMENT"
 msgstr "Estados financieros"
 
 #. BorrowerDocumentType
-#: README.rst:130
+#: README.rst:134
 msgid "SIGNED_CONTRACT"
 msgstr "Contrato firmado"
 
 #. BorrowerDocumentType
-#: README.rst:131
+#: README.rst:135
 msgid "SHAREHOLDER_COMPOSITION"
 msgstr "Composición accionaria"
 
 #. BorrowerDocumentType
-#: README.rst:132
+#: README.rst:136
 msgid "CHAMBER_OF_COMMERCE"
 msgstr "Cámara de comercio"
 
 #. BorrowerDocumentType
-#: README.rst:133
+#: README.rst:137
 msgid "THREE_LAST_BANK_STATEMENT"
 msgstr "Últimos tres extractos bancarios"
 
 #. ApplicationStatus
-#: README.rst:158
+#: README.rst:162
 msgid "PENDING"
 msgstr "Pendiente"
 
 #. ApplicationStatus
-#: README.rst:162
+#: README.rst:166
 msgid "DECLINED"
 msgstr "Declinado"
 
 #. ApplicationStatus
-#: README.rst:166
+#: README.rst:170
 msgid "ACCEPTED"
 msgstr "Aceptado"
 
 #. ApplicationStatus
-#: README.rst:170
+#: README.rst:174
 msgid "SUBMITTED"
 msgstr "Enviado"
 
 #. ApplicationStatus
-#: README.rst:174
+#: README.rst:178
 msgid "STARTED"
 msgstr "Empezado"
 
 #. ApplicationStatus
-#: README.rst:179
+#: README.rst:183
 msgid "REJECTED"
 msgstr "Rechazado"
 
 #. ApplicationStatus
-#: README.rst:183
+#: README.rst:187
 msgid "INFORMATION_REQUESTED"
 msgstr "Información solicitada"
 
 #. ApplicationStatus
-#: README.rst:187
+#: README.rst:191
 msgid "LAPSED"
 msgstr "Caducado"
 
 #. ApplicationStatus
-#: README.rst:191
+#: README.rst:195
 msgid "APPROVED"
 msgstr "Precalificado"
 
 #. ApplicationStatus
-#: README.rst:195
+#: README.rst:199
 msgid "CONTRACT_UPLOADED"
 msgstr "Contrato cargado"
 
 #. ApplicationStatus
-#: README.rst:199
+#: README.rst:203
 msgid "COMPLETED"
 msgstr "Completado"
 
 #. BorrowerSize
-#: README.rst:281
+#: README.rst:287
 msgid "NOT_INFORMED"
 msgstr "No informado"
 
 #. BorrowerSize
-#: README.rst:282
+#: README.rst:288
 msgid "MICRO"
 msgstr "0 a 10"
 
 #. BorrowerSize
-#: README.rst:283
+#: README.rst:289
 msgid "SMALL"
 msgstr "11 a 50"
 
 #. BorrowerSize
-#: README.rst:284
+#: README.rst:290
 msgid "MEDIUM"
 msgstr "51 a 200"
 
 #. BorrowerSize
-#: README.rst:285
+#: README.rst:291
 msgid "BIG"
 msgstr "+ 200"
 
 #. BorrowerSector
-#: README.rst:289
+#: README.rst:295
 msgid "agricultura"
 msgstr "Agricultura, ganadería, caza, silvicultura y pesca"
 
 #. BorrowerSector
-#: README.rst:290
+#: README.rst:296
 msgid "minas"
 msgstr "Explotación de minas y canteras"
 
 #. BorrowerSector
-#: README.rst:291
+#: README.rst:297
 msgid "manufactura"
 msgstr "Industrias manufactureras"
 
 #. BorrowerSector
-#: README.rst:292
+#: README.rst:298
 msgid "electricidad"
 msgstr "Suministro de electricidad, gas, vapor y aire acondicionado"
 
 #. BorrowerSector
-#: README.rst:293
+#: README.rst:299
 msgid "agua"
 msgstr ""
 "Distribución de agua; evacuación y tratamiento de aguas residuales, "
 "gestión de desechos y actividades de saneamiento ambiental"
 
 #. BorrowerSector
-#: README.rst:294
+#: README.rst:300
 msgid "construccion"
 msgstr "Construcción"
 
 #. BorrowerSector
-#: README.rst:295
+#: README.rst:301
 msgid "transporte"
 msgstr "Transporte y almacenamiento"
 
 #. BorrowerSector
-#: README.rst:296
+#: README.rst:302
 msgid "alojamiento"
 msgstr "Alojamiento y servicios de comida"
 
 #. BorrowerSector
-#: README.rst:297
+#: README.rst:303
 msgid "comunicaciones"
 msgstr "Información y comunicaciones"
 
 #. BorrowerSector
-#: README.rst:298
+#: README.rst:304
 msgid "actividades_financieras"
 msgstr "Actividades financieras y de seguros"
 
 #. BorrowerSector
-#: README.rst:299
+#: README.rst:305
 msgid "actividades_inmobiliarias"
 msgstr "Actividades inmobiliarias"
 
 #. BorrowerSector
-#: README.rst:300
+#: README.rst:306
 msgid "actividades_profesionales"
 msgstr "Actividades profesionales, científicas y técnicas"
 
 #. BorrowerSector
-#: README.rst:301
+#: README.rst:307
 msgid "actividades_servicios_administrativos"
 msgstr "Actividades de servicios administrativos y de apoyo"
 
 #. BorrowerSector
-#: README.rst:302
+#: README.rst:308
 msgid "administracion_publica"
 msgstr ""
 "Administración pública y defensa; planes de seguridad social de "
 "afiliación obligatoria"
 
 #. BorrowerSector
-#: README.rst:303
+#: README.rst:309
 msgid "educacion"
 msgstr "Educación"
 
 #. BorrowerSector
-#: README.rst:304
+#: README.rst:310
 msgid "atencion_salud"
 msgstr "Actividades de atención de la salud humana y de asistencia social"
 
 #. BorrowerSector
-#: README.rst:305
+#: README.rst:311
 msgid "actividades_artisticas"
 msgstr "Actividades artísticas, de entretenimiento y recreación"
 
 #. BorrowerSector
-#: README.rst:306
+#: README.rst:312
 msgid "otras_actividades"
 msgstr "Otras actividades de servicios"
 
 #. BorrowerSector
-#: README.rst:307
+#: README.rst:313
 msgid "actividades_hogares"
 msgstr ""
 "Actividades de los hogares individuales en calidad de empleadores; "
@@ -247,7 +247,7 @@ msgstr ""
 " de bienes y servicios para uso propio"
 
 #. BorrowerSector
-#: README.rst:308
+#: README.rst:314
 msgid "actividades_organizaciones_extraterritoriales"
 msgstr "Actividades de organizaciones y entidades extraterritoriales"
 
@@ -372,42 +372,38 @@ msgstr "Opción de crédito alternativa"
 msgid "Application updated"
 msgstr "Aplicación actualizada"
 
-#: app/util.py:54
+#: app/util.py:55
 #, python-format
 msgid "%(model_name)s not found"
 msgstr "%(model_name)s no encontrado"
 
-#: app/util.py:112
+#: app/util.py:110
 msgid "Format not allowed. It must be a PNG, JPEG, or PDF file"
 msgstr "Formato no permitido. El formato debe ser un PNG, JPEG or archivo PDF"
 
-#: app/util.py:118
+#: app/util.py:116
 msgid "File is too large"
 msgstr "El archivo es muy grande"
 
-#: app/routers/applications.py:175
+#: app/routers/applications.py:174
 msgid "Some borrower data field are not verified"
 msgstr "Algunos campos de datos de la empresa no fueron verificados"
 
-#: app/routers/applications.py:186
+#: app/routers/applications.py:185
 msgid "Some documents are not verified"
 msgstr "Algunos documentos no fueron verificados"
 
-#: app/routers/applications.py:332
+#: app/routers/applications.py:331
 msgid "Award not found"
 msgstr "La adjudicación no ha sido encontrada"
 
-#: app/routers/applications.py:377
+#: app/routers/applications.py:376
 msgid "Borrower not found"
 msgstr "La empresa no ha sido encontrada"
 
-#: app/routers/applications.py:386
+#: app/routers/applications.py:385
 msgid "This column cannot be updated"
 msgstr "Esta columna no puede ser actualizada"
-
-#: app/routers/applications.py:585
-msgid "There was an error"
-msgstr "Ocurrió un error"
 
 #: app/routers/downloads.py:88 app/routers/downloads.py:106
 msgid "Application Details"
@@ -417,11 +413,11 @@ msgstr "Detalles de la aplicación"
 msgid "Previous Public Sector Contracts"
 msgstr "Contratos anteriores con el sector público"
 
-#: app/routers/downloads.py:148 app/utils/tables.py:209
+#: app/routers/downloads.py:148 app/utils/tables.py:211
 msgid "National Tax ID"
 msgstr "Identificación fiscal nacional"
 
-#: app/routers/downloads.py:149 app/utils/tables.py:201
+#: app/routers/downloads.py:149 app/utils/tables.py:203
 msgid "Legal Name"
 msgstr "Nombre legal"
 
@@ -441,12 +437,12 @@ msgstr "Etapa"
 msgid "Lender with that name already exists"
 msgstr "La entidad financiera con ese nombre ya existe"
 
-#: app/routers/guest/applications.py:378 app/routers/guest/applications.py:467
+#: app/routers/guest/applications.py:377 app/routers/guest/applications.py:466
 #: app/routers/lenders.py:192
 msgid "Credit product not found"
 msgstr "Producto crediticio no encontrado"
 
-#: app/routers/users.py:61 app/routers/users.py:367
+#: app/routers/users.py:61 app/routers/users.py:344
 msgid "User with that email already exists"
 msgstr "El usuario con ese correo ya existe"
 
@@ -454,67 +450,50 @@ msgstr "El usuario con ese correo ya existe"
 msgid "Password changed with MFA setup required"
 msgstr "Cambio de contraseña con configuración de MFA requerido"
 
-#: app/routers/users.py:113 app/routers/users.py:193
+#: app/routers/users.py:113 app/routers/users.py:187
 msgid "Temporal password is expired, please request a new one"
 msgstr "La contraseña temporal ha expirado, por favor solicite una nueva"
 
 #: app/routers/users.py:117
-msgid "There was an error trying to update the password"
-msgstr "Ocurrió un error al tratar de actualizar la contraseña"
-
-#: app/routers/users.py:120
 msgid "Password changed"
 msgstr "Contraseña cambiada"
 
-#: app/routers/users.py:145
+#: app/routers/users.py:142
 msgid "Invalid session for the user, session is expired"
 msgstr "Sesión inválida para el usuario, la sesión ha expirado"
 
-#: app/routers/users.py:149
-msgid "There was an error trying to setup mfa"
-msgstr "Ocurrió un error tratando de configurar el MFA"
-
-#: app/routers/users.py:152
+#: app/routers/users.py:146
 msgid "MFA configured successfully"
 msgstr "El MFA fue configurado correctamente"
 
-#: app/routers/users.py:237
+#: app/routers/users.py:217
 msgid "User logged out successfully"
 msgstr "Usuario deslogueado correctamente"
 
-#: app/routers/users.py:286
+#: app/routers/users.py:263
 msgid "An email with a reset link was sent to end user"
 msgstr "Se envió un correo con el enlace de reseteo de contraseña."
 
-#: app/routers/guest/applications.py:321 app/routers/guest/applications.py:371
-#: app/routers/guest/applications.py:460 app/routers/guest/applications.py:526
+#: app/routers/guest/applications.py:320 app/routers/guest/applications.py:370
+#: app/routers/guest/applications.py:459 app/routers/guest/applications.py:525
 msgid "Credit product not selected"
 msgstr "El producto crediticio no fue seleccionado"
 
-#: app/routers/guest/applications.py:327
+#: app/routers/guest/applications.py:326
 msgid "Cannot rollback at this stage"
 msgstr "No se puede retroceder en esta etapa"
 
-#: app/routers/guest/applications.py:532
+#: app/routers/guest/applications.py:531
 msgid "Lender not selected"
 msgstr "No se ha seleccionado la entidad financiera"
 
-#: app/routers/guest/applications.py:548
-msgid "There was an error submitting the application"
-msgstr "Ocurrió un error enviando la aplicación"
-
-#: app/routers/guest/applications.py:597
+#: app/routers/guest/applications.py:589
 msgid "Cannot upload document at this stage"
 msgstr "No se pueden subir documentos en esta etapa"
 
-#: app/routers/guest/applications.py:804
-msgid "A new application has alredy been created from this one"
+#: app/routers/guest/applications.py:796
+msgid "A new application has already been created from this one"
 msgstr "Una nueva aplicación ya ha sido creada desde esta"
-
-#: app/routers/guest/applications.py:823
-#, python-format
-msgid "There was a problem copying the application. %(exception)s"
-msgstr "Ocurrió un problema copiando la aplicación. %(exception)s"
 
 #: app/routers/guest/emails.py:34
 msgid "New email is not valid"
@@ -528,137 +507,136 @@ msgstr "La aplicación no tiene la confirmación de correo pendiente"
 msgid "Not authorized to modify this application"
 msgstr "No autorizado a modificar la aplicación en esta etapa"
 
-#: app/utils/tables.py:41
+#: app/utils/tables.py:43
 msgid "Financing Options"
 msgstr "Opciones crediticias"
 
-#: app/utils/tables.py:42 app/utils/tables.py:128 app/utils/tables.py:198
-#: app/utils/tables.py:248
+#: app/utils/tables.py:44 app/utils/tables.py:130 app/utils/tables.py:200
+#: app/utils/tables.py:250
 msgid "Data"
 msgstr "Datos"
 
-#: app/utils/tables.py:45
+#: app/utils/tables.py:47
 msgid "Lender"
 msgstr "Entidad financiera"
 
-#: app/utils/tables.py:49
+#: app/utils/tables.py:51
 msgid "Amount requested"
 msgstr "Monto solicitado"
 
-#: app/utils/tables.py:57 app/utils/tables.py:81
+#: app/utils/tables.py:59 app/utils/tables.py:83
 msgid "Type"
 msgstr "Tipo"
 
-#: app/utils/tables.py:58
+#: app/utils/tables.py:60
 msgid "Loan"
 msgstr "Préstamo"
 
-#: app/utils/tables.py:63
+#: app/utils/tables.py:65
 msgid "Payment start date"
 msgstr "Fecha de inicio de pago"
 
-#: app/utils/tables.py:69
+#: app/utils/tables.py:71
 msgid "Repayment terms"
 msgstr "Periodo de pago"
 
-#: app/utils/tables.py:70
+#: app/utils/tables.py:72
 #, python-format
 msgid "%(repayment_years)s year(s), %(repayment_months)s month(s)"
 msgstr "%(repayment_years)s año(s), %(repayment_months)s mes(es)"
 
-#: app/utils/tables.py:82
+#: app/utils/tables.py:84
 msgid "Credit Line"
 msgstr "Línea de crédito"
 
-#: app/utils/tables.py:89
+#: app/utils/tables.py:91
 msgid "Contract amount"
 msgstr "Monto del contrato"
 
-#: app/utils/tables.py:95
+#: app/utils/tables.py:97
 msgid "Credit amount"
 msgstr "Monto del crédito"
 
-#: app/utils/tables.py:127
+#: app/utils/tables.py:129
 msgid "Award Data"
 msgstr "Datos de la adjudicación"
 
-#: app/utils/tables.py:131
+#: app/utils/tables.py:133
 msgid "View data in SECOP II"
 msgstr "Ver datos en SECOP II"
 
-#: app/utils/tables.py:135
+#: app/utils/tables.py:137
 msgid "Award Title"
 msgstr "Título de la adjudicación"
 
-#: app/utils/tables.py:139
+#: app/utils/tables.py:141
 msgid "Contracting Process ID"
 msgstr "Identificador del proceso de contratación"
 
-#: app/utils/tables.py:143
+#: app/utils/tables.py:145
 msgid "Award Description"
 msgstr "Descripción de la adjudicación"
 
-#: app/utils/tables.py:147
+#: app/utils/tables.py:149
 msgid "Award Date"
 msgstr "Fecha de la adjudicación"
 
-#: app/utils/tables.py:151
+#: app/utils/tables.py:153
 msgid "Award Value Currency & Amount"
 msgstr "Monto y moneda de la adjudicación"
 
-#: app/utils/tables.py:155
+#: app/utils/tables.py:157
 msgid "Contract Start Date"
 msgstr "Fecha de inicio del contrato"
 
-#: app/utils/tables.py:159
+#: app/utils/tables.py:161
 msgid "Contract End Date"
 msgstr "Fecha de fin del contrato"
 
-#: app/utils/tables.py:163
+#: app/utils/tables.py:165
 msgid "Payment Method"
 msgstr "Método de pago"
 
-#: app/utils/tables.py:167
+#: app/utils/tables.py:169
 msgid "Buyer Name"
 msgstr "Nombre de la entidad compradora"
 
-#: app/utils/tables.py:174
+#: app/utils/tables.py:176
 msgid "Procurement Method"
 msgstr "Método de contratación"
 
-#: app/utils/tables.py:178
+#: app/utils/tables.py:180
 msgid "Contract Type"
 msgstr "Tipo de contrato"
 
-#: app/utils/tables.py:197
+#: app/utils/tables.py:199
 msgid "MSME Data"
 msgstr "Datos de la empresa"
 
-#: app/utils/tables.py:205
+#: app/utils/tables.py:207
 msgid "Address"
 msgstr "Dirección"
 
-#: app/utils/tables.py:213
+#: app/utils/tables.py:215
 msgid "Registration Type"
 msgstr "Tipo de registro"
 
-#: app/utils/tables.py:217
+#: app/utils/tables.py:219
 msgid "Size"
 msgstr "Tamaño"
 
-#: app/utils/tables.py:221
+#: app/utils/tables.py:223
 msgid "Sector"
 msgstr "Sector"
 
-#: app/utils/tables.py:225
+#: app/utils/tables.py:227
 msgid "Annual Revenue"
 msgstr "Valor estimado de facturación anual de su empresa"
 
-#: app/utils/tables.py:229
+#: app/utils/tables.py:231
 msgid "Business Email"
 msgstr "Correo institucional"
 
-#: app/utils/tables.py:247
+#: app/utils/tables.py:249
 msgid "MSME Documents"
 msgstr "Documentos de la empresa"
-

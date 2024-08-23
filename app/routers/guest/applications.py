@@ -793,7 +793,7 @@ async def find_alternative_credit_option(
         if app_action:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=_("A new application has alredy been created from this one"),
+                detail=_("A new application has already been created from this one"),
             )
 
         # Copy the application, changing the uuid, status, and borrower_accepted_at.
