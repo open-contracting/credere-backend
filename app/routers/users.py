@@ -240,7 +240,7 @@ def me(
     "/users/forgot-password",
 )
 def forgot_password(
-    payload: parsers.BasicUser,
+    payload: parsers.ResetPassword,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """

@@ -65,7 +65,7 @@ def test_duplicate_user(client, admin_header, user_payload):
 
 
 def test_login_invalid_username(client):
-    response = client.post("/users/login", json={"username": "nonexistent"})
+    response = client.post("/users/login", json={"username": "nonexistent", "password": "", "temp_password": ""})
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Invalid username or password")}
