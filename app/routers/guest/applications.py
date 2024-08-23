@@ -61,7 +61,7 @@ async def decline(
 
     :param payload: The application decline payload.
     :return: The application response containing the updated application, borrower, and award.
-    :raise: HTTPException with status code 400 if the application is not in the PENDING status.
+    :raise: HTTPException if the application is not in the PENDING status.
     """
     with rollback_on_error(session):
         borrower_declined_data = vars(payload)
@@ -104,7 +104,7 @@ async def rollback_decline(
 
     :param payload: The application base payload.
     :return: The application response containing the updated application, borrower, and award.
-    :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
+    :raise: HTTPException if the application is not in the DECLINED status.
     """
     with rollback_on_error(session):
         # Update application.
@@ -143,7 +143,7 @@ async def decline_feedback(
 
     :param payload: The application decline feedback payload.
     :return: The application response containing the updated application, borrower, and award.
-    :raise: HTTPException with status code 400 if the application is not in the DECLINED status.
+    :raise: HTTPException if the application is not in the DECLINED status.
     """
     with rollback_on_error(session):
         borrower_declined_preferences_data = vars(payload)
@@ -310,19 +310,19 @@ async def rollback_select_credit_product(
 
     :param payload: The application data.
     :return: The application response containing the updated application, borrower, and award.
-    :raise: HTTPException with status code 400 if the credit product is not selected or if the lender is already
+    :raise: HTTPException if the credit product is not selected or if the lender is already
             assigned.
     """
     with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Credit product not selected"),
             )
 
         if application.lender_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Cannot rollback at this stage"),
             )
 
@@ -361,19 +361,19 @@ async def confirm_credit_product(
     :param payload: The application data.
     :return: The application response containing the updated application, borrower, award, lender, documents, and
              credit product.
-    :raise: HTTPException with status code 400 if the credit product is not selected or not found.
+    :raise: HTTPException if the credit product is not selected or not found.
     """
     with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Credit product not selected"),
             )
 
         credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
         if not credit_product:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Credit product not found"),
             )
 
@@ -450,19 +450,19 @@ async def rollback_confirm_credit_product(
     :param payload: The application data.
     :return: The application response containing the updated application, borrower, award, lender, documents, and
              credit product.
-    :raise: HTTPException with status code 400 if the credit product is not selected or not found.
+    :raise: HTTPException if the credit product is not selected or not found.
     """
     with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Credit product not selected"),
             )
 
         credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
         if not credit_product:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Credit product not found"),
             )
 
@@ -521,13 +521,13 @@ async def update_apps_send_notifications(
     with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Credit product not selected"),
             )
 
         if not application.lender:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Lender not selected"),
             )
 
@@ -585,7 +585,7 @@ async def upload_document(
         new_file, filename = util.validate_file(file)
         if not application.pending_documents:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Cannot upload document at this stage"),
             )
 
@@ -772,8 +772,8 @@ async def find_alternative_credit_option(
     :param payload: The payload containing the UUID of the rejected application.
     :param client: The Cognito client for sending notifications.
     :return: The newly created application as an alternative credit option.
-    :raise: HTTPException with status code 400 if the application has already been copied.
-    :raise: HTTPException with status code 400 if the application is not in the rejected status.
+    :raise: HTTPException if the application has already been copied.
+    :raise: HTTPException if the application is not in the rejected status.
     """
     with rollback_on_error(session):
         # Check if the application has already been copied.

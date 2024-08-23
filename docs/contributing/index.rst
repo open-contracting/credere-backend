@@ -221,7 +221,13 @@ Update API
 
 .. seealso:: :doc:`../api/index`
 
-Use the parameter ``id`` only for application IDs, to avoid accidental errors.
+-  Use the parameter ``id`` only for application IDs, to avoid accidental errors.
+-  Don't use ``status.HTTP_400_BAD_REQUEST``. FastAPI uses it for `request validation errors <https://fastapi.tiangolo.com/tutorial/handling-errors/?h=#override-request-validation-exceptions>`__, which are reported to Sentry. In general, use ``status.HTTP_422_UNPROCESSABLE_ENTITY``, instead.
+
+   .. seealso::
+
+      -  `422 Unprocessable Content <https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422>`__ (MDN)
+      -  Choosing an HTTP Status Code <https://www.codetinkerer.com/2015/12/04/choosing-an-http-status-code.html>`__
 
 After making changes, regenerate the OpenAPI document by :ref:`running the server<dev-server>` and:
 
