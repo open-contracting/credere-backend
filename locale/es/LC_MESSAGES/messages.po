@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-23 16:53-0400\n"
+"POT-Creation-Date: 2024-08-23 19:47-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -498,10 +498,6 @@ msgstr "La aplicación no tiene la confirmación de correo pendiente"
 msgid "Not authorized to modify this application"
 msgstr "No autorizado a modificar la aplicación en esta etapa"
 
-#: app/routers/guest/meta.py:35
-msgid "Domain doesn't exist"
-msgstr "El dominio no existe"
-
 #: app/utils/tables.py:43
 msgid "Financing Options"
 msgstr "Opciones crediticias"
@@ -635,4 +631,3 @@ msgstr "Correo institucional"
 #: app/utils/tables.py:249
 msgid "MSME Documents"
 msgstr "Documentos de la empresa"
-
