@@ -20,10 +20,10 @@ app.include_router(users.router)
 app.include_router(applications.router)
 app.include_router(guest.applications.router)
 app.include_router(guest.emails.router)
+app.include_router(guest.meta.router)
 app.include_router(downloads.router)
 app.include_router(lenders.router)
 app.include_router(statistics.router)
-app.include_router(guest.meta.router)
 
 
 @app.exception_handler(500)
