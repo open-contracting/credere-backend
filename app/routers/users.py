@@ -171,7 +171,10 @@ def login(
                 mfa_code=payload.temp_password,
             )
         else:
-            raise NotImplementedError  # Missing MFA challenge
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail=_("Missing MFA challenge"),
+            )
     # The user failed to sign in ("Incorrect username or password", etc.).
     except client.cognito.exceptions.NotAuthorizedException:
         raise HTTPException(

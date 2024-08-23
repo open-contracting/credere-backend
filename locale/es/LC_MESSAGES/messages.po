@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-23 13:55-0400\n"
+"POT-Creation-Date: 2024-08-23 14:39-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -35,6 +35,10 @@ msgstr "JWK inválido"
 msgid "Not authenticated"
 msgstr "No autenticado"
 
+#: app/aws.py:177
+msgid "Authentication challenge not implemented"
+msgstr "Desafío de autenticación no implementado"
+
 #: app/dependencies.py:44
 msgid "Username missing"
 msgstr "Falta el nombre de usuario"
@@ -47,24 +51,28 @@ msgstr "Usuario no encontrado"
 msgid "Insufficient permissions"
 msgstr "Permisos insuficientes"
 
-#: app/dependencies.py:98
+#: app/dependencies.py:96
+msgid "Authorization group not implemented"
+msgstr "Grupo de autorización no implementado"
+
+#: app/dependencies.py:101
 msgid "User is not authorized"
 msgstr "Usuario no autorizado"
 
-#: app/dependencies.py:106
+#: app/dependencies.py:109
 msgid "Application expired"
 msgstr "La aplicación ha expirado"
 
-#: app/dependencies.py:113
+#: app/dependencies.py:116
 #, python-format
 msgid "Application status should not be %(status)s"
 msgstr "El estado de la aplicación no debe ser %(status)s"
 
-#: app/dependencies.py:126 app/dependencies.py:166
+#: app/dependencies.py:129 app/dependencies.py:169
 msgid "Application not found"
 msgstr "La aplicación no ha sido encontrada"
 
-#: app/dependencies.py:172
+#: app/dependencies.py:175
 msgid "Application lapsed"
 msgstr "La aplicación ha caducado"
 
@@ -401,7 +409,7 @@ msgstr "Ya existe un entidad financiera con ese nombre"
 msgid "Credit product not found"
 msgstr "Producto crediticio no encontrado"
 
-#: app/routers/users.py:56 app/routers/users.py:342
+#: app/routers/users.py:56 app/routers/users.py:345
 msgid "User with that email already exists"
 msgstr "Ya existe un usuario con ese correo"
 
@@ -417,7 +425,7 @@ msgstr "Contraseña cambiada"
 msgid "Invalid session for the user, session is expired"
 msgstr "Sesión inválida para el usuario, la sesión ha expirado"
 
-#: app/routers/users.py:131 app/routers/users.py:184
+#: app/routers/users.py:131 app/routers/users.py:187
 msgid "Invalid MFA code"
 msgstr "Código MFA no válido"
 
@@ -425,15 +433,19 @@ msgstr "Código MFA no válido"
 msgid "MFA configured successfully"
 msgstr "El MFA fue configurado correctamente"
 
-#: app/routers/users.py:160 app/routers/users.py:179
+#: app/routers/users.py:160 app/routers/users.py:182
 msgid "Invalid username or password"
 msgstr "Nombre de usuario o contraseña no válidos"
 
-#: app/routers/users.py:215
+#: app/routers/users.py:176
+msgid "Missing MFA challenge"
+msgstr "Falta el desafío de MFA"
+
+#: app/routers/users.py:218
 msgid "User logged out successfully"
 msgstr "Usuario deslogueado correctamente"
 
-#: app/routers/users.py:261
+#: app/routers/users.py:264
 msgid "An email with a reset link was sent to end user"
 msgstr "Se envió un correo con el enlace de reseteo de contraseña."
 

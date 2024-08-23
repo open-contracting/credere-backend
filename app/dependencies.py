@@ -91,7 +91,10 @@ def raise_if_unauthorized(
                     if user.lender_id == application.lender_id:
                         break
                 case _:
-                    raise NotImplementedError
+                    raise HTTPException(
+                        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                        detail=_("Authorization group not implemented"),
+                    )
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

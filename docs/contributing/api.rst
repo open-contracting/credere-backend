@@ -12,9 +12,10 @@ API design
 
    -  ``status.HTTP_404_NOT_FOUND``, if the resource is not found
    -  ``status.HTTP_409_CONFLICT``, if the resource already exists
-   -  ``status.HTTP_422_UNPROCESSABLE_ENTITY``, otherwise
+   -  ``status.HTTP_501_NOT_IMPLEMENTED``, if the code path is not implemented
+   -  ``status.HTTP_422_UNPROCESSABLE_ENTITY`` for problems with the request, otherwise
 
    .. seealso::
 
       -  `422 Unprocessable Content <https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422>`__ (MDN)
-      -  Choosing an HTTP Status Code <https://www.codetinkerer.com/2015/12/04/choosing-an-http-status-code.html>`__
+      -  `Choosing an HTTP Status Code <https://www.codetinkerer.com/2015/12/04/choosing-an-http-status-code.html>`__

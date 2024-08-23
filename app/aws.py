@@ -7,9 +7,11 @@ import string
 from typing import Callable
 
 import boto3
+from fastapi import HTTPException, status
 from mypy_boto3_cognito_idp import CognitoIdentityProviderClient, literals, type_defs
 from mypy_boto3_ses.client import SESClient
 
+from app.i18n import _
 from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
@@ -170,7 +172,10 @@ class Client:
                     "refresh_token": challenge_response["AuthenticationResult"]["RefreshToken"],
                 }
             case _:
-                raise NotImplementedError
+                raise HTTPException(
+                    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                    detail=_("Authentication challenge not implemented"),
+                )
 
 
 ses_client = boto3.client(
