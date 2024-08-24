@@ -316,13 +316,13 @@ class BorrowerSector(StrEnum):
 
 
 class CreditType(StrEnum):
-    LOAN = "LOAN"
-    CREDIT_LINE = "CREDIT_LINE"
+    LOAN = i("LOAN")
+    CREDIT_LINE = i("CREDIT_LINE")
 
 
 class BorrowerType(StrEnum):
-    NATURAL_PERSON = "NATURAL_PERSON"
-    LEGAL_PERSON = "LEGAL_PERSON"
+    NATURAL_PERSON = i("NATURAL_PERSON")
+    LEGAL_PERSON = i("LEGAL_PERSON")
 
 
 class StatisticType(StrEnum):
@@ -346,7 +346,7 @@ class LenderBase(SQLModel):
     #: .. seealso:: :attr:`~app.settings.Settings.progress_to_remind_started_applications`
     sla_days: int | None
     #: Additional HTML content to include in a :attr:`app.models.MessageType.APPROVED_APPLICATION` message, if the
-    #: "additional_comments" key in the application's :attr:`app.models.APplication.lender_approved_data` isn't set.
+    #: "additional_comments" key in the application's :attr:`app.models.Application.lender_approved_data` isn't set.
     default_pre_approval_message: str = Field(default="")
 
 
