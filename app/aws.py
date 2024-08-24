@@ -104,7 +104,7 @@ class Client:
         challenge_name: literals.ChallengeNameTypeType,
         new_password: str = "",
         mfa_code: str = "",
-    ) -> type_defs.RespondToAuthChallengeResponseTypeDef | dict[str, str]:
+    ) -> type_defs.RespondToAuthChallengeResponseTypeDef:
         """
         Responds to the authentication challenge provided by Cognito.
 
@@ -156,7 +156,7 @@ class Client:
                     Session=verify_response["Session"],
                 )
             case "SOFTWARE_TOKEN_MFA":
-                challenge_response = self.cognito.respond_to_auth_challenge(
+                return self.cognito.respond_to_auth_challenge(
                     ClientId=app_settings.cognito_client_id,
                     ChallengeName=challenge_name,
                     ChallengeResponses={
@@ -166,11 +166,6 @@ class Client:
                     },
                     Session=session,
                 )
-
-                return {
-                    "access_token": challenge_response["AuthenticationResult"]["AccessToken"],
-                    "refresh_token": challenge_response["AuthenticationResult"]["RefreshToken"],
-                }
             case _:
                 raise HTTPException(
                     status_code=status.HTTP_501_NOT_IMPLEMENTED,

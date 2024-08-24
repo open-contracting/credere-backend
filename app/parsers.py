@@ -10,8 +10,12 @@ from app.models import BorrowerSize
 class BasicUser(BaseModel):
     username: str
     name: str | None = None
-    password: str | None = None
-    temp_password: str | None = None
+    password: str
+    temp_password: str
+
+
+class ResetPassword(BaseModel):
+    username: str
 
 
 class SetupMFA(BaseModel):

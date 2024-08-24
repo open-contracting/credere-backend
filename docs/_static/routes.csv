@@ -5,7 +5,7 @@ PUT,/users/setup-mfa,SetupMFA,ResponseBase,SetupMFAInput,IResponse
 POST,/users/login,BasicUser,LoginResponse,LoginInput,ILoginResponse
 GET,/users/logout,,ResponseBase,,IResponse
 GET,/users/me,,UserResponse,,IUserResponse
-POST,/users/forgot-password,BasicUser,ResponseBase,ResetPasswordInput,IResponse
+POST,/users/forgot-password,ResetPassword,ResponseBase,ResetPasswordInput,IResponse
 GET,/users/{user_id},user_id,models.User,id,IUser
 GET,/users,"page, page_size, sort_field, sort_order",UserListResponse,PaginationInput,IUsersListResponse
 PUT,/users/{user_id},models.User,models.UserWithLender,UpdateUserInput,IUser

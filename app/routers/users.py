@@ -71,11 +71,11 @@ def change_password(
     and handles different scenarios such as new password requirement, MFA setup, and error handling.
     """
     # This endpoint is only called for new users, to replace the generated password.
-    response = client.initiate_auth(payload.username, payload.temp_password)
-    if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
-        response = client.respond_to_auth_challenge(
+    initiate_response = client.initiate_auth(payload.username, payload.temp_password)
+    if initiate_response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
+        respond_response = client.respond_to_auth_challenge(
             username=payload.username,
-            session=response["Session"],
+            session=initiate_response["Session"],
             challenge_name="NEW_PASSWORD_REQUIRED",
             new_password=payload.password,
         )
@@ -88,9 +88,9 @@ def change_password(
         UserAttributes=[{"Name": "email_verified", "Value": "true"}],
     )
 
-    if "ChallengeName" in response and response["ChallengeName"] == "MFA_SETUP":
+    if "ChallengeName" in respond_response and respond_response["ChallengeName"] == "MFA_SETUP":
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/associate_software_token.html
-        associate_response = client.cognito.associate_software_token(Session=response["Session"])
+        associate_response = client.cognito.associate_software_token(Session=respond_response["Session"])
 
         return serializers.ChangePasswordResponse(
             detail=_("Password changed with MFA setup required"),
@@ -189,8 +189,8 @@ def login(
 
     return serializers.LoginResponse(
         user=user,
-        access_token=mfa_login_response["access_token"],
-        refresh_token=mfa_login_response["refresh_token"],
+        access_token=mfa_login_response["AuthenticationResult"]["AccessToken"],
+        refresh_token=mfa_login_response["AuthenticationResult"]["RefreshToken"],
     )
 
 
@@ -240,7 +240,7 @@ def me(
     "/users/forgot-password",
 )
 def forgot_password(
-    payload: parsers.BasicUser,
+    payload: parsers.ResetPassword,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
     """
