@@ -1004,6 +1004,12 @@ class UserBase(SQLModel):
     language: str = Field(default="es", description="ISO 639-1 language code")
     #: The email address with which the user logs in and is contacted.
     email: str = Field(unique=True)
+    #: The MessageType the user wants to receive notifications about. The supported MessageTypes are:
+    #: - MessageType.NEW_APPLICATION_FI
+    #: - MessageType.OVERDUE_APPLICATION
+    #: - MessageType.BORROWER_DOCUMENT_UPDATED
+    #: - MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI
+    notification_preferences: dict[MessageType, bool] = Field(default_factory=dict, sa_type=JSON)
     #: The name by which the user is addressed in emails and identified in application action histories.
     name: str = Field(default="")
     #: The Cognito ``Username``.
