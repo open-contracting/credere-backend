@@ -1,1 +1,1 @@
-from . import applications, emails  # noqa: F401
+from . import applications, emails, meta  # noqa: F401
