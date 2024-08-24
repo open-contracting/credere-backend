@@ -136,6 +136,7 @@ class BorrowerDocumentType(StrEnum):
     SHAREHOLDER_COMPOSITION = i("SHAREHOLDER_COMPOSITION")
     CHAMBER_OF_COMMERCE = i("CHAMBER_OF_COMMERCE")
     THREE_LAST_BANK_STATEMENT = i("THREE_LAST_BANK_STATEMENT")
+    INCOME_TAX_RETURN_STATEMENT = i("INCOME_TAX_RETURN_STATEMENT")
 
 
 # https://github.com/open-contracting/credere-backend/issues/39
