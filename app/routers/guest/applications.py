@@ -532,7 +532,7 @@ async def update_apps_send_notifications(
         application.borrower_submitted_at = datetime.now(application.created_at.tzinfo)
         application.pending_documents = False
 
-        mail.send_notification_new_app_to_lender(client.ses, application)
+        mail.send_notification_new_app_to_lender(client.ses, application.lender)
         mail.send_notification_new_app_to_ocp(client.ses, application)
 
         message_id = mail.send_application_submission_completed(client.ses, application)

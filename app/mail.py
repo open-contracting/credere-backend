@@ -8,7 +8,7 @@ from urllib.parse import quote
 from mypy_boto3_ses.client import SESClient
 
 from app.i18n import _
-from app.models import Application
+from app.models import Application, Lender, MessageType
 from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
@@ -50,20 +50,26 @@ def get_template_data(template_name: str, subject: str, parameters: dict[str, An
     }
 
 
-def send_email(ses: SESClient, email: str, data: dict[str, str], *, to_borrower: bool = True) -> str:
+def send_email(ses: SESClient, email: list[str], data: dict[str, str], *, to_borrower: bool = True) -> str:
     if app_settings.environment == "production" or not to_borrower:
         to_address = email
     else:
-        to_address = app_settings.test_mail_receiver
-
+        to_address = [app_settings.test_mail_receiver]
+    if not to_address:
+        logger.info("No email will be sent, no address provided")
+        return ""
     logger.info("%s - Email to: %s sent to %s", app_settings.environment, email, to_address)
     return ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": [to_address]},
+        Destination={"ToAddresses": to_address},
         ReplyToAddresses=[app_settings.ocp_email_group],
         Template=f"credere-main-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
     )["MessageId"]
+
+
+def get_lender_emails(lender: Lender, message_type: MessageType):
+    return [user.email for user in lender.users if user.notification_preferences.get(message_type, None)]
 
 
 def send_application_approved_email(ses: SESClient, application: Application) -> str:
@@ -95,7 +101,7 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
 
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data("Application_approved", _("Your credit application has been prequalified"), parameters),
     )
 
@@ -109,7 +115,7 @@ def send_application_submission_completed(ses: SESClient, application: Applicati
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Application_submitted",
             _("Application Submission Complete"),
@@ -130,7 +136,7 @@ def send_application_credit_disbursed(ses: SESClient, application: Application) 
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Application_credit_disbursed",
             _("Your credit application has been approved"),
@@ -157,7 +163,7 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_pa
     """
     return send_email(
         ses,
-        username,
+        [username],
         get_template_data(
             "New_Account_Created",
             _("Welcome"),
@@ -184,7 +190,7 @@ def send_upload_contract_notification_to_lender(ses: SESClient, application: App
     """
     return send_email(
         ses,
-        application.lender.email_group,
+        get_lender_emails(application.lender, MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI),
         get_template_data(
             "New_contract_submission",
             _("New contract submission"),
@@ -206,7 +212,7 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application) 
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Contract_upload_confirmation",
             _("Thank you for uploading the signed contract"),
@@ -246,7 +252,7 @@ def send_new_email_confirmation(
     )
 
     send_email(ses, application.primary_email, data)
-    return send_email(ses, new_email, data)
+    return send_email(ses, [new_email], data)
 
 
 def send_mail_to_reset_password(ses: SESClient, username: str, temporary_password: str) -> str:
@@ -261,7 +267,7 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temporary_passwor
     """
     return send_email(
         ses,
-        username,
+        [username],
         get_template_data(
             "Reset_password",
             _("Reset password"),
@@ -301,7 +307,7 @@ def send_invitation_email(ses: SESClient, application: Application) -> str:
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Access_to_credit_scheme_for_MSMEs",
             _("Opportunity to access MSME credit for being awarded a public contract"),
@@ -319,7 +325,7 @@ def send_mail_intro_reminder(ses: SESClient, application: Application) -> str:
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Access_to_credit_reminder",
             _("Opportunity to access MSME credit for being awarded a public contract"),
@@ -337,7 +343,7 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Complete_application_reminder",
             _("Reminder - Opportunity to access MSME credit for being awarded a public contract"),
@@ -354,15 +360,15 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
     )
 
 
-def send_notification_new_app_to_lender(ses: SESClient, application: Application) -> str:
+def send_notification_new_app_to_lender(ses: SESClient, lender: Lender) -> str:
     """
     Sends a notification email about a new application to a lender's email group.
 
-    :param lender_email_group: List of email addresses belonging to the lender.
+    :param lender: The lender to email.
     """
     return send_email(
         ses,
-        application.lender.email_group,
+        get_lender_emails(lender, MessageType.NEW_APPLICATION_FI),
         get_template_data(
             "FI_New_application_submission_FI_user",
             _("New application submission"),
@@ -381,7 +387,7 @@ def send_notification_new_app_to_ocp(ses: SESClient, application: Application) -
     """
     return send_email(
         ses,
-        app_settings.ocp_email_group,
+        [app_settings.ocp_email_group],
         get_template_data(
             "New_application_submission_OCP_user",
             _("New application submission"),
@@ -403,7 +409,7 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Request_data_to_SME",
             _("New message from a financial institution"),
@@ -417,22 +423,21 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
     )
 
 
-def send_overdue_application_email_to_lender(ses: SESClient, lender_name: str, lender_email: str, amount: int) -> str:
+def send_overdue_application_email_to_lender(ses: SESClient, lender: Lender, amount: int) -> str:
     """
     Sends an email notification to the lender about overdue applications.
 
-    :param lender_name: Name of the recipient at the lender.
-    :param lender_email: Email address of the recipient at the lender.
+    :param lender: The overdue lender.
     :param amount: Number of overdue applications.
     """
     return send_email(
         ses,
-        lender_email,
+        get_lender_emails(lender, MessageType.OVERDUE_APPLICATION),
         get_template_data(
             "Overdue_application_FI",
             _("You have credit applications that need processing"),
             {
-                "USER": lender_name,
+                "USER": lender.name,
                 "NUMBER_APPLICATIONS": amount,
                 "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
@@ -448,7 +453,7 @@ def send_overdue_application_email_to_ocp(ses: SESClient, application: Applicati
     """
     return send_email(
         ses,
-        app_settings.ocp_email_group,
+        [app_settings.ocp_email_group],
         get_template_data(
             "Overdue_application_OCP_admin",
             _("New overdue application"),
@@ -469,7 +474,7 @@ def send_rejected_application_email(ses: SESClient, application: Application) ->
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Application_declined",
             _("Your credit application has been declined"),
@@ -492,7 +497,7 @@ def send_rejected_application_email_without_alternatives(ses: SESClient, applica
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "Application_declined_without_alternative",
             _("Your credit application has been declined"),
@@ -511,7 +516,7 @@ def send_copied_application_notification_to_borrower(ses: SESClient, application
     """
     return send_email(
         ses,
-        application.primary_email,
+        [application.primary_email],
         get_template_data(
             "alternative_credit_msme",
             _("Alternative credit option"),
@@ -531,7 +536,7 @@ def send_upload_documents_notifications_to_lender(ses: SESClient, application: A
     """
     return send_email(
         ses,
-        application.lender.email_group,
+        get_lender_emails(application.lender, MessageType.BORROWER_DOCUMENT_UPDATED),
         get_template_data(
             "FI_Documents_Updated_FI_user",
             _("Application updated"),
