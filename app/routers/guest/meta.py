@@ -18,7 +18,6 @@ async def get_settings_by_domain() -> dict[str, list[dict[str, str]]]:
         - BorrowerSector
         - BorrowerSize
         - BorrowerType
-        - CreditType
 
     :return: A dict of constants with their keys and localized values.
     """
@@ -28,7 +27,6 @@ async def get_settings_by_domain() -> dict[str, list[dict[str, str]]]:
         "BorrowerSector",
         "BorrowerSize",
         "BorrowerType",
-        "CreditType",
     ):
         constants[domain] = [{"label": _(name), "value": name} for name in getattr(models, domain)]
     return constants
