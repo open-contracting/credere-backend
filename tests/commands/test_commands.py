@@ -4,6 +4,7 @@ import pytest
 from typer.testing import CliRunner
 
 from app import __main__, models
+from app.models import User
 from app.settings import app_settings
 from tests import assert_change, assert_success
 
@@ -120,6 +121,12 @@ def test_send_overdue_reminders(
     reset_database, session, mock_send_templated_email, started_application, seconds, call_count, overdue
 ):
     started_application.lender_started_at = datetime.now(started_application.tz) - timedelta(seconds=seconds)
+    user = User(
+        notification_preferences={models.MessageType.OVERDUE_APPLICATION: True},
+        lender=started_application.lender,
+        email="test@example.com",
+    )
+    User.create_from_object(session, user)
     session.commit()
 
     with assert_change(mock_send_templated_email, "call_count", call_count):
