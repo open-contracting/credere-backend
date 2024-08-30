@@ -819,6 +819,15 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             ),
         )
 
+    @classmethod
+    def by_borrower_legal_name_or_email(cls, base_query: Query, search_value: str) -> "Query[Self]":
+        return base_query.filter(
+            or_(
+                cls.Application.borrower.email == search_value,
+                cls.Application.borrower.legal_name.ilike(f"{search_value}%"),
+            )
+        )
+
     @property
     def tz(self) -> tzinfo | None:
         """

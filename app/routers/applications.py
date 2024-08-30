@@ -404,6 +404,7 @@ async def get_applications_list(
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.borrower_submitted_at"),
     sort_order: SortOrder = Query("asc"),
+    search_value: str = "",
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
@@ -425,6 +426,9 @@ async def get_applications_list(
         )
         .order_by(get_order_by(sort_field, sort_order, model=models.Application))
     )
+
+    if search_value:
+        applications_query = models.Application.by_borrower_legal_name_or_email(applications_query, search_value)
 
     total_count = applications_query.count()
 
@@ -500,6 +504,7 @@ async def get_applications(
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.borrower_submitted_at"),
     sort_order: SortOrder = Query("asc"),
+    search_value: str = "",
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
@@ -521,6 +526,9 @@ async def get_applications(
         )
         .order_by(get_order_by(sort_field, sort_order, model=models.Application))
     )
+    if search_value:
+        applications_query = models.Application.by_borrower_legal_name_or_email(applications_query, search_value)
+
     total_count = applications_query.count()
 
     applications = applications_query.limit(page_size).offset(page * page_size).all()
