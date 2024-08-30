@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-30 16:59-0400\n"
+"POT-Creation-Date: 2024-08-30 17:40-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -209,7 +209,11 @@ msgstr "Documento de declaración de renta de los últimos dos años"
 
 #: app/models.py:140
 msgid "CHAMBER_OF_COMMERCE_WITH_TEMPORARY_UNIONS"
-msgstr "Documento de Registro de la Cámara de Comercio: Documento debe estar firmado y con emisión menor a 3 meses. Para uniones temporales, pueden reemplazar el certificado de la cámara de comercio por el documento que certifique la creación de la unión temporal."
+msgstr ""
+"Documento de Registro de la Cámara de Comercio: Documento debe estar "
+"firmado y con emisión menor a 3 meses. Para uniones temporales, pueden "
+"reemplazar el certificado de la cámara de comercio por el documento que "
+"certifique la creación de la unión temporal."
 
 #: app/models.py:165
 msgid "PENDING"
@@ -384,8 +388,8 @@ msgid "%(model_name)s not found"
 msgstr "%(model_name)s no encontrado"
 
 #: app/util.py:110
-msgid "Format not allowed. It must be a PNG, JPEG, or PDF file"
-msgstr "Formato no permitido. El formato debe ser un PNG, JPEG or archivo PDF"
+msgid "Format not allowed. It must be a PNG, JPEG, PDF or ZIP file"
+msgstr "Formato no permitido. El formato debe ser un PNG, JPEG, archivo PDF o archivo ZIP"
 
 #: app/util.py:116
 msgid "File is too large"
