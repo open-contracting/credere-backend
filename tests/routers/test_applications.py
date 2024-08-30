@@ -218,7 +218,7 @@ def test_approve_application_cycle(
             files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-        assert response.json() == {"detail": _("Format not allowed. It must be a PNG, JPEG, or PDF file")}
+        assert response.json() == {"detail": _("Format not allowed. It must be a PNG, JPEG, PDF or ZIP file")}
 
     with open(file, "rb") as file_to_upload:
         response = client.post(
