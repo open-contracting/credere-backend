@@ -24,7 +24,7 @@ from app.sources import colombia as data_access
 
 T = TypeVar("T")
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
-ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg"}
+ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg", ".zip"}
 
 
 class SortOrder(StrEnum):
@@ -95,7 +95,7 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     """
     Validates the uploaded file.
 
-    This function checks whether the file has an allowed format (PNG, JPEG, or PDF) and whether its size is below
+    This function checks whether the file has an allowed format (ALLOWED_EXTENSIONS) and whether its size is below
     the maximum allowed size. If the file does not pass these checks, an HTTPException is raised. Otherwise, the file
     and its filename are returned.
 
@@ -107,10 +107,10 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     if os.path.splitext(filename)[1].lower() not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=_("Format not allowed. It must be a PNG, JPEG, or PDF file"),
+            detail=_("Format not allowed. It must be a PNG, JPEG, PDF or ZIP file"),
         )
     new_file = file.file.read()
-    if len(new_file) >= MAX_FILE_SIZE:  # 10MB in bytes
+    if len(new_file) >= MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=_("File is too large"),

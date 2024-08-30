@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     #: Credere frontend).
     #:
     #: .. seealso:: :func:`app.util.validate_file`
-    max_file_size_mb: int = 5
+    max_file_size_mb: int = 20
 
     # Timeline
 
