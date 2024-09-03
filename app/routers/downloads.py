@@ -145,9 +145,11 @@ async def export_applications(
     pd.DataFrame(
         [
             {
-                _("National Tax ID", lang): application.borrower.legal_identifier,
                 _("Legal Name", lang): application.borrower.legal_name,
-                _("Email Address", lang): application.primary_email,
+                _("National Tax ID", lang): application.borrower.legal_identifier,
+                _("Buyer Name", lang): application.award.buyer_name,
+                _("Award Value Currency & Amount", lang): application.award.award_amount,
+                _("Amount requested", lang): application.amount_requested,
                 _("Submission Date", lang): application.borrower_submitted_at,
                 _("Stage", lang): _(application.status, lang),
             }
@@ -157,10 +159,10 @@ async def export_applications(
                 .options(joinedload(models.Application.borrower))
             )
         ]
-    ).to_csv(stream, index=False)
+    ).to_csv(stream, index=False, encoding="utf-8")
 
     return Response(
         content=stream.getvalue(),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=export.csv"},
+        headers={"Content-Disposition": "attachment; filename=export.csv; charset=utf-8"},
     )
