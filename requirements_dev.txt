@@ -72,7 +72,7 @@ coverage[toml]==6.5.0
     #   pytest-cov
 coveralls==3.3.1
     # via -r requirements_dev.in
-cryptography==42.0.5
+cryptography==43.0.1
     # via
     #   -r requirements.txt
     #   joserfc
@@ -99,7 +99,9 @@ filelock==3.12.0
 flake8==6.0.0
     # via -r requirements_dev.in
 greenlet==3.0.3
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
