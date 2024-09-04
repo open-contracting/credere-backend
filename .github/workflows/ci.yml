@@ -17,11 +17,12 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/postgres
         shell: bash
+        # https://github.com/sveetch/py-html-checker/issues/26
         run: |
           pybabel compile -f -d locale
           alembic upgrade head
           alembic check
-          pytest -W error --cov app --random-order --random-order-bucket=global
+          pytest -W error -W ignore::DeprecationWarning:html_checker -W ignore::DeprecationWarning:pkg_resources --cov app --random-order --random-order-bucket=global
       - env:
           TEST_SETTINGS: True
         run: pytest -W error settings_tests/test_settings.py

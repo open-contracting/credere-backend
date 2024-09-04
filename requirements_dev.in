@@ -8,7 +8,6 @@ isort
 moto[cognitoidp]
 mypy
 pandas-stubs
-pip-tools
 pre-commit
 py-html-checker
 pytest
