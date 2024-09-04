@@ -182,7 +182,7 @@ packaging==23.1
     #   black
     #   pytest
     #   sphinx
-pandas==2.1.0
+pandas==2.2.2
     # via -r requirements.txt
 pandas-stubs==2.2.2.240807
     # via -r requirements_dev.in
@@ -261,7 +261,7 @@ pytz==2023.3
     # via
     #   -r requirements.txt
     #   pandas
-pyyaml==6.0
+pyyaml==6.0.2
     # via
     #   pre-commit
     #   responses

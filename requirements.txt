@@ -79,7 +79,7 @@ numpy==1.26.0
     # via pandas
 orjson==3.10.7
     # via -r requirements.in
-pandas==2.1.0
+pandas==2.2.2
     # via -r requirements.in
 pillow==10.3.0
     # via reportlab

@@ -1,3 +1,7 @@
+[project]
+name = "credere-backend"
+version = "0.0.0"
+
 [tool.black]
 line-length = 119
 exclude = '/(migrations|node_modules)/'
