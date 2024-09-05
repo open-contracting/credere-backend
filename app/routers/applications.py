@@ -412,7 +412,7 @@ async def get_applications_list(
     Get a paginated list of submitted applications for administrative purposes.
     """
     applications_query = models.Application.submitted_search(
-        session, search_value=search_value, sort_field=sort_field, sort_order=sort_order, lender_id=None
+        session, search_value=search_value, sort_field=sort_field, sort_order=sort_order
     )
 
     total_count = applications_query.count()

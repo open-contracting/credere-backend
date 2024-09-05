@@ -790,7 +790,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def submitted_search(
-        cls, session: Session, lender_id: int | None, search_value: str, sort_field: str, sort_order: str
+        cls, session: Session, sort_field: str, sort_order: str, lender_id: int = None, search_value: str = None
     ):
         applications_query = (
             cls.submitted(session)
@@ -827,16 +827,6 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         return applications_query
 
     @classmethod
-    def submitted_to_lender(cls, session: Session, lender_id: int | None) -> "Query[Self]":
-        """
-        :return: A query for applications :meth:`~app.models.Application.submitted` to a specific lender.
-        """
-        return cls.submitted(session).filter(
-            Application.lender_id == lender_id,
-            col(Application.lender_id).isnot(None),
-        )
-
-    @classmethod
     def archivable(cls, session: Session) -> "Query[Self]":
         """
         :return: A query for :meth:`~app.models.Application.unarchived` applications that have been in a final state
@@ -866,15 +856,6 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                     col(cls.application_lapsed_at) + delta < datetime.now(),
                 ),
             ),
-        )
-
-    @classmethod
-    def by_borrower_legal_name_or_email(cls, base_query: Query, search_value: str) -> "Query[Self]":
-        return base_query.filter(
-            or_(
-                cls.Application.borrower.email == search_value,
-                cls.Application.borrower.legal_name.ilike(f"{search_value}%"),
-            )
         )
 
     @property
