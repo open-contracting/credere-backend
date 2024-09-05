@@ -790,7 +790,12 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def submitted_search(
-        cls, session: Session, sort_field: str, sort_order: str, lender_id: int = None, search_value: str = None
+        cls,
+        session: Session,
+        sort_field: str,
+        sort_order: str,
+        lender_id: int | None = None,
+        search_value: str | None = None,
     ):
         applications_query = (
             cls.submitted(session)
@@ -811,10 +816,10 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             applications_query = applications_query.filter(
                 or_(
                     Application.primary_email == search_value,
-                    Borrower.legal_name.ilike(f"%{search_value}%"),
-                    Borrower.legal_identifier.ilike(f"%{search_value}%"),
-                    Award.buyer_name.ilike(f"%{search_value}%"),
-                    Lender.name.ilike(f"{search_value}%"),
+                    col(Borrower.legal_name).ilike(f"%{search_value}%"),
+                    col(Borrower.legal_identifier).ilike(f"%{search_value}%"),
+                    col(Award.buyer_name).ilike(f"%{search_value}%"),
+                    col(Lender.name).ilike(f"{search_value}%"),
                 )
             )
 
