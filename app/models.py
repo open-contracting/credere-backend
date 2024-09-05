@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timedelta, tzinfo
 from decimal import Decimal
 from enum import StrEnum
@@ -5,7 +6,7 @@ from typing import Any, Self
 
 from sqlalchemy import Boolean, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Query, Session, joinedload
 from sqlalchemy.sql import ColumnElement, Select, func
 from sqlalchemy.sql.expression import nulls_last, true
 from sqlmodel import Field, Relationship, SQLModel, col
@@ -23,6 +24,16 @@ def get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
              value in the input dictionary is empty or None, and False otherwise.
     """
     return {key: value == "" or value is None for key, value in data.items()}
+
+
+def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None = None) -> Any:
+    if "." in sort_field:
+        model_name, field_name = sort_field.split(".", 1)
+        # credere-frontend doesn't use any camelcase models.
+        column = getattr(getattr(sys.modules[__name__], model_name.capitalize()), field_name)
+    else:
+        column = getattr(model, sort_field)
+    return getattr(col(column), sort_order)()
 
 
 # https://github.com/tiangolo/sqlmodel/issues/254
@@ -776,6 +787,44 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 ]
             )
         )
+
+    @classmethod
+    def submitted_search(
+        cls, session: Session, lender_id: int | None, search_value: str, sort_field: str, sort_order: str
+    ):
+        applications_query = (
+            cls.submitted(session)
+            .join(Award)
+            .join(Borrower)
+            .join(CreditProduct)
+            .join(Lender)
+            .options(
+                joinedload(Application.award),
+                joinedload(Application.borrower),
+                joinedload(Application.borrower_documents),
+                joinedload(Application.credit_product),
+                joinedload(Application.lender),
+            )
+            .order_by(get_order_by(sort_field, sort_order, model=Application))
+        )
+        if search_value:
+            applications_query = applications_query.filter(
+                or_(
+                    Application.primary_email == search_value,
+                    Borrower.legal_name.ilike(f"%{search_value}%"),
+                    Borrower.legal_identifier.ilike(f"%{search_value}%"),
+                    Award.buyer_name.ilike(f"%{search_value}%"),
+                    Lender.name.ilike(f"{search_value}%"),
+                )
+            )
+
+        if lender_id:
+            applications_query = applications_query.filter(
+                Application.lender_id == lender_id,
+                col(Application.lender_id).isnot(None),
+            )
+
+        return applications_query
 
     @classmethod
     def submitted_to_lender(cls, session: Session, lender_id: int | None) -> "Query[Self]":

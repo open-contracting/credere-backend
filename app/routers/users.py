@@ -7,7 +7,7 @@ from app import auth, aws, dependencies, mail, models, parsers, serializers
 from app.db import get_db, rollback_on_error
 from app.i18n import _
 from app.settings import app_settings
-from app.util import SortOrder, get_object_or_404, get_order_by
+from app.util import SortOrder, get_object_or_404
 
 router = APIRouter()
 
@@ -301,7 +301,7 @@ async def get_all_users(
         session.query(models.User)
         .outerjoin(models.Lender)
         .options(joinedload(models.User.lender))
-        .order_by(get_order_by(sort_field, sort_order, model=models.User), models.User.id)
+        .order_by(models.get_order_by(sort_field, sort_order, model=models.User), models.User.id)
     )
 
     total_count = list_query.count()
