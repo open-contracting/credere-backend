@@ -1023,7 +1023,7 @@ class UserBase(SQLModel):
     #: - :attr:`~app.models.MessageType.BORROWER_DOCUMENT_UPDATED`
     #: - :attr:`~app.models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI`
     #: - :attr:`~app.models.MessageType.OVERDUE_APPLICATION`
-    notification_preferences: dict[MessageType, bool] = Field(default_factory=dict, sa_type=JSON)
+    notification_preferences: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
     #: The name by which the user is addressed in emails and identified in application action histories.
     name: str = Field(default="")
     #: The Cognito ``Username``.
