@@ -149,6 +149,8 @@ typing-extensions==4.8.0
     # via
     #   alembic
     #   fastapi
+    #   mypy-boto3-cognito-idp
+    #   mypy-boto3-ses
     #   pydantic
     #   pydantic-core
     #   sqlalchemy

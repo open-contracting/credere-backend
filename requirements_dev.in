@@ -5,6 +5,7 @@ coverage
 moto[cognitoidp]
 mypy
 pandas-stubs
+pre-commit
 py-html-checker
 pytest
 pytest-mock
