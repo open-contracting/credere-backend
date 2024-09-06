@@ -193,6 +193,7 @@ def lender_header(session, aws_client, lender):
         name="Lender Test User",
         type=models.UserType.FI,
         lender=lender,
+        notification_preferences={models.MessageType.OVERDUE_APPLICATION: True},
     )
 
 
