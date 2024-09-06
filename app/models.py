@@ -338,11 +338,6 @@ class BorrowerType(StrEnum):
     LEGAL_PERSON = i("LEGAL_PERSON")
 
 
-class StatisticType(StrEnum):
-    MSME_OPT_IN_STATISTICS = "MSME_OPT_IN_STATISTICS"
-    APPLICATION_KPIS = "APPLICATION_KPIS"
-
-
 class StatisticCustomRange(StrEnum):
     LAST_WEEK = "LAST_WEEK"
     LAST_MONTH = "LAST_MONTH"
@@ -1111,16 +1106,6 @@ class ApplicationAction(SQLModel, ActiveRecordMixin, table=True):
     created_at: datetime = Field(
         default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     )
-
-
-class Statistic(SQLModel, ActiveRecordMixin, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    type: StatisticType
-    data: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
-    created_at: datetime = Field(
-        default=datetime.utcnow(), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    )
-    lender_id: int | None = Field(foreign_key="lender.id")
 
 
 # Classes that inherit from SQLModel but that are used as serializers only.

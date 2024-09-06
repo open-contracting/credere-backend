@@ -171,9 +171,3 @@ def test_remove_data_no_dated_application(session, pending_application):
     assert pending_application.borrower.address != ""
     assert pending_application.borrower.legal_identifier != ""
     assert pending_application.borrower.source_data != {}
-
-
-def test_update_statistic(engine):
-    result = runner.invoke(__main__.app, ["update-statistics"])
-
-    assert_success(result)
