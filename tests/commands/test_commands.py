@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime, timedelta
 
 import pytest
@@ -118,15 +117,16 @@ def test_set_lapsed_applications_no_lapsed(session, pending_application):
     ],
 )
 def test_send_overdue_reminders(
-    reset_database, session, mock_send_templated_email, started_application, seconds, call_count, overdue
+    reset_database,
+    session,
+    mock_send_templated_email,
+    started_application,
+    lender_header,
+    seconds,
+    call_count,
+    overdue,
 ):
     started_application.lender_started_at = datetime.now(started_application.tz) - timedelta(seconds=seconds)
-    models.User.create(
-        session,
-        email=f"lender-user-{uuid.uuid4()}@example.com",
-        lender_id=started_application.lender_id,
-        notification_preferences={models.MessageType.OVERDUE_APPLICATION: True},
-    )
     session.commit()
 
     with assert_change(mock_send_templated_email, "call_count", call_count):
