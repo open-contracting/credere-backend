@@ -95,9 +95,9 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     """
     Validates the uploaded file.
 
-    This function checks whether the file has an allowed format (ALLOWED_EXTENSIONS) and whether its size is below
-    the maximum allowed size. If the file does not pass these checks, an HTTPException is raised. Otherwise, the file
-    and its filename are returned.
+    This function checks whether the file has an allowed format and whether its size is below the maximum allowed size.
+
+    If the file does not pass these checks, raise an HTTPException. Otherwise, return the file and its filename.
 
     :param file: The uploaded file.
     :return: A dictionary mapping the file to its filename.

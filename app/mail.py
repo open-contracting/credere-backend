@@ -50,18 +50,18 @@ def get_template_data(template_name: str, subject: str, parameters: dict[str, An
     }
 
 
-def send_email(ses: SESClient, email: list[str], data: dict[str, str], *, to_borrower: bool = True) -> str:
+def send_email(ses: SESClient, emails: list[str], data: dict[str, str], *, to_borrower: bool = True) -> str:
     if app_settings.environment == "production" or not to_borrower:
-        to_address = email
+        to_addresses = emails
     else:
-        to_address = [app_settings.test_mail_receiver]
-    if not to_address:
-        logger.info("No email will be sent, no address provided")
+        to_addresses = [app_settings.test_mail_receiver]
+    if not to_addresses:
+        logger.error("No email address provided!")  # ideally, it should be impossible for a lender to have no users
         return ""
-    logger.info("%s - Email to: %s sent to %s", app_settings.environment, email, to_address)
+    logger.info("%s - Email to: %s sent to %s", app_settings.environment, emails, to_addresses)
     return ses.send_templated_email(
         Source=app_settings.email_sender_address,
-        Destination={"ToAddresses": to_address},
+        Destination={"ToAddresses": to_addresses},
         ReplyToAddresses=[app_settings.ocp_email_group],
         Template=f"credere-main-{app_settings.email_template_lang}",
         TemplateData=json.dumps(data),
@@ -69,7 +69,7 @@ def send_email(ses: SESClient, email: list[str], data: dict[str, str], *, to_bor
 
 
 def get_lender_emails(lender: Lender, message_type: MessageType):
-    return [user.email for user in lender.users if user.notification_preferences.get(message_type, None)]
+    return [user.email for user in lender.users if user.notification_preferences.get(message_type)]
 
 
 def send_application_approved_email(ses: SESClient, application: Application) -> str:
