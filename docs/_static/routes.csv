@@ -16,10 +16,10 @@ PUT,/applications/{id}/verify-data-field,UpdateDataField,models.ApplicationWithR
 PUT,/applications/documents/{document_id}/verify-document,VerifyBorrowerDocument,models.ApplicationWithRelations,IVerifyDocument,IApplication
 PUT,/applications/{id}/award,AwardUpdate,models.ApplicationWithRelations,IUpdateAward,IApplication
 PUT,/applications/{id}/borrower,BorrowerUpdate,models.ApplicationWithRelations,IUpdateBorrower,IApplication
-GET,/applications/admin-list,"page, page_size, sort_field, sort_order",ApplicationListResponse,PaginationInput,IApplicationsListResponse
+GET,/applications/admin-list,"page, page_size, sort_field, sort_order, search_value",ApplicationListResponse,PaginationInput,IApplicationsListResponse
 GET,/applications/id/{id},,models.ApplicationWithRelations,id,IApplication
 POST,/applications/{id}/start,,models.ApplicationWithRelations,id,IApplication
-GET,/applications,"page, page_size, sort_field, sort_order",ApplicationListResponse,PaginationInput,IApplicationsListResponse
+GET,/applications,"page, page_size, sort_field, sort_order, search_value",ApplicationListResponse,PaginationInput,IApplicationsListResponse
 POST,/applications/email-sme/{id},ApplicationEmailBorrower,models.ApplicationWithRelations,EmailToSMEInput,IApplication
 GET,/applications/{id}/previous-awards,,list[models.Award],id,IAward[]
 GET,/applications/uuid/{uuid},,ApplicationResponse,uuid,IApplicationResponse
