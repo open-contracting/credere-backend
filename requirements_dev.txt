@@ -64,7 +64,9 @@ email-validator==2.2.0
 fastapi==0.109.2
     # via -r requirements.txt
 greenlet==3.0.3
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   sqlalchemy
 h11==0.14.0
     # via
     #   -r requirements.txt
@@ -266,8 +268,11 @@ typing-extensions==4.8.0
     # via
     #   -r requirements.txt
     #   alembic
+    #   boto3-stubs
     #   fastapi
     #   mypy
+    #   mypy-boto3-cognito-idp
+    #   mypy-boto3-ses
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
