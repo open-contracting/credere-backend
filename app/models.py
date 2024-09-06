@@ -338,9 +338,13 @@ class StatisticCustomRange(StrEnum):
 
 
 class LenderBase(SQLModel):
+    #: The name of the lender.
     name: str = Field(default="", unique=True)
+    #: An email address of the lender, for sharing with borrowers.
     email_group: str = Field(default="")
+    #: The type of the lender, from the ``LENDER_TYPES`` enum in credere-frontend. (Unused.)
     type: str = Field(default="")  # LENDER_TYPES
+    #: The filename of the logo of the lender, in credere-frontend.
     logo_filename: str = Field(default="")
 
     #: The number of days within which the lender agrees to respond to application changes.
@@ -354,7 +358,9 @@ class LenderBase(SQLModel):
 
 class Lender(LenderBase, ActiveRecordMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    #: Unused.
     status: str = Field(default="")
+    #: Unused.
     deleted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
 
     # Relationships
@@ -375,7 +381,7 @@ class CreditProductBase(SQLModel):
     #: The size of the borrower to which this credit product is applicable.
     #: (The same credit product can be configured for each applicable borrower size.)
     borrower_size: BorrowerSize
-    # The types of borrower to which this credit product is applicable.
+    #: The types of borrower to which this credit product is applicable.
     borrower_types: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
     #: The lower limit for the amount requested, below which this credit product is inapplicable.
     lower_limit: Decimal = Field(max_digits=16, decimal_places=2)
@@ -427,9 +433,11 @@ class BorrowerBase(SQLModel):
 
     # From data source
 
+    #: The name of the borrower in the data source.
     legal_name: str = Field(default="")
     #: The email address with which the application's :attr:`~app.models.Application.primary_email` is initialized.
     email: str = Field(default="")
+    #: The registered address of the borrower in the data source.
     address: str = Field(default="")
     #: The ID of the borrower in the data source.
     legal_identifier: str = Field(default="")
@@ -444,8 +452,11 @@ class BorrowerBase(SQLModel):
 
     #: .. seealso:: :attr:`app.models.CreditProduct.borrower_size`
     size: BorrowerSize = Field(default=BorrowerSize.NOT_INFORMED)
+    #: The industrial sector of the borrower.
     sector: str = Field(default="")  # SECTOR_TYPES
+    #: The annual revenue of the borrower.
     annual_revenue: Decimal | None = Field(max_digits=16, decimal_places=2)
+    #: The currency of the annual revenue of the borrower.
     currency: str = Field(default="COP", description="ISO 4217 currency code")
 
     # Timestamps
@@ -1002,14 +1013,16 @@ class UserBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     #: The authorization group of the user.
     type: UserType = Field(default=UserType.FI)
+    #: Unused.
     language: str = Field(default="es", description="ISO 639-1 language code")
     #: The email address with which the user logs in and is contacted.
     email: str = Field(unique=True)
-    #: The MessageType the user wants to receive notifications about. The supported MessageTypes are:
-    #: - MessageType.NEW_APPLICATION_FI
-    #: - MessageType.OVERDUE_APPLICATION
-    #: - MessageType.BORROWER_DOCUMENT_UPDATED
-    #: - MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI
+    #: The :class:`~app.models.MessageType` the user wants to receive notifications about. The supported types are:
+    #:
+    #: - :attr:`~app.models.MessageType.NEW_APPLICATION_FI`
+    #: - :attr:`~app.models.MessageType.BORROWER_DOCUMENT_UPDATED`
+    #: - :attr:`~app.models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI`
+    #: - :attr:`~app.models.MessageType.OVERDUE_APPLICATION`
     notification_preferences: dict[MessageType, bool] = Field(default_factory=dict, sa_type=JSON)
     #: The name by which the user is addressed in emails and identified in application action histories.
     name: str = Field(default="")
