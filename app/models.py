@@ -29,7 +29,7 @@ def get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
 def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None = None) -> Any:
     if "." in sort_field:
         model_name, field_name = sort_field.split(".", 1)
-        # credere-frontend doesn't use any camelcase models.
+        # credere-frontend doesn't use any camelcase models, so capitalize() works.
         column = getattr(getattr(sys.modules[__name__], model_name.capitalize()), field_name)
     else:
         column = getattr(model, sort_field)
@@ -797,39 +797,41 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         lender_id: int | None = None,
         search_value: str | None = None,
     ):
-        applications_query = (
+        query = (
             cls.submitted(session)
             .join(Award)
             .join(Borrower)
             .join(CreditProduct)
             .join(Lender)
             .options(
-                joinedload(Application.award),
-                joinedload(Application.borrower),
-                joinedload(Application.borrower_documents),
-                joinedload(Application.credit_product),
-                joinedload(Application.lender),
+                joinedload(cls.award),
+                joinedload(cls.borrower),
+                joinedload(cls.borrower_documents),
+                joinedload(cls.credit_product),
+                joinedload(cls.lender),
             )
-            .order_by(get_order_by(sort_field, sort_order, model=Application))
+            .order_by(get_order_by(sort_field, sort_order, model=cls))
         )
+
         if search_value:
-            applications_query = applications_query.filter(
+            like = f"%{search_value}%"
+            query = query.filter(
                 or_(
-                    Application.primary_email == search_value,
-                    col(Borrower.legal_name).ilike(f"%{search_value}%"),
-                    col(Borrower.legal_identifier).ilike(f"%{search_value}%"),
-                    col(Award.buyer_name).ilike(f"%{search_value}%"),
+                    cls.primary_email == search_value,
+                    col(Borrower.legal_name).ilike(like),
+                    col(Borrower.legal_identifier).ilike(like),
+                    col(Award.buyer_name).ilike(like),
                     col(Lender.name).ilike(f"{search_value}%"),
                 )
             )
 
         if lender_id:
-            applications_query = applications_query.filter(
-                Application.lender_id == lender_id,
-                col(Application.lender_id).isnot(None),
+            query = query.filter(
+                cls.lender_id == lender_id,
+                col(cls.lender_id).isnot(None),
             )
 
-        return applications_query
+        return query
 
     @classmethod
     def archivable(cls, session: Session) -> "Query[Self]":
@@ -891,7 +893,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         cls = type(self)
         return [
             lender_id
-            for (lender_id,) in session.query(Application.lender_id)
+            for (lender_id,) in session.query(cls.lender_id)
             .distinct()
             .filter(
                 cls.award_borrower_identifier == self.award_borrower_identifier,
