@@ -19,7 +19,7 @@ Setup
 
    .. code-block:: bash
 
-      pip install -r requirements_dev.txt -r docs/requirements.txt
+      pip install -r requirements_dev.txt -r docs/requirements.txt sphinx-autobuild
 
    .. note::
 
@@ -105,7 +105,7 @@ The :attr:`DATABASE_URL<app.settings.Settings.database_url>` and :attr:`TEST_DAT
 
 .. code-block:: bash
 
-   pytest -W error --cov app
+   coverage run --source=app -m pytest
 
 Generate coverage HTML report:
 

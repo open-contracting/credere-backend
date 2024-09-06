@@ -1,13 +1,12 @@
 -r requirements.txt
 botocore
 boto3-stubs
-coveralls
+coverage
 moto[cognitoidp]
 mypy
 pandas-stubs
 py-html-checker
 pytest
-pytest-cov
 pytest-mock
 pytest-random-order
 reportlab-stubs

@@ -22,13 +22,11 @@ jobs:
           pybabel compile -f -d locale
           alembic upgrade head
           alembic check
-          pytest -W error -W ignore::DeprecationWarning:html_checker -W ignore::DeprecationWarning:pkg_resources --cov app --random-order --random-order-bucket=global
+          coverage run --source=app -m pytest -W error -W ignore::DeprecationWarning:html_checker -W ignore::DeprecationWarning:pkg_resources --random-order --random-order-bucket=global
       - env:
           TEST_SETTINGS: True
         run: pytest -W error settings_tests/test_settings.py
-      - env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: coveralls --service=github
+      - uses: coverallsapp/github-action@v2
     services:
       postgres:
         image: postgres:15
