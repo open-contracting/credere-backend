@@ -832,7 +832,6 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                     col(Borrower.legal_name).ilike(like),
                     col(Borrower.legal_identifier).ilike(like),
                     col(Award.buyer_name).ilike(like),
-                    col(Lender.name).ilike(f"{search_value}%"),
                 )
             )
 
