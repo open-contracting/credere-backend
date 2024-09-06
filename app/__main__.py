@@ -11,18 +11,15 @@ from typing import Any, Callable, Generator
 
 import click
 import minify_html
-import typer
 import typer.cli
 from fastapi.params import Depends, Header
 from fastapi.routing import APIRoute
 from rich.console import Console
 from rich.table import Table
-from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
 from starlette.routing import Route
 
-import app.utils.statistics as statistics_utils
 from app import aws, mail, main, models, util
 from app.db import get_db, handle_skipped_award, rollback_on_error
 from app.exceptions import SkippedAwardError, SourceFormatError
@@ -232,67 +229,6 @@ def update_applications_to_lapsed() -> None:
             ):
                 application.status = models.ApplicationStatus.LAPSED
                 application.application_lapsed_at = datetime.utcnow()
-
-            session.commit()
-
-
-@app.command()
-def update_statistics() -> None:
-    """
-    Update and store various statistics related to applications and lenders in the database.
-    """
-    keys_to_serialize = [
-        "sector_statistics",
-        "rejected_reasons_count_by_reason",
-        "fis_chosen_by_supplier",
-    ]
-
-    with contextmanager(get_db)() as session:
-        with rollback_on_error(session):
-            # Get general KPIs
-            statistic_kpis = statistics_utils.get_general_statistics(session, None, None, None)
-
-            models.Statistic.create_or_update(
-                session,
-                [
-                    cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
-                    models.Statistic.type == models.StatisticType.APPLICATION_KPIS,
-                ],
-                type=models.StatisticType.APPLICATION_KPIS,
-                data=statistic_kpis,
-            )
-
-            # Get opt-in statistics
-            statistics_opt_in = statistics_utils.get_borrower_opt_in_stats(session)
-            for key in keys_to_serialize:
-                statistics_opt_in[key] = [data.model_dump() for data in statistics_opt_in[key]]
-
-            models.Statistic.create_or_update(
-                session,
-                [
-                    cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
-                    models.Statistic.type == models.StatisticType.MSME_OPT_IN_STATISTICS,
-                ],
-                type=models.StatisticType.MSME_OPT_IN_STATISTICS,
-                data=statistics_opt_in,
-            )
-
-            # Get general KPIs for every lender
-            for (lender_id,) in session.query(models.Lender.id):
-                # Get statistics for each lender
-                statistic_kpis = statistics_utils.get_general_statistics(session, None, None, lender_id)
-
-                models.Statistic.create_or_update(
-                    session,
-                    [
-                        cast(col(models.Statistic.created_at), Date) == datetime.today().date(),
-                        models.Statistic.type == models.StatisticType.APPLICATION_KPIS,
-                        models.Statistic.lender_id == lender_id,
-                    ],
-                    type=models.StatisticType.APPLICATION_KPIS,
-                    data=statistic_kpis,
-                    lender_id=lender_id,
-                )
 
             session.commit()
 

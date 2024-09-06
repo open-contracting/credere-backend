@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import app.utils.statistics as statistics_utils
 from app import dependencies, serializers
 from app.db import get_db
-from app.models import Statistic, StatisticCustomRange, StatisticType, User
+from app.models import StatisticCustomRange, User
 
 router = APIRouter()
 
@@ -27,8 +26,8 @@ async def get_admin_statistics_by_lender(
     """
     Retrieve OCP statistics by lender.
 
-    This secure endpoint is accessible only to users with the OCP role. It retrieves statistics for the Online
-    Credit Platform (OCP) based on the specified filters:
+    This secure endpoint is accessible only to users with the OCP role. It retrieves statistics for admins
+    based on the specified filters:
     - initial_date (optional): The initial date to filter the statistics.
     - final_date (optional): The final date to filter the statistics.
     - lender_id (optional): The lender ID to filter the statistics for a specific lender.
@@ -36,23 +35,11 @@ async def get_admin_statistics_by_lender(
     :param initial_date: The initial date to filter the statistics (optional).
     :param final_date: The final date to filter the statistics (optional).
     :param lender_id: The lender ID to filter the statistics for a specific lender (optional).
-    :return: Response containing the OCP statistics.
+    :return: Response containing the admin statistics.
     """
 
     if initial_date is None and final_date is None and custom_range is None:
-        if result := (
-            session.query(Statistic)
-            .filter(
-                Statistic.type == StatisticType.APPLICATION_KPIS,
-                Statistic.lender_id == lender_id,
-                func.date(Statistic.created_at) == datetime.now().date(),
-            )
-            .first()
-        ):
-            statistics_kpis = result.data
-        # If no record for the current date, calculate the statistics
-        else:
-            statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
+        statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
     else:
         if custom_range is not None:
             custom_range = custom_range.upper()
@@ -82,25 +69,14 @@ async def get_admin_statistics_opt_in(
     """
     Retrieve OCP statistics for borrower opt-in.
 
-    This secure endpoint is accessible only to users with the OCP role. It retrieves
+    This secure endpoint is accessible only to users with the admin role. It retrieves
     statistics related to borrower opt-in and the count of lenders chosen by borrower.
 
-    :return: Response containing the OCP statistics for borrower opt-in.
+    :return: Response containing the admin statistics for borrower opt-in.
     """
-    if result := (
-        session.query(Statistic)
-        .filter(
-            Statistic.type == StatisticType.MSME_OPT_IN_STATISTICS,
-            func.date(Statistic.created_at) == datetime.now().date(),
-        )
-        .first()
-    ):
-        opt_in_stats = result.data
-    else:
-        opt_in_stats = statistics_utils.get_borrower_opt_in_stats(session)
 
     return serializers.StatisticOptInResponse(
-        opt_in_stat=opt_in_stats,
+        opt_in_stat=statistics_utils.get_borrower_opt_in_stats(session),
     )
 
 
@@ -121,19 +97,7 @@ async def get_lender_statistics(
 
     :return: Response containing the statistics for the lender.
     """
-    if result := (
-        session.query(Statistic)
-        .filter(
-            Statistic.type == StatisticType.APPLICATION_KPIS,
-            Statistic.lender_id == user.lender_id,
-            func.date(Statistic.created_at) == datetime.now().date(),
-        )
-        .first()
-    ):
-        statistics_kpis = result.data
-    else:
-        statistics_kpis = statistics_utils.get_general_statistics(session, None, None, user.lender_id)
 
     return serializers.StatisticResponse(
-        statistics_kpis=statistics_kpis,
+        statistics_kpis=statistics_utils.get_general_statistics(session, None, None, user.lender_id),
     )
