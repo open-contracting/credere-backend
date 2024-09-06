@@ -13,7 +13,7 @@ import orjson
 from email_validator import EmailNotValidError, validate_email
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
-from sqlmodel import SQLModel, col
+from sqlmodel import col
 
 from app import models
 from app.db import get_db, handle_skipped_award
@@ -35,16 +35,6 @@ class SortOrder(StrEnum):
 # In future, httpx.Client might allow custom decoders. https://github.com/encode/httpx/issues/717
 def loads(response: httpx.Response) -> Any:
     return orjson.loads(response.text)
-
-
-def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None = None) -> Any:
-    if "." in sort_field:
-        model_name, field_name = sort_field.split(".", 1)
-        # credere-frontend doesn't use any camelcase models.
-        column = getattr(getattr(models, model_name.capitalize()), field_name)
-    else:
-        column = getattr(model, sort_field)
-    return getattr(col(column), sort_order)()
 
 
 def get_object_or_404(session: Session, model: type[T], field: str, value: Any) -> T:

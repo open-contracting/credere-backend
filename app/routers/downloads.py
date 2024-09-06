@@ -154,7 +154,9 @@ async def export_applications(
                 _("Stage", lang): _(application.status, lang),
             }
             for application in (
-                models.Application.submitted_to_lender(session, user.lender_id)
+                models.Application.submitted_search(
+                    session, lender_id=user.lender_id, sort_field="application.borrower_submitted_at", sort_order="asc"
+                )
                 .join(models.Borrower)
                 .options(joinedload(models.Application.borrower))
             )

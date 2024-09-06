@@ -9,7 +9,7 @@ from sqlmodel import col
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.i18n import _
-from app.util import SortOrder, get_order_by
+from app.util import SortOrder
 
 router = APIRouter()
 
@@ -404,26 +404,47 @@ async def get_applications_list(
     page_size: int = Query(10, gt=0),
     sort_field: str = Query("application.borrower_submitted_at"),
     sort_order: SortOrder = Query("asc"),
+    search_value: str = "",
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
     """
     Get a paginated list of submitted applications for administrative purposes.
     """
-    applications_query = (
-        models.Application.submitted(session)
-        .join(models.Award)
-        .join(models.Borrower)
-        .join(models.CreditProduct)
-        .join(models.Lender)
-        .options(
-            joinedload(models.Application.award),
-            joinedload(models.Application.borrower),
-            joinedload(models.Application.borrower_documents),
-            joinedload(models.Application.credit_product),
-            joinedload(models.Application.lender),
-        )
-        .order_by(get_order_by(sort_field, sort_order, model=models.Application))
+    applications_query = models.Application.submitted_search(
+        session, search_value=search_value, sort_field=sort_field, sort_order=sort_order
+    )
+
+    total_count = applications_query.count()
+
+    applications = applications_query.limit(page_size).offset(page * page_size).all()
+
+    return serializers.ApplicationListResponse(
+        items=cast(list[models.ApplicationWithRelations], applications),
+        count=total_count,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get(
+    "/applications",
+    tags=["applications"],
+)
+async def get_applications(
+    page: int = Query(0, ge=0),
+    page_size: int = Query(10, gt=0),
+    sort_field: str = Query("application.borrower_submitted_at"),
+    sort_order: SortOrder = Query("asc"),
+    search_value: str = "",
+    user: models.User = Depends(dependencies.get_user),
+    session: Session = Depends(get_db),
+) -> serializers.ApplicationListResponse:
+    """
+    Get a paginated list of submitted applications for a specific lender user.
+    """
+    applications_query = models.Application.submitted_search(
+        session, search_value=search_value, sort_field=sort_field, sort_order=sort_order, lender_id=user.lender_id
     )
 
     total_count = applications_query.count()
@@ -489,48 +510,6 @@ async def start_application(
 
         session.commit()
         return application
-
-
-@router.get(
-    "/applications",
-    tags=["applications"],
-)
-async def get_applications(
-    page: int = Query(0, ge=0),
-    page_size: int = Query(10, gt=0),
-    sort_field: str = Query("application.borrower_submitted_at"),
-    sort_order: SortOrder = Query("asc"),
-    user: models.User = Depends(dependencies.get_user),
-    session: Session = Depends(get_db),
-) -> serializers.ApplicationListResponse:
-    """
-    Get a paginated list of submitted applications for a specific lender user.
-    """
-    applications_query = (
-        models.Application.submitted_to_lender(session, user.lender_id)
-        .join(models.Award)
-        .join(models.Borrower)
-        .join(models.CreditProduct)
-        .join(models.Lender)
-        .options(
-            joinedload(models.Application.award),
-            joinedload(models.Application.borrower),
-            joinedload(models.Application.borrower_documents),
-            joinedload(models.Application.credit_product),
-            joinedload(models.Application.lender),
-        )
-        .order_by(get_order_by(sort_field, sort_order, model=models.Application))
-    )
-    total_count = applications_query.count()
-
-    applications = applications_query.limit(page_size).offset(page * page_size).all()
-
-    return serializers.ApplicationListResponse(
-        items=cast(list[models.ApplicationWithRelations], applications),
-        count=total_count,
-        page=page,
-        page_size=page_size,
-    )
 
 
 @router.post(

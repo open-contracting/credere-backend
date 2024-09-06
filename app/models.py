@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timedelta, tzinfo
 from decimal import Decimal
 from enum import StrEnum
@@ -5,7 +6,7 @@ from typing import Any, Self
 
 from sqlalchemy import Boolean, Column, DateTime, and_, desc, or_, select
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Query, Session, joinedload
 from sqlalchemy.sql import ColumnElement, Select, func
 from sqlalchemy.sql.expression import nulls_last, true
 from sqlmodel import Field, Relationship, SQLModel, col
@@ -23,6 +24,16 @@ def get_missing_data_keys(data: dict[str, Any]) -> dict[str, bool]:
              value in the input dictionary is empty or None, and False otherwise.
     """
     return {key: value == "" or value is None for key, value in data.items()}
+
+
+def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None = None) -> Any:
+    if "." in sort_field:
+        model_name, field_name = sort_field.split(".", 1)
+        # credere-frontend doesn't use any camelcase models, so capitalize() works.
+        column = getattr(getattr(sys.modules[__name__], model_name.capitalize()), field_name)
+    else:
+        column = getattr(model, sort_field)
+    return getattr(col(column), sort_order)()
 
 
 # https://github.com/tiangolo/sqlmodel/issues/254
@@ -789,14 +800,48 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
-    def submitted_to_lender(cls, session: Session, lender_id: int | None) -> "Query[Self]":
-        """
-        :return: A query for applications :meth:`~app.models.Application.submitted` to a specific lender.
-        """
-        return cls.submitted(session).filter(
-            Application.lender_id == lender_id,
-            col(Application.lender_id).isnot(None),
+    def submitted_search(
+        cls,
+        session: Session,
+        sort_field: str,
+        sort_order: str,
+        lender_id: int | None = None,
+        search_value: str | None = None,
+    ):
+        query = (
+            cls.submitted(session)
+            .join(Award)
+            .join(Borrower)
+            .join(CreditProduct)
+            .join(Lender)
+            .options(
+                joinedload(cls.award),
+                joinedload(cls.borrower),
+                joinedload(cls.borrower_documents),
+                joinedload(cls.credit_product),
+                joinedload(cls.lender),
+            )
+            .order_by(get_order_by(sort_field, sort_order, model=cls))
         )
+
+        if search_value:
+            like = f"%{search_value}%"
+            query = query.filter(
+                or_(
+                    cls.primary_email == search_value,
+                    col(Borrower.legal_name).ilike(like),
+                    col(Borrower.legal_identifier).ilike(like),
+                    col(Award.buyer_name).ilike(like),
+                )
+            )
+
+        if lender_id:
+            query = query.filter(
+                cls.lender_id == lender_id,
+                col(cls.lender_id).isnot(None),
+            )
+
+        return query
 
     @classmethod
     def archivable(cls, session: Session) -> "Query[Self]":
@@ -858,7 +903,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         cls = type(self)
         return [
             lender_id
-            for (lender_id,) in session.query(Application.lender_id)
+            for (lender_id,) in session.query(cls.lender_id)
             .distinct()
             .filter(
                 cls.award_borrower_identifier == self.award_borrower_identifier,
