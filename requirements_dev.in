@@ -1,20 +1,15 @@
 -r requirements.txt
-black
 botocore
 boto3-stubs
 coveralls
-flake8
-isort
 moto[cognitoidp]
 mypy
 pandas-stubs
-pre-commit
 py-html-checker
 pytest
 pytest-cov
 pytest-mock
 pytest-random-order
 reportlab-stubs
-sphinx-autobuild
 sqlalchemy2-stubs
 types-requests
