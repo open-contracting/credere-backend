@@ -7,7 +7,7 @@ line-length = 119
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "W"]
+select = ["E", "F", "I", "W"]
 
 # https://docs.pydantic.dev/2.0/integrations/mypy/#configuring-the-plugin
 [tool.mypy]
