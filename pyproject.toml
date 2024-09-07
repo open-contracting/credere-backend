@@ -26,3 +26,6 @@ disallow_untyped_defs = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+[tool.uv.pip]
+python-platform = "linux"  # greenlet
