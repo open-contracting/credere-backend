@@ -2,14 +2,12 @@
 name = "credere-backend"
 version = "0.0.0"
 
-[tool.black]
+[tool.ruff]
 line-length = 119
-exclude = '/(migrations|node_modules)/'
+target-version = "py311"
 
-[tool.isort]
-profile = 'black'
-line_length = 119
-skip = ['migrations']
+[tool.ruff.lint]
+select = ["E", "F", "W"]
 
 # https://docs.pydantic.dev/2.0/integrations/mypy/#configuring-the-plugin
 [tool.mypy]

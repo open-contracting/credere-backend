@@ -50,12 +50,15 @@ def test_approve_application_cycle(
     }
 
     # this will mock the previous award get to return an empty array
-    with patch(
-        "app.sources.colombia.get_previous_awards",
-        return_value=MockResponse(status.HTTP_200_OK, source_award),
-    ), patch(
-        "app.sources.colombia._get_remote_contract",
-        return_value=(load_json_file("fixtures/contract.json"), "url"),
+    with (
+        patch(
+            "app.sources.colombia.get_previous_awards",
+            return_value=MockResponse(status.HTTP_200_OK, source_award),
+        ),
+        patch(
+            "app.sources.colombia._get_remote_contract",
+            return_value=(load_json_file("fixtures/contract.json"), "url"),
+        ),
     ):
         response = client.post("/applications/access-scheme", json={"uuid": pending_application.uuid})
         assert_ok(response)
