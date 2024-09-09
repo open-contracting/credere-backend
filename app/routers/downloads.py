@@ -147,6 +147,7 @@ async def export_applications(
             {
                 _("Legal Name", lang): application.borrower.legal_name,
                 _("National Tax ID", lang): application.borrower.legal_identifier,
+                _("Email Address", lang): application.primary_email,
                 _("Buyer Name", lang): application.award.buyer_name,
                 _("Award Value Currency & Amount", lang): application.award.award_amount,
                 _("Amount requested", lang): application.amount_requested,
