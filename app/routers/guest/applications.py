@@ -532,16 +532,9 @@ async def update_apps_send_notifications(
         application.borrower_submitted_at = datetime.now(application.created_at.tzinfo)
         application.pending_documents = False
 
-        mail.send_notification_new_app_to_lender(client.ses, application.lender)
-        mail.send_notification_new_app_to_ocp(client.ses, application)
-
-        message_id = mail.send_application_submission_completed(client.ses, application)
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.SUBMISSION_COMPLETED,
-            external_message_id=message_id,
-        )
+        mail.send_new_application_ocp(client.ses, application)
+        mail.send_new_application_fi(client.ses, application)
+        mail.send(session, client.ses, models.MessageType.SUBMISSION_COMPLETED, application)
 
         session.commit()
         return serializers.ApplicationResponse(
@@ -637,13 +630,7 @@ async def complete_information_request(
             application_id=application.id,
         )
 
-        message_id = mail.send_upload_documents_notifications_to_lender(client.ses, application)
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.BORROWER_DOCUMENT_UPDATED,
-            external_message_id=message_id,
-        )
+        mail.send(session, client.ses, models.MessageType.BORROWER_DOCUMENT_UPDATED, application)
 
         session.commit()
         return serializers.ApplicationResponse(
@@ -723,22 +710,8 @@ async def confirm_upload_contract(
             application_id=application.id,
         )
 
-        lender_message_id, borrower_message_id = (
-            mail.send_upload_contract_notification_to_lender(client.ses, application),
-            mail.send_upload_contract_confirmation(client.ses, application),
-        )
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI,
-            external_message_id=lender_message_id,
-        )
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.CONTRACT_UPLOAD_CONFIRMATION,
-            external_message_id=borrower_message_id,
-        )
+        mail.send(session, client.ses, models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI, application)
+        mail.send(session, client.ses, models.MessageType.CONTRACT_UPLOAD_CONFIRMATION, application)
 
         session.commit()
         return serializers.ApplicationResponse(
@@ -819,13 +792,7 @@ async def find_alternative_credit_option(
             application_id=new_application.id,
         )
 
-        message_id = mail.send_copied_application_notification_to_borrower(client.ses, new_application)
-        models.Message.create(
-            session,
-            application=new_application,
-            type=models.MessageType.APPLICATION_COPIED,
-            external_message_id=message_id,
-        )
+        mail.send(session, client.ses, models.MessageType.APPLICATION_COPIED, new_application)
 
         session.commit()
         return serializers.ApplicationResponse(

@@ -45,7 +45,7 @@ async def reject_application(
         payload_dict = jsonable_encoder(payload, exclude_unset=True)
         application.stage_as_rejected(payload_dict)
 
-        options = (
+        options = session.query(
             session.query(models.CreditProduct)
             .join(models.Lender)
             .options(joinedload(models.CreditProduct.lender))
@@ -55,8 +55,8 @@ async def reject_application(
                 col(models.CreditProduct.lower_limit) <= application.amount_requested,
                 col(models.CreditProduct.upper_limit) >= application.amount_requested,
             )
-            .all()
-        )
+            .exists()
+        ).scalar()
 
         models.ApplicationAction.create(
             session,
@@ -66,16 +66,7 @@ async def reject_application(
             user_id=user.id,
         )
 
-        if options:
-            message_id = mail.send_rejected_application_email(client.ses, application)
-        else:
-            message_id = mail.send_rejected_application_email_without_alternatives(client.ses, application)
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.REJECTED_APPLICATION,
-            external_message_id=message_id,
-        )
+        mail.send(session, client.ses, models.MessageType.REJECTED_APPLICATION, application, options=options)
 
         session.commit()
         return application
@@ -118,13 +109,7 @@ async def complete_application(
             user_id=user.id,
         )
 
-        message_id = mail.send_application_credit_disbursed(client.ses, application)
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.CREDIT_DISBURSED,
-            external_message_id=message_id,
-        )
+        mail.send(session, client.ses, models.MessageType.CREDIT_DISBURSED, application)
 
         session.commit()
         return application
@@ -196,13 +181,7 @@ async def approve_application(
             user_id=user.id,
         )
 
-        message_id = mail.send_application_approved_email(client.ses, application)
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.APPROVED_APPLICATION,
-            external_message_id=message_id,
-        )
+        mail.send(session, client.ses, models.MessageType.APPROVED_APPLICATION, application)
 
         session.commit()
         return application
@@ -551,14 +530,13 @@ async def email_borrower(
             user_id=user.id,
         )
 
-        message_id = mail.send_mail_request_to_borrower(client.ses, application, payload.message)
-        models.Message.create(
+        mail.send(
             session,
-            application_id=application.id,
-            body=payload.message,
-            lender_id=application.lender.id,
-            type=models.MessageType.FI_MESSAGE,
-            external_message_id=message_id,
+            client.ses,
+            models.MessageType.FI_MESSAGE,
+            application,
+            message=payload.message,
+            message_kwargs={"body": payload.message, "lender_id": application.lender.id},
         )
 
         session.commit()

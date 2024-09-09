@@ -1,14 +1,16 @@
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
 from mypy_boto3_ses.client import SESClient
+from sqlalchemy.orm import Session
 
 from app.i18n import _
-from app.models import Application, Lender, MessageType
+from app.models import Application, Lender, Message, MessageType
 from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,23 @@ def get_template_data(template_name: str, subject: str, parameters: dict[str, An
     }
 
 
+def send(
+    session: Session,
+    ses: SESClient,
+    message_type: str,
+    application: Application | None,
+    *,
+    message_kwargs: dict[str, Any] | None = None,
+    **send_kwargs: Any,
+) -> None:
+    message_id = getattr(sys.modules[__name__], f"send_{message_type.lower()}")(ses, application, **send_kwargs)
+    if message_kwargs is None:
+        message_kwargs = {}
+    Message.create(
+        session, application=application, type=message_type, external_message_id=message_id, **message_kwargs
+    )
+
+
 def send_email(ses: SESClient, emails: list[str], data: dict[str, str], *, to_borrower: bool = True) -> str:
     if app_settings.environment == "production" or not to_borrower:
         to_addresses = emails
@@ -63,7 +82,7 @@ def get_lender_emails(lender: Lender, message_type: MessageType):
     return [user.email for user in lender.users if user.notification_preferences.get(message_type)]
 
 
-def send_application_approved_email(ses: SESClient, application: Application) -> str:
+def send_approved_application(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application has been approved.
 
@@ -96,7 +115,7 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
     )
 
 
-def send_application_submission_completed(ses: SESClient, application: Application) -> str:
+def send_submission_completed(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application is submitted.
 
@@ -117,7 +136,7 @@ def send_application_submission_completed(ses: SESClient, application: Applicati
     )
 
 
-def send_application_credit_disbursed(ses: SESClient, application: Application) -> str:
+def send_credit_disbursed(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification when an application has the credit dibursed.
 
@@ -139,7 +158,7 @@ def send_application_credit_disbursed(ses: SESClient, application: Application) 
     )
 
 
-def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_password: str) -> str:
+def send_new_user(ses: SESClient, *, name: str, username: str, temporary_password: str) -> str:
     """
     Sends an email to a new user with a link to set their password.
 
@@ -169,7 +188,7 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_pa
     )
 
 
-def send_upload_contract_notification_to_lender(ses: SESClient, application: Application) -> str:
+def send_contract_upload_confirmation_to_fi(ses: SESClient, application: Application) -> str:
     """
     Sends an email to the lender to notify them of a new contract submission.
 
@@ -191,7 +210,7 @@ def send_upload_contract_notification_to_lender(ses: SESClient, application: App
     )
 
 
-def send_upload_contract_confirmation(ses: SESClient, application: Application) -> str:
+def send_contract_upload_confirmation(ses: SESClient, application: Application) -> str:
     """
     Sends an email to the borrower confirming the successful upload of the contract.
 
@@ -213,8 +232,8 @@ def send_upload_contract_confirmation(ses: SESClient, application: Application) 
     )
 
 
-def send_new_email_confirmation(
-    ses: SESClient, application: Application, new_email: str, confirmation_email_token: str
+def send_email_change_confirmation(
+    ses: SESClient, application: Application, *, new_email: str, confirmation_email_token: str
 ) -> str:
     """
     Sends an email to confirm the new primary email for the borrower.
@@ -242,7 +261,7 @@ def send_new_email_confirmation(
     return send_email(ses, [new_email], data)
 
 
-def send_mail_to_reset_password(ses: SESClient, username: str, temporary_password: str) -> str:
+def send_reset_password(ses: SESClient, *, username: str, temporary_password: str) -> str:
     """
     Sends an email to a user with instructions to reset their password.
 
@@ -282,7 +301,7 @@ def get_invitation_email_parameters(application: Application) -> dict[str, str]:
     }
 
 
-def send_invitation_email(ses: SESClient, application: Application) -> str:
+def send_borrower_invitation(ses: SESClient, application: Application) -> str:
     """
     Sends an invitation email to the provided email address.
 
@@ -300,7 +319,7 @@ def send_invitation_email(ses: SESClient, application: Application) -> str:
     )
 
 
-def send_mail_intro_reminder(ses: SESClient, application: Application) -> str:
+def send_borrower_pending_application_reminder(ses: SESClient, application: Application) -> str:
     """
     Sends an introductory reminder email to the provided email address.
 
@@ -318,7 +337,7 @@ def send_mail_intro_reminder(ses: SESClient, application: Application) -> str:
     )
 
 
-def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
+def send_borrower_pending_submit_reminder(ses: SESClient, application: Application) -> str:
     """
     Sends a submission reminder email to the provided email address.
 
@@ -342,7 +361,7 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
     )
 
 
-def send_notification_new_app_to_lender(ses: SESClient, lender: Lender) -> str:
+def send_new_application_fi(ses: SESClient, lender: Lender) -> str:
     """
     Sends a notification email about a new application to a lender's email group.
 
@@ -362,7 +381,7 @@ def send_notification_new_app_to_lender(ses: SESClient, lender: Lender) -> str:
     )
 
 
-def send_notification_new_app_to_ocp(ses: SESClient, application: Application) -> str:
+def send_new_application_ocp(ses: SESClient, application: Application) -> str:
     """
     Sends a notification email about a new application to the Open Contracting Partnership's (OCP) email group.
     """
@@ -381,11 +400,11 @@ def send_notification_new_app_to_ocp(ses: SESClient, application: Application) -
     )
 
 
-def send_mail_request_to_borrower(ses: SESClient, application: Application, email_message: str) -> str:
+def send_fi_message(ses: SESClient, application: Application, *, message: str) -> str:
     """
     Sends an email request to the borrower for additional data.
 
-    :param email_message: Message content from the lender to be included in the email.
+    :param message: Message content from the lender to be included in the email.
     """
     return send_email(
         ses,
@@ -395,14 +414,14 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
             _("New message from a financial institution"),
             {
                 "LENDER_NAME": application.lender.name,
-                "LENDER_MESSAGE": email_message,
+                "LENDER_MESSAGE": message,
                 "LOGIN_DOCUMENTS_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/documents",
             },
         ),
     )
 
 
-def send_overdue_application_email_to_lender(ses: SESClient, lender: Lender, amount: int) -> str:
+def send_overdue_application_to_lender(ses: SESClient, *, lender: Lender, amount: int) -> str:
     """
     Sends an email notification to the lender about overdue applications.
 
@@ -425,7 +444,7 @@ def send_overdue_application_email_to_lender(ses: SESClient, lender: Lender, amo
     )
 
 
-def send_overdue_application_email_to_ocp(ses: SESClient, application: Application) -> str:
+def send_overdue_application(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification to the Open Contracting Partnership (OCP) about overdue applications.
     """
@@ -445,32 +464,27 @@ def send_overdue_application_email_to_ocp(ses: SESClient, application: Applicati
     )
 
 
-def send_rejected_application_email(ses: SESClient, application: Application) -> str:
+def send_rejected_application(ses: SESClient, application: Application, *, options: bool) -> str:
     """
     Sends an email notification to the applicant when an application has been rejected.
     """
-    return send_email(
-        ses,
-        [application.primary_email],
-        get_template_data(
-            "Application_declined",
-            _("Your credit application has been declined"),
-            {
-                "LENDER_NAME": application.lender.name,
-                "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-                "FIND_ALTENATIVE_URL": (
-                    f"{app_settings.frontend_url}/application/{quote(application.uuid)}/find-alternative-credit"
-                ),
-            },
-        ),
-    )
+    if options:
+        return send_email(
+            ses,
+            application.primary_email,
+            get_template_data(
+                "Application_declined",
+                _("Your credit application has been declined"),
+                {
+                    "LENDER_NAME": application.lender.name,
+                    "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                    "FIND_ALTENATIVE_URL": (
+                        f"{app_settings.frontend_url}/application/{quote(application.uuid)}/find-alternative-credit"
+                    ),
+                },
+            ),
+        )
 
-
-def send_rejected_application_email_without_alternatives(ses: SESClient, application: Application) -> str:
-    """
-    Sends an email notification to the applicant when an application has been rejected,
-    and no alternatives are available.
-    """
     return send_email(
         ses,
         [application.primary_email],
@@ -485,7 +499,7 @@ def send_rejected_application_email_without_alternatives(ses: SESClient, applica
     )
 
 
-def send_copied_application_notification_to_borrower(ses: SESClient, application: Application) -> str:
+def send_application_copied(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification to the borrower when an application
     has been copied, allowing them to continue with the application process.
@@ -504,7 +518,7 @@ def send_copied_application_notification_to_borrower(ses: SESClient, application
     )
 
 
-def send_upload_documents_notifications_to_lender(ses: SESClient, application: Application) -> str:
+def send_borrower_document_updated(ses: SESClient, application: Application) -> str:
     """
     Sends an email notification to the lender to notify them that new
     documents have been uploaded and are ready for their review.
