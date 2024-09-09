@@ -5,6 +5,8 @@ CloudFront is used to serve images for emails.
 
 .. attention:: If images are changed in git, the cache isn't invalidated! Read `Invalidate files to remove content <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html>`__ for options.
 
+.. attention:: Do not delete images from git. Old emails continue to reference old images.
+
 .. tip:: Use CloudFront's *Reports & analytics* to check `Popular objects <https://us-east-1.console.aws.amazon.com/cloudfront/v3/home?region=us-east-1#/popular_urls>`__ and other statistics.
 
 Configuration
