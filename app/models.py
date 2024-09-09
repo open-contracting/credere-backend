@@ -802,7 +802,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         sort_order: str,
         lender_id: int | None = None,
         search_value: str | None = None,
-    ):
+    ) -> "Query[Self]":
         query = (
             cls.submitted(session)
             .join(Award)
