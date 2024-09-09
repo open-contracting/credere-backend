@@ -15,10 +15,6 @@ logger = logging.getLogger(__name__)
 
 BASE_TEMPLATES_PATH = os.path.join(Path(__file__).absolute().parent.parent, "email_templates")
 
-LOCALIZED_IMAGES_BASE_URL = app_settings.images_base_url
-if app_settings.email_template_lang != "":
-    LOCALIZED_IMAGES_BASE_URL = f"{LOCALIZED_IMAGES_BASE_URL}/{app_settings.email_template_lang}"
-
 
 def get_template_data(template_name: str, subject: str, parameters: dict[str, Any]) -> dict[str, str]:
     """
@@ -33,20 +29,15 @@ def get_template_data(template_name: str, subject: str, parameters: dict[str, An
     ) as f:
         html = f.read()
 
-    for key in parameters.keys():
-        html = html.replace("{{%s}}" % key, str(parameters[key]))
+    parameters.setdefault("IMAGES_BASE_URL", app_settings.images_base_url)
+    for key, value in parameters.items():
+        html = html.replace("{{%s}}" % key, str(value))
 
     return {
         "CONTENT": html,
         "SUBJECT": f"Credere - {subject}",
-        "OCP_LOGO": f"{app_settings.images_base_url}/logoocp.jpg",
-        "TWITTER_LOGO": f"{app_settings.images_base_url}/twiterlogo.png",
-        "FB_LOGO": f"{app_settings.images_base_url}/facebook.png",
-        "LINK_LOGO": f"{app_settings.images_base_url}/link.png",
-        "STRIVE_LOGO": f"{app_settings.images_base_url}/strive_logo_lockup_horizontal_positive.png",
-        "TWITTER_LINK": app_settings.twitter_link,
-        "FACEBOOK_LINK": app_settings.facebook_link,
-        "LINK_LINK": app_settings.link_link,
+        "FRONTEND_URL": app_settings.frontend_url,
+        "IMAGES_BASE_URL": app_settings.images_base_url,
     }
 
 
@@ -86,7 +77,6 @@ def send_application_approved_email(ses: SESClient, application: Application) ->
         "TENDER_TITLE": application.award.title,
         "BUYER_NAME": application.award.buyer_name,
         "UPLOAD_CONTRACT_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/upload-contract",
-        "UPLOAD_CONTRACT_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/uploadContract.png",
     }
 
     if application.lender.default_pre_approval_message:
@@ -169,7 +159,6 @@ def send_mail_to_new_user(ses: SESClient, name: str, username: str, temporary_pa
             _("Welcome"),
             {
                 "USER": name,
-                "SET_PASSWORD_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/set_password.png",
                 "LOGIN_URL": (
                     f"{app_settings.frontend_url}/create-password"
                     f"?key={quote(temporary_password)}&email={quote(username)}"
@@ -196,7 +185,6 @@ def send_upload_contract_notification_to_lender(ses: SESClient, application: App
             _("New contract submission"),
             {
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
-                "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
             },
         ),
         to_borrower=False,
@@ -247,7 +235,6 @@ def send_new_email_confirmation(
                 f"{app_settings.frontend_url}/application/{quote(application.uuid)}/change-primary-email"
                 f"?token={quote(confirmation_email_token)}"
             ),
-            "CONFIRM_EMAIL_CHANGE_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/confirmemailchange.png",
         },
     )
 
@@ -277,7 +264,6 @@ def send_mail_to_reset_password(ses: SESClient, username: str, temporary_passwor
                     f"{app_settings.frontend_url}/create-password"
                     f"?key={quote(temporary_password)}&email={quote(username)}"
                 ),
-                "RESET_PASSWORD_IMAGE": f"{LOCALIZED_IMAGES_BASE_URL}/ResetPassword.png",
             },
         ),
         to_borrower=False,
@@ -291,8 +277,6 @@ def get_invitation_email_parameters(application: Application) -> dict[str, str]:
         "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
         "TENDER_TITLE": application.award.title,
         "BUYER_NAME": application.award.buyer_name,
-        "FIND_OUT_MORE_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/findoutmore.png",
-        "REMOVE_ME_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/removeme.png",
         "FIND_OUT_MORE_URL": f"{base_application_url}/intro{base_fathom_url}intro",
         "REMOVE_ME_URL": f"{base_application_url}/decline{base_fathom_url}decline",
     }
@@ -352,8 +336,6 @@ def send_mail_submit_reminder(ses: SESClient, application: Application) -> str:
                 "TENDER_TITLE": application.award.title,
                 "BUYER_NAME": application.award.buyer_name,
                 "APPLY_FOR_CREDIT_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/intro",
-                "APPLY_FOR_CREDIT_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/applyForCredit.png",
-                "REMOVE_ME_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/removeme.png",
                 "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/decline",
             },
         ),
@@ -374,7 +356,6 @@ def send_notification_new_app_to_lender(ses: SESClient, lender: Lender) -> str:
             _("New application submission"),
             {
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
-                "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
             },
         ),
         to_borrower=False,
@@ -394,7 +375,6 @@ def send_notification_new_app_to_ocp(ses: SESClient, application: Application) -
             {
                 "LENDER_NAME": application.lender.name,
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
-                "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
             },
         ),
         to_borrower=False,
@@ -417,7 +397,6 @@ def send_mail_request_to_borrower(ses: SESClient, application: Application, emai
                 "LENDER_NAME": application.lender.name,
                 "LENDER_MESSAGE": email_message,
                 "LOGIN_DOCUMENTS_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/documents",
-                "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/uploadDocument.png",
             },
         ),
     )
@@ -439,7 +418,6 @@ def send_overdue_application_email_to_lender(ses: SESClient, lender: Lender, amo
             {
                 "USER": lender.name,
                 "NUMBER_APPLICATIONS": amount,
-                "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
             },
         ),
@@ -460,7 +438,6 @@ def send_overdue_application_email_to_ocp(ses: SESClient, application: Applicati
             {
                 "USER": application.lender.name,
                 "LENDER_NAME": application.lender.name,
-                "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
             },
         ),
@@ -484,7 +461,6 @@ def send_rejected_application_email(ses: SESClient, application: Application) ->
                 "FIND_ALTENATIVE_URL": (
                     f"{app_settings.frontend_url}/application/{quote(application.uuid)}/find-alternative-credit"
                 ),
-                "FIND_ALTERNATIVE_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/findAlternative.png",
             },
         ),
     )
@@ -522,7 +498,6 @@ def send_copied_application_notification_to_borrower(ses: SESClient, application
             _("Alternative credit option"),
             {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-                "CONTINUE_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/continueInCredere.png",
                 "CONTINUE_URL": f"{app_settings.frontend_url}/application/{application.uuid}/credit-options",
             },
         ),
@@ -541,7 +516,6 @@ def send_upload_documents_notifications_to_lender(ses: SESClient, application: A
             "FI_Documents_Updated_FI_user",
             _("Application updated"),
             {
-                "LOGIN_IMAGE_LINK": f"{LOCALIZED_IMAGES_BASE_URL}/logincompleteimage.png",
                 "LOGIN_URL": f"{app_settings.frontend_url}/login",
             },
         ),
