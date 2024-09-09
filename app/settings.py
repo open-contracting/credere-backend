@@ -130,12 +130,6 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:3000"  # also for CORS
     #: The language of the email templates to use.
     email_template_lang: str = "es"
-    #: The URL of OCP's Facebook profile.
-    facebook_link: str = "https://www.facebook.com/OpenContracting/"
-    #: The URL of OCP's Twitter profile.
-    twitter_link: str = "https://twitter.com/opencontracting"
-    #: The base URL of Credere.
-    link_link: str = "http://localhost:3000"
     #: The base URL of Credere's images directory (can be a CDN URL).
     images_base_url: str = "https://credere.open-contracting.org/images"
 
