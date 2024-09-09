@@ -6,7 +6,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, Response
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app import dependencies, models, util
 from app.db import get_db, rollback_on_error
@@ -157,8 +157,6 @@ async def export_applications(
                 models.Application.submitted_search(
                     session, lender_id=user.lender_id, sort_field="application.borrower_submitted_at", sort_order="asc"
                 )
-                .join(models.Borrower)
-                .options(joinedload(models.Application.borrower))
             )
         ]
     ).to_csv(stream, index=False, encoding="utf-8")
