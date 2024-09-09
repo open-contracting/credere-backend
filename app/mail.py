@@ -78,7 +78,7 @@ def send_email(ses: SESClient, emails: list[str], data: dict[str, str], *, to_bo
     )["MessageId"]
 
 
-def get_lender_emails(lender: Lender, message_type: MessageType):
+def get_lender_emails(lender: Lender, message_type: MessageType) -> list[str]:
     return [user.email for user in lender.users if user.notification_preferences.get(message_type)]
 
 
@@ -257,7 +257,7 @@ def send_email_change_confirmation(
         },
     )
 
-    send_email(ses, application.primary_email, data)
+    send_email(ses, [application.primary_email], data)
     return send_email(ses, [new_email], data)
 
 

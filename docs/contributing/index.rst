@@ -249,6 +249,13 @@ Then, `update <https://ocp-software-handbook.readthedocs.io/en/latest/services/p
    mv schemaspy/diagrams/orphans/orphans.png docs/_static/
    mv schemaspy/diagrams/summary/relationships.real.large.png docs/_static/
 
+Update email templates
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: This section is a stub.
+
+-  `Premailer <https://premailer.dialect.ca>`__
+
 .. _erd:
 
 Entity relationship diagram
