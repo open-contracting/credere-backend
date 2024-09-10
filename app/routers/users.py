@@ -47,7 +47,9 @@ async def create_user(
 
             session.commit()
 
-            mail.send_mail_to_new_user(client.ses, payload.name, payload.email, temporary_password)
+            mail.send_new_user(
+                client.ses, name=payload.name, username=payload.email, temporary_password=temporary_password
+            )
 
             return user
         except (client.cognito.exceptions.UsernameExistsException, IntegrityError):
@@ -258,7 +260,7 @@ def forgot_password(
         Permanent=False,
     )
 
-    mail.send_mail_to_reset_password(client.ses, payload.username, temporary_password)
+    mail.send_reset_password(client.ses, username=payload.username, temporary_password=temporary_password)
 
     # always return 200 to avoid user enumeration
     return serializers.ResponseBase(detail=_("An email with a reset link was sent to end user"))
