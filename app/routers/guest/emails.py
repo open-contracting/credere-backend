@@ -45,14 +45,13 @@ async def change_email(
             application_id=application.id,
         )
 
-        message_id = mail.send_new_email_confirmation(
-            client.ses, application, payload.new_email, confirmation_email_token
-        )
-        models.Message.create(
+        mail.send(
             session,
-            application=application,
-            type=models.MessageType.EMAIL_CHANGE_CONFIRMATION,
-            external_message_id=message_id,
+            client.ses,
+            models.MessageType.EMAIL_CHANGE_CONFIRMATION,
+            application,
+            new_email=payload.new_email,
+            confirmation_email_token=confirmation_email_token,
         )
 
         session.commit()

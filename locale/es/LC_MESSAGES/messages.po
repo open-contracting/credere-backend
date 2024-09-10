@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-08-30 17:40-0400\n"
+"POT-Creation-Date: 2024-09-10 13:16-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -76,43 +76,11 @@ msgstr "La aplicación no ha sido encontrada"
 msgid "Application lapsed"
 msgstr "La aplicación ha caducado"
 
-#: app/mail.py:105
-msgid "Your credit application has been prequalified"
-msgstr "Revisión de tu aplicación completada exitosamente"
-
-#: app/mail.py:121
-msgid "Application Submission Complete"
-msgstr "Envío de aplicación completada"
-
-#: app/mail.py:142
-msgid "Your credit application has been approved"
-msgstr "Tu solicitud de crédito ha sido aprobada"
-
-#: app/mail.py:169
-msgid "Welcome"
-msgstr "Bienvenido/a"
-
-#: app/mail.py:196
-msgid "New contract submission"
-msgstr "Una empresa ha subido su contrato"
-
-#: app/mail.py:218
-msgid "Thank you for uploading the signed contract"
-msgstr "Gracias por subir tu contrato firmado"
-
-#: app/mail.py:242
-msgid "Confirm email address change"
-msgstr "Confirmar cambio de dirección de correo electrónico"
-
-#: app/mail.py:273
-msgid "Reset password"
-msgstr "Restablecer contraseña"
-
-#: app/mail.py:313 app/mail.py:331
+#: app/mail.py:45
 msgid "Opportunity to access MSME credit for being awarded a public contract"
 msgstr "Oportunidad de acceso a crédito por ser adjudicatario de contrato estatal"
 
-#: app/mail.py:349
+#: app/mail.py:56
 msgid ""
 "Reminder - Opportunity to access MSME credit for being awarded a public "
 "contract"
@@ -120,57 +88,89 @@ msgstr ""
 "Recordatorio - Oportunidad de acceso a crédito por ser adjudicatario de "
 "contrato estatal"
 
-#: app/mail.py:374 app/mail.py:393
+#: app/mail.py:67
+msgid "Application Submission Complete"
+msgstr "Envío de aplicación completada"
+
+#: app/mail.py:75 app/mail.py:80
 msgid "New application submission"
 msgstr "Nueva aplicación recibida"
 
-#: app/mail.py:415
+#: app/mail.py:85
 msgid "New message from a financial institution"
 msgstr "Nuevo mensaje de una institución financiera"
 
-#: app/mail.py:438
-msgid "You have credit applications that need processing"
-msgstr "Tienes solicitudes de crédito que necesitan procesamiento"
+#: app/mail.py:94
+msgid "Application updated"
+msgstr "Aplicación actualizada"
 
-#: app/mail.py:459
-msgid "New overdue application"
-msgstr "Nueva solicitud vencida"
-
-#: app/mail.py:480 app/mail.py:503
+#: app/mail.py:99
 msgid "Your credit application has been declined"
 msgstr "Tu solicitud de crédito ha sido rechazada"
 
-#: app/mail.py:522
+#: app/mail.py:120
+msgid "Your credit application has been prequalified"
+msgstr "Revisión de tu aplicación completada exitosamente"
+
+#: app/mail.py:132
+msgid "Thank you for uploading the signed contract"
+msgstr "Gracias por subir tu contrato firmado"
+
+#: app/mail.py:141
+msgid "New contract submission"
+msgstr "Una empresa ha subido su contrato"
+
+#: app/mail.py:146
+msgid "Your credit application has been approved"
+msgstr "Tu solicitud de crédito ha sido aprobada"
+
+#: app/mail.py:155
+msgid "New overdue application"
+msgstr "Nueva solicitud vencida"
+
+#: app/mail.py:164
 msgid "Alternative credit option"
 msgstr "Opción de crédito alternativa"
 
-#: app/mail.py:542
-msgid "Application updated"
-msgstr "Aplicación actualizada"
+#: app/mail.py:175
+msgid "Confirm email address change"
+msgstr "Confirmar cambio de dirección de correo electrónico"
+
+#: app/mail.py:271
+msgid "Welcome"
+msgstr "Bienvenido/a"
+
+#: app/mail.py:297
+msgid "Reset password"
+msgstr "Restablecer contraseña"
+
+#: app/mail.py:320
+msgid "You have credit applications that need processing"
+msgstr "Tienes solicitudes de crédito que necesitan procesamiento"
 
 #: app/main.py:31
 msgid "An unexpected error occurred"
 msgstr "Ocurrió un error inesperado"
 
-#: app/models.py:130
+#: app/models.py:141
 msgid "INCORPORATION_DOCUMENT"
 msgstr "Certificado de incorporación de tu empresa"
 
-#: app/models.py:131
+#: app/models.py:142
 msgid "SUPPLIER_REGISTRATION_DOCUMENT"
 msgstr "Registro Único de Proponentes (RUP) de su empresa"
 
-#: app/models.py:132
+#: app/models.py:143
 msgid "BANK_NAME"
 msgstr "Nombre del banco"
 
-#: app/models.py:133
+#: app/models.py:144
 msgid "BANK_CERTIFICATION_DOCUMENT"
 msgstr ""
 "Certificado Bancario de la empresa: Documento debe estar firmado y con "
 "emisión menor a 3 meses."
 
-#: app/models.py:134
+#: app/models.py:145
 msgid "FINANCIAL_STATEMENT"
 msgstr ""
 "Documento de Estados Financieros de su empresa: A corte del último "
@@ -180,34 +180,34 @@ msgstr ""
 "parcial del trimestre, se recibe pero puede llegar a ser solicitada más "
 "adelante por la institución financiera."
 
-#: app/models.py:135
+#: app/models.py:146
 msgid "SIGNED_CONTRACT"
 msgstr "Contrato firmado"
 
-#: app/models.py:136
+#: app/models.py:147
 msgid "SHAREHOLDER_COMPOSITION"
 msgstr ""
 "Documento de Composición Accionaria: Debe enviarse completo, hasta llegar"
 " al beneficiario final con concentración mayor al 5 por ciento."
 
-#: app/models.py:137
+#: app/models.py:148
 msgid "CHAMBER_OF_COMMERCE"
 msgstr ""
 "Documento de Registro de la Cámara de Comercio: Documento debe estar "
 "firmado y con emisión menor a 3 meses."
 
-#: app/models.py:138
+#: app/models.py:149
 msgid "THREE_LAST_BANK_STATEMENT"
 msgstr ""
 "Extractos Bancarios de los últimos 3 meses: De la o las cuentas "
 "principales de la empresa. El documento deber ser emitido por el banco y "
 "deber ser enviado SIN alterar."
 
-#: app/models.py:139
+#: app/models.py:150
 msgid "INCOME_TAX_RETURN_STATEMENT"
 msgstr "Documento de declaración de renta de los últimos dos años"
 
-#: app/models.py:140
+#: app/models.py:151
 msgid "CHAMBER_OF_COMMERCE_WITH_TEMPORARY_UNIONS"
 msgstr ""
 "Documento de Registro de la Cámara de Comercio: Documento debe estar "
@@ -215,203 +215,205 @@ msgstr ""
 "reemplazar el certificado de la cámara de comercio por el documento que "
 "certifique la creación de la unión temporal."
 
-#: app/models.py:165
+#: app/models.py:176
 msgid "PENDING"
 msgstr "Pendiente"
 
-#: app/models.py:169
+#: app/models.py:180
 msgid "DECLINED"
 msgstr "Declinado"
 
-#: app/models.py:173
+#: app/models.py:184
 msgid "ACCEPTED"
 msgstr "Aceptado"
 
-#: app/models.py:177
+#: app/models.py:188
 msgid "SUBMITTED"
 msgstr "Enviado"
 
-#: app/models.py:181
+#: app/models.py:192
 msgid "STARTED"
 msgstr "Empezado"
 
-#: app/models.py:186
+#: app/models.py:197
 msgid "REJECTED"
 msgstr "Rechazado"
 
-#: app/models.py:190
+#: app/models.py:201
 msgid "INFORMATION_REQUESTED"
 msgstr "Información solicitada"
 
-#: app/models.py:194
+#: app/models.py:205
 msgid "LAPSED"
 msgstr "Caducado"
 
-#: app/models.py:198
+#: app/models.py:209
 msgid "APPROVED"
 msgstr "Precalificado"
 
-#: app/models.py:202
+#: app/models.py:213
 msgid "CONTRACT_UPLOADED"
 msgstr "Contrato cargado"
 
-#: app/models.py:206
+#: app/models.py:217
 msgid "COMPLETED"
 msgstr "Completado"
 
-#: app/models.py:290
+#: app/models.py:335
 msgid "NOT_INFORMED"
 msgstr "No informado"
 
-#: app/models.py:291
+#: app/models.py:336
 msgid "MICRO"
 msgstr "0 a 10"
 
-#: app/models.py:292
+#: app/models.py:337
 msgid "SMALL"
 msgstr "11 a 50"
 
-#: app/models.py:293
+#: app/models.py:338
 msgid "MEDIUM"
 msgstr "51 a 200"
 
-#: app/models.py:294
+#: app/models.py:339
 msgid "BIG"
 msgstr "+ 200"
 
-#: app/models.py:298
+#: app/models.py:343
 msgid "agricultura"
 msgstr "Agricultura, ganadería, caza, silvicultura y pesca"
 
-#: app/models.py:299
+#: app/models.py:344
 msgid "minas"
 msgstr "Explotación de minas y canteras"
 
-#: app/models.py:300
+#: app/models.py:345
 msgid "manufactura"
 msgstr "Industrias manufactureras"
 
-#: app/models.py:301
+#: app/models.py:346
 msgid "electricidad"
 msgstr "Suministro de electricidad, gas, vapor y aire acondicionado"
 
-#: app/models.py:302
+#: app/models.py:347
 msgid "agua"
 msgstr ""
 "Distribución de agua; evacuación y tratamiento de aguas residuales, "
 "gestión de desechos y actividades de saneamiento ambiental"
 
-#: app/models.py:303
+#: app/models.py:348
 msgid "construccion"
 msgstr "Construcción"
 
-#: app/models.py:304
+#: app/models.py:349
 msgid "transporte"
 msgstr "Transporte y almacenamiento"
 
-#: app/models.py:305
+#: app/models.py:350
 msgid "alojamiento"
 msgstr "Alojamiento y servicios de comida"
 
-#: app/models.py:306
+#: app/models.py:351
 msgid "comunicaciones"
 msgstr "Información y comunicaciones"
 
-#: app/models.py:307
+#: app/models.py:352
 msgid "actividades_financieras"
 msgstr "Actividades financieras y de seguros"
 
-#: app/models.py:308
+#: app/models.py:353
 msgid "actividades_inmobiliarias"
 msgstr "Actividades inmobiliarias"
 
-#: app/models.py:309
+#: app/models.py:354
 msgid "actividades_profesionales"
 msgstr "Actividades profesionales, científicas y técnicas"
 
-#: app/models.py:310
+#: app/models.py:355
 msgid "actividades_servicios_administrativos"
 msgstr "Actividades de servicios administrativos y de apoyo"
 
-#: app/models.py:311
+#: app/models.py:356
 msgid "administracion_publica"
 msgstr ""
 "Administración pública y defensa; planes de seguridad social de "
 "afiliación obligatoria"
 
-#: app/models.py:312
+#: app/models.py:357
 msgid "educacion"
 msgstr "Educación"
 
-#: app/models.py:313
+#: app/models.py:358
 msgid "atencion_salud"
 msgstr "Actividades de atención de la salud humana y de asistencia social"
 
-#: app/models.py:314
+#: app/models.py:359
 msgid "actividades_artisticas"
 msgstr "Actividades artísticas, de entretenimiento y recreación"
 
-#: app/models.py:315
+#: app/models.py:360
 msgid "otras_actividades"
 msgstr "Otras actividades de servicios"
 
-#: app/models.py:316
+#: app/models.py:361
 msgid "actividades_hogares"
 msgstr ""
 "Actividades de los hogares individuales en calidad de empleadores; "
 "actividades no diferenciadas de los hogares individuales como productores"
 " de bienes y servicios para uso propio"
 
-#: app/models.py:317
+#: app/models.py:362
 msgid "actividades_organizaciones_extraterritoriales"
 msgstr "Actividades de organizaciones y entidades extraterritoriales"
 
-#: app/models.py:321
+#: app/models.py:366
 msgid "LOAN"
 msgstr "Préstamo"
 
-#: app/models.py:322
+#: app/models.py:367
 msgid "CREDIT_LINE"
 msgstr "Línea de crédito"
 
-#: app/models.py:326
+#: app/models.py:371
 msgid "NATURAL_PERSON"
 msgstr "Persona natural"
 
-#: app/models.py:327
+#: app/models.py:372
 msgid "LEGAL_PERSON"
 msgstr "Persona jurídica"
 
-#: app/util.py:55
+#: app/util.py:45
 #, python-format
 msgid "%(model_name)s not found"
 msgstr "%(model_name)s no encontrado"
 
-#: app/util.py:110
+#: app/util.py:100
 msgid "Format not allowed. It must be a PNG, JPEG, PDF or ZIP file"
-msgstr "Formato no permitido. El formato debe ser un PNG, JPEG, archivo PDF o archivo ZIP"
+msgstr ""
+"Formato no permitido. El formato debe ser un PNG, JPEG, archivo PDF o "
+"archivo ZIP"
 
-#: app/util.py:116
+#: app/util.py:106
 msgid "File is too large"
 msgstr "El archivo es muy grande"
 
-#: app/routers/applications.py:171
+#: app/routers/applications.py:156
 msgid "Some borrower data field are not verified"
 msgstr "Algunos campos de datos de la empresa no fueron verificados"
 
-#: app/routers/applications.py:182
+#: app/routers/applications.py:167
 msgid "Some documents are not verified"
 msgstr "Algunos documentos no fueron verificados"
 
-#: app/routers/applications.py:328
+#: app/routers/applications.py:307
 msgid "Award not found"
 msgstr "La adjudicación no ha sido encontrada"
 
-#: app/routers/applications.py:373
+#: app/routers/applications.py:352
 msgid "Borrower not found"
 msgstr "La empresa no ha sido encontrada"
 
-#: app/routers/applications.py:382
+#: app/routers/applications.py:361
 msgid "This column cannot be updated"
 msgstr "Esta columna no puede ser actualizada"
 
@@ -423,23 +425,35 @@ msgstr "Detalles de la aplicación"
 msgid "Previous Public Sector Contracts"
 msgstr "Contratos anteriores con el sector público"
 
-#: app/routers/downloads.py:148 app/utils/tables.py:211
-msgid "National Tax ID"
-msgstr "Identificación fiscal nacional"
-
-#: app/routers/downloads.py:149 app/utils/tables.py:203
+#: app/routers/downloads.py:148 app/utils/tables.py:203
 msgid "Legal Name"
 msgstr "Nombre legal"
+
+#: app/routers/downloads.py:149 app/utils/tables.py:211
+msgid "National Tax ID"
+msgstr "Identificación fiscal nacional"
 
 #: app/routers/downloads.py:150
 msgid "Email Address"
 msgstr "Dirección de correo electrónico"
 
-#: app/routers/downloads.py:151
+#: app/routers/downloads.py:151 app/utils/tables.py:169
+msgid "Buyer Name"
+msgstr "Nombre de la entidad compradora"
+
+#: app/routers/downloads.py:152 app/utils/tables.py:153
+msgid "Award Value Currency & Amount"
+msgstr "Monto y moneda de la adjudicación"
+
+#: app/routers/downloads.py:153 app/utils/tables.py:51
+msgid "Amount requested"
+msgstr "Monto solicitado"
+
+#: app/routers/downloads.py:154
 msgid "Submission Date"
 msgstr "Fecha de envío"
 
-#: app/routers/downloads.py:152
+#: app/routers/downloads.py:155
 msgid "Stage"
 msgstr "Etapa"
 
@@ -452,43 +466,43 @@ msgstr "Ya existe un entidad financiera con ese nombre"
 msgid "Credit product not found"
 msgstr "Producto crediticio no encontrado"
 
-#: app/routers/users.py:56 app/routers/users.py:345
+#: app/routers/users.py:58 app/routers/users.py:348
 msgid "User with that email already exists"
 msgstr "Ya existe un usuario con ese correo"
 
-#: app/routers/users.py:96
+#: app/routers/users.py:98
 msgid "Password changed with MFA setup required"
 msgstr "Cambio de contraseña con configuración de MFA requerido"
 
-#: app/routers/users.py:102
+#: app/routers/users.py:104
 msgid "Password changed"
 msgstr "Contraseña cambiada"
 
-#: app/routers/users.py:126
+#: app/routers/users.py:128
 msgid "Invalid session for the user, session is expired"
 msgstr "Sesión inválida para el usuario, la sesión ha expirado"
 
-#: app/routers/users.py:131 app/routers/users.py:187
+#: app/routers/users.py:133 app/routers/users.py:189
 msgid "Invalid MFA code"
 msgstr "Código MFA no válido"
 
-#: app/routers/users.py:134
+#: app/routers/users.py:136
 msgid "MFA configured successfully"
 msgstr "El MFA fue configurado correctamente"
 
-#: app/routers/users.py:160 app/routers/users.py:182
+#: app/routers/users.py:162 app/routers/users.py:184
 msgid "Invalid username or password"
 msgstr "Nombre de usuario o contraseña no válidos"
 
-#: app/routers/users.py:176
+#: app/routers/users.py:178
 msgid "Missing MFA challenge"
 msgstr "Falta el desafío de MFA"
 
-#: app/routers/users.py:218
+#: app/routers/users.py:220
 msgid "User logged out successfully"
 msgstr "Usuario deslogueado correctamente"
 
-#: app/routers/users.py:264
+#: app/routers/users.py:266
 msgid "An email with a reset link was sent to end user"
 msgstr "Se envió un correo con el enlace de reseteo de contraseña."
 
@@ -505,11 +519,11 @@ msgstr "No se puede retroceder en esta etapa"
 msgid "Lender not selected"
 msgstr "No se ha seleccionado la entidad financiera"
 
-#: app/routers/guest/applications.py:586
+#: app/routers/guest/applications.py:579
 msgid "Cannot upload document at this stage"
 msgstr "No se pueden subir documentos en esta etapa"
 
-#: app/routers/guest/applications.py:793
+#: app/routers/guest/applications.py:766
 msgid "A new application has already been created from this one"
 msgstr "Una nueva aplicación ya ha sido creada desde esta"
 
@@ -517,11 +531,11 @@ msgstr "Una nueva aplicación ya ha sido creada desde esta"
 msgid "New email is not valid"
 msgstr "El nuevo correo no es válido"
 
-#: app/routers/guest/emails.py:81
+#: app/routers/guest/emails.py:80
 msgid "Application is not pending an email confirmation"
 msgstr "La aplicación no tiene la confirmación de correo pendiente"
 
-#: app/routers/guest/emails.py:88
+#: app/routers/guest/emails.py:87
 msgid "Not authorized to modify this application"
 msgstr "No autorizado a modificar la aplicación en esta etapa"
 
@@ -537,10 +551,6 @@ msgstr "Datos"
 #: app/utils/tables.py:47
 msgid "Lender"
 msgstr "Entidad financiera"
-
-#: app/utils/tables.py:51
-msgid "Amount requested"
-msgstr "Monto solicitado"
 
 #: app/utils/tables.py:59 app/utils/tables.py:83
 msgid "Type"
@@ -599,10 +609,6 @@ msgstr "Descripción de la adjudicación"
 msgid "Award Date"
 msgstr "Fecha de la adjudicación"
 
-#: app/utils/tables.py:153
-msgid "Award Value Currency & Amount"
-msgstr "Monto y moneda de la adjudicación"
-
 #: app/utils/tables.py:157
 msgid "Contract Start Date"
 msgstr "Fecha de inicio del contrato"
@@ -614,10 +620,6 @@ msgstr "Fecha de fin del contrato"
 #: app/utils/tables.py:165
 msgid "Payment Method"
 msgstr "Método de pago"
-
-#: app/utils/tables.py:169
-msgid "Buyer Name"
-msgstr "Nombre de la entidad compradora"
 
 #: app/utils/tables.py:176
 msgid "Procurement Method"

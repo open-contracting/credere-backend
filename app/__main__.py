@@ -90,13 +90,7 @@ def _create_complete_application(
             expired_at=datetime.utcnow() + timedelta(days=app_settings.application_expiration_days),
         )
 
-        message_id = mail.send_invitation_email(aws.ses_client, application)
-        models.Message.create(
-            session,
-            application=application,
-            type=models.MessageType.BORROWER_INVITATION,
-            external_message_id=message_id,
-        )
+        mail.send(session, aws.ses_client, models.MessageType.BORROWER_INVITATION, application)
 
         session.commit()
 
@@ -184,13 +178,7 @@ def send_reminders() -> None:
         if not state["quiet"]:
             print(f"Sending {len(pending_introduction_reminder)} BORROWER_PENDING_APPLICATION_REMINDER...")
         for application in pending_introduction_reminder:
-            message_id = mail.send_mail_intro_reminder(aws.ses_client, application)
-            models.Message.create(
-                session,
-                application=application,
-                type=models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER,
-                external_message_id=message_id,
-            )
+            mail.send(session, aws.ses_client, models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER, application)
 
             session.commit()
 
@@ -205,13 +193,7 @@ def send_reminders() -> None:
         if not state["quiet"]:
             print(f"Sending {len(pending_submission_reminder)} BORROWER_PENDING_SUBMIT_REMINDER...")
         for application in pending_submission_reminder:
-            message_id = mail.send_mail_submit_reminder(aws.ses_client, application)
-            models.Message.create(
-                session,
-                application=application,
-                type=models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER,
-                external_message_id=message_id,
-            )
+            mail.send(session, aws.ses_client, models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER, application)
 
             session.commit()
 
@@ -256,28 +238,15 @@ def sla_overdue_applications() -> None:
                     if days_passed > application.lender.sla_days:
                         application.overdued_at = datetime.now(application.created_at.tzinfo)
 
-                        message_id = mail.send_overdue_application_email_to_ocp(aws.ses_client, application)
-                        models.Message.create(
-                            session,
-                            application=application,
-                            type=models.MessageType.OVERDUE_APPLICATION,
-                            external_message_id=message_id,
-                        )
+                        mail.send(session, aws.ses_client, models.MessageType.OVERDUE_APPLICATION, application)
 
                         session.commit()
 
         for lender_id, lender_data in overdue_lenders.items():
-            message_id = mail.send_overdue_application_email_to_lender(
+            mail.send_overdue_application_to_lender(
                 aws.ses_client,
-                models.Lender.get(session, id=lender_id),
-                lender_data["count"],
-            )
-            models.Message.create(
-                session,
-                # NOTE: A random application that might not even be to the lender, but application is not nullable.
-                application=application,
-                type=models.MessageType.OVERDUE_APPLICATION,
-                external_message_id=message_id,
+                lender=models.Lender.get(session, id=lender_id),
+                amount=lender_data["count"],
             )
 
             session.commit()
