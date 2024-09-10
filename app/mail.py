@@ -32,15 +32,17 @@ def send(
 
     base_application_url = f"{app_settings.frontend_url}/application/{quote(application.uuid)}"
 
+    # This match statement must set `recipients`, `subject` and `parameters`.
+    #
     # `recipients` is a list of lists. Each sublist is a `ToAddresses` parameter for an email message.
     #
     # All URLs using `app_settings.frontend_url` are React routes in credere-frontend.
     match message_type:
         case MessageType.BORROWER_INVITATION | MessageType.BORROWER_PENDING_APPLICATION_REMINDER:
+            base_fathom_url = "?utm_source=credere-intro&utm_medium=email&utm_campaign="
+
             recipients = [[application.primary_email]]
             subject = _("Opportunity to access MSME credit for being awarded a public contract")
-
-            base_fathom_url = "?utm_source=credere-intro&utm_medium=email&utm_campaign="
             parameters = {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "TENDER_TITLE": application.award.title,
