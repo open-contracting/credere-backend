@@ -9,8 +9,8 @@ from tests import assert_change, assert_success
 
 runner = CliRunner()
 # Do 1-2 seconds off the minimum offset, to avoid test failures due to timing issues.
-negative_offset = -2  # min 0
-positive_offset = 2  # min 1
+negative_offset = -5  # min 0
+positive_offset = 5  # min 1
 
 
 @pytest.mark.parametrize(
