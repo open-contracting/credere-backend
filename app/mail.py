@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -14,30 +13,7 @@ from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
-BASE_TEMPLATES_PATH = os.path.join(Path(__file__).absolute().parent.parent, "email_templates")
-
-
-def get_template_data(template_name: str, subject: str, parameters: dict[str, Any]) -> dict[str, str]:
-    """
-    Read the HTML file and replace its parameters (like ``BUYER_NAME``) to use as the ``{{CONTENT}}`` tag in the email
-    template, then return all tags required by the email template.
-    """
-    with open(
-        os.path.join(BASE_TEMPLATES_PATH, f"{template_name}.{app_settings.email_template_lang}.html"),
-        encoding="utf-8",
-    ) as f:
-        html = f.read()
-
-    parameters.setdefault("IMAGES_BASE_URL", app_settings.images_base_url)
-    for key, value in parameters.items():
-        html = html.replace("{{%s}}" % key, str(value))
-
-    return {
-        "CONTENT": html,
-        "SUBJECT": f"Credere - {subject}",
-        "FRONTEND_URL": app_settings.frontend_url,
-        "IMAGES_BASE_URL": app_settings.images_base_url,
-    }
+BASE_TEMPLATES_PATH = Path(__file__).absolute().parent.parent / "email_templates"
 
 
 def send(
@@ -209,8 +185,13 @@ def send(
 
     # Only the last message ID is saved, if multiple email messages are sent.
     for to_addresses in recipients:
-        message_id = send_email(
-            ses, to_addresses, get_template_data(template_name, subject, parameters), to_borrower=to_borrower
+        message_id = _send_email(
+            ses,
+            to_addresses=to_addresses,
+            to_borrower=to_borrower,
+            subject=subject,
+            template_name=template_name,
+            parameters=parameters,
         )
 
     if save:
@@ -221,23 +202,44 @@ def send(
         )
 
 
-def send_email(ses: SESClient, emails: list[str], data: dict[str, str], *, to_borrower: bool = True) -> str:
-    if app_settings.environment == "production" or not to_borrower:
-        to_addresses = emails
-    else:
+def _send_email(
+    ses: SESClient,
+    *,
+    to_addresses: list[str],
+    to_borrower: bool = True,
+    subject: str,
+    template_name: str,
+    parameters: dict[str, str],
+) -> str:
+    original_addresses = to_addresses.copy()
+
+    if app_settings.environment != "production" and to_borrower:
         to_addresses = [app_settings.test_mail_receiver]
 
     if not to_addresses:
         logger.error("No email address provided!")  # ideally, it should be impossible for a lender to have no users
         return ""
 
-    logger.info("%s - Email to: %s sent to %s", app_settings.environment, emails, to_addresses)
+    # Read the HTML template and replace its parameters (like ``BUYER_NAME``).
+    parameters.setdefault("IMAGES_BASE_URL", app_settings.images_base_url)
+    content = (BASE_TEMPLATES_PATH / f"{template_name}.{app_settings.email_template_lang}.html").read_text()
+    for key, value in parameters.items():
+        content = content.replace("{{%s}}" % key, value)
+
+    logger.info("%s - Email to: %s sent to %s", app_settings.environment, original_addresses, to_addresses)
     return ses.send_templated_email(
         Source=app_settings.email_sender_address,
         Destination={"ToAddresses": to_addresses},
         ReplyToAddresses=[app_settings.ocp_email_group],
         Template=f"credere-main-{app_settings.email_template_lang}",
-        TemplateData=json.dumps(data),
+        TemplateData=json.dumps(
+            {
+                "SUBJECT": f"Credere - {subject}",
+                "CONTENT": content,
+                "FRONTEND_URL": app_settings.frontend_url,
+                "IMAGES_BASE_URL": app_settings.images_base_url,
+            }
+        ),
     )["MessageId"]
 
 
@@ -257,21 +259,19 @@ def send_new_user(ses: SESClient, *, name: str, username: str, temporary_passwor
     :param username: The username (email address) of the new user.
     :param temporary_password: The temporary password for the new user.
     """
-    return send_email(
+    return _send_email(
         ses,
-        [username],
-        get_template_data(
-            "new_user",
-            _("Welcome"),
-            {
-                "USER": name,
-                "LOGIN_URL": (
-                    f"{app_settings.frontend_url}/create-password"
-                    f"?key={quote(temporary_password)}&email={quote(username)}"
-                ),
-            },
-        ),
+        to_addresses=[username],
         to_borrower=False,
+        subject=_("Welcome"),
+        template_name="new_user",
+        parameters={
+            "USER": name,
+            "LOGIN_URL": (
+                f"{app_settings.frontend_url}/create-password"
+                f"?key={quote(temporary_password)}&email={quote(username)}"
+            ),
+        },
     )
 
 
@@ -285,21 +285,19 @@ def send_reset_password(ses: SESClient, *, username: str, temporary_password: st
     :param username: The username associated with the account for which the password is to be reset.
     :param temporary_password: A temporary password generated for the account.
     """
-    return send_email(
+    return _send_email(
         ses,
-        [username],
-        get_template_data(
-            "reset_password",
-            _("Reset password"),
-            {
-                "USER_ACCOUNT": username,
-                "RESET_PASSWORD_URL": (
-                    f"{app_settings.frontend_url}/create-password"
-                    f"?key={quote(temporary_password)}&email={quote(username)}"
-                ),
-            },
-        ),
+        to_addresses=[username],
         to_borrower=False,
+        subject=_("Reset password"),
+        template_name="reset_password",
+        parameters={
+            "USER_ACCOUNT": username,
+            "RESET_PASSWORD_URL": (
+                f"{app_settings.frontend_url}/create-password"
+                f"?key={quote(temporary_password)}&email={quote(username)}"
+            ),
+        },
     )
 
 
@@ -322,17 +320,15 @@ def send_overdue_application_to_lender(ses: SESClient, *, lender: Lender, amount
     :param lender: The overdue lender.
     :param amount: Number of overdue applications.
     """
-    return send_email(
+    return _send_email(
         ses,
-        _get_lender_emails(lender, MessageType.OVERDUE_APPLICATION),
-        get_template_data(
-            "overdue_application_to_lender",
-            _("You have credit applications that need processing"),
-            {
-                "USER": lender.name,
-                "NUMBER_APPLICATIONS": amount,
-                "LOGIN_URL": f"{app_settings.frontend_url}/login",
-            },
-        ),
+        to_addresses=_get_lender_emails(lender, MessageType.OVERDUE_APPLICATION),
         to_borrower=False,
+        subject=_("You have credit applications that need processing"),
+        template_name="overdue_application_to_lender",
+        parameters={
+            "USER": lender.name,
+            "NUMBER_APPLICATIONS": str(amount),
+            "LOGIN_URL": f"{app_settings.frontend_url}/login",
+        },
     )
