@@ -225,38 +225,72 @@ class BorrowerStatus(StrEnum):
 
 
 class MessageType(StrEnum):
+    #: Message the borrower to accept or decline the invitation.
+    #:
     #: PENDING (:typer:`python-m-app-fetch-awards`)
     BORROWER_INVITATION = "BORROWER_INVITATION"
+    #: Remind the borrower to accept or decline the invitation.
+    #:
     #: PENDING (:typer:`python-m-app-send-reminders`)
     BORROWER_PENDING_APPLICATION_REMINDER = "BORROWER_PENDING_APPLICATION_REMINDER"
+    #: Remind the borrower to submit the application.
+    #:
     #: ACCEPTED (:typer:`python-m-app-send-reminders`)
     BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
+    #: Confirm receipt of the application.
+    #:
     #: ACCEPTED → SUBMITTED (``/applications/submit``)
     SUBMISSION_COMPLETED = "SUBMISSION_COMPLETED"
+    #: Notify the administrators about a new application.
+    #:
     #: Unused, but the corresponding message is sent by ``/applications/submit`` :issue:`330`
     NEW_APPLICATION_OCP = "NEW_APPLICATION_OCP"
+    #: Notify the lender about a new application.
+    #:
     #: Unused, but the corresponding message is sent by ``/applications/submit`` :issue:`330`
     NEW_APPLICATION_FI = "NEW_APPLICATION_FI"
+    #: Request documents from the borrower.
+    #:
     #: STARTED → INFORMATION_REQUESTED (``/applications/email-sme/{id}``)
     FI_MESSAGE = "FI_MESSAGE"
+    #: Notify the lender about the requested documents.
+    #:
     #: INFORMATION_REQUESTED → STARTED (``/applications/complete-information-request``)
     BORROWER_DOCUMENT_UPDATED = "BORROWER_DOCUMENT_UPDATED"
+    #: Notify the borrower that the application is rejected.
+    #:
     #: STARTED → REJECTED (``/applications/{id}/reject-application``)
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
+    #: Notify the borrower that the application is pre-approved.
+    #:
     #: STARTED → APPROVED (``/applications/{id}/approve-application``)
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
+    #: Request a contract from the borrower.
+    #:
     #: Unused
     CONTRACT_UPLOAD_REQUEST = "CONTRACT_UPLOAD_REQUEST"
+    #: Confirm receipt of the requested contract.
+    #:
     #: APPROVED → CONTRACT_UPLOADED (``/applications/confirm-upload-contract``)
     CONTRACT_UPLOAD_CONFIRMATION = "CONTRACT_UPLOAD_CONFIRMATION"
+    #: Notify the lender about the requested contract.
+    #:
     #: APPROVED → CONTRACT_UPLOADED (``/applications/confirm-upload-contract``)
     CONTRACT_UPLOAD_CONFIRMATION_TO_FI = "CONTRACT_UPLOAD_CONFIRMATION_TO_FI"
+    #: Notify the borrower that the application is completed.
+    #:
     #: CONTRACT_UPLOADED → COMPLETED (``/applications/{id}/complete-application``)
     CREDIT_DISBURSED = "CREDIT_DISBURSED"
+    #: Remind the administrators about overdue applications.
+    #:
     #: STARTED | CONTRACT_UPLOADED (:typer:`python-m-app-sla-overdue-applications`)
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
+    #: Send the borrower a URL to continue the copied application.
+    #:
     #: ACCEPTED (``/applications/find-alternative-credit-option``)
     APPLICATION_COPIED = "APPLICATION_COPIED"
+    #: Verify the borrower's new email address.
+    #:
     #: Any (``/applications/change-email``)
     EMAIL_CHANGE_CONFIRMATION = "EMAIL_CHANGE_CONFIRMATION"
 
