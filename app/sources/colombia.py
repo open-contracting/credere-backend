@@ -1,4 +1,3 @@
-from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import quote_plus
@@ -12,7 +11,6 @@ from app.settings import app_settings
 URLS = {
     "CONTRACTS": "https://www.datos.gov.co/resource/jbjy-vk9h.json",
     "AWARDS": "https://www.datos.gov.co/resource/p6dx-8zbt.json",
-    "BORROWER_EMAIL": "https://www.datos.gov.co/resource/vzyx-b5wf.json",
     "BORROWER": "https://www.datos.gov.co/resource/4ex9-j3n8.json",
 }
 
@@ -195,10 +193,18 @@ def get_borrower(borrower_identifier: str, supplier_id: str, entry: dict[str, st
         )
 
     remote_borrower = borrower_response_json[0]
-    email = get_email(supplier_id)
+    # Emails in data source are uppercase and AWS SES is case sensitive.
+    email = remote_borrower.get("correo_electronico", "").lower()
+
+    if not util.is_valid_email(email):
+        raise SkippedAwardError(
+            "Invalid remote borrower email",
+            url=borrower_url,
+            data={"response": remote_borrower, "email": email},
+        )
 
     if (
-        remote_borrower.get("tipo_organizacion", "").lower() == SUPPLIER_TYPE_TO_EXCLUDE
+        remote_borrower.get("tipo_entidad", "").lower() == SUPPLIER_TYPE_TO_EXCLUDE
         or remote_borrower.get("regimen_tributario", "") == "Persona Natural"
         or remote_borrower.get("tipo_de_documento", "") == "Cédula de Ciudadanía"
     ):
@@ -215,51 +221,13 @@ def get_borrower(borrower_identifier: str, supplier_id: str, entry: dict[str, st
         "address": (
             f"Direccion: {remote_borrower.get('direccion', 'No provisto')}\n"
             f"Ciudad: {remote_borrower.get('ciudad', 'No provisto')}\n"
-            f"Provincia: {remote_borrower.get('provincia', 'No provisto')}\n"
-            f"Estado: {remote_borrower.get('estado', 'No provisto')}"
+            f"Departamento: {remote_borrower.get('departamento', 'No provisto')}\n"
         ),
         "legal_identifier": remote_borrower.get("nit_entidad", ""),
-        "type": remote_borrower.get("tipo_organizacion", ""),
+        "type": remote_borrower.get("tipo_entidad", ""),
         "source_data": remote_borrower,
         "is_msme": remote_borrower.get("es_pyme", "").lower() == "si",
     }
-
-
-def _get_email(borrower_response: dict[str, str]) -> str:
-    if "correo_entidad" in borrower_response:
-        return borrower_response["correo_entidad"]
-    return borrower_response.get("correo_electr_nico", "")
-
-
-def get_email(supplier_id: str) -> str:
-    """
-    Get the email address for the borrower based on the given document provider.
-
-    :param supplier_id: The document provider for the borrower.
-    :return: The email address of the borrower.
-    """
-
-    email_url = f"{URLS['BORROWER_EMAIL']}?nit={supplier_id}"
-    email_response_json = util.loads(sources.make_request_with_retry(email_url, HEADERS))
-    len_email_response_json = len(email_response_json)
-
-    if len_email_response_json == 0:
-        raise SkippedAwardError("No remote borrower emails found", url=email_url)
-
-    remote_email: dict[str, str] = email_response_json[0]
-    email = _get_email(remote_email)
-
-    if len_email_response_json > 1:
-        email = Counter(_get_email(email) for email in email_response_json).most_common(1)[0][0]
-
-    if not util.is_valid_email(email):
-        raise SkippedAwardError(
-            "Invalid remote borrower email",
-            url=email_url,
-            data={"response": email_response_json, "email": email},
-        )
-
-    return email
 
 
 def get_supplier_id(entry: dict[str, str]) -> str:
