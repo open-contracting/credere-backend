@@ -270,6 +270,7 @@ def forgot_password(
 )
 async def get_user(
     user_id: int,
+    admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> models.User:
     """
