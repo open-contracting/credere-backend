@@ -109,6 +109,7 @@ def send(
                 template_name = "rejected_application_no_alternatives"
 
         case MessageType.APPROVED_APPLICATION:
+            # If a lender has a `default_pre_approval_message`, they cannot send custom `additional_comments`.
             if application.lender.default_pre_approval_message:
                 additional_comments = application.lender.default_pre_approval_message
             elif application.lender_approved_data.get("additional_comments"):
