@@ -19,11 +19,11 @@ def test_create_and_get_user(client, admin_header, lender_header, user_payload):
     assert response.json()["name"] == user_payload["name"]
 
     # fetch second user since the first one is the OCP user created for headers
-    response = client.get("/users/2")
+    response = client.get("/users/2", headers=admin_header)
     assert_ok(response)
 
     # try to get a non-existing user
-    response = client.get("/users/200")
+    response = client.get("/users/200", headers=admin_header)
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": _("%(model_name)s not found", model_name="User")}
 
