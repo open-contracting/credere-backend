@@ -32,7 +32,8 @@ class SortOrder(StrEnum):
     DESC = "desc"
 
 
-class StatisticCustomRange(StrEnum):
+class StatisticRange(StrEnum):
+    CUSTOM_RANGE = "CUSTOM_RANGE"
     LAST_WEEK = "LAST_WEEK"
     LAST_MONTH = "LAST_MONTH"
 

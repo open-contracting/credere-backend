@@ -7,7 +7,7 @@ import app.utils.statistics as statistics_utils
 from app import dependencies, serializers
 from app.db import get_db
 from app.models import User
-from app.util import StatisticCustomRange
+from app.util import StatisticRange
 
 router = APIRouter()
 
@@ -20,7 +20,7 @@ async def get_admin_statistics_by_lender(
     initial_date: str | None = None,
     final_date: str | None = None,
     lender_id: int | None = None,
-    custom_range: StatisticCustomRange | None = None,
+    custom_range: StatisticRange | None = None,
     admin: User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.StatisticResponse:
@@ -46,9 +46,9 @@ async def get_admin_statistics_by_lender(
             custom_range = custom_range.upper()
             current_date = datetime.now().date()
 
-            if custom_range == StatisticCustomRange.LAST_WEEK:
+            if custom_range == StatisticRange.LAST_WEEK:
                 initial_date = (current_date - timedelta(days=7)).isoformat()
-            elif custom_range == StatisticCustomRange.LAST_MONTH:
+            elif custom_range == StatisticRange.LAST_MONTH:
                 initial_date = (current_date - timedelta(days=30)).isoformat()
             final_date = current_date.isoformat()
 
