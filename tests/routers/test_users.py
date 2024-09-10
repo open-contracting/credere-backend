@@ -1,3 +1,4 @@
+import datetime
 import uuid
 
 from fastapi import status
@@ -64,11 +65,59 @@ def test_duplicate_user(client, admin_header, user_payload):
     assert response.json() == {"detail": _("User with that email already exists")}
 
 
+def test_login(client, admin_header, admin_email):
+    client.get("/users/logout", headers=admin_header)
+    response = client.post(
+        "/users/login",
+        json={
+            "username": admin_email,
+            "password": "12345-UPPER-lower",
+            "temp_password": "123456",
+        },
+    )
+    data = response.json()
+    user = data.pop("user")
+    user_id = user.pop("id")
+    created_at = user.pop("created_at")
+
+    assert len(data) == 2
+    assert isinstance(user_id, int)
+    assert datetime.datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%S.%f%z")
+    assert user == {
+        "email": admin_email,
+        "external_id": admin_email,
+        "language": "es",
+        "lender_id": None,
+        "name": "OCP Test User",
+        "notification_preferences": {},
+        "type": "OCP",
+    }
+    assert isinstance(data["access_token"], str)
+    assert isinstance(data["refresh_token"], str)
+    assert response.status_code == status.HTTP_200_OK
+
+
 def test_login_invalid_username(client):
     response = client.post("/users/login", json={"username": "nonexistent", "password": "", "temp_password": ""})
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": _("Invalid username or password")}
+
+
+# UserCode is not implemented yet in moto, so can't test invalid MFA.
+def test_login_invalid_password(client, admin_header, admin_email):
+    client.get("/users/logout", headers=admin_header)
+    response = client.post(
+        "/users/login",
+        json={
+            "username": admin_email,
+            "password": "invalid",
+            "temp_password": "123456",
+        },
+    )
+
+    assert response.json() == {"detail": _("Invalid username or password")}
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_logout(client, admin_header):

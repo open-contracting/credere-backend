@@ -72,6 +72,17 @@ def create_user(session, aws_client, *, email, **kwargs):
         Username=email,
         UserAttributes=[{"Name": "email_verified", "Value": "true"}],
     )
+    assert response.get("ChallengeName") == "MFA_SETUP", response
+    response = aws_client.cognito.associate_software_token(Session=response["Session"])
+
+    # setup_mfa()
+    aws_client.cognito.verify_software_token(Session=response["Session"], UserCode="123456")
+
+    # login()
+    response = aws_client.initiate_auth(email, "12345-UPPER-lower")
+    response = aws_client.respond_to_auth_challenge(
+        email, session=response["Session"], challenge_name=response["ChallengeName"], mfa_code="123456"
+    )
 
     return {"Authorization": "Bearer " + response["AuthenticationResult"]["AccessToken"]}
 
