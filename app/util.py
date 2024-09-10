@@ -29,6 +29,7 @@ ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg", ".zip"}
 
 # https://fastapi.tiangolo.com/tutorial/path-operation-configuration/#tags-with-enums
 class Tags(Enum):
+    authentication = "authentication"
     applications = "applications"
     lenders = "lenders"
     meta = "meta"

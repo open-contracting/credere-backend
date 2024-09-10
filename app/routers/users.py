@@ -59,6 +59,7 @@ async def create_user(
 
 @router.put(
     "/users/change-password",
+    tags=[util.Tags.authentication],
 )
 def change_password(
     payload: parsers.BasicUser,
@@ -104,6 +105,7 @@ def change_password(
 
 @router.put(
     "/users/setup-mfa",
+    tags=[util.Tags.authentication],
 )
 def setup_mfa(
     payload: parsers.SetupMFA,
@@ -136,6 +138,7 @@ def setup_mfa(
 
 @router.post(
     "/users/login",
+    tags=[util.Tags.authentication],
 )
 def login(
     payload: parsers.BasicUser,
@@ -196,6 +199,7 @@ def login(
 
 @router.get(
     "/users/logout",
+    tags=[util.Tags.authentication],
 )
 async def logout(
     request: Request,
@@ -220,6 +224,7 @@ async def logout(
 
 @router.get(
     "/users/me",
+    tags=[util.Tags.authentication],
 )
 def me(
     username_from_token: str = Depends(dependencies.get_current_user),
@@ -238,6 +243,7 @@ def me(
 
 @router.post(
     "/users/forgot-password",
+    tags=[util.Tags.authentication],
 )
 def forgot_password(
     payload: parsers.ResetPassword,
