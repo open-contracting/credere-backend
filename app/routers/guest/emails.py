@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post(
     "/applications/change-email",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def change_email(
     payload: parsers.ChangeEmail,
@@ -61,7 +61,7 @@ async def change_email(
 
 @router.post(
     "/applications/confirm-change-email",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def confirm_email(
     payload: parsers.ConfirmNewEmail,

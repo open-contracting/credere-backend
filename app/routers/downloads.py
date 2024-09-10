@@ -20,7 +20,7 @@ router = APIRouter()
 
 @router.get(
     "/applications/documents/id/{document_id}",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def get_borrower_document(
     document_id: int,
@@ -58,7 +58,7 @@ async def get_borrower_document(
 
 @router.get(
     "/applications/{id}/download-application/{lang}",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def download_application(
     lang: str,
@@ -133,7 +133,7 @@ async def download_application(
 
 @router.get(
     "/applications/export/{lang}",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def export_applications(
     lang: str,

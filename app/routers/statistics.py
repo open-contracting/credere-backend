@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 import app.utils.statistics as statistics_utils
-from app import dependencies, serializers
+from app import dependencies, serializers, util
 from app.db import get_db
 from app.models import StatisticCustomRange, User
 
@@ -13,7 +13,7 @@ router = APIRouter()
 
 @router.get(
     "/statistics-ocp",
-    tags=["statistics"],
+    tags=[util.Tags.statistics],
 )
 async def get_admin_statistics_by_lender(
     initial_date: str | None = None,
@@ -60,7 +60,7 @@ async def get_admin_statistics_by_lender(
 
 @router.get(
     "/statistics-ocp/opt-in",
-    tags=["statistics"],
+    tags=[util.Tags.statistics],
 )
 async def get_admin_statistics_opt_in(
     admin: User = Depends(dependencies.get_admin_user),
@@ -82,7 +82,7 @@ async def get_admin_statistics_opt_in(
 
 @router.get(
     "/statistics-fi",
-    tags=["statistics"],
+    tags=[util.Tags.statistics],
 )
 async def get_lender_statistics(
     session: Session = Depends(get_db),

@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import auth, aws, dependencies, mail, models, parsers, serializers
+from app import auth, aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.i18n import _
 from app.settings import app_settings
@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post(
     "/users",
-    tags=["users"],
+    tags=[util.Tags.users],
 )
 async def create_user(
     payload: models.User,
@@ -266,7 +266,7 @@ def forgot_password(
 
 @router.get(
     "/users/{user_id}",
-    tags=["users"],
+    tags=[util.Tags.users],
 )
 async def get_user(
     user_id: int,
@@ -282,7 +282,7 @@ async def get_user(
 
 @router.get(
     "/users",
-    tags=["users"],
+    tags=[util.Tags.users],
 )
 async def get_all_users(
     page: int = Query(0, ge=0),
@@ -318,7 +318,7 @@ async def get_all_users(
 
 @router.put(
     "/users/{user_id}",
-    tags=["users"],
+    tags=[util.Tags.users],
     response_model=models.UserWithLender,
 )
 async def update_user(

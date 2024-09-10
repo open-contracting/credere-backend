@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.post(
     "/applications/{id}/reject-application",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def reject_application(
@@ -83,7 +83,7 @@ async def reject_application(
 
 @router.post(
     "/applications/{id}/complete-application",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def complete_application(
@@ -132,7 +132,7 @@ async def complete_application(
 
 @router.post(
     "/applications/{id}/approve-application",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def approve_application(
@@ -210,7 +210,7 @@ async def approve_application(
 
 @router.put(
     "/applications/{id}/verify-data-field",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def verify_data_field(
@@ -259,7 +259,7 @@ async def verify_data_field(
 
 @router.put(
     "/applications/documents/{document_id}/verify-document",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def verify_document(
@@ -300,7 +300,7 @@ async def verify_document(
 
 @router.put(
     "/applications/{id}/award",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def update_application_award(
@@ -345,7 +345,7 @@ async def update_application_award(
 
 @router.put(
     "/applications/{id}/borrower",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def update_application_borrower(
@@ -397,7 +397,7 @@ async def update_application_borrower(
 
 @router.get(
     "/applications/admin-list",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def get_applications_list(
     page: int = Query(0, ge=0),
@@ -429,7 +429,7 @@ async def get_applications_list(
 
 @router.get(
     "/applications",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def get_applications(
     page: int = Query(0, ge=0),
@@ -461,7 +461,7 @@ async def get_applications(
 
 @router.get(
     "/applications/id/{id}",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def get_application(
@@ -482,7 +482,7 @@ async def get_application(
 
 @router.post(
     "/applications/{id}/start",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def start_application(
@@ -514,7 +514,7 @@ async def start_application(
 
 @router.post(
     "/applications/email-sme/{id}",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.ApplicationWithRelations,
 )
 async def email_borrower(
@@ -567,7 +567,7 @@ async def email_borrower(
 
 @router.get(
     "/applications/{id}/previous-awards",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def previous_contracts(
     user: models.User = Depends(dependencies.get_user),

@@ -5,7 +5,7 @@ import os.path
 import uuid
 from contextlib import contextmanager
 from datetime import datetime
-from enum import StrEnum
+from enum import Enum, StrEnum
 from typing import Any, Callable, Generator, TypeVar
 
 import httpx
@@ -25,6 +25,15 @@ from app.sources import colombia as data_access
 T = TypeVar("T")
 MAX_FILE_SIZE = app_settings.max_file_size_mb * 1024 * 1024  # MB in bytes
 ALLOWED_EXTENSIONS = {".png", ".pdf", ".jpeg", ".jpg", ".zip"}
+
+
+# https://fastapi.tiangolo.com/tutorial/path-operation-configuration/#tags-with-enums
+class Tags(Enum):
+    applications = "applications"
+    lenders = "lenders"
+    meta = "meta"
+    statistics = "statistics"
+    users = "users"
 
 
 class SortOrder(StrEnum):

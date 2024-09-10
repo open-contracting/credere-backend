@@ -15,7 +15,7 @@ router = APIRouter()
 
 @router.get(
     "/applications/uuid/{uuid}",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def application_by_uuid(
     session: Session = Depends(get_db),
@@ -41,7 +41,7 @@ async def application_by_uuid(
 
 @router.post(
     "/applications/decline",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def decline(
     payload: parsers.ApplicationDeclinePayload,
@@ -85,7 +85,7 @@ async def decline(
 
 @router.post(
     "/applications/rollback-decline",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def rollback_decline(
     payload: parsers.ApplicationBase,
@@ -124,7 +124,7 @@ async def rollback_decline(
 
 @router.post(
     "/applications/decline-feedback",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def decline_feedback(
     payload: parsers.ApplicationDeclineFeedbackPayload,
@@ -158,7 +158,7 @@ async def decline_feedback(
 
 @router.post(
     "/applications/access-scheme",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def access_scheme(
     payload: parsers.ApplicationBase,
@@ -199,7 +199,7 @@ async def access_scheme(
 
 @router.post(
     "/applications/credit-product-options",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def credit_product_options(
     payload: parsers.ApplicationCreditOptions,
@@ -237,7 +237,7 @@ async def credit_product_options(
 
 @router.post(
     "/applications/select-credit-product",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def select_credit_product(
     payload: parsers.ApplicationSelectCreditProduct,
@@ -293,7 +293,7 @@ async def select_credit_product(
 
 @router.post(
     "/applications/rollback-select-credit-product",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def rollback_select_credit_product(
     payload: parsers.ApplicationBase,
@@ -343,7 +343,7 @@ async def rollback_select_credit_product(
 
 @router.post(
     "/applications/confirm-credit-product",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def confirm_credit_product(
     payload: parsers.ApplicationBase,
@@ -432,7 +432,7 @@ async def confirm_credit_product(
 
 @router.post(
     "/applications/rollback-confirm-credit-product",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def rollback_confirm_credit_product(
     payload: parsers.ApplicationBase,
@@ -494,7 +494,7 @@ async def rollback_confirm_credit_product(
 
 @router.post(
     "/applications/submit",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def update_apps_send_notifications(
     payload: parsers.ApplicationBase,
@@ -554,7 +554,7 @@ async def update_apps_send_notifications(
 
 @router.post(
     "/applications/upload-document",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.BorrowerDocumentBase,
 )
 async def upload_document(
@@ -603,7 +603,7 @@ async def upload_document(
 
 @router.post(
     "/applications/complete-information-request",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def complete_information_request(
     payload: parsers.ApplicationBase,
@@ -657,7 +657,7 @@ async def complete_information_request(
 
 @router.post(
     "/applications/upload-contract",
-    tags=["applications"],
+    tags=[util.Tags.applications],
     response_model=models.BorrowerDocumentBase,
 )
 async def upload_contract(
@@ -690,7 +690,7 @@ async def upload_contract(
 
 @router.post(
     "/applications/confirm-upload-contract",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def confirm_upload_contract(
     payload: parsers.UploadContractConfirmation,
@@ -753,7 +753,7 @@ async def confirm_upload_contract(
 
 @router.post(
     "/applications/find-alternative-credit-option",
-    tags=["applications"],
+    tags=[util.Tags.applications],
 )
 async def find_alternative_credit_option(
     payload: parsers.ApplicationBase,
