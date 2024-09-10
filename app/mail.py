@@ -39,7 +39,7 @@ def send(
             subject = _("Opportunity to access MSME credit for being awarded a public contract")
 
             base_fathom_url = "?utm_source=credere-intro&utm_medium=email&utm_campaign="
-            return {
+            parameters = {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "TENDER_TITLE": application.award.title,
                 "BUYER_NAME": application.award.buyer_name,
