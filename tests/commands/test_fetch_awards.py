@@ -16,7 +16,6 @@ borrower = load_json_file("fixtures/borrower.json")
 # borrower_declined = load_json_file("fixtures/borrower_declined.json")
 expected_borrower = load_json_file("fixtures/borrower_result.json")
 contract = load_json_file("fixtures/contract.json")
-email = load_json_file("fixtures/email.json")
 
 runner = CliRunner()
 
@@ -36,13 +35,12 @@ def mock_response(status_code: int, content: dict, function_path: str):
 
 
 @contextmanager
-def mock_whole_process(status_code: int, award: dict, borrower: dict, email: dict, function_path: str):
+def mock_whole_process(status_code: int, award: dict, borrower: dict, function_path: str):
     # Mock all calls to make_request_with_retry from fetch-awards.
     mock = MagicMock(
         side_effect=[
             MockResponse(status_code, award),
             MockResponse(status_code, borrower),
-            MockResponse(status_code, email),
             MockResponse(status_code, award),
         ]
     )
@@ -102,7 +100,6 @@ def test_fetch_previous_borrower_awards_empty(reset_database, sessionmaker, sess
             200,
             contract,
             borrower,
-            email,
             "app.sources.make_request_with_retry",
         ),
     ):
@@ -138,7 +135,6 @@ def test_fetch_previous_borrower_awards(reset_database, sessionmaker, session):
             200,
             [previous_contract],
             borrower,
-            email,
             "app.sources.make_request_with_retry",
         ),
     ):
@@ -173,7 +169,6 @@ def test_fetch_new_awards_from_date(reset_database, session):
             200,
             contract,
             borrower,
-            email,
             "app.sources.make_request_with_retry",
         ),
     ):
@@ -224,7 +219,6 @@ def test_fetch_award_by_id_and_supplier(reset_database, session):
             200,
             contract,
             borrower,
-            email,
             "app.sources.make_request_with_retry",
         ),
     ):
