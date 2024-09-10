@@ -532,8 +532,8 @@ async def update_apps_send_notifications(
         application.borrower_submitted_at = datetime.now(application.created_at.tzinfo)
         application.pending_documents = False
 
-        mail.send_new_application_ocp(client.ses, application)
-        mail.send_new_application_fi(client.ses, application)
+        mail.send(session, client.ses, models.MessageType.NEW_APPLICATION_OCP, application, save=False)
+        mail.send(session, client.ses, models.MessageType.NEW_APPLICATION_FI, application, save=False)
         mail.send(session, client.ses, models.MessageType.SUBMISSION_COMPLETED, application)
 
         session.commit()
