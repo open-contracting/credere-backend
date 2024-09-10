@@ -536,7 +536,7 @@ async def email_borrower(
             models.MessageType.FI_MESSAGE,
             application,
             message=payload.message,
-            message_kwargs={"body": payload.message, "lender_id": application.lender.id},
+            save_kwargs={"body": payload.message, "lender_id": application.lender.id},
         )
 
         session.commit()

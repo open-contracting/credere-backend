@@ -23,16 +23,16 @@ def send(
     application: Application,
     *,
     save: bool = True,
-    message_kwargs: dict[str, Any] | None = None,
+    save_kwargs: dict[str, Any] | None = None,
     **send_kwargs: Any,
 ) -> None:
-    # The template name can be overridden by the match statement, if it is conditional on `send_kwargs`.
+    # `template_name` can be overridden by the match statement, if it is conditional on `send_kwargs`.
     # If so, use new template names for each condition.
     template_name = message_type.lower()
 
     base_application_url = f"{app_settings.frontend_url}/application/{quote(application.uuid)}"
 
-    # recipients is a list of lists. Each sublist is a `ToAddresses` parameter for an email message.
+    # `recipients` is a list of lists. Each sublist is a `ToAddresses` parameter for an email message.
     match message_type:
         case MessageType.BORROWER_INVITATION | MessageType.BORROWER_PENDING_APPLICATION_REMINDER:
             recipients = [[application.primary_email]]
@@ -196,10 +196,10 @@ def send(
         )
 
     if save:
-        if message_kwargs is None:
-            message_kwargs = {}
+        if save_kwargs is None:
+            save_kwargs = {}
         Message.create(
-            session, application=application, type=message_type, external_message_id=message_id, **message_kwargs
+            session, application=application, type=message_type, external_message_id=message_id, **save_kwargs
         )
 
 
