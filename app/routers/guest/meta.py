@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app import models
+from app import models, util
 from app.i18n import _
 
 router = APIRouter()
@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get(
     "/meta",
-    tags=["meta"],
+    tags=[util.Tags.meta],
 )
 async def get_settings_by_domain() -> dict[str, list[dict[str, str]]]:
     """

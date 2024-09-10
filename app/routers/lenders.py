@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import dependencies, models, serializers
+from app import dependencies, models, serializers, util
 from app.db import get_db, rollback_on_error
 from app.i18n import _
 from app.sources import colombia as data_access
@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.post(
     "/lenders",
-    tags=["lenders"],
+    tags=[util.Tags.lenders],
 )
 async def create_lender(
     payload: models.LenderCreate,
@@ -52,7 +52,7 @@ async def create_lender(
 
 @router.post(
     "/lenders/{lender_id}/credit-products",
-    tags=["lenders"],
+    tags=[util.Tags.lenders],
 )
 async def create_credit_products(
     lender_id: int,
@@ -78,7 +78,7 @@ async def create_credit_products(
 
 @router.get(
     "/lenders/{lender_id}",
-    tags=["lenders"],
+    tags=[util.Tags.lenders],
     response_model=models.LenderWithRelations,
 )
 async def get_lender(
@@ -97,7 +97,7 @@ async def get_lender(
 
 @router.put(
     "/lenders/{lender_id}",
-    tags=["lenders"],
+    tags=[util.Tags.lenders],
 )
 async def update_lender(
     lender_id: int,
@@ -129,7 +129,7 @@ async def update_lender(
 
 @router.get(
     "/lenders",
-    tags=["lenders"],
+    tags=[util.Tags.lenders],
 )
 async def get_lenders_list(
     session: Session = Depends(get_db),
@@ -152,7 +152,7 @@ async def get_lenders_list(
 
 @router.get(
     "/procurement-categories",
-    tags=["lenders"],
+    tags=[util.Tags.lenders],
 )
 async def get_procurement_categories_from_source() -> list[str]:
     """
@@ -166,7 +166,7 @@ async def get_procurement_categories_from_source() -> list[str]:
 
 @router.get(
     "/credit-products/{credit_product_id}",
-    tags=["lenders"],
+    tags=[util.Tags.lenders],
     response_model=models.CreditProductWithLender,
 )
 async def get_credit_product(
@@ -197,7 +197,7 @@ async def get_credit_product(
 
 @router.put(
     "/credit-products/{credit_product_id}",
-    tags=["lenders"],
+    tags=[util.Tags.lenders],
 )
 async def update_credit_products(
     credit_product_id: int,

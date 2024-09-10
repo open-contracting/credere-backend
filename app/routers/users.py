@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app import auth, aws, dependencies, mail, models, parsers, serializers
+from app import auth, aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.i18n import _
 from app.settings import app_settings
@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post(
     "/users",
-    tags=["users"],
+    tags=[util.Tags.users],
 )
 async def create_user(
     payload: models.User,
@@ -61,6 +61,7 @@ async def create_user(
 
 @router.put(
     "/users/change-password",
+    tags=[util.Tags.authentication],
 )
 def change_password(
     payload: parsers.BasicUser,
@@ -106,6 +107,7 @@ def change_password(
 
 @router.put(
     "/users/setup-mfa",
+    tags=[util.Tags.authentication],
 )
 def setup_mfa(
     payload: parsers.SetupMFA,
@@ -138,6 +140,7 @@ def setup_mfa(
 
 @router.post(
     "/users/login",
+    tags=[util.Tags.authentication],
 )
 def login(
     payload: parsers.BasicUser,
@@ -198,6 +201,7 @@ def login(
 
 @router.get(
     "/users/logout",
+    tags=[util.Tags.authentication],
 )
 async def logout(
     request: Request,
@@ -222,6 +226,7 @@ async def logout(
 
 @router.get(
     "/users/me",
+    tags=[util.Tags.authentication],
 )
 def me(
     username_from_token: str = Depends(dependencies.get_current_user),
@@ -240,6 +245,7 @@ def me(
 
 @router.post(
     "/users/forgot-password",
+    tags=[util.Tags.authentication],
 )
 def forgot_password(
     payload: parsers.ResetPassword,
@@ -268,7 +274,7 @@ def forgot_password(
 
 @router.get(
     "/users/{user_id}",
-    tags=["users"],
+    tags=[util.Tags.users],
 )
 async def get_user(
     user_id: int,
@@ -285,7 +291,7 @@ async def get_user(
 
 @router.get(
     "/users",
-    tags=["users"],
+    tags=[util.Tags.users],
 )
 async def get_all_users(
     page: int = Query(0, ge=0),
@@ -321,7 +327,7 @@ async def get_all_users(
 
 @router.put(
     "/users/{user_id}",
-    tags=["users"],
+    tags=[util.Tags.users],
     response_model=models.UserWithLender,
 )
 async def update_user(
