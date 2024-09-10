@@ -30,17 +30,22 @@ def send(
     # If so, use new template names for each condition.
     template_name = message_type.lower()
 
+    base_application_url = f"{app_settings.frontend_url}/application/{quote(application.uuid)}"
+
     # recipients is a list of lists. Each sublist is a `ToAddresses` parameter for an email message.
     match message_type:
-        case MessageType.BORROWER_INVITATION:
+        case MessageType.BORROWER_INVITATION | MessageType.BORROWER_PENDING_APPLICATION_REMINDER:
             recipients = [[application.primary_email]]
             subject = _("Opportunity to access MSME credit for being awarded a public contract")
-            parameters = _get_borrower_invitation_parameters(application)
 
-        case MessageType.BORROWER_PENDING_APPLICATION_REMINDER:
-            recipients = [[application.primary_email]]
-            subject = _("Opportunity to access MSME credit for being awarded a public contract")
-            parameters = _get_borrower_invitation_parameters(application)
+            base_fathom_url = "?utm_source=credere-intro&utm_medium=email&utm_campaign="
+            return {
+                "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "TENDER_TITLE": application.award.title,
+                "BUYER_NAME": application.award.buyer_name,
+                "FIND_OUT_MORE_URL": f"{base_application_url}/intro{base_fathom_url}intro",
+                "REMOVE_ME_URL": f"{base_application_url}/decline{base_fathom_url}decline",
+            }
 
         case MessageType.BORROWER_PENDING_SUBMIT_REMINDER:
             recipients = [[application.primary_email]]
@@ -49,8 +54,8 @@ def send(
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "TENDER_TITLE": application.award.title,
                 "BUYER_NAME": application.award.buyer_name,
-                "APPLY_FOR_CREDIT_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/intro",
-                "REMOVE_ME_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/decline",
+                "APPLY_FOR_CREDIT_URL": f"{base_application_url}/intro",
+                "REMOVE_ME_URL": f"{base_application_url}/decline",
             }
 
         case MessageType.SUBMISSION_COMPLETED:
@@ -77,7 +82,7 @@ def send(
             parameters = {
                 "LENDER_NAME": application.lender.name,
                 "LENDER_MESSAGE": send_kwargs["message"],
-                "LOGIN_DOCUMENTS_URL": f"{app_settings.frontend_url}/application/{quote(application.uuid)}/documents",
+                "LOGIN_DOCUMENTS_URL": f"{base_application_url}/documents",
             }
 
         case MessageType.BORROWER_DOCUMENT_UPDATED:
@@ -95,9 +100,7 @@ def send(
 
             if send_kwargs["options"]:
                 template_name = "rejected_application_alternatives"
-                parameters["FIND_ALTENATIVE_URL"] = (
-                    f"{app_settings.frontend_url}/application/{quote(application.uuid)}/find-alternative-credit"
-                )
+                parameters["FIND_ALTENATIVE_URL"] = f"{base_application_url}/find-alternative-credit"
             else:
                 template_name = "rejected_application_no_alternatives"
 
@@ -117,9 +120,7 @@ def send(
                 "TENDER_TITLE": application.award.title,
                 "BUYER_NAME": application.award.buyer_name,
                 "ADDITIONAL_COMMENTS": additional_comments,
-                "UPLOAD_CONTRACT_URL": (
-                    f"{app_settings.frontend_url}/application/{quote(application.uuid)}/upload-contract"
-                ),
+                "UPLOAD_CONTRACT_URL": f"{base_application_url}/upload-contract",
             }
 
         case MessageType.CONTRACT_UPLOAD_CONFIRMATION:
@@ -172,7 +173,7 @@ def send(
                 "NEW_MAIL": send_kwargs["new_email"],
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
                 "CONFIRM_EMAIL_CHANGE_URL": (
-                    f"{app_settings.frontend_url}/application/{quote(application.uuid)}/change-primary-email"
+                    f"{base_application_url}/change-primary-email"
                     f"?token={quote(send_kwargs['confirmation_email_token'])}"
                 ),
             }
@@ -299,18 +300,6 @@ def send_reset_password(ses: SESClient, *, username: str, temporary_password: st
             ),
         },
     )
-
-
-def _get_borrower_invitation_parameters(application: Application) -> dict[str, str]:
-    base_application_url = f"{app_settings.frontend_url}/application/{quote(application.uuid)}"
-    base_fathom_url = "?utm_source=credere-intro&utm_medium=email&utm_campaign="
-    return {
-        "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-        "TENDER_TITLE": application.award.title,
-        "BUYER_NAME": application.award.buyer_name,
-        "FIND_OUT_MORE_URL": f"{base_application_url}/intro{base_fathom_url}intro",
-        "REMOVE_ME_URL": f"{base_application_url}/decline{base_fathom_url}decline",
-    }
 
 
 def send_overdue_application_to_lender(ses: SESClient, *, lender: Lender, amount: int) -> str:
