@@ -23,10 +23,18 @@ Credere frontend's ``src/constants/index.ts`` constants should match ``app.model
      - SIGNED_CONTRACT_DOCUMENT_TYPE
    * - CreditType
      - CREDIT_PRODUCT_TYPE
-   * - StatisticCustomRange
-     - STATISTICS_DATE_FILTER
    * - UserType
      - USER_TYPES
+
+… and also ``app.util`` enumerations.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Backend
+     - Frontend
+   * - StatisticCustomRange
+     - STATISTICS_DATE_FILTER
 
 Schemas and models
 ------------------

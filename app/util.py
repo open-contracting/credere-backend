@@ -32,6 +32,11 @@ class SortOrder(StrEnum):
     DESC = "desc"
 
 
+class StatisticCustomRange(StrEnum):
+    LAST_WEEK = "LAST_WEEK"
+    LAST_MONTH = "LAST_MONTH"
+
+
 # In future, httpx.Client might allow custom decoders. https://github.com/encode/httpx/issues/717
 def loads(response: httpx.Response) -> Any:
     return orjson.loads(response.text)

@@ -372,11 +372,6 @@ class BorrowerType(StrEnum):
     LEGAL_PERSON = i("LEGAL_PERSON")
 
 
-class StatisticCustomRange(StrEnum):
-    LAST_WEEK = "LAST_WEEK"
-    LAST_MONTH = "LAST_MONTH"
-
-
 class LenderBase(SQLModel):
     #: The name of the lender.
     name: str = Field(default="", unique=True)
