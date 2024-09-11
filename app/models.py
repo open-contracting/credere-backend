@@ -132,7 +132,8 @@ class ActiveRecordMixin:
 
     @classmethod
     def create_or_update(cls, session: Session, filters: list[bool | ColumnElement[Boolean]], **data: Any) -> Self:
-        if obj := session.query(cls).filter(*filters).first():
+        obj: Self | None = session.query(cls).filter(*filters).first()
+        if obj:
             return obj.update(session, **data)
         return cls.create(session, **data)
 
@@ -592,7 +593,8 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
         """
         :return: The most recent ``source_last_updated_at`` value.
         """
-        if obj := session.query(cls).order_by(nulls_last(desc(cls.source_last_updated_at))).first():
+        obj: Self | None = session.query(cls).order_by(nulls_last(desc(cls.source_last_updated_at))).first()
+        if obj:
             return obj.source_last_updated_at
         return None
 

@@ -221,7 +221,7 @@ def sla_overdue_applications() -> None:
     Send reminders to lenders and OCP about overdue applications.
     """
     with contextmanager(get_db)() as session:
-        overdue_lenders: dict[str, Any] = defaultdict(lambda: {"count": 0})
+        overdue_lenders: dict[int, Any] = defaultdict(lambda: {"count": 0})
         for application in session.query(models.Application).filter(
             col(models.Application.status).in_(
                 [models.ApplicationStatus.CONTRACT_UPLOADED, models.ApplicationStatus.STARTED]

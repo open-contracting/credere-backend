@@ -2,15 +2,20 @@
 
 import logging.config
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import sentry_sdk
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
+if TYPE_CHECKING:
+    from sentry_sdk._types import Event
+else:
+    Event = dict[str, Any]
 
-def sentry_filter_transactions(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
+
+def sentry_filter_transactions(event: Event, hint: dict[str, Any]) -> Event | None:
     """
     Filter transactions to be sent to Sentry.
     This function prevents transactions that interact with Cognito from being sent to Sentry.

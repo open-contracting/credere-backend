@@ -43,7 +43,6 @@ async def get_admin_statistics_by_lender(
         statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
     else:
         if custom_range is not None:
-            custom_range = custom_range.upper()
             current_date = datetime.now().date()
 
             if custom_range == StatisticRange.LAST_WEEK:

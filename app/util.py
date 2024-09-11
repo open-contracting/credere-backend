@@ -54,7 +54,7 @@ def loads(response: httpx.Response) -> Any:
 
 
 def get_object_or_404(session: Session, model: type[T], field: str, value: Any) -> T:
-    obj = model.first_by(session, field, value)
+    obj: T | None = model.first_by(session, field, value)
     if not obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -238,7 +238,7 @@ def create_or_update_borrower_document(
     :return: The newly created or updated BorrowerDocument.
     """
 
-    existing_document = (
+    existing_document: models.BorrowerDocument | None = (
         session.query(models.BorrowerDocument)
         .filter(
             models.BorrowerDocument.application_id == application.id,
@@ -255,12 +255,12 @@ def create_or_update_borrower_document(
             verified=verified,
             submitted_at=datetime.utcnow(),
         )
-    else:
-        return models.BorrowerDocument.create(
-            session,
-            application_id=application.id,
-            type=type,
-            file=file,
-            name=filename,
-            verified=verified,
-        )
+
+    return models.BorrowerDocument.create(
+        session,
+        application_id=application.id,
+        type=type,
+        file=file,
+        name=filename,
+        verified=verified,
+    )

@@ -28,7 +28,7 @@ async def get_auth_credentials(request: Request) -> auth.JWTAuthorizationCredent
     return await auth.JWTAuthorization()(request)
 
 
-async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials)) -> str:
+async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials)) -> Any:
     """
     Extracts the username of the current user from the provided JWT credentials.
 
@@ -37,7 +37,7 @@ async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depen
     :return: The username of the current user.
     """
     try:
-        return credentials.claims["username"]
+        return credentials.claims["username"]  # str
     except KeyError:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
