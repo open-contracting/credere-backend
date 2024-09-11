@@ -12,10 +12,4 @@ jobs:
           cache: pip
           cache-dependency-path: setup.cfg
       - run: pip install -r requirements_dev.txt
-      # https://github.com/python/typing/issues/213 might resolve some models.py errors.
-      - shell: sh {0}
-        run: |
-          mypy --strict --show-error-codes app reportlab_mods.py > error-summary.txt
-          status=$?
-          cat error-summary.txt
-          [ $status -eq 0 ] || [ $(tail -n1 error-summary.txt | cut -d' ' -f2) -le 20 ]
+      - run: mypy --strict --show-error-codes app reportlab_mods.py

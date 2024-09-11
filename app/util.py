@@ -54,7 +54,8 @@ def loads(response: httpx.Response) -> Any:
 
 
 def get_object_or_404(session: Session, model: type[T], field: str, value: Any) -> T:
-    obj: T | None = model.first_by(session, field, value)
+    # "type[T]" has no attribute "first_by" https://github.com/python/typing/issues/213
+    obj: T | None = model.first_by(session, field, value)  # type: ignore[attr-defined]
     if not obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -110,7 +111,9 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     :raise HTTPException: If the file format is not allowed or if the file size is too large.
     """
     filename = file.filename
-    if os.path.splitext(filename)[1].lower() not in ALLOWED_EXTENSIONS:
+    # Value of type variable "AnyOrLiteralStr" of "splitext" cannot be "str | None"
+    # Item "None" of "str | None" has no attribute "lower"
+    if os.path.splitext(filename)[1].lower() not in ALLOWED_EXTENSIONS:  # type: ignore[type-var,union-attr]
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=_("Format not allowed. It must be a PNG, JPEG, PDF or ZIP file"),
@@ -158,7 +161,9 @@ def get_modified_data_fields(session: Session, application: models.Application) 
         borrower=application.borrower,
         lender=application.lender,
         credit_product=application.credit_product,
-        borrower_documents=application.borrower_documents,
+        # incompatible type "list[BorrowerDocument]"; expected "list[BorrowerDocumentBase]"
+        # https://github.com/open-contracting/credere-backend/issues/376
+        borrower_documents=application.borrower_documents,  # type: ignore[arg-type]
         modified_data_fields=modified_data_fields,
     )
 

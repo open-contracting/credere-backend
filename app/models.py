@@ -107,8 +107,8 @@ class ActiveRecordMixin:
         :param data: The initial instance data.
         :return: The inserted instance.
         """
-        # https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/
-        obj = cls.model_validate(obj)
+        # https://github.com/fastapi/sqlmodel/issues/348
+        obj = cls.model_validate(obj)  # type: ignore[attr-defined]
         session.add(obj)
         session.flush()
         return obj
@@ -124,7 +124,8 @@ class ActiveRecordMixin:
         for key, value in data.items():
             setattr(self, key, value)
         if hasattr(self, "missing_data"):  # Award and Borrower
-            self.missing_data = get_missing_data_keys(self.model_dump())
+            # https://github.com/fastapi/sqlmodel/issues/348
+            self.missing_data = get_missing_data_keys(self.model_dump())  # type: ignore[attr-defined]
 
         session.add(self)  # not strictly necessary
         session.flush()
@@ -961,7 +962,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         else:
             # Days between the lender starting and now.
             end_time = datetime.now(self.tz)
-        days += (end_time - self.lender_started_at).days
+        days += (end_time - self.lender_started_at).days  # type: ignore[operator]
 
         # A lender can have only one unresponded request at a time.
         for borrower_response in base_query.filter(

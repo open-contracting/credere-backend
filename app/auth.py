@@ -85,7 +85,9 @@ class JWTAuthorization(HTTPBearer):
 
         return alg_obj.verify(msg, prepared_key, sig)
 
-    async def __call__(self, request: Request) -> JWTAuthorizationCredentials:
+    # Return type "Coroutine[Any, Any, JWTAuthorizationCredentials]" of "__call__" incompatible with
+    # return type "Coroutine[Any, Any, HTTPAuthorizationCredentials | None]" in supertypes "HTTPBearer" and "HTTPBase"
+    async def __call__(self, request: Request) -> JWTAuthorizationCredentials:  # type: ignore[override]
         """
         Authenticate and verify the provided JWT token in the request.
 
