@@ -16,7 +16,6 @@ README.rst
 
 # Configuration
 pyproject.toml
-setup.cfg
 *.db
 
 
