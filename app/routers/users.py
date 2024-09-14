@@ -50,13 +50,12 @@ async def create_user(
             mail.send_new_user(
                 client.ses, name=payload.name, username=payload.email, temporary_password=temporary_password
             )
-
-            return user
         except (client.cognito.exceptions.UsernameExistsException, IntegrityError):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=_("User with that email already exists"),
-            )
+            ) from None
+        return user
 
 
 @router.put(
@@ -128,12 +127,12 @@ def setup_mfa(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=_("Invalid session for the user, session is expired"),
-        )
+        ) from None
     except client.cognito.exceptions.EnableSoftwareTokenMFAException:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=_("Invalid MFA code"),
-        )
+        ) from None
 
     return serializers.ResponseBase(detail=_("MFA configured successfully"))
 
@@ -185,12 +184,12 @@ def login(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=_("Invalid username or password"),
-        )
+        ) from None
     except client.cognito.exceptions.CodeMismatchException:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=_("Invalid MFA code"),
-        )
+        ) from None
 
     return serializers.LoginResponse(
         user=user,
@@ -211,9 +210,9 @@ async def logout(
     Logout the user from all devices in Cognito.
     """
     try:
-        # get_auth_credentials()
+        # get_auth_credentials
         credentials = await auth.JWTAuthorization()(request)
-        # get_current_user()
+        # get_current_user
         username = credentials.claims["username"]
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/admin_user_global_sign_out.html
         client.cognito.admin_user_global_sign_out(UserPoolId=app_settings.cognito_pool_id, Username=username)
@@ -347,9 +346,9 @@ async def update_user(
             user = user.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
             session.commit()
-            return user
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=_("User with that email already exists"),
-            )
+            ) from None
+        return user

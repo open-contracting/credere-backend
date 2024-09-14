@@ -35,10 +35,9 @@ def upgrade() -> None:
             column_info = column
             break
 
-    if column_info is not None:
-        if column_info["nullable"]:
-            # The award_id column is already nullable, no migration required
-            return
+    if column_info is not None and column_info["nullable"]:
+        # The award_id column is already nullable, no migration required
+        return
 
     # The award_id column is not nullable or doesn't exist, perform the migration
     op.alter_column(
@@ -62,12 +61,11 @@ def downgrade() -> None:
             column_info = column
             break
 
-    if column_info is not None:
-        if not column_info["nullable"]:
-            # The award_id column is not nullable, perform the downgrade
-            op.alter_column(
-                "application",
-                "award_id",
-                existing_type=sa.Integer(),
-                nullable=False,
-            )
+    if column_info is not None and not column_info["nullable"]:
+        # The award_id column is not nullable, perform the downgrade
+        op.alter_column(
+            "application",
+            "award_id",
+            existing_type=sa.Integer(),
+            nullable=False,
+        )

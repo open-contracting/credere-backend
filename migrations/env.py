@@ -13,15 +13,7 @@ config.set_section_option(section, "DATABASE_URL", app_settings.database_url)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-# target_metadata = metadata
 target_metadata = SQLModel.metadata  # noqa: F405
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
 
 
 def run_migrations_offline() -> None:

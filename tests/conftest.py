@@ -1,9 +1,10 @@
 import json
 import os
 import uuid
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, Generator
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import boto3

@@ -144,12 +144,9 @@ async def approve_application(
     with rollback_on_error(session):
         # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
         # the application's `secop_data_verification`.
-        not_validated_fields = []
         app_secop_dict = application.secop_data_verification.copy()
         fields = list(parsers.UpdateDataField().model_dump().keys())
-        for key in fields:
-            if key not in app_secop_dict or not app_secop_dict[key]:
-                not_validated_fields.append(key)
+        not_validated_fields = [key for key in fields if key not in app_secop_dict or not app_secop_dict[key]]
         if not_validated_fields:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -157,10 +154,7 @@ async def approve_application(
             )
 
         # Check all documents are verified.
-        not_validated_documents = []
-        for document in application.borrower_documents:
-            if not document.verified:
-                not_validated_documents.append(document.type)
+        not_validated_documents = [doc.type for doc in application.borrower_documents if not doc.verified]
         if not_validated_documents:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -354,7 +348,7 @@ async def update_application_borrower(
 
         # Update the borrower.
         update_dict = jsonable_encoder(payload, exclude_unset=True)
-        for field, value in update_dict.items():
+        for field in update_dict:
             if not application.borrower.missing_data[field]:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

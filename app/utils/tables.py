@@ -244,18 +244,7 @@ def create_documents_table(documents: list[models.BorrowerDocument], lang: str) 
     :return: The generated table.
     """
 
-    data = [
-        [
-            _("MSME Documents", lang),
-            _("Data", lang),
-        ]
-    ]
-    for document in documents:
-        data.append(
-            [
-                _(document.type),
-                document.name,
-            ]
-        )
+    data = [[_("MSME Documents", lang), _("Data", lang)]]
+    data.extend([_(document.type), document.name] for document in documents)
 
     return create_table(data)

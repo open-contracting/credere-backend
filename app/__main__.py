@@ -5,26 +5,29 @@ import json
 import sys
 import types
 from collections import defaultdict
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Any, Callable, Generator
+from typing import TYPE_CHECKING, Any
 
 import click
 import minify_html
 import typer.cli
 from fastapi.params import Depends, Header
-from fastapi.routing import APIRoute
 from rich.console import Console
 from rich.table import Table
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
-from starlette.routing import Route
 
 from app import aws, mail, main, models, util
 from app.db import get_db, handle_skipped_award, rollback_on_error
 from app.exceptions import SkippedAwardError, SourceFormatError
 from app.settings import app_settings
 from app.sources import colombia as data_access
+
+if TYPE_CHECKING:
+    from fastapi.routing import APIRoute
+    from starlette.routing import Route
 
 state = {"quiet": False}
 
@@ -203,16 +206,15 @@ def update_applications_to_lapsed() -> None:
     """
     Lapse applications that have been waiting for the borrower to respond for some time.
     """
-    with contextmanager(get_db)() as session:
-        with rollback_on_error(session):
-            for application in models.Application.lapseable(session).options(
-                joinedload(models.Application.borrower),
-                joinedload(models.Application.borrower_documents),
-            ):
-                application.status = models.ApplicationStatus.LAPSED
-                application.application_lapsed_at = datetime.utcnow()
+    with contextmanager(get_db)() as session, rollback_on_error(session):
+        for application in models.Application.lapseable(session).options(
+            joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
+        ):
+            application.status = models.ApplicationStatus.LAPSED
+            application.application_lapsed_at = datetime.utcnow()
 
-            session.commit()
+        session.commit()
 
 
 @app.command()
@@ -258,40 +260,39 @@ def remove_dated_application_data() -> None:
     Clear personal data and delete borrower documents from applications that have been in a final state for some time.
     If the borrower has no other active applications, clear the borrower's personal data.
     """
-    with contextmanager(get_db)() as session:
-        with rollback_on_error(session):
-            for application in models.Application.archivable(session).options(
-                joinedload(models.Application.borrower),
-                joinedload(models.Application.borrower_documents),
-            ):
-                application.award.previous = True
-                application.primary_email = ""
-                application.archived_at = datetime.utcnow()
+    with contextmanager(get_db)() as session, rollback_on_error(session):
+        for application in models.Application.archivable(session).options(
+            joinedload(models.Application.borrower),
+            joinedload(models.Application.borrower_documents),
+        ):
+            application.award.previous = True
+            application.primary_email = ""
+            application.archived_at = datetime.utcnow()
 
-                for document in application.borrower_documents:
-                    session.delete(document)
+            for document in application.borrower_documents:
+                session.delete(document)
 
-                # Clear the associated borrower's personal data if they have no other active applications.
-                if not session.query(
-                    models.Application.unarchived(session)
-                    .filter(
-                        models.Application.borrower_id == application.borrower_id,
-                        models.Application.id != application.id,
-                    )
-                    .exists()
-                ).scalar():
-                    application.borrower.legal_name = ""
-                    application.borrower.email = ""
-                    application.borrower.address = ""
-                    application.borrower.legal_identifier = ""
-                    application.borrower.source_data = {}
+            # Clear the associated borrower's personal data if they have no other active applications.
+            if not session.query(
+                models.Application.unarchived(session)
+                .filter(
+                    models.Application.borrower_id == application.borrower_id,
+                    models.Application.id != application.id,
+                )
+                .exists()
+            ).scalar():
+                application.borrower.legal_name = ""
+                application.borrower.email = ""
+                application.borrower.address = ""
+                application.borrower.legal_identifier = ""
+                application.borrower.source_data = {}
 
-            session.commit()
+        session.commit()
 
 
 # The openapi.json file can't be used, because it doesn't track Python modules.
 @dev.command()
-def routes(csv_format: bool = False) -> None:
+def routes(*, csv_format: bool = False) -> None:
     """
     Print a table of routes.
     """
@@ -313,7 +314,8 @@ def routes(csv_format: bool = False) -> None:
 
     rows = []
     for route in main.app.routes:
-        assert isinstance(route, (APIRoute, Route))
+        if TYPE_CHECKING:
+            assert isinstance(route, APIRoute | Route)
 
         # Skip default OpenAPI routes.
         if route.endpoint.__module__.startswith("fastapi."):
@@ -327,7 +329,7 @@ def routes(csv_format: bool = False) -> None:
                 arg
                 for arg, default in itertools.zip_longest(reversed(spec.args), reversed(spec.defaults or []))
                 # Note: Depends() can contain application `id` and `uuid` args, under many layers.
-                if not isinstance(default, (Depends, Header))
+                if not isinstance(default, Depends | Header)
             )
 
         response = _pretty(getattr(route, "response_model", None), "app.serializers")
@@ -373,7 +375,7 @@ def cli_input_json(name: str, file: typer.FileText) -> None:
 
 # https://typer.tiangolo.com/tutorial/commands/callback/
 @app.callback()
-def cli(quiet: bool = typer.Option(False, "--quiet", "-q")) -> None:
+def cli(*, quiet: bool = typer.Option(False, "--quiet", "-q")) -> None:  # noqa: FBT003
     if quiet:
         state["quiet"] = True
 

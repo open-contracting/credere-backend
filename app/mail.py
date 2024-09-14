@@ -230,7 +230,7 @@ def _send_email(
     parameters.setdefault("IMAGES_BASE_URL", app_settings.images_base_url)
     content = (BASE_TEMPLATES_PATH / f"{template_name}.{app_settings.email_template_lang}.html").read_text()
     for key, value in parameters.items():
-        content = content.replace("{{%s}}" % key, value)
+        content = content.replace("{{%s}}" % key, value)  # noqa: UP031
 
     logger.info("%s - Email to: %s sent to %s", app_settings.environment, original_addresses, to_addresses)
     return ses.send_templated_email(

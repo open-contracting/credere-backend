@@ -1,6 +1,7 @@
+from collections.abc import Callable, Generator
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Generator
+from typing import TYPE_CHECKING, Any
 
 from fastapi import Depends, Form, HTTPException, Request, status
 from sqlalchemy.orm import Session, defaultload, joinedload
@@ -42,7 +43,7 @@ async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depen
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=_("Username missing"),
-        )
+        ) from None
 
 
 async def get_user(username: str = Depends(get_current_user), session: Session = Depends(get_db)) -> models.User:
@@ -81,7 +82,8 @@ def raise_if_unauthorized(
     statuses: tuple[models.ApplicationStatus, ...] = (),
 ) -> None:
     if roles:
-        assert user is not None
+        if TYPE_CHECKING:
+            assert user is not None
         for role in roles:
             match role:
                 case models.UserType.OCP:
@@ -109,12 +111,11 @@ def raise_if_unauthorized(
                 detail=_("Application expired"),
             )
 
-    if statuses:
-        if application.status not in statuses:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_("Application status should not be %(status)s", status=_(application.status)),
-            )
+    if statuses and application.status not in statuses:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=_("Application status should not be %(status)s", status=_(application.status)),
+        )
 
 
 def get_application_as_user(id: int, session: Session = Depends(get_db)) -> models.Application:

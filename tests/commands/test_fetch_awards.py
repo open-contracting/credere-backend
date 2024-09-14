@@ -13,7 +13,6 @@ expected_application = load_json_file("fixtures/application_result.json")
 award = load_json_file("fixtures/award.json")
 expected_award = load_json_file("fixtures/award_result.json")
 borrower = load_json_file("fixtures/borrower.json")
-# borrower_declined = load_json_file("fixtures/borrower_declined.json")
 expected_borrower = load_json_file("fixtures/borrower_result.json")
 contract = load_json_file("fixtures/contract.json")
 

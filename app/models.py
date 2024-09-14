@@ -40,7 +40,8 @@ def get_order_by(sort_field: str, sort_order: str, model: type[SQLModel] | None 
 #
 # The session.flush() calls are not strictly necessary. However, they can avoid errors like:
 #
-#     instance.related_id = related.id  # related_id is set to None
+# >>> instance.related_id = related.id
+# (related_id is set to None)
 class ActiveRecordMixin:
     @classmethod
     def filter_by(cls, session: Session, field: str, value: Any) -> "Query[Self]":
@@ -956,24 +957,16 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             ApplicationAction.type == ApplicationActionType.FI_REQUEST_INFORMATION
         ).all()
 
-        if lender_requests:
-            # Days between the lender starting and making a first request.
-            end_time = lender_requests.pop(0).created_at
-        else:
-            # Days between the lender starting and now.
-            end_time = datetime.now(self.tz)
+        # Days between the lender starting and making a first request. / Days between the lender starting and now.
+        end_time = lender_requests.pop(0).created_at if lender_requests else datetime.now(self.tz)
         days += (end_time - self.lender_started_at).days  # type: ignore[operator]
 
         # A lender can have only one unresponded request at a time.
         for borrower_response in base_query.filter(
             ApplicationAction.type == ApplicationActionType.MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED
         ):
-            if lender_requests:
-                # Days between the next request and the next response.
-                end_time = lender_requests.pop(0).created_at
-            else:
-                # Days between the last request and now.
-                end_time = datetime.now(self.tz)
+            # Days between the next request and the next response. / Days between the last request and now.
+            end_time = lender_requests.pop(0).created_at if lender_requests else datetime.now(self.tz)
             days += (end_time - borrower_response.created_at).days
 
             if not lender_requests:

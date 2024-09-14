@@ -3,10 +3,11 @@ import hashlib
 import hmac
 import os.path
 import uuid
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum, StrEnum
-from typing import Any, Callable, Generator, TypeVar
+from typing import Any, TypeVar
 
 import httpx
 import orjson
@@ -144,7 +145,7 @@ def get_modified_data_fields(session: Session, application: models.Application) 
         key_prefix = (
             "award_updates" if action.type == models.ApplicationActionType.AWARD_UPDATE else "borrower_updates"
         )
-        for key, value in action_data.items():
+        for key in action_data:
             if (
                 key not in modified_data_fields[key_prefix]
                 or action.created_at > modified_data_fields[key_prefix][key]["modified_at"]
@@ -180,7 +181,7 @@ def create_award_from_data_source(
     :return: The inserted award.
     """
 
-    data = data_access.get_award(entry, borrower_id, previous)
+    data = data_access.get_award(entry, borrower_id, previous=previous)
     if award := models.Award.first_by(session, "source_contract_id", data["source_contract_id"]):
         raise SkippedAwardError(
             "Award already exists",
@@ -212,11 +213,10 @@ def get_previous_awards_from_data_source(
         return
 
     for entry in awards_response_json:
-        with contextmanager(db_provider)() as session:
-            with handle_skipped_award(session, "Error creating award"):
-                create_award_from_data_source(session, entry, borrower.id, previous=True)
+        with contextmanager(db_provider)() as session, handle_skipped_award(session, "Error creating award"):
+            create_award_from_data_source(session, entry, borrower.id, previous=True)
 
-                session.commit()
+            session.commit()
 
 
 def create_or_update_borrower_document(
