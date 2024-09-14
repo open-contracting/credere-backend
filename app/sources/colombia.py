@@ -49,7 +49,7 @@ PROCUREMENT_CATEGORIES = [
 
 
 def _get_remote_contract(
-    proceso_de_compra: str, proveedor_adjudicado: str, previous: bool = False
+    proceso_de_compra: str, proveedor_adjudicado: str, *, previous: bool = False
 ) -> tuple[list[dict[str, str]], str]:
     params = f"proceso_de_compra='{proceso_de_compra}' AND documento_proveedor='{proveedor_adjudicado}'"
     if previous:
@@ -61,6 +61,7 @@ def _get_remote_contract(
 def get_award(
     entry: dict[str, Any],
     borrower_id: int | None = None,
+    *,
     previous: bool = False,
 ) -> dict[str, str | None]:
     """
@@ -75,10 +76,14 @@ def get_award(
     proceso_de_compra = entry["id_del_portafolio"]
     proveedor_adjudicado = entry["nit_del_proveedor_adjudicado"]
 
-    contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, proveedor_adjudicado, previous)
+    contract_response_json, contract_url = _get_remote_contract(
+        proceso_de_compra, proveedor_adjudicado, previous=previous
+    )
     if not contract_response_json:
         # Retry without proveedor_adjudicado, in case contract data is available, but not the supplier name.
-        contract_response_json, contract_url = _get_remote_contract(proceso_de_compra, "No Adjudicado", previous)
+        contract_response_json, contract_url = _get_remote_contract(
+            proceso_de_compra, "No Adjudicado", previous=previous
+        )
         if not contract_response_json:
             raise SkippedAwardError("No remote contracts found", url=contract_url, data={"previous": previous})
 
@@ -91,7 +96,7 @@ def get_award(
     new_award = {
         "source_url": entry.get("urlproceso", {}).get("url", ""),
         "entity_code": entry.get("nit_entidad", ""),
-        "source_last_updated_at": entry.get("fecha_de_ultima_publicaci", None),
+        "source_last_updated_at": entry.get("fecha_de_ultima_publicaci"),
         "procurement_method": entry.get("modalidad_de_contratacion", ""),
         "buyer_name": entry.get("entidad", ""),
         "contracting_process_id": proceso_de_compra,
@@ -99,7 +104,7 @@ def get_award(
         "previous": previous,
         "source_data_awards": entry,
         "description": entry.get("descripci_n_del_procedimiento", ""),
-        "award_date": entry.get("fecha_adjudicacion", None),
+        "award_date": entry.get("fecha_adjudicacion"),
         "contract_status": entry.get("estado_del_procedimiento", ""),
         "title": entry.get("nombre_del_procedimiento", ""),
         "payment_method": {
@@ -109,8 +114,8 @@ def get_award(
             "valor_pendiente_de_pago": remote_contract.get("valor_pendiente_de_pago", ""),
             "valor_pagado": remote_contract.get("valor_pagado", ""),
         },
-        "contractperiod_startdate": remote_contract.get("fecha_de_inicio_del_contrato", None),
-        "contractperiod_enddate": remote_contract.get("fecha_de_fin_del_contrato", None),
+        "contractperiod_startdate": remote_contract.get("fecha_de_inicio_del_contrato"),
+        "contractperiod_enddate": remote_contract.get("fecha_de_fin_del_contrato"),
         "award_amount": remote_contract.get("valor_del_contrato", ""),
         "source_data_contracts": remote_contract,
         "source_contract_id": source_contract_id,
@@ -238,7 +243,7 @@ def get_supplier_id(entry: dict[str, str]) -> str:
     :return: The document provider for the borrower.
     """
 
-    supplier_id = entry.get("nit_del_proveedor_adjudicado", None)
+    supplier_id = entry.get("nit_del_proveedor_adjudicado")
     if not supplier_id or supplier_id == "No Definido":
         raise SkippedAwardError("Missing supplier_id", data=entry)
 

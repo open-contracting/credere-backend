@@ -1,5 +1,5 @@
 import functools
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import jwt
 import requests  # moto intercepts only requests, not httpx: https://github.com/getmoto/moto/issues/4197
@@ -33,7 +33,8 @@ def get_keys() -> dict[str, JWK]:
         for jwk in JWKS.model_validate(
             requests.get(
                 f"https://cognito-idp.{app_settings.aws_region}.amazonaws.com/"
-                f"{app_settings.cognito_pool_id}/.well-known/jwks.json"
+                f"{app_settings.cognito_pool_id}/.well-known/jwks.json",
+                timeout=10,
             ).json()
         ).keys
     }
@@ -48,7 +49,7 @@ class JWTAuthorization(HTTPBearer):
     :param auto_error: If set to True, automatic error responses will be sent when request authentication fails.
     """
 
-    def __init__(self, auto_error: bool = True):
+    def __init__(self, *, auto_error: bool = True):
         super().__init__(auto_error=auto_error)
         self.kid_to_jwk = get_keys()
 
@@ -73,14 +74,15 @@ class JWTAuthorization(HTTPBearer):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=_("JWK public key not found"),
-            )
+            ) from None
 
         msg = jwt_credentials.message.encode()
         sig = base64url_decode(jwt_credentials.signature.encode())
 
         obj = jwt.PyJWK(public_key)
         alg_obj = obj.Algorithm
-        assert alg_obj
+        if TYPE_CHECKING:
+            assert alg_obj
         prepared_key = alg_obj.prepare_key(obj.key)
 
         return alg_obj.verify(msg, prepared_key, sig)
@@ -123,7 +125,7 @@ class JWTAuthorization(HTTPBearer):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=_("JWK invalid"),
-                )
+                ) from None
 
             if not self.verify_jwk_token(jwt_credentials):
                 raise HTTPException(
@@ -132,8 +134,7 @@ class JWTAuthorization(HTTPBearer):
                 )
 
             return jwt_credentials
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=_("Not authenticated"),
-            )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=_("Not authenticated"),
+        )

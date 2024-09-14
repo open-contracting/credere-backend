@@ -42,12 +42,12 @@ async def create_lender(
                     session.add(models.CreditProduct(**credit_product.model_dump(), lender=lender))
 
             session.commit()
-            return lender
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=_("Lender with that name already exists"),
-            )
+            ) from None
+        return lender
 
 
 @router.post(
@@ -119,12 +119,12 @@ async def update_lender(
             lender = lender.update(session, **jsonable_encoder(payload, exclude_unset=True))
 
             session.commit()
-            return lender
         except IntegrityError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=_("Lender with that name already exists"),
-            )
+            ) from None
+        return lender
 
 
 @router.get(
@@ -190,7 +190,7 @@ async def get_credit_product(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=_("Credit product not found"),
-        )
+        ) from None
 
     return credit_product
 

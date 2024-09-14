@@ -28,17 +28,17 @@ pdfmetrics.registerFontFamily(
 
 width, height = A4
 styles = getSampleStyleSheet()  # type: ignore[no-untyped-call]
-styleN = styles["BodyText"]
+styleN = styles["BodyText"]  # noqa: N816
 styleN.fontName = "GTEestiProDisplay"
 styleN.alignment = TA_LEFT
-styleBH = styles["Normal"]
+styleBH = styles["Normal"]  # noqa: N816
 styleBH.fontName = "GTEestiProDisplay"
 styleBH.alignment = TA_CENTER
 
-styleTitle = styles["Title"]
+styleTitle = styles["Title"]  # noqa: N816
 styleTitle.fontName = "GTEestiProDisplay"
 
-styleSubTitle = styles["Heading2"]
+styleSubTitle = styles["Heading2"]  # noqa: N816
 styleSubTitle.fontName = "GTEestiProDisplay"
 
 

@@ -4,7 +4,7 @@ import hmac
 import logging
 import random
 import string
-from typing import Callable
+from collections.abc import Callable
 
 import boto3
 from fastapi import HTTPException, status
@@ -16,31 +16,23 @@ from app.settings import app_settings
 
 logger = logging.getLogger(__name__)
 
+PASSWORD_LENGTH = 14
+PASSWORD_CHARACTERS = list(
+    set(string.ascii_letters) | set(string.digits) | set(string.punctuation) - set('"/\\|_-#@%&*(){}[]<>~`')
+)
+
 
 def generate_password_fn() -> str:
     """
-    Generates a random password of length at least 14 characters.
-    The generated password includes characters from ASCII letters, digits and punctuation,
-    but it excludes the following characters: '"/\\|_-#@%&*(){}[]<>~`'.
-
-    :return: The randomly generated password.
+    Return a random password of 14 ASCII letter, digit and punctuation characters.
     """
-    excluded_chars = '"/\\|_-#@%&*(){}[]<>~`'
-    characters = f"{string.ascii_letters}{string.digits}{string.punctuation}"
-    password = ""
-
-    while len(password) < 14:
-        char = random.choice(characters)
-        if char not in excluded_chars:
-            password += char
-
-    return password
+    return "".join(random.choice(PASSWORD_CHARACTERS) for _ in range(PASSWORD_LENGTH))  # noqa: S311
 
 
 # https://docs.aws.amazon.com/cognito/latest/developerguide/signing-up-users-in-your-app.html#cognito-user-pools-computing-secret-hash
 def get_secret_hash(username: str) -> str:
     """
-    Generates a secret hash for the given username using Cognito client secret and Cognito client id.
+    Generate a secret hash for the given username using Cognito client secret and Cognito client id.
 
     :param username: The username
     :return: A base64 encoded string containing the generated secret hash.

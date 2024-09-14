@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 
 from sqlalchemy import Integer, distinct, func, text, true
 from sqlalchemy.orm import Query, Session
@@ -97,17 +98,14 @@ def get_general_statistics(
         proportion_of_disbursed = 0
 
     if application_received_count:
-        if lender_id is None:
-            column = Application.borrower_accepted_at
-        else:
-            column = Application.borrower_submitted_at
+        column = Application.borrower_accepted_at if lender_id is None else Application.borrower_submitted_at
         proportion_of_submitted_out_of_opt_in = round(
             (application_received_count / session.query(Application).filter(col(column).isnot(None)).count()) * 100, 2
         )
     else:
         proportion_of_submitted_out_of_opt_in = 0.0
 
-    general_statistics = {
+    return {
         "applications_received_count": application_received_count,
         "applications_approved_count": applications_approved_count,
         "applications_rejected_count": base_query.filter(Application.status == ApplicationStatus.REJECTED).count(),
@@ -149,8 +147,6 @@ def get_general_statistics(
         ),
         "proportion_of_submitted_out_of_opt_in": proportion_of_submitted_out_of_opt_in,
     }
-
-    return general_statistics
 
 
 # Group of Stat only for OCP USER (opt in stats)
