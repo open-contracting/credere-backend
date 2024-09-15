@@ -13,7 +13,7 @@ class ApplicationResponse(BaseModel):
     award: models.Award  # IAward
     lender: models.Lender | None = None  # ILender
     documents: list[models.BorrowerDocumentBase] = Field(default_factory=list)  # IBorrowerDocument
-    creditProduct: models.CreditProduct | None = None  # ICreditProduct # noqa: N815
+    creditProduct: models.CreditProduct | None = None  # ICreditProduct # noqa: N815 # backwards-compatibility
 
 
 class CreditProductListResponse(BaseModel):

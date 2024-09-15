@@ -375,7 +375,7 @@ def cli_input_json(name: str, file: typer.FileText) -> None:
 
 # https://typer.tiangolo.com/tutorial/commands/callback/
 @app.callback()
-def cli(*, quiet: bool = typer.Option(False, "--quiet", "-q")) -> None:  # noqa: FBT003
+def cli(*, quiet: bool = typer.Option(False, "--quiet", "-q")) -> None:  # noqa: FBT003 # false positive
     if quiet:
         state["quiet"] = True
 
