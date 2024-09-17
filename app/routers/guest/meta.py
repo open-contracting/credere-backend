@@ -12,12 +12,14 @@ router = APIRouter()
 )
 async def get_settings_by_domain() -> dict[str, list[dict[str, str]]]:
     """
-    Get the keys and localized descriptions of constants, where a constant can be:
+    Get the keys and localized descriptions of constants.
 
-        - BorrowerDocumentType
-        - BorrowerSector
-        - BorrowerSize
-        - BorrowerType
+    A constant can be:
+
+    - BorrowerDocumentType
+    - BorrowerSector
+    - BorrowerSize
+    - BorrowerType
 
     :return: A dict of constants with their keys and localized values.
     """

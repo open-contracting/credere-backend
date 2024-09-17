@@ -76,9 +76,7 @@ def generate_uuid(string: str) -> str:
 
 
 def get_secret_hash(string: str) -> str:
-    """
-    Calculate the hash of a string.
-    """
+    """Calculate the hash of a string."""
     message = string.encode()
     key = app_settings.hash_key.encode()
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
@@ -99,7 +97,7 @@ def is_valid_email(email: str) -> bool:
 
 def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     """
-    Validates the uploaded file.
+    Validate the uploaded file.
 
     This function checks whether the file has an allowed format and whether its size is below the maximum allowed size.
 
@@ -197,8 +195,9 @@ def get_previous_awards_from_data_source(
     borrower_id: int, db_provider: Callable[[], Generator[Session, None, None]] = get_db
 ) -> None:
     """
-    Fetch previous awards for a borrower that accepted an application. This won't generate an application,
-    it will just insert the awards in our database
+    Fetch previous awards for a borrower that accepted an application.
+
+    This won't generate an application; it will only insert the awards into the database.
 
     :param borrower_id: The ID of the borrower for whom to fetch and process previous awards.
     """
@@ -226,7 +225,7 @@ def create_or_update_borrower_document(
     verified: bool | None = False,
 ) -> models.BorrowerDocument:
     """
-    Creates a new borrower document or updates an existing one.
+    Create a new borrower document or update an existing one.
 
     This function first checks if a document of the same type already exists for the application in the session.
     If it does, it updates the existing document's file, name, verified status, and submission time with the provided

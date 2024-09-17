@@ -5,7 +5,6 @@ import json
 import sys
 import types
 from collections import defaultdict
-from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
@@ -47,9 +46,7 @@ app.add_typer(dev, name="dev", help="Commands for maintainers of Credere.")
 
 
 # Called by fetch-award* commands.
-def _create_complete_application(
-    session: Session, award_entry: dict[str, str], db_provider: Callable[[], Generator[Session, None, None]]
-) -> None:
+def _create_complete_application(session: Session, award_entry: dict[str, str]) -> None:
     with handle_skipped_award(session, "Error creating application"):
         # Create the award. If it exists, skip this award.
         award = util.create_award_from_data_source(session, award_entry)
@@ -104,8 +101,7 @@ def fetch_awards(
     until_date: datetime = typer.Option(default=None, formats=["%Y-%m-%d"]),
 ) -> None:
     """
-    Fetch new awards from the date of the most recently updated award, or in the period described by the --from-date
-    and --until-date options.
+    Fetch new awards from the date of the most recently updated award, or in the selected period.
 
     \b
     -  If the award already exists, skip the award.
@@ -138,7 +134,7 @@ def fetch_awards(
                         "Source contract is missing required fields:"
                         f" url={awards_response.url}, data={awards_response_json}"
                     )
-                _create_complete_application(session, entry, get_db)
+                _create_complete_application(session, entry)
 
             index += 1
             awards_response = data_access.get_new_awards(index, from_date, until_date)
@@ -152,6 +148,7 @@ def fetch_awards(
 def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
     """
     Fetch one award, by award ID and supplier ID, and process it like the fetch-awards command.
+
     Use this to manually invite a borrower who wasn't automatically invited.
     """
     award_response_json = util.loads(data_access.get_award_by_id_and_supplier(award_id, supplier_id))
@@ -160,14 +157,12 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
         return
 
     with contextmanager(get_db)() as session:
-        _create_complete_application(session, award_response_json[0], get_db)
+        _create_complete_application(session, award_response_json[0])
 
 
 @app.command()
 def send_reminders() -> None:
-    """
-    Send reminders to borrowers about PENDING and ACCEPTED applications.
-    """
+    """Send reminders to borrowers about PENDING and ACCEPTED applications."""
     with contextmanager(get_db)() as session:
         pending_introduction_reminder = (
             models.Application.pending_introduction_reminder(session)
@@ -202,9 +197,7 @@ def send_reminders() -> None:
 
 @app.command()
 def update_applications_to_lapsed() -> None:
-    """
-    Lapse applications that have been waiting for the borrower to respond for some time.
-    """
+    """Lapse applications that have been waiting for the borrower to respond for some time."""
     with contextmanager(get_db)() as session, rollback_on_error(session):
         for application in models.Application.lapseable(session).options(
             joinedload(models.Application.borrower),
@@ -218,9 +211,7 @@ def update_applications_to_lapsed() -> None:
 
 @app.command()
 def sla_overdue_applications() -> None:
-    """
-    Send reminders to lenders and OCP about overdue applications.
-    """
+    """Send reminders to lenders and OCP about overdue applications."""
     with contextmanager(get_db)() as session:
         overdue_lenders: dict[int, Any] = defaultdict(lambda: {"count": 0})
         for application in session.query(models.Application).filter(
@@ -257,6 +248,7 @@ def sla_overdue_applications() -> None:
 def remove_dated_application_data() -> None:
     """
     Clear personal data and delete borrower documents from applications that have been in a final state for some time.
+
     If the borrower has no other active applications, clear the borrower's personal data.
     """
     with contextmanager(get_db)() as session, rollback_on_error(session):
@@ -292,9 +284,7 @@ def remove_dated_application_data() -> None:
 # The openapi.json file can't be used, because it doesn't track Python modules.
 @dev.command()
 def routes(*, csv_format: bool = False) -> None:
-    """
-    Print a table of routes.
-    """
+    """Print a table of routes."""
 
     def _pretty(model: Any, expected: str) -> str:
         if model is None:
@@ -348,9 +338,7 @@ def routes(*, csv_format: bool = False) -> None:
 
 @dev.command()
 def cli_input_json(name: str, file: typer.FileText) -> None:
-    """
-    Print a JSON string for the aws ses create-template --cli-input-json argument.
-    """
+    """Print a JSON string for the aws ses create-template --cli-input-json argument."""
     # aws ses create-template --generate-cli-skeleton
     json.dump(
         {

@@ -18,6 +18,7 @@ else:
 def sentry_filter_transactions(event: Event, hint: dict[str, Any]) -> Event | None:
     """
     Filter transactions to be sent to Sentry.
+
     This function prevents transactions that interact with Cognito from being sent to Sentry.
 
     :param event: The event data.

@@ -19,7 +19,5 @@ def _(message: str, language: str | None = None, **kwargs: Any) -> str:
 
 
 def i(message: str) -> str:
-    """
-    An identity function, used to extract messages only.
-    """
+    """Use this identity function to extract messages only."""
     return message

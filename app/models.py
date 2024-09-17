@@ -157,6 +157,8 @@ class BorrowerDocumentType(StrEnum):
 # https://github.com/open-contracting/credere-backend/issues/39
 class ApplicationStatus(StrEnum):
     """
+    An application status.
+
     The different workflows are:
 
     -  PENDING → LAPSED
@@ -592,9 +594,7 @@ class Award(AwardBase, ActiveRecordMixin, table=True):
 
     @classmethod
     def last_updated(cls, session: Session) -> datetime | None:
-        """
-        :return: The most recent ``source_last_updated_at`` value.
-        """
+        """Return the most recent ``source_last_updated_at`` value."""
         obj: Self | None = session.query(cls).order_by(nulls_last(desc(cls.source_last_updated_at))).first()
         if obj:
             return obj.source_last_updated_at
@@ -738,17 +738,15 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @classmethod
     def unarchived(cls, session: Session) -> "Query[Self]":
-        """
-        :return: A query for unarchived applications.
-        """
+        """Return a query for unarchived applications."""
         return session.query(cls).filter(col(cls.archived_at).is_(None))
 
     @classmethod
     def pending_introduction_reminder(cls, session: Session) -> "Query[Self]":
         """
-        :return: A query for PENDING applications whose expiration date is within
-            :attr:`~app.settings.Settings.reminder_days_before_expiration` days from now, and whose
-            borrower hasn't already received a reminder to accept and may receive Credere invitations.
+        Return a query for PENDING applications whose expiration date is within
+        :attr:`~app.settings.Settings.reminder_days_before_expiration` days from now, and whose borrower hasn't already
+        received a reminder to accept and may receive Credere invitations.
 
         .. seealso:: :typer:`python-m-app-send-reminders`
         """
@@ -767,9 +765,9 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
         """
-        :return: A query for ACCEPTED applications whose lapsed date is within
-            :attr:`~app.settings.Settings.reminder_days_before_lapsed` days from now, and whose
-            borrower hasn't already received a reminder to submit.
+        Return query for ACCEPTED applications whose lapsed date is within
+        :attr:`~app.settings.Settings.reminder_days_before_lapsed` days from now, and whose borrower hasn't already
+        received a reminder to submit.
 
         .. seealso:: :typer:`python-m-app-send-reminders`
         """
@@ -785,9 +783,9 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def lapseable(cls, session: Session) -> "Query[Self]":
         """
-        :return: A query for :meth:`~app.models.Application.unarchived` applications that have been waiting for the
-            borrower to respond (PENDING, ACCEPTED, INFORMATION_REQUESTED) for
-            :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
+        Return a query for :meth:`~app.models.Application.unarchived` applications that have been waiting for the
+        borrower to respond (PENDING, ACCEPTED, INFORMATION_REQUESTED) for
+        :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
 
         .. seealso:: :typer:`python-m-app-update-applications-to-lapsed`
         """
@@ -813,8 +811,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def submitted(cls, session: Session) -> "Query[Self]":
         """
-        :return: A query for :meth:`~app.models.Application.unarchived` applications that have been submitted to any
-            lender (not one of PENDING, DECLINED, ACCEPTED) and that aren't LAPSED.
+        Return query for :meth:`~app.models.Application.unarchived` applications that have been submitted to any
+        lender (not one of PENDING, DECLINED, ACCEPTED) and that aren't LAPSED.
         """
         return cls.unarchived(session).filter(
             col(cls.status).notin_(
@@ -874,9 +872,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def archivable(cls, session: Session) -> "Query[Self]":
         """
-        :return: A query for :meth:`~app.models.Application.unarchived` applications that have been in a final state
-            (DECLINED, REJECTED, COMPLETED, LAPSED) for
-            :attr:`~app.settings.Settings.days_to_erase_borrowers_data` days.
+        Return query for :meth:`~app.models.Application.unarchived` applications that have been in a final state
+        (DECLINED, REJECTED, COMPLETED, LAPSED) for :attr:`~app.settings.Settings.days_to_erase_borrowers_data` days.
 
         .. seealso:: :typer:`python-m-app-remove-dated-application-data`
         """
@@ -905,15 +902,11 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
     @property
     def tz(self) -> tzinfo | None:
-        """
-        :return: The application's time zone.
-        """
+        """Return the application's time zone."""
         return self.created_at.tzinfo
 
     def previous_awards(self, session: Session) -> list["Award"]:
-        """
-        :return: The previous awards to the application's borrower, in reverse time order by contract start date.
-        """
+        """Return the previous awards to the application's borrower, in reverse time order by contract start date."""
         return (
             session.query(Award)
             .filter(
@@ -925,9 +918,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     def rejected_lenders(self, session: Session) -> list[Self]:
-        """
-        :return: The IDs of lenders who rejected applications from the application's borrower, for the same award.
-        """
+        """Return the IDs of lenders who rejected applications from the application's borrower, for the same award."""
         cls = type(self)
         return [
             lender_id
@@ -942,9 +933,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         ]
 
     def days_waiting_for_lender(self, session: Session) -> int:
-        """
-        :return: The number of days that the application has been waiting for the lender to respond.
-        """
+        """Return the number of days that the application has been waiting for the lender to respond."""
         days = 0
 
         # Sadly, `self.actions.order_by(ApplicationAction.created_at)` raises
@@ -976,17 +965,13 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         return round(days)
 
     def stage_as_rejected(self, lender_rejected_data: dict[str, Any]) -> None:
-        """
-        Assign fields related to marking the application as REJECTED.
-        """
+        """Assign fields related to marking the application as REJECTED."""
         self.status = ApplicationStatus.REJECTED
         self.lender_rejected_at = datetime.now(self.tz)
         self.lender_rejected_data = lender_rejected_data
 
     def stage_as_completed(self, disbursed_final_amount: Decimal | None) -> None:
-        """
-        Assign fields related to marking the application as COMPLETED.
-        """
+        """Assign fields related to marking the application as COMPLETED."""
         self.status = ApplicationStatus.COMPLETED
         self.lender_completed_at = datetime.now(self.tz)
         self.disbursed_final_amount = disbursed_final_amount
@@ -1052,9 +1037,7 @@ class Message(SQLModel, ActiveRecordMixin, table=True):
 
     @classmethod
     def application_by_type(cls, message_type: MessageType) -> Select:
-        """
-        :return: The IDs of applications that sent messages of the provided type.
-        """
+        """Return the IDs of applications that sent messages of the provided type."""
         return select(cls.application_id).filter(cls.type == message_type)
 
 

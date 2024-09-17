@@ -1,6 +1,4 @@
-"""
-This file is required, because reportlab/__init__.py runs `import reportlab_mods`.
-"""
+"""reportlab/__init__.py runs ``import reportlab_mods`` (this file)."""
 
 import os
 from typing import Any

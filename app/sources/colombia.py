@@ -176,7 +176,7 @@ def get_previous_awards(supplier_id: str) -> httpx.Response:
 
 def get_borrower(borrower_identifier: str, supplier_id: str, entry: dict[str, str]) -> dict[str, str]:
     """
-    Get the borrower information from the source
+    Get the borrower information from the source.
 
     :param borrower_identifier: The unique identifier for the borrower.
     :param supplier_id: The document provider for the borrower.

@@ -255,7 +255,7 @@ def _get_lender_emails(lender: Lender, message_type: MessageType) -> list[str]:
 
 def send_new_user(ses: SESClient, *, name: str, username: str, temporary_password: str) -> str:
     """
-    Sends an email to a new user with a link to set their password.
+    Send an email to a new user with a link to set their password.
 
     This function generates an email message for new users, providing them with
     a temporary password and a link to set their password. The email is sent to the
@@ -283,7 +283,7 @@ def send_new_user(ses: SESClient, *, name: str, username: str, temporary_passwor
 
 def send_reset_password(ses: SESClient, *, username: str, temporary_password: str) -> str:
     """
-    Sends an email to a user with instructions to reset their password.
+    Send an email to a user with instructions to reset their password.
 
     This function generates and sends an email message to a user providing a link
     for them to reset their password.
@@ -309,7 +309,7 @@ def send_reset_password(ses: SESClient, *, username: str, temporary_password: st
 
 def send_overdue_application_to_lender(ses: SESClient, *, lender: Lender, amount: int) -> str:
     """
-    Sends an email notification to the lender about overdue applications.
+    Send an email notification to the lender about overdue applications.
 
     :param lender: The overdue lender.
     :param amount: Number of overdue applications.

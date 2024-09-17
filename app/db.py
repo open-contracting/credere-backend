@@ -17,9 +17,7 @@ SessionLocal = sessionmaker(expire_on_commit=False, bind=engine)
 
 @contextmanager
 def rollback_on_error(session: Session) -> Generator[None, None, None]:
-    """
-    Call ``session.rollback()`` and re-raise the exception.
-    """
+    """Call ``session.rollback()`` and re-raise the exception."""
     try:
         yield
     except Exception:
@@ -53,8 +51,6 @@ def handle_skipped_award(session: Session, msg: str) -> Generator[None, None, No
 
 # This is a FastAPI dependency.
 def get_db() -> Generator[Session, None, None]:
-    """
-    Get a SQLAlchemy session.
-    """
+    """Get a SQLAlchemy session."""
     with SessionLocal() as session:
         yield session

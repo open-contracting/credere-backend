@@ -7,7 +7,46 @@ line-length = 119
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "C4", "F", "I", "W"]
+select = ["ALL"]
+ignore = [
+    "ANN", "C901", "COM812", "D203", "D212", "D415", "EM", "ISC001", "PERF203", "PLR091", "Q000",
+    "D1", "D205",
+    "DTZ",
+    "PTH",
+    "TRY003",  # errors
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.File",
+    "fastapi.Query",
+    "typer.Option",
+    "app.dependencies.get_scoped_application_as_guest_via_form",
+    "app.dependencies.get_scoped_application_as_guest_via_payload",
+    "app.dependencies.get_scoped_application_as_guest_via_uuid",
+    "app.dependencies.get_scoped_application_as_user",
+]
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["copyright", "id", "type"]
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.per-file-ignores]
+"docs/conf.py" = ["D100", "INP001"]
+"migrations/*" = ["D400", "INP001"]
+"*/__main__.py" = [
+    "D301",  # click escapes
+    "T201",  # print
+]
+"*/main.py" = ["ARG001"]  # handler
+"*/routers/*" = ["ARG001"]  # dependencies
+"*/settings.py" = ["ARG001"]  # sentry
+"*tests/*" = [
+    "ARG001", "D", "FBT003", "INP001", "PLR2004", "S", "TRY003",
+]
 
 # https://docs.pydantic.dev/2.0/integrations/mypy/#configuring-the-plugin
 [tool.mypy]

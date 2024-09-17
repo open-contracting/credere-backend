@@ -54,6 +54,7 @@ async def decline(
 ) -> serializers.ApplicationResponse:
     """
     Decline an application.
+
     Changes application status from "PENDING" to "DECLINED".
 
     :param payload: The application decline payload.
@@ -442,7 +443,7 @@ async def rollback_confirm_credit_product(
     ),
 ) -> serializers.ApplicationResponse:
     """
-    Rollbascks the confirmation of the selected credit product for an application.
+    Rollback the confirmation of the selected credit product for an application.
 
     :param payload: The application data.
     :return: The application response containing the updated application, borrower, award, lender, documents, and
@@ -505,8 +506,7 @@ async def update_apps_send_notifications(
     ),
 ) -> serializers.ApplicationResponse:
     """
-    Changes application status from "'ACCEPTED" to "SUBMITTED".
-    Sends a notification to OCP and lender user.
+    Change application status from "'ACCEPTED" to "SUBMITTED". Send a notification to OCP and lender user.
 
     This operation also ensures that the credit product and lender are selected before updating the status.
 
@@ -609,9 +609,9 @@ async def complete_information_request(
     ),
 ) -> serializers.ApplicationResponse:
     """
-    Complete the information request for an application:
-    Changes the application from "INFORMATION REQUESTED" status back to "STARTED" and updates the pending documents
-    status.
+    Complete the information request for an application.
+
+    Changes application status from "INFORMATION REQUESTED" to "STARTED" and update the pending documents status.
 
     This operation also sends a notification about the uploaded documents to the lender.
 

@@ -23,9 +23,7 @@ PASSWORD_CHARACTERS = list(
 
 
 def generate_password_fn() -> str:
-    """
-    Return a random password of 14 ASCII letter, digit and punctuation characters.
-    """
+    """Return a random password of 14 ASCII letter, digit and punctuation characters."""
     return "".join(random.choice(PASSWORD_CHARACTERS) for _ in range(PASSWORD_LENGTH))  # noqa: S311
 
 
@@ -43,9 +41,7 @@ def get_secret_hash(username: str) -> str:
 
 
 class Client:
-    """
-    A client for Cognito and SES services.
-    """
+    """A client for Cognito and SES services."""
 
     def __init__(
         self,
@@ -62,7 +58,7 @@ class Client:
 
     def initiate_auth(self, username: str, password: str) -> type_defs.InitiateAuthResponseTypeDef:
         """
-        Initiates an authentication request for a user in Cognito.
+        Initiate an authentication request for a user in Cognito.
 
         :param username: The username (typically an email) of the user initiating authentication.
         :param password: The password of the user initiating the authentication.
@@ -109,11 +105,6 @@ class Client:
                          challenge is 'MFA_SETUP' or 'SOFTWARE_TOKEN_MFA'.
         :return: The response from the Cognito 'respond_to_auth_challenge' method.
         :raises boto3.exceptions: Any exceptions that occur when making the Cognito request.
-
-        Notes:
-            The 'respond_to_auth_challenge' method allows the application to respond to different types of
-            authentication challenges issued by Cognito.
-
         """
         secret_hash = get_secret_hash(username)
 

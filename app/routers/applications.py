@@ -35,8 +35,9 @@ async def reject_application(
     ),
 ) -> Any:
     """
-    Reject an application:
-    Changes the status from "STARTED" to "REJECTED".
+    Reject an application.
+
+    Changes application status from "STARTED" to "REJECTED".
 
     :param payload: The rejected application data.
     :return: The rejected application with its associated relations.
@@ -90,8 +91,9 @@ async def complete_application(
     ),
 ) -> Any:
     """
-    Complete an application:
-    Changes application status from "CONTRACT_UPLOADED" to "COMPLETED".
+    Complete an application.
+
+    Change application status from "CONTRACT_UPLOADED" to "COMPLETED".
 
     :param payload: The completed application data.
     :return: The completed application with its associated relations.
@@ -133,10 +135,9 @@ async def approve_application(
     ),
 ) -> Any:
     """
-    Approve an application:
-    Changes application status from "STARTED" to "APPROVED".
+    Approve an application.
 
-    Sends an email to the borrower notifying the current stage of their application.
+    Change application status from "STARTED" to "APPROVED". Notify the borrower of the approval.
 
     :param payload: The approved application data.
     :return: The approved application with its associated relations.
@@ -381,9 +382,7 @@ async def get_applications_list(
     admin: models.User = Depends(dependencies.get_admin_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
-    """
-    Get a paginated list of submitted applications for administrative purposes.
-    """
+    """Get a paginated list of submitted applications for administrative purposes."""
     applications_query = models.Application.submitted_search(
         session, search_value=search_value, sort_field=sort_field, sort_order=sort_order
     )
@@ -413,9 +412,7 @@ async def get_applications(
     user: models.User = Depends(dependencies.get_user),
     session: Session = Depends(get_db),
 ) -> serializers.ApplicationListResponse:
-    """
-    Get a paginated list of submitted applications for a specific lender user.
-    """
+    """Get a paginated list of submitted applications for a specific lender user."""
     applications_query = models.Application.submitted_search(
         session, search_value=search_value, sort_field=sort_field, sort_order=sort_order, lender_id=user.lender_id
     )
@@ -470,8 +467,9 @@ async def start_application(
     ),
 ) -> Any:
     """
-    Start an application:
-    Changes application status from "SUBMITTED" to "STARTED".
+    Start an application.
+
+    Change application status from "SUBMITTED" to "STARTED".
 
     :param id: The ID of the application to start.
     :return: The started application with its associated relations.
@@ -502,9 +500,9 @@ async def email_borrower(
     ),
 ) -> Any:
     """
-    Send an email to the borrower and update the application status:
-    Changes the application status from "STARTED" to "INFORMATION_REQUESTED".
-    sends an email to the borrower notifying the request.
+    Send an email to the borrower and update the application status.
+
+    Change application status from "STARTED" to "INFORMATION_REQUESTED". Notify the borrower of the request.
 
     :param payload: The payload containing the message to send to the borrower.
     :return: The updated application with its associated relations.

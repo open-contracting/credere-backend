@@ -206,9 +206,7 @@ async def logout(
     request: Request,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
-    """
-    Logout the user from all devices in Cognito.
-    """
+    """Logout the user from all devices in Cognito."""
     try:
         # get_auth_credentials
         credentials = await auth.JWTAuthorization()(request)

@@ -44,6 +44,7 @@ def get_keys() -> dict[str, JWK]:
 class JWTAuthorization(HTTPBearer):
     """
     An extension of HTTPBearer authentication to verify JWT (JSON Web Tokens) with public keys.
+
     This class loads and keeps track of public keys from an external source and verifies incoming tokens.
 
     :param auto_error: If set to True, automatic error responses will be sent when request authentication fails.
@@ -55,7 +56,7 @@ class JWTAuthorization(HTTPBearer):
 
     def verify_jwk_token(self, jwt_credentials: JWTAuthorizationCredentials) -> bool:
         """
-        Verifies the provided JWT credentials with the loaded public keys.
+        Verify the provided JWT credentials with the loaded public keys.
 
         :param jwt_credentials: JWT credentials extracted from the request.
         :return: Returns True if the token is verified, False otherwise.

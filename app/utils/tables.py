@@ -31,7 +31,7 @@ def _format_date(date_str: str) -> str:
 
 def create_application_table(application: models.Application, lang: str) -> Table:
     """
-    Creates a table of application information.
+    Create a table of application information.
 
     :param application: The application's data.
     :param lang: The lang requested.
@@ -103,7 +103,7 @@ def create_application_table(application: models.Application, lang: str) -> Tabl
 
 def create_award_table(award: models.Award, lang: str) -> Table:
     """
-    Creates a table of Open Contracting award data.
+    Create a table of Open Contracting award data.
 
     :param award: The award data.
     :param lang: The lang requested.
@@ -184,7 +184,7 @@ def create_award_table(award: models.Award, lang: str) -> Table:
 
 def create_borrower_table(borrower: models.Borrower, application: models.Application, lang: str) -> Table:
     """
-    Creates a table of borrower data.
+    Create a table of borrower data.
 
     :param borrower: The borrower's data.
     :param lang: The lang requested.
@@ -234,7 +234,7 @@ def create_borrower_table(borrower: models.Borrower, application: models.Applica
 
 def create_documents_table(documents: list[models.BorrowerDocument], lang: str) -> Table:
     """
-    Creates a table of borrower information and documents.
+    Create a table of borrower information and documents.
 
     :param documents: List of documents.
     :param lang: The lang requested.
