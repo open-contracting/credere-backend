@@ -1,4 +1,5 @@
-"""modify statistics enum type
+"""
+modify statistics enum type
 
 Revision ID: 637b31a11d96
 Revises: 9455718e2178

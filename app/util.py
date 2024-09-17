@@ -72,7 +72,6 @@ def generate_uuid(string: str) -> str:
     :param string: The input string to generate the UUID from.
     :return: The generated UUID.
     """
-
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, string))
 
 
@@ -80,7 +79,6 @@ def get_secret_hash(string: str) -> str:
     """
     Calculate the hash of a string.
     """
-
     message = string.encode()
     key = app_settings.hash_key.encode()
     return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
@@ -180,7 +178,6 @@ def create_award_from_data_source(
     :param previous: Whether the award is a previous award or not. (default: False)
     :return: The inserted award.
     """
-
     data = data_access.get_award(entry, borrower_id, previous=previous)
     if award := models.Award.first_by(session, "source_contract_id", data["source_contract_id"]):
         raise SkippedAwardError(
@@ -242,7 +239,6 @@ def create_or_update_borrower_document(
     :param verified: The verified status of the document. Defaults to False.
     :return: The newly created or updated BorrowerDocument.
     """
-
     existing_document: models.BorrowerDocument | None = (
         session.query(models.BorrowerDocument)
         .filter(

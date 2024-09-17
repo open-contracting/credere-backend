@@ -115,7 +115,6 @@ def fetch_awards(
     -  If the application already exists, skip the award.
        Otherwise, create a PENDING application and email an invitation to the borrower.
     """
-
     if bool(from_date) ^ bool(until_date):
         raise click.UsageError("--from-date and --until-date must either be both set or both not set.")
     if from_date and until_date and from_date > until_date:

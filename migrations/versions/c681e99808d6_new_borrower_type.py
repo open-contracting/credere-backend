@@ -1,4 +1,5 @@
-"""new borrower type
+"""
+new borrower type
 
 Revision ID: c681e99808d6
 Revises: 6a0d845e53cb

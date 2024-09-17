@@ -1,4 +1,5 @@
-"""borrower annual_revenue field
+"""
+borrower annual_revenue field
 
 Revision ID: 20e0ff589a61
 Revises: 8a775f48bf88

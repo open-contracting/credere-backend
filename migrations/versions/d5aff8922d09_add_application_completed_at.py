@@ -1,4 +1,5 @@
-"""add application completed at
+"""
+add application completed at
 
 Revision ID: d5aff8922d09
 Revises: 0097ef5ab968

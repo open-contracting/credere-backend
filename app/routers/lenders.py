@@ -160,7 +160,6 @@ async def get_procurement_categories_from_source() -> list[str]:
 
     :return: The list of existing procurement categories.
     """
-
     return data_access.PROCUREMENT_CATEGORIES
 
 

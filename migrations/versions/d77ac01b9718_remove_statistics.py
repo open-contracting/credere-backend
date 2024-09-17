@@ -1,4 +1,5 @@
-"""remove statistics
+"""
+remove statistics
 
 Revision ID: d77ac01b9718
 Revises: db1054a56c3c

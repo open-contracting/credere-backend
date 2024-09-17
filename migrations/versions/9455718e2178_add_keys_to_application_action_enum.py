@@ -1,4 +1,5 @@
-"""add keys to application action enum
+"""
+add keys to application action enum
 
 Revision ID: 9455718e2178
 Revises: d5aff8922d09

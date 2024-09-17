@@ -1,4 +1,5 @@
-"""Add single-column indexes for slow queries
+"""
+Add single-column indexes for slow queries
 
 Revision ID: 385fb9a01efc
 Revises: 55ef2bbbfcba

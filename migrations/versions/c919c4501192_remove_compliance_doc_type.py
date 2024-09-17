@@ -1,4 +1,5 @@
-"""remove compliance doc type
+"""
+remove compliance doc type
 
 Revision ID: c919c4501192
 Revises: f9f53b0fd892

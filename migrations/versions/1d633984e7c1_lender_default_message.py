@@ -1,4 +1,5 @@
-"""lender default message
+"""
+lender default message
 
 Revision ID: 1d633984e7c1
 Revises: 63f2125bb242

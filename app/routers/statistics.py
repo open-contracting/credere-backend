@@ -38,7 +38,6 @@ async def get_admin_statistics_by_lender(
     :param lender_id: The lender ID to filter the statistics for a specific lender (optional).
     :return: Response containing the admin statistics.
     """
-
     if initial_date is None and final_date is None and custom_range is None:
         statistics_kpis = statistics_utils.get_general_statistics(session, initial_date, final_date, lender_id)
     else:
@@ -74,7 +73,6 @@ async def get_admin_statistics_opt_in(
 
     :return: Response containing the admin statistics for borrower opt-in.
     """
-
     return serializers.StatisticOptInResponse(
         opt_in_stat=statistics_utils.get_borrower_opt_in_stats(session),
     )
@@ -97,7 +95,6 @@ async def get_lender_statistics(
 
     :return: Response containing the statistics for the lender.
     """
-
     return serializers.StatisticResponse(
         statistics_kpis=statistics_utils.get_general_statistics(session, None, None, user.lender_id),
     )

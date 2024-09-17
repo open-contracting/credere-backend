@@ -1,4 +1,5 @@
-"""msme type in credit product
+"""
+msme type in credit product
 
 Revision ID: a03836bf1cdf
 Revises: 66aaad70ea76

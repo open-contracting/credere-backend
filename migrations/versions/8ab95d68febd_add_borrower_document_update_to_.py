@@ -1,4 +1,5 @@
-"""add_borrower_document_update_to_application_type_enum
+"""
+add_borrower_document_update_to_application_type_enum
 
 Revision ID: 8ab95d68febd
 Revises: 0d937c85609d

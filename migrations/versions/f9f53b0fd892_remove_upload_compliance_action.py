@@ -1,4 +1,5 @@
-"""remove upload-compliance action
+"""
+remove upload-compliance action
 
 Revision ID: f9f53b0fd892
 Revises: 385fb9a01efc

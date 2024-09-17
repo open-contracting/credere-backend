@@ -1,4 +1,5 @@
-"""additional info
+"""
+additional info
 
 Revision ID: 3f575f86f623
 Revises: 791d69d98498

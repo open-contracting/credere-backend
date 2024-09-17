@@ -1,4 +1,5 @@
-"""add OCP_DOWNLOADED_APPLICATION to application_action_type
+"""
+add OCP_DOWNLOADED_APPLICATION to application_action_type
 
 Revision ID: 66aaad70ea76
 Revises: 637b31a11d96

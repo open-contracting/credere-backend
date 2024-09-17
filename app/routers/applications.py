@@ -510,7 +510,6 @@ async def email_borrower(
     :return: The updated application with its associated relations.
     :raises HTTPException: If there's an error in sending the email to the borrower.
     """
-
     with rollback_on_error(session):
         application.status = models.ApplicationStatus.INFORMATION_REQUESTED
         application.information_requested_at = datetime.now(application.created_at.tzinfo)

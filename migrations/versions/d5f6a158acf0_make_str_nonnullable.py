@@ -1,4 +1,5 @@
-"""make str nonnullable
+"""
+make str nonnullable
 
 Revision ID: d5f6a158acf0
 Revises: beaafd626a26

@@ -77,7 +77,6 @@ def get_general_statistics(
     :param lender_id: The ID of the lender for filtering applications. (default: None)
     :return: A dictionary containing the general statistics about applications.
     """
-
     base_query = _get_base_query(session.query(Application), start_date, end_date, lender_id)
 
     application_received_count = base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count()

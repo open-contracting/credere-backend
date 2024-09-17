@@ -72,7 +72,6 @@ def get_award(
     :param previous: Whether the award is a previous award or not. (default: False)
     :return: The newly created award data as a dictionary.
     """
-
     proceso_de_compra = entry["id_del_portafolio"]
     proveedor_adjudicado = entry["nit_del_proveedor_adjudicado"]
 
@@ -171,7 +170,6 @@ def get_previous_awards(supplier_id: str) -> httpx.Response:
     :param supplier_id: The document provider to get previous contracts data for.
     :return: The response object containing the previous awards data.
     """
-
     url = f"{URLS['AWARDS']}?$where=nit_del_proveedor_adjudicado = '{supplier_id}'"
     return sources.make_request_with_retry(url, HEADERS)
 
@@ -185,7 +183,6 @@ def get_borrower(borrower_identifier: str, supplier_id: str, entry: dict[str, st
     :param entry: The dictionary containing the borrower data.
     :return: The newly created borrower data as a dictionary.
     """
-
     borrower_url = f"{URLS['BORROWER']}?nit_entidad={supplier_id}&codigo_entidad={entry.get('codigoproveedor', '')}"
     borrower_response_json = util.loads(sources.make_request_with_retry(borrower_url, HEADERS))
     len_borrower_response_json = len(borrower_response_json)
@@ -242,7 +239,6 @@ def get_supplier_id(entry: dict[str, str]) -> str:
     :param entry: The dictionary containing the borrower data.
     :return: The document provider for the borrower.
     """
-
     supplier_id = entry.get("nit_del_proveedor_adjudicado")
     if not supplier_id or supplier_id == "No Definido":
         raise SkippedAwardError("Missing supplier_id", data=entry)

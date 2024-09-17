@@ -1,4 +1,5 @@
-"""new application actions
+"""
+new application actions
 
 Revision ID: e4389132baa5
 Revises: fe69372ecf30

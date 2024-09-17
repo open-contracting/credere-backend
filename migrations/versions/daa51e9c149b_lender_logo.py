@@ -1,4 +1,5 @@
-"""lender logo
+"""
+lender logo
 
 Revision ID: daa51e9c149b
 Revises: 44e9a4a2ddb5

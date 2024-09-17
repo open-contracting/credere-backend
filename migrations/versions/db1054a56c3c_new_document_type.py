@@ -1,4 +1,5 @@
-"""new document type
+"""
+new document type
 
 Revision ID: db1054a56c3c
 Revises: 1fa1da5eb109

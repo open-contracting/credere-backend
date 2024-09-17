@@ -37,7 +37,6 @@ def create_application_table(application: models.Application, lang: str) -> Tabl
     :param lang: The lang requested.
     :return: The generated table.
     """
-
     data = [
         [
             _("Financing Options", lang),
@@ -110,7 +109,6 @@ def create_award_table(award: models.Award, lang: str) -> Table:
     :param lang: The lang requested.
     :return: The generated table.
     """
-
     payment_method_text = f"""Habilita Pago Adelantado: {
         _format_currency(award.payment_method.get("habilita_pago_adelantado", ""), award.award_currency)
     }\nValor De Pago Adelantado: {
@@ -192,7 +190,6 @@ def create_borrower_table(borrower: models.Borrower, application: models.Applica
     :param lang: The lang requested.
     :return: The generated table.
     """
-
     return create_table(
         [
             [
@@ -243,7 +240,6 @@ def create_documents_table(documents: list[models.BorrowerDocument], lang: str) 
     :param lang: The lang requested.
     :return: The generated table.
     """
-
     data = [[_("MSME Documents", lang), _("Data", lang)]]
     data.extend([_(document.type), document.name] for document in documents)
 

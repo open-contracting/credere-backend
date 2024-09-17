@@ -618,7 +618,6 @@ async def complete_information_request(
     :param payload: The application data to update.
     :return: The updated application with borrower, award, lender, and documents details.
     """
-
     with rollback_on_error(session):
         application.status = models.ApplicationStatus.STARTED
         application.pending_documents = False

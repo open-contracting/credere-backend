@@ -1,4 +1,5 @@
-"""borrower is_msme field
+"""
+borrower is_msme field
 
 Revision ID: 8a775f48bf88
 Revises: d4bb1f0964ed

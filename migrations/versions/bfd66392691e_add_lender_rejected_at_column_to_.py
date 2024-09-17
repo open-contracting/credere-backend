@@ -1,4 +1,5 @@
-"""Add lender_rejected_at column to applications table
+"""
+Add lender_rejected_at column to applications table
 
 Revision ID: bfd66392691e
 Revises: 2ca870aa737d

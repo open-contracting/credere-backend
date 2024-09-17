@@ -1,4 +1,5 @@
-"""new document types
+"""
+new document types
 
 Revision ID: 03e96ecd4e99
 Revises: a03836bf1cdf

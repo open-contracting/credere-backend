@@ -12,7 +12,6 @@ def make_request_with_retry(url: str, headers: dict[str, str]) -> httpx.Response
     :param headers: The headers to include in the request.
     :return: The HTTP response from the request if successful, otherwise None.
     """
-
     response = client.get(url, headers=headers)
     response.raise_for_status()
     return response

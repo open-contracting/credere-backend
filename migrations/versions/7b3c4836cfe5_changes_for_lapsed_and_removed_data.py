@@ -1,4 +1,5 @@
-"""Added information_requested_at column
+"""
+Added information_requested_at column
 
 Revision ID: 7b3c4836cfe5
 Revises: df236486f60a

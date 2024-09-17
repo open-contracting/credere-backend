@@ -1,4 +1,5 @@
-"""user notification preferences
+"""
+user notification preferences
 
 Revision ID: 1fa1da5eb109
 Revises: 755091b6b4b4

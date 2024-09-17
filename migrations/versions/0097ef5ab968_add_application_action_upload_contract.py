@@ -1,4 +1,5 @@
-"""add application action upload contract
+"""
+add application action upload contract
 
 Revision ID: 0097ef5ab968
 Revises: 7e81b8a695ed

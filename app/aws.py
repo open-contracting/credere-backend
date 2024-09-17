@@ -113,6 +113,7 @@ class Client:
         Notes:
             The 'respond_to_auth_challenge' method allows the application to respond to different types of
             authentication challenges issued by Cognito.
+
         """
         secret_hash = get_secret_hash(username)
 

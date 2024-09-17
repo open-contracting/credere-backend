@@ -1,4 +1,5 @@
-"""borrowerdocument.type nonnullable
+"""
+borrowerdocument.type nonnullable
 
 Revision ID: eaef8e99aee2
 Revises: d5f6a158acf0

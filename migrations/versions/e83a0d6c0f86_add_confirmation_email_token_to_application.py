@@ -1,4 +1,5 @@
-"""add_confirmation_email_token_to_application
+"""
+add_confirmation_email_token_to_application
 
 Revision ID: e83a0d6c0f86
 Revises: 9df7f1e04a80

@@ -1,4 +1,5 @@
-"""msme emails message types
+"""
+msme emails message types
 
 Revision ID: 22acf38240bd
 Revises: a03836bf1cdf

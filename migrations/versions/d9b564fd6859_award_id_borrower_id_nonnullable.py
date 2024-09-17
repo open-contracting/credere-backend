@@ -1,4 +1,5 @@
-"""award id borrower id nonnullable
+"""
+award id borrower id nonnullable
 
 Revision ID: d9b564fd6859
 Revises: eaef8e99aee2

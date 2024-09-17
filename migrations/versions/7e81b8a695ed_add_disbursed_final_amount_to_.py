@@ -1,4 +1,5 @@
-"""add_disbursed_final_amount_to_application
+"""
+add_disbursed_final_amount_to_application
 
 Revision ID: 7e81b8a695ed
 Revises: 8ab95d68febd

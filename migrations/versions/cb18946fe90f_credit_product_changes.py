@@ -1,4 +1,5 @@
-"""credit product changes
+"""
+credit product changes
 
 Revision ID: cb18946fe90f
 Revises: 173969eb685c

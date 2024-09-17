@@ -1,4 +1,5 @@
-"""fix statistics
+"""
+fix statistics
 
 Revision ID: 55ef2bbbfcba
 Revises: 3f575f86f623

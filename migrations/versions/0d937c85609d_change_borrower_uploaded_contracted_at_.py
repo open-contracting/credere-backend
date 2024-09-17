@@ -1,4 +1,5 @@
-"""change_borrower_uploaded_contracted_at_to_borrower_uploaded_contract_at
+"""
+change_borrower_uploaded_contracted_at_to_borrower_uploaded_contract_at
 
 Revision ID: 0d937c85609d
 Revises: e83a0d6c0f86

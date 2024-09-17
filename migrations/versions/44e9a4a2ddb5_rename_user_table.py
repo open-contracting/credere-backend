@@ -1,4 +1,5 @@
-"""rename user table
+"""
+rename user table
 
 Revision ID: 44e9a4a2ddb5
 Revises: 63b0daed7f08

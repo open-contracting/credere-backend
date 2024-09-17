@@ -1,4 +1,5 @@
-"""create event log
+"""
+create event log
 
 Revision ID: 6a0d845e53cb
 Revises: e4389132baa5

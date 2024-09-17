@@ -1,4 +1,5 @@
-"""borrower_document_message_type
+"""
+borrower_document_message_type
 
 Revision ID: fe69372ecf30
 Revises: c919c4501192

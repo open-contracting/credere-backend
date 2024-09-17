@@ -1,4 +1,5 @@
-"""added message.lenderId enum.AWAITING_INFORMATION
+"""
+added message.lenderId enum.AWAITING_INFORMATION
 
 Revision ID: 173969eb685c
 Revises: 7b3c4836cfe5

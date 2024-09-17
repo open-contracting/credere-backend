@@ -1,4 +1,5 @@
-"""credit product procurement category
+"""
+credit product procurement category
 
 Revision ID: 63f2125bb242
 Revises: 6a0d845e53cb

@@ -1,4 +1,5 @@
-"""repayment application data
+"""
+repayment application data
 
 Revision ID: 9df7f1e04a80
 Revises: cb18946fe90f

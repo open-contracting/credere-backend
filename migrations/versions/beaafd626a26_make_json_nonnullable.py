@@ -1,4 +1,5 @@
-"""make JSON nonnullable
+"""
+make JSON nonnullable
 
 Revision ID: beaafd626a26
 Revises: 20e0ff589a61
