@@ -78,7 +78,7 @@ def compare_objects(instance, expected):
             case "size":
                 assert value == models.BorrowerSize.NOT_INFORMED
             case "status":
-                assert value in (models.BorrowerStatus.ACTIVE, models.ApplicationStatus.PENDING)
+                assert value in {models.BorrowerStatus.ACTIVE, models.ApplicationStatus.PENDING}
             case _:
                 assert value == expected[key], f"{instance.__class__.__name__}.{key}"
 
