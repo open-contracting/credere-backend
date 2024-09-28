@@ -75,11 +75,7 @@ mypy-boto3-cognito-idp==1.29.0
     # via -r requirements.in
 mypy-boto3-ses==1.29.0
     # via -r requirements.in
-numpy==1.26.0
-    # via pandas
 orjson==3.10.7
-    # via -r requirements.in
-pandas==2.2.2
     # via -r requirements.in
 pillow==10.3.0
     # via reportlab
@@ -102,15 +98,11 @@ pygments==2.18.0
 pyjwt==2.8.0
     # via -r requirements.in
 python-dateutil==2.8.2
-    # via
-    #   botocore
-    #   pandas
+    # via botocore
 python-dotenv==1.0.0
     # via pydantic-settings
 python-multipart==0.0.7
     # via -r requirements.in
-pytz==2023.3
-    # via pandas
 reportlab==4.0.4
     # via -r requirements.in
 requests==2.32.3
@@ -155,8 +147,6 @@ typing-extensions==4.8.0
     #   pydantic-core
     #   sqlalchemy
     #   typer
-tzdata==2023.3
-    # via pandas
 urllib3==1.26.19
     # via
     #   botocore

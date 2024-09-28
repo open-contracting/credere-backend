@@ -1,8 +1,8 @@
+import csv
 import io
 import zipfile
 from typing import Any
 
-import pandas as pd
 from fastapi import APIRouter, Depends, Response
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
@@ -142,25 +142,36 @@ async def export_applications(
 ) -> Response:
     stream = io.StringIO()
 
-    pd.DataFrame(
+    writer = csv.writer(stream)
+    writer.writerow(
         [
-            {
-                _("Legal Name", lang): application.borrower.legal_name,
-                _("National Tax ID", lang): application.borrower.legal_identifier,
-                _("Email Address", lang): application.primary_email,
-                _("Buyer Name", lang): application.award.buyer_name,
-                _("Award Value Currency & Amount", lang): application.award.award_amount,
-                _("Amount requested", lang): application.amount_requested,
-                _("Submission Date", lang): application.borrower_submitted_at,
-                _("Stage", lang): _(application.status, lang),
-            }
-            for application in (
-                models.Application.submitted_search(
-                    session, lender_id=user.lender_id, sort_field="application.borrower_submitted_at", sort_order="asc"
-                )
-            )
+            _("Legal Name", lang),
+            _("National Tax ID", lang),
+            _("Email Address", lang),
+            _("Buyer Name", lang),
+            _("Award Value Currency & Amount", lang),
+            _("Amount requested", lang),
+            _("Submission Date", lang),
+            _("Stage", lang),
         ]
-    ).to_csv(stream, index=False, encoding="utf-8")
+    )
+    writer.writerows(
+        [
+            application.borrower.legal_name,
+            application.borrower.legal_identifier,
+            application.primary_email,
+            application.award.buyer_name,
+            application.award.award_amount,
+            application.amount_requested,
+            application.borrower_submitted_at,
+            _(application.status, lang),
+        ]
+        for application in (
+            models.Application.submitted_search(
+                session, lender_id=user.lender_id, sort_field="application.borrower_submitted_at", sort_order="asc"
+            )
+        )
+    )
 
     return Response(
         content=stream.getvalue(),
