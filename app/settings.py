@@ -190,7 +190,6 @@ if app_settings.sentry_dsn:
     sentry_sdk.init(
         dsn=app_settings.sentry_dsn,
         before_send=sentry_filter_transactions,
-        # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
         traces_sample_rate=1.0,
         # FastAPI uses 400 for request validation errors, which shouldn't occur unless the frontend is misimplemented.
         integrations=[
