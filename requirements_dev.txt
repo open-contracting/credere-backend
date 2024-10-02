@@ -127,16 +127,11 @@ mypy-boto3-ses==1.29.0
 mypy-extensions==1.0.0
     # via mypy
 numpy==1.26.0
-    # via
-    #   -r requirements.txt
-    #   pandas
-    #   pandas-stubs
+    # via pandas-stubs
 orjson==3.10.7
     # via -r requirements.txt
 packaging==23.1
     # via pytest
-pandas==2.2.2
-    # via -r requirements.txt
 pandas-stubs==2.2.2.240807
     # via -r requirements_dev.in
 pillow==10.3.0
@@ -185,17 +180,12 @@ python-dateutil==2.8.2
     #   -r requirements.txt
     #   botocore
     #   moto
-    #   pandas
 python-dotenv==1.0.0
     # via
     #   -r requirements.txt
     #   pydantic-settings
 python-multipart==0.0.7
     # via -r requirements.txt
-pytz==2023.3
-    # via
-    #   -r requirements.txt
-    #   pandas
 pyyaml==6.0.2
     # via responses
 reportlab==4.0.4
@@ -277,10 +267,6 @@ typing-extensions==4.8.0
     #   sqlalchemy
     #   sqlalchemy2-stubs
     #   typer
-tzdata==2023.3
-    # via
-    #   -r requirements.txt
-    #   pandas
 urllib3==1.26.19
     # via
     #   -r requirements.txt

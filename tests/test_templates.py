@@ -30,8 +30,7 @@ allow = {
 
 @pytest.mark.skipif("CI" not in os.environ, reason="skipping slow test in development")
 def test_valid_html(tmp_path):
-    files = (pathlib.Path(BASEDIR).parent / "email_templates").glob("*")
-    for file in files:
+    for file in (pathlib.Path(BASEDIR).parent / "email_templates").glob("*"):
         (tmp_path / file.name).write_text(re.sub(r"{{[^}]+}}", "http://host", file.read_text()))
 
     for path, report in ValidatorInterface().validate([str(path) for path in tmp_path.glob("*")]).registry.items():
