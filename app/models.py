@@ -204,7 +204,7 @@ class ApplicationStatus(StrEnum):
     #:
     #: (``/applications/email-sme/{id}``)
     INFORMATION_REQUESTED = i("INFORMATION_REQUESTED")
-    #: Borrower doesn't accept, or doesn't submit the application or information requested.
+    #: Borrower doesn't accept or decline the invitation, or doesn't submit the application or information requested.
     #:
     #: (:typer:`python-m-app-update-applications-to-lapsed`)
     LAPSED = i("LAPSED")
