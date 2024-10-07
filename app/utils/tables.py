@@ -84,13 +84,7 @@ def create_application_table(application: models.Application, lang: str) -> Tabl
             ],
         )
 
-    if application.status == models.ApplicationStatus.COMPLETED:
-        data.append(
-            [
-                _("Contract amount", lang),
-                _format_currency(application.contract_amount_submitted, application.currency),
-            ]
-        )
+    if application.status == models.ApplicationStatus.APPROVED:
         data.append(
             [
                 _("Credit amount", lang),
