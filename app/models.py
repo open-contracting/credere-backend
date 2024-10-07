@@ -935,13 +935,13 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         self.lender_rejected_at = datetime.now(self.tz)
         self.lender_rejected_data = lender_rejected_data
 
-    def stage_as_approved(self, disbursed_final_amount: Decimal | None, payload_dict) -> None:
+    def stage_as_approved(self, disbursed_final_amount: Decimal | None, lender_approved_data: dict[str, Any]) -> None:
         """Assign fields related to marking the application as COMPLETED."""
         self.status = ApplicationStatus.APPROVED
         self.lender_approved_at = datetime.now(self.tz)
         self.disbursed_final_amount = disbursed_final_amount
         self.overdued_at = None
-        self.lender_approved_data = payload_dict
+        self.lender_approved_data = lender_approved_data
 
 
 class BorrowerDocumentBase(SQLModel):
