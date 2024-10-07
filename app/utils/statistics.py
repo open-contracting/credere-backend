@@ -81,20 +81,9 @@ def get_general_statistics(
 
     application_received_count = base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count()
 
-    applications_approved_count = base_query.filter(
-        col(Application.status).in_(
-            [ApplicationStatus.APPROVED, ApplicationStatus.CONTRACT_UPLOADED, ApplicationStatus.COMPLETED]
-        )
-    ).count()
-
     applications_with_credit_disbursed_count = base_query.filter(
-        Application.status == ApplicationStatus.COMPLETED
+        Application.status == ApplicationStatus.APPROVED
     ).count()
-
-    if applications_approved_count and applications_with_credit_disbursed_count:
-        proportion_of_disbursed = int(applications_with_credit_disbursed_count / applications_approved_count * 100)
-    else:
-        proportion_of_disbursed = 0
 
     if application_received_count:
         column = Application.borrower_accepted_at if lender_id is None else Application.borrower_submitted_at
@@ -106,7 +95,6 @@ def get_general_statistics(
 
     return {
         "applications_received_count": application_received_count,
-        "applications_approved_count": applications_approved_count,
         "applications_rejected_count": base_query.filter(Application.status == ApplicationStatus.REJECTED).count(),
         "applications_waiting_for_information_count": base_query.filter(
             Application.status == ApplicationStatus.INFORMATION_REQUESTED
@@ -115,7 +103,6 @@ def get_general_statistics(
             col(Application.status).in_([ApplicationStatus.STARTED, ApplicationStatus.INFORMATION_REQUESTED])
         ).count(),
         "applications_with_credit_disbursed_count": applications_with_credit_disbursed_count,
-        "proportion_of_disbursed": proportion_of_disbursed,
         "average_amount_requested": _scalar_or_zero(
             _get_base_query(
                 session.query(func.avg(Application.amount_requested)), start_date, end_date, lender_id
@@ -141,7 +128,7 @@ def get_general_statistics(
         "average_processing_time": _scalar_or_zero(
             _get_base_query(
                 session.query(func.avg(Application.completed_in_days)), start_date, end_date, lender_id
-            ).filter(Application.status == ApplicationStatus.COMPLETED),
+            ).filter(col(Application.status).in_((ApplicationStatus.APPROVED, ApplicationStatus.REJECTED))),
             formatter=int,
         ),
         "proportion_of_submitted_out_of_opt_in": proportion_of_submitted_out_of_opt_in,
@@ -174,7 +161,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
     accepted = col(Application.borrower_accepted_at).isnot(None)
     declined = col(Application.borrower_declined_at).isnot(None)
     submitted = col(Application.borrower_submitted_at).isnot(None)
-    approved = col(Application.lender_completed_at).isnot(None)
+    approved = col(Application.lender_approved_at).isnot(None)
     # When filtering by size, remember to query or join Borrower.
     msme_from_source = Borrower.is_msme == true()
     msme_from_borrower = Borrower.size != BorrowerSize.BIG

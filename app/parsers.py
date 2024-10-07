@@ -47,9 +47,6 @@ class LenderApprovedData(BaseModel):
     compliant_checks_completed: bool
     compliant_checks_passed: bool
     additional_comments: str | None = None
-
-
-class LenderReviewContract(BaseModel):
     disbursed_final_amount: Decimal | None = None
 
 

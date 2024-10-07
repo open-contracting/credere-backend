@@ -109,40 +109,6 @@ def send(
                 template_name = "rejected_application_no_alternatives"
 
         case MessageType.APPROVED_APPLICATION:
-            # If a lender has a `default_pre_approval_message`, they cannot send custom `additional_comments`.
-            if application.lender.default_pre_approval_message:
-                additional_comments = application.lender.default_pre_approval_message
-            elif application.lender_approved_data.get("additional_comments"):
-                additional_comments = application.lender_approved_data["additional_comments"]
-            else:
-                additional_comments = "Ninguno"
-
-            recipients = [[application.primary_email]]
-            subject = _("Your credit application has been prequalified")
-            parameters = {
-                "LENDER_NAME": application.lender.name,
-                "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-                "TENDER_TITLE": application.award.title,
-                "BUYER_NAME": application.award.buyer_name,
-                "ADDITIONAL_COMMENTS": additional_comments,
-                "UPLOAD_CONTRACT_URL": f"{base_application_url}/upload-contract",
-            }
-
-        case MessageType.CONTRACT_UPLOAD_CONFIRMATION:
-            recipients = [[application.primary_email]]
-            subject = _("Thank you for uploading the signed contract")
-            parameters = {
-                "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
-                "TENDER_TITLE": application.award.title,
-                "BUYER_NAME": application.award.buyer_name,
-            }
-
-        case MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI:
-            recipients = [_get_lender_emails(application.lender, MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI)]
-            subject = _("New contract submission")
-            parameters = {"LOGIN_URL": f"{app_settings.frontend_url}/login"}
-
-        case MessageType.CREDIT_DISBURSED:
             recipients = [[application.primary_email]]
             subject = _("Your credit application has been approved")
             parameters = {
