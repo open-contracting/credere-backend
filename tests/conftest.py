@@ -328,8 +328,6 @@ def application_payload(application_uuid, award, borrower):
         "lender_rejected_data": {},
         "lender_approved_at": None,
         "lender_approved_data": {},
-        "borrower_uploaded_contract_at": None,
-        "contract_amount_submitted": None,
         "secop_data_verification": {
             "legal_name": False,
             "address": True,

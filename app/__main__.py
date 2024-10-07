@@ -16,7 +16,6 @@ from fastapi.params import Depends, Header
 from rich.console import Console
 from rich.table import Table
 from sqlalchemy.orm import Session, joinedload
-from sqlmodel import col
 
 from app import aws, mail, main, models, util
 from app.db import get_db, handle_skipped_award, rollback_on_error
@@ -215,9 +214,7 @@ def sla_overdue_applications() -> None:
     with contextmanager(get_db)() as session:
         overdue_lenders: dict[int, Any] = defaultdict(lambda: {"count": 0})
         for application in session.query(models.Application).filter(
-            col(models.Application.status).in_(
-                [models.ApplicationStatus.CONTRACT_UPLOADED, models.ApplicationStatus.STARTED]
-            )
+            models.Application.status == models.ApplicationStatus.STARTED
         ):
             with rollback_on_error(session):
                 days_passed = application.days_waiting_for_lender(session)

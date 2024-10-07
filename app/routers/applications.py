@@ -42,7 +42,6 @@ async def reject_application(
     with rollback_on_error(session):
         payload_dict = jsonable_encoder(payload, exclude_unset=True)
         application.stage_as_rejected(payload_dict)
-        application.completed_in_days = application.days_waiting_for_lender(session)
 
         options = session.query(
             session.query(models.CreditProduct)
