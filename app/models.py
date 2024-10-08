@@ -708,7 +708,7 @@ class ApplicationBase(SQLModel):
     award_id: int = Field(foreign_key="award.id", index=True)
     borrower_id: int = Field(foreign_key="borrower.id", index=True)
     lender_id: int | None = Field(foreign_key="lender.id")
-    credit_product_id: int | None = Field(foreign_key="credit_product.id")
+    credit_product_id: int | None = Field(foreign_key="credit_product.id", index=True)
 
     # Timestamps
     created_at: datetime = Field(
@@ -837,7 +837,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         query = (
             cls.submitted(session)
             .join(Award)
-            .join(Borrower)
+            .join(Borrower, cls.borrower_id == Borrower.id)
             .join(CreditProduct)
             .join(Lender)
             .options(
