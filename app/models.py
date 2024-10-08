@@ -837,7 +837,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         query = (
             cls.submitted(session)
             .join(Award)
-            .join(Borrower)
+            .join(Borrower, cls.borrower_id == Borrower.id)
             .join(CreditProduct)
             .join(Lender)
             .options(
