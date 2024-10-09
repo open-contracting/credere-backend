@@ -68,9 +68,8 @@ def get_general_statistics(
 
     This function retrieves general statistics about applications based on the provided start_date, end_date, and
     lender_id (if available). The statistics include the count of applications received, approved, rejected, waiting
-    for information, in progress, with credit disbursed, proportion of credit disbursed, average amount requested,
-    average repayment period, count of overdue applications, average processing time, and proportion of submitted
-    applications out of the opt-in applications.
+    for information, in progress, average amount requested, average repayment period, count of overdue applications,
+    average processing time, and proportion of submitted applications out of the opt-in applications.
 
     :param start_date: The start date for filtering applications. (default: None)
     :param end_date: The end date for filtering applications. (default: None)
@@ -267,6 +266,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
             _rejected_reason("already_have_acredit"),
             _rejected_reason("preffer_to_go_to_bank"),
             _rejected_reason("dont_want_access_credit"),
+            _rejected_reason("suspicious_email"),
             _rejected_reason("other"),
         ],
         #
