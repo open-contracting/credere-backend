@@ -642,39 +642,6 @@ async def complete_information_request(
 
 
 @router.post(
-    "/applications/upload-contract",
-    tags=[util.Tags.applications],
-    response_model=models.BorrowerDocumentBase,
-)
-async def upload_contract(
-    file: UploadFile,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_form(statuses=(models.ApplicationStatus.APPROVED,))
-    ),
-) -> Any:
-    """
-    Upload a contract document for an application.
-
-    :param file: The uploaded file.
-    :return: The created or updated borrower document representing the contract.
-    """
-    with rollback_on_error(session):
-        new_file, filename = util.validate_file(file)
-
-        document = util.create_or_update_borrower_document(
-            session,
-            filename,
-            application,
-            models.BorrowerDocumentType.SIGNED_CONTRACT,
-            new_file,
-        )
-
-        session.commit()
-        return document
-
-
-@router.post(
     "/applications/find-alternative-credit-option",
     tags=[util.Tags.applications],
 )
