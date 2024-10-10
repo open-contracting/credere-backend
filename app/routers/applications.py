@@ -27,10 +27,7 @@ async def reject_application(
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
             roles=(models.UserType.FI,),
-            statuses=(
-                models.ApplicationStatus.CONTRACT_UPLOADED,
-                models.ApplicationStatus.STARTED,
-            ),
+            statuses=(models.ApplicationStatus.STARTED,),
         )
     ),
 ) -> Any:
@@ -68,50 +65,6 @@ async def reject_application(
         )
 
         mail.send(session, client.ses, models.MessageType.REJECTED_APPLICATION, application, options=options)
-
-        session.commit()
-        return application
-
-
-@router.post(
-    "/applications/{id}/complete-application",
-    tags=[util.Tags.applications],
-    response_model=models.ApplicationWithRelations,
-)
-async def complete_application(
-    payload: parsers.LenderReviewContract,
-    session: Session = Depends(get_db),
-    user: models.User = Depends(dependencies.get_user),
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.FI,),
-            statuses=(models.ApplicationStatus.CONTRACT_UPLOADED,),
-        )
-    ),
-) -> Any:
-    """
-    Complete an application.
-
-    Change application status from "CONTRACT_UPLOADED" to "COMPLETED".
-
-    :param payload: The completed application data.
-    :return: The completed application with its associated relations.
-    """
-    with rollback_on_error(session):
-        application.stage_as_completed(payload.disbursed_final_amount)
-        application.completed_in_days = application.days_waiting_for_lender(session)
-
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.FI_COMPLETE_APPLICATION,
-            # payload.disbursed_final_amount is a Decimal.
-            data=jsonable_encoder({"disbursed_final_amount": payload.disbursed_final_amount}),
-            application_id=application.id,
-            user_id=user.id,
-        )
-
-        mail.send(session, client.ses, models.MessageType.CREDIT_DISBURSED, application)
 
         session.commit()
         return application
@@ -163,10 +116,8 @@ async def approve_application(
             )
 
         # Approve the application.
-        payload_dict = jsonable_encoder(payload, exclude_unset=True)
-        application.lender_approved_data = payload_dict
-        application.status = models.ApplicationStatus.APPROVED
-        application.lender_approved_at = datetime.now(application.created_at.tzinfo)
+        application.stage_as_approved(payload.disbursed_final_amount, jsonable_encoder(payload, exclude_unset=True))
+        application.completed_in_days = application.days_waiting_for_lender(session)
 
         models.ApplicationAction.create(
             session,
