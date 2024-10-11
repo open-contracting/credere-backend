@@ -67,9 +67,7 @@ def get_general_statistics(
     Get general statistics about applications based on the provided parameters.
 
     This function retrieves general statistics about applications based on the provided start_date, end_date, and
-    lender_id (if available). The statistics include the count of applications received, approved, rejected, waiting
-    for information, in progress, average amount requested, average repayment period, count of overdue applications,
-    average processing time, and proportion of submitted applications out of the opt-in applications.
+    lender_id (if available).
 
     :param start_date: The start date for filtering applications. (default: None)
     :param end_date: The end date for filtering applications. (default: None)

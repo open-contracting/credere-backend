@@ -656,7 +656,7 @@ class ApplicationBase(SQLModel):
     #: .. seealso:: :meth:`app.models.Application.days_waiting_for_lender`
     completed_in_days: int | None
 
-    #: The time at which the application was most recently overdue (reset once completed).
+    #: The time at which the application was most recently overdue (reset once approved).
     #:
     #: .. seealso:: :attr:`~app.settings.Settings.progress_to_remind_started_applications`
     overdued_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
