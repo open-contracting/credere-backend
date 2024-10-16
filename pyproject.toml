@@ -52,7 +52,7 @@ ignore-variadic-names = true
 [tool.mypy]
 strict = true
 warn_unreachable = true
-exclude = "(tests|migrations)/"
+exclude = "(migrations|tests)/"
 plugins = ["pydantic.mypy"]
 
 [tool.pydantic-mypy]
