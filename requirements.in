@@ -2,7 +2,7 @@ alembic
 babel
 boto3
 click
-email_validator
+email-validator
 fastapi
 httpx
 minify-html
@@ -21,4 +21,4 @@ sqlalchemy[postgresql]
 sqlmodel
 starlette
 typer
-uvicorn==0.22.0
+uvicorn

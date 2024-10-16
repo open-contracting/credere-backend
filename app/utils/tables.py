@@ -9,17 +9,19 @@ from app.i18n import _
 from reportlab_mods import create_table, styleN
 
 
-def _format_currency(number: Decimal | None, currency: str) -> str:
+def _format_currency(number: Decimal | str | None, currency: str) -> str:
     if number is None:
         return "-"
     if isinstance(number, str):
         try:
-            number = int(number)
+            formatted_number = locale.format_string("%d", int(number), grouping=True)
         except ValueError:
             return "-"
+    else:
+        formatted_number = locale.format_string("%d", number, grouping=True)
 
     locale.setlocale(locale.LC_ALL, "")
-    formatted_number = locale.format_string("%d", number, grouping=True)
+
     return f"{currency}$ {formatted_number}"
 
 
