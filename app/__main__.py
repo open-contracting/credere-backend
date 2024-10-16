@@ -118,7 +118,8 @@ def fetch_awards(
 
     with contextmanager(get_db)() as session:
         if from_date is None:
-            from_date = models.Award.last_updated(session)
+            # Mypy considers this unreachable, because the annotation is typer.Option, without None.
+            from_date = models.Award.last_updated(session)  # type: ignore[unreachable]
 
         index = 0
         awards_response = data_access.get_new_awards(index, from_date, until_date)
