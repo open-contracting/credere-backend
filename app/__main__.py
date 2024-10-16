@@ -283,8 +283,9 @@ def remove_dated_application_data() -> None:
 
 # The openapi.json file can't be used, because it doesn't track Python modules.
 @dev.command()
-def routes(*, csv_format: bool = False) -> None:
+def routes(*, file: typer.FileText | None = None, csv_format: bool = False) -> None:
     """Print a table of routes."""
+    existing = {f"{row['Methods']} {row['Path']}": row for row in csv.DictReader(file)}
 
     def _pretty(model: Any, expected: str) -> str:
         if model is None:
@@ -321,13 +322,23 @@ def routes(*, csv_format: bool = False) -> None:
                 if not isinstance(default, Depends | Header)
             )
 
+        methods = ", ".join(route.methods or [])
         response = _pretty(getattr(route, "response_model", None), "app.serializers")
-        rows.append([", ".join(route.methods or []), route.path, request, response])
+        rows.append(
+            {
+                "Methods": methods,
+                "Path": route.path,
+                "Backend parsers": request,
+                "Backend serializers": response,
+                "Frontend request": existing.get(f"{methods} {route.path}", {}).get("Frontend request"),
+                "Frontend response": existing.get(f"{methods} {route.path}", {}).get("Frontend response"),
+            }
+        )
 
-    fieldnames = "Methods", "Path", "Request format", "Response format"
+    fieldnames = "Methods", "Path", "Backend parsers", "Backend serializers", "Frontend request", "Frontend response"
     if csv_format:
-        writer = csv.writer(sys.stdout, lineterminator="\n")
-        writer.writerow(fieldnames)
+        writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames, lineterminator="\n")
+        writer.writeheader()
         writer.writerows(rows)
     else:
         table = Table(*fieldnames)

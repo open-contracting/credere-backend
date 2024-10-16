@@ -45,7 +45,7 @@ This table is contructed by running this command, and filling in information fro
 
 .. code-block:: bash
 
-   python -m app dev routes --csv-format
+   uv run python -m app dev routes --csv-format --file docs/_static/routes.csv
 
 .. csv-table::
    :file: _static/routes.csv
