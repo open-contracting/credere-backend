@@ -2,7 +2,7 @@ alembic
 babel
 boto3
 click
-email_validator
+email-validator
 fastapi
 httpx
 minify-html

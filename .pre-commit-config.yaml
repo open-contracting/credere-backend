@@ -19,3 +19,28 @@ repos:
         name: pip-compile requirements_dev.in
         args: [requirements_dev.in, -o, requirements_dev.txt]
         files: ^requirements(_dev)?\.(in|txt)$
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.12.0
+    hooks:
+      - id: mypy
+        args: [--strict]
+        exclude: "(tests|migrations)/"
+        additional_dependencies:
+          - boto3-stubs
+          - click
+          - email-validator
+          - fastapi
+          - httpx
+          - minify-html
+          - mypy-boto3-cognito-idp
+          - mypy-boto3-ses
+          - orjson
+          - pydantic
+          - pydantic-settings
+          - pyjwt
+          - reportlab-stubs
+          - sentry-sdk
+          - sqlalchemy2-stubs
+          - sqlmodel
+          - typer
+          - types-requests

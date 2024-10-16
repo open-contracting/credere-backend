@@ -50,8 +50,9 @@ ignore-variadic-names = true
 
 # https://docs.pydantic.dev/2.0/integrations/mypy/#configuring-the-plugin
 [tool.mypy]
-plugins = ['pydantic.mypy']
-follow_imports = 'silent'
+exclude = "(tests|migrations)/"
+plugins = ["pydantic.mypy"]
+follow_imports = "silent"
 warn_redundant_casts = true
 warn_unused_ignores = true
 disallow_any_generics = true
