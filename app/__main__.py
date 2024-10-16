@@ -285,7 +285,7 @@ def remove_dated_application_data() -> None:
 @dev.command()
 def routes(*, file: typer.FileText | None = None, csv_format: bool = False) -> None:
     """Print a table of routes."""
-    existing = {f"{row['Methods']} {row['Path']}": row for row in csv.DictReader(file)}
+    existing = {f"{row['Methods']} {row['Path']}": row for row in csv.DictReader(file)} if file else {}
 
     def _pretty(model: Any, expected: str) -> str:
         if model is None:
