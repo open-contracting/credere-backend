@@ -21,4 +21,4 @@ sqlalchemy[postgresql]
 sqlmodel
 starlette
 typer
-uvicorn==0.22.0
+uvicorn
