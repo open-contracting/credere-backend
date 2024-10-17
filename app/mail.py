@@ -70,6 +70,10 @@ def send(
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
             }
 
+            if application.lender.external_onboarding_url:
+                parameters["EXTERNAL_ONBOARDING_URL"] = application.lender.external_onboarding_url
+                template_name = "submission_completed_external_onboarding"
+
         case MessageType.NEW_APPLICATION_OCP:
             recipients = [[app_settings.ocp_email_group]]
             subject = _("New application submission")
