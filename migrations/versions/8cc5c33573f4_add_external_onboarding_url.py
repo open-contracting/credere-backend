@@ -24,16 +24,21 @@ def upgrade() -> None:
         sa.Column(
             "external_onboarding_url",
             sqlmodel.sql.sqltypes.AutoString(),
-            nullable=True,
+            nullable=False,
             server_default="",
         ),
     )
     op.drop_column("lender", "default_pre_approval_message")
-    # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     op.add_column(
-        "lender", sa.Column("default_pre_approval_message", sa.VARCHAR(), autoincrement=False, nullable=False)
+        "lender",
+        sa.Column(
+            "default_pre_approval_message",
+            sqlmodel.sql.sqltypes.AutoString(),
+            nullable=True,
+            server_default="",
+        ),
     )
     op.drop_column("lender", "external_onboarding_url")
