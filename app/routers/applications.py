@@ -96,23 +96,30 @@ async def approve_application(
     :return: The approved application with its associated relations.
     """
     with rollback_on_error(session):
-        # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
-        # the application's `secop_data_verification`.
-        app_secop_dict = application.secop_data_verification.copy()
-        fields = list(parsers.UpdateDataField().model_dump().keys())
-        not_validated_fields = [key for key in fields if key not in app_secop_dict or not app_secop_dict[key]]
-        if not_validated_fields:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_("Some borrower data field are not verified"),
-            )
+        # If the lender has an external onboarding system the fields and documents verification is not required-
+        if not application.lender.external_onboarding_url:
+            # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
+            # the application's `secop_data_verification`.
+            app_secop_dict = application.secop_data_verification.copy()
+            fields = list(parsers.UpdateDataField().model_dump().keys())
+            not_validated_fields = [key for key in fields if key not in app_secop_dict or not app_secop_dict[key]]
+            if not_validated_fields:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=_("Some borrower data field are not verified"),
+                )
 
-        # Check all documents are verified.
-        not_validated_documents = [doc.type for doc in application.borrower_documents if not doc.verified]
-        if not_validated_documents:
+            # Check all documents are verified.
+            not_validated_documents = [doc.type for doc in application.borrower_documents if not doc.verified]
+            if not_validated_documents:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=_("Some documents are not verified"),
+                )
+        if not payload.disbursed_final_amount:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_("Some documents are not verified"),
+                detail=_("The disbursed final amount information is required for approving the application"),
             )
 
         # Approve the application.
@@ -460,6 +467,14 @@ async def email_borrower(
     :raises HTTPException: If there's an error in sending the email to the borrower.
     """
     with rollback_on_error(session):
+        if application.lender.external_onboarding_url:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=_(
+                    "The lender has an external onboarding system so no information can be requested from the "
+                    "borrower through Credere"
+                ),
+            )
         application.status = models.ApplicationStatus.INFORMATION_REQUESTED
         application.information_requested_at = datetime.now(application.created_at.tzinfo)
         application.pending_documents = True
