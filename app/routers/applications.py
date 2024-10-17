@@ -102,16 +102,14 @@ async def approve_application(
             # the application's `secop_data_verification`.
             app_secop_dict = application.secop_data_verification.copy()
             fields = list(parsers.UpdateDataField().model_dump().keys())
-            not_validated_fields = [key for key in fields if key not in app_secop_dict or not app_secop_dict[key]]
-            if not_validated_fields:
+            if any(not app_secop_dict.get(key) for key in fields):
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=_("Some borrower data field are not verified"),
                 )
 
             # Check all documents are verified.
-            not_validated_documents = [doc.type for doc in application.borrower_documents if not doc.verified]
-            if not_validated_documents:
+            if any(not doc.verified for doc in application.borrower_documents):
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=_("Some documents are not verified"),
