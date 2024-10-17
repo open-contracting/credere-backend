@@ -171,8 +171,7 @@ class ApplicationStatus(StrEnum):
     -  → INFORMATION_REQUESTED → LAPSED
     -  → INFORMATION_REQUESTED → STARTED (→ …)
     -  → REJECTED
-    -  → APPROVED → CONTRACT_UPLOADED → COMPLETED
-    -  → APPROVED → CONTRACT_UPLOADED → REJECTED
+    -  → APPROVED
     """
 
     #: Credere sends an invitation to the borrower.
@@ -208,18 +207,10 @@ class ApplicationStatus(StrEnum):
     #:
     #: (:typer:`python-m-app-update-applications-to-lapsed`)
     LAPSED = i("LAPSED")
-    #: Lender pre-approves the application, and Credere asks the borrower to upload its contract.
+    #: Lender approves the application, and sets the final credit disbursed.
     #:
     #: (``/applications/{id}/approve-application``)
     APPROVED = i("APPROVED")
-    #: Borrower uploads its contract and final contract amount.
-    #:
-    #: (``/applications/confirm-upload-contract``)
-    CONTRACT_UPLOADED = i("CONTRACT_UPLOADED")
-    #: Lender sets the final credit disbursed.
-    #:
-    #: (``/applications/{id}/complete-application``)
-    COMPLETED = i("COMPLETED")
 
 
 class BorrowerStatus(StrEnum):
@@ -270,22 +261,6 @@ class MessageType(StrEnum):
     #:
     #: STARTED → APPROVED (``/applications/{id}/approve-application``)
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
-    #: Request a contract from the borrower.
-    #:
-    #: Unused
-    CONTRACT_UPLOAD_REQUEST = "CONTRACT_UPLOAD_REQUEST"
-    #: Confirm receipt of the requested contract.
-    #:
-    #: APPROVED → CONTRACT_UPLOADED (``/applications/confirm-upload-contract``)
-    CONTRACT_UPLOAD_CONFIRMATION = "CONTRACT_UPLOAD_CONFIRMATION"
-    #: Notify the lender about the requested contract.
-    #:
-    #: APPROVED → CONTRACT_UPLOADED (``/applications/confirm-upload-contract``)
-    CONTRACT_UPLOAD_CONFIRMATION_TO_FI = "CONTRACT_UPLOAD_CONFIRMATION_TO_FI"
-    #: Notify the borrower that the application is completed.
-    #:
-    #: CONTRACT_UPLOADED → COMPLETED (``/applications/{id}/complete-application``)
-    CREDIT_DISBURSED = "CREDIT_DISBURSED"
     #: Remind the administrators about overdue applications.
     #:
     #: STARTED | CONTRACT_UPLOADED (:typer:`python-m-app-sla-overdue-applications`)
@@ -312,7 +287,6 @@ class ApplicationActionType(StrEnum):
     BORROWER_UPDATE = "BORROWER_UPDATE"
     APPLICATION_CALCULATOR_DATA_UPDATE = "APPLICATION_CALCULATOR_DATA_UPDATE"
     APPLICATION_CONFIRM_CREDIT_PRODUCT = "APPLICATION_CONFIRM_CREDIT_PRODUCT"
-    FI_COMPLETE_APPLICATION = "FI_COMPLETE_APPLICATION"
     FI_DOWNLOAD_DOCUMENT = "FI_DOWNLOAD_DOCUMENT"
     FI_DOWNLOAD_APPLICATION = "FI_DOWNLOAD_APPLICATION"
     OCP_DOWNLOAD_APPLICATION = "OCP_DOWNLOAD_APPLICATION"
@@ -322,14 +296,12 @@ class ApplicationActionType(StrEnum):
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"
     MSME_UPLOAD_DOCUMENT = "MSME_UPLOAD_DOCUMENT"
-    MSME_UPLOAD_CONTRACT = "MSME_UPLOAD_CONTRACT"
     MSME_CHANGE_EMAIL = "MSME_CHANGE_EMAIL"
     MSME_CONFIRM_EMAIL = "MSME_CONFIRM_EMAIL"
     MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED = "MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED"
     MSME_RETRY_APPLICATION = "MSME_RETRY_APPLICATION"
     DATA_VALIDATION_UPDATE = "DATA_VALIDATION_UPDATE"
     BORROWER_DOCUMENT_VERIFIED = "BORROWER_DOCUMENT_VERIFIED"
-    BORROWER_UPLOADED_CONTRACT = "BORROWER_UPLOADED_CONTRACT"
     APPLICATION_COPIED_FROM = "APPLICATION_COPIED_FROM"
     COPIED_APPLICATION = "COPIED_APPLICATION"
     APPLICATION_ROLLBACK_SELECT_PRODUCT = "APPLICATION_ROLLBACK_SELECT_PRODUCT"
@@ -677,13 +649,6 @@ class ApplicationBase(SQLModel):
     #: Whether the borrower fields (keys) have been verified (``bool`` values) by the lender.
     secop_data_verification: dict[str, Any] = Field(default_factory=dict, sa_type=JSON)
 
-    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.CONTRACT_UPLOADED`.
-    borrower_uploaded_contract_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
-    #: The amount of the contract submitted by the borrower.
-    contract_amount_submitted: Decimal | None = Field(max_digits=16, decimal_places=2)
-
-    #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.COMPLETED`.
-    lender_completed_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
     #: The amount of the loan disbursed by the lender.
     disbursed_final_amount: Decimal | None = Field(max_digits=16, decimal_places=2)
     #: The total number of days waiting for the lender.
@@ -691,7 +656,7 @@ class ApplicationBase(SQLModel):
     #: .. seealso:: :meth:`app.models.Application.days_waiting_for_lender`
     completed_in_days: int | None
 
-    #: The time at which the application was most recently overdue (reset once completed).
+    #: The time at which the application was most recently overdue (reset once approved).
     #:
     #: .. seealso:: :attr:`~app.settings.Settings.progress_to_remind_started_applications`
     overdued_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
@@ -873,7 +838,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     def archivable(cls, session: Session) -> "Query[Self]":
         """
         Return query for :meth:`~app.models.Application.unarchived` applications that have been in a final state
-        (DECLINED, REJECTED, COMPLETED, LAPSED) for :attr:`~app.settings.Settings.days_to_erase_borrowers_data` days.
+        (DECLINED, REJECTED, APPROVED, LAPSED) for :attr:`~app.settings.Settings.days_to_erase_borrowers_data` days.
 
         .. seealso:: :typer:`python-m-app-remove-dated-application-data`
         """
@@ -890,7 +855,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                     col(cls.lender_rejected_at) + delta < datetime.now(),
                 ),
                 and_(
-                    cls.status == ApplicationStatus.COMPLETED,
+                    cls.status == ApplicationStatus.APPROVED,
                     col(cls.lender_approved_at) + delta < datetime.now(),
                 ),
                 and_(
@@ -970,12 +935,13 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         self.lender_rejected_at = datetime.now(self.tz)
         self.lender_rejected_data = lender_rejected_data
 
-    def stage_as_completed(self, disbursed_final_amount: Decimal | None) -> None:
+    def stage_as_approved(self, disbursed_final_amount: Decimal | None, lender_approved_data: dict[str, Any]) -> None:
         """Assign fields related to marking the application as COMPLETED."""
-        self.status = ApplicationStatus.COMPLETED
-        self.lender_completed_at = datetime.now(self.tz)
+        self.status = ApplicationStatus.APPROVED
+        self.lender_approved_at = datetime.now(self.tz)
         self.disbursed_final_amount = disbursed_final_amount
         self.overdued_at = None
+        self.lender_approved_data = lender_approved_data
 
 
 class BorrowerDocumentBase(SQLModel):

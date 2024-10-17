@@ -47,6 +47,7 @@ def test_approve_application_cycle(
         "compliant_checks_completed": True,
         "compliant_checks_passed": True,
         "additional_comments": "test comments",
+        "disbursed_final_amount": 10000,
     }
 
     # this will mock the previous award get to return an empty array
@@ -282,28 +283,6 @@ def test_approve_application_cycle(
     response = client.post(f"/applications/{appid}/approve-application", json=approve_payload, headers=lender_header)
     assert_ok(response)
     assert response.json()["status"] == models.ApplicationStatus.APPROVED
-
-    # Borrower uploads contract
-    with open(file, "rb") as file_to_upload:
-        response = client.post(
-            "/applications/upload-contract",
-            data={"uuid": pending_application.uuid},
-            files={"file": (file_to_upload.name, file_to_upload, "image/jpeg")},
-        )
-        assert_ok(response)
-
-    response = client.post(
-        "/applications/confirm-upload-contract",
-        json={"uuid": pending_application.uuid, "contract_amount_submitted": 100000},
-    )
-    assert_ok(response)
-    assert response.json()["application"]["status"] == models.ApplicationStatus.CONTRACT_UPLOADED
-
-    response = client.post(
-        f"/applications/{appid}/complete-application", json={"disbursed_final_amount": 10000}, headers=lender_header
-    )
-    assert_ok(response)
-    assert response.json()["status"] == models.ApplicationStatus.COMPLETED
 
 
 def test_get_applications(client, session, admin_header, lender_header, pending_application):

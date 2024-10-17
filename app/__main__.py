@@ -16,7 +16,6 @@ from fastapi.params import Depends, Header
 from rich.console import Console
 from rich.table import Table
 from sqlalchemy.orm import Session, joinedload
-from sqlmodel import col
 
 from app import aws, mail, main, models, util
 from app.db import get_db, handle_skipped_award, rollback_on_error
@@ -46,7 +45,7 @@ app.add_typer(dev, name="dev", help="Commands for maintainers of Credere.")
 
 
 # Called by fetch-award* commands.
-def _create_complete_application(session: Session, award_entry: dict[str, str]) -> None:
+def _create_application(session: Session, award_entry: dict[str, str]) -> None:
     with handle_skipped_award(session, "Error creating application"):
         # Create the award. If it exists, skip this award.
         award = util.create_award_from_data_source(session, award_entry)
@@ -135,7 +134,7 @@ def fetch_awards(
                         "Source contract is missing required fields:"
                         f" url={awards_response.url}, data={awards_response_json}"
                     )
-                _create_complete_application(session, entry)
+                _create_application(session, entry)
 
             index += 1
             awards_response = data_access.get_new_awards(index, from_date, until_date)
@@ -158,7 +157,7 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
         return
 
     with contextmanager(get_db)() as session:
-        _create_complete_application(session, award_response_json[0])
+        _create_application(session, award_response_json[0])
 
 
 @app.command()
@@ -216,9 +215,7 @@ def sla_overdue_applications() -> None:
     with contextmanager(get_db)() as session:
         overdue_lenders: dict[int, Any] = defaultdict(lambda: {"count": 0})
         for application in session.query(models.Application).filter(
-            col(models.Application.status).in_(
-                [models.ApplicationStatus.CONTRACT_UPLOADED, models.ApplicationStatus.STARTED]
-            )
+            models.Application.status == models.ApplicationStatus.STARTED
         ):
             with rollback_on_error(session):
                 days_passed = application.days_waiting_for_lender(session)
