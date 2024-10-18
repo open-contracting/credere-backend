@@ -284,6 +284,55 @@ def test_approve_application_cycle(
     assert response.json()["status"] == models.ApplicationStatus.APPROVED
 
 
+def test_approve_application_with_external_onboarding(
+    reset_database,
+    client,
+    session,
+    admin_header,
+    lender_header,
+    unauthorized_lender_header,
+    accepted_application,
+    lender,
+):
+    appid = accepted_application.id
+
+    client.post(
+        "/applications/select-credit-product",
+        json={
+            "uuid": accepted_application.uuid,
+            "borrower_size": models.BorrowerSize.SMALL,
+            "amount_requested": 10000,
+            "sector": "adminstration",
+            "credit_product_id": accepted_application.credit_product_id,
+        },
+    )
+    client.post("/applications/confirm-credit-product", json={"uuid": accepted_application.uuid})
+    client.post("/applications/submit", json={"uuid": accepted_application.uuid})
+
+    # The lender user starts application
+    response = client.post(f"/applications/{appid}/start", headers=lender_header)
+    assert_ok(response)
+    assert response.json()["status"] == models.ApplicationStatus.STARTED
+
+    lender.external_onboarding_url = "https://onboarding.org"
+    session.commit()
+
+    payload = {
+        "compliant_checks_completed": True,
+        "compliant_checks_passed": True,
+        "disbursed_final_amount": 0,
+    }
+    # lender tries to approve the application without verifying fields and documents and final amount
+    response = client.post(f"/applications/{appid}/approve-application", json=payload, headers=lender_header)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # disbursed_final_amount is set, but documents and fields verifications are not required
+    payload["disbursed_final_amount"] = 1000
+    response = client.post(f"/applications/{appid}/approve-application", json=payload, headers=lender_header)
+    assert_ok(response)
+    assert response.json()["status"] == models.ApplicationStatus.APPROVED
+
+
 def test_get_applications(client, session, admin_header, lender_header, pending_application):
     appid = pending_application.id
 
