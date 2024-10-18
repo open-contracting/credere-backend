@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-18 14:28-0300\n"
+"POT-Creation-Date: 2024-10-18 16:39-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -394,19 +394,15 @@ msgstr "Algunos campos de datos de la empresa no fueron verificados"
 msgid "Some documents are not verified"
 msgstr "Algunos documentos no fueron verificados"
 
-#: app/routers/applications.py:121
-msgid "The disbursed final amount is required"
-msgstr "Favor indicar el monto final desembolsado"
-
-#: app/routers/applications.py:259
+#: app/routers/applications.py:253
 msgid "Award not found"
 msgstr "La adjudicación no ha sido encontrada"
 
-#: app/routers/applications.py:304
+#: app/routers/applications.py:298
 msgid "Borrower not found"
 msgstr "La empresa no ha sido encontrada"
 
-#: app/routers/applications.py:313
+#: app/routers/applications.py:307
 msgid "This column cannot be updated"
 msgstr "Esta columna no puede ser actualizada"
 
@@ -649,4 +645,3 @@ msgstr "Correo institucional"
 #: app/utils/tables.py:239
 msgid "MSME Documents"
 msgstr "Documentos de la empresa"
-

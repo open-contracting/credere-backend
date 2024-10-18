@@ -115,12 +115,6 @@ async def approve_application(
                     detail=_("Some documents are not verified"),
                 )
 
-        if not payload.disbursed_final_amount:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_("The disbursed final amount is required"),
-            )
-
         # Approve the application.
         application.stage_as_approved(payload.disbursed_final_amount, jsonable_encoder(payload, exclude_unset=True))
         application.completed_in_days = application.days_waiting_for_lender(session)

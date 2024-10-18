@@ -1,8 +1,8 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models import BorrowerSize
 
@@ -46,7 +46,7 @@ class AwardUpdate(BaseModel):
 class LenderApprovedData(BaseModel):
     compliant_checks_completed: bool
     compliant_checks_passed: bool
-    disbursed_final_amount: Decimal
+    disbursed_final_amount: Annotated[Decimal, Field(gt=0)]
 
 
 class BorrowerUpdate(BaseModel):
