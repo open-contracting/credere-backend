@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-07 14:07-0300\n"
+"POT-Creation-Date: 2024-10-18 16:39-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -39,40 +39,49 @@ msgstr "No autenticado"
 msgid "Authentication challenge not implemented"
 msgstr "Desafío de autenticación no implementado"
 
-#: app/dependencies.py:45
+#: app/dependencies.py:46
 msgid "Username missing"
 msgstr "Falta el nombre de usuario"
 
-#: app/dependencies.py:62
+#: app/dependencies.py:63
 msgid "User not found"
 msgstr "Usuario no encontrado"
 
-#: app/dependencies.py:71
+#: app/dependencies.py:72
 msgid "Insufficient permissions"
 msgstr "Permisos insuficientes"
 
-#: app/dependencies.py:98
+#: app/dependencies.py:99
 msgid "Authorization group not implemented"
 msgstr "Grupo de autorización no implementado"
 
-#: app/dependencies.py:103
+#: app/dependencies.py:104
 msgid "User is not authorized"
 msgstr "Usuario no autorizado"
 
-#: app/dependencies.py:111
+#: app/dependencies.py:112
 msgid "Application expired"
 msgstr "La aplicación ha expirado"
 
 #: app/dependencies.py:117
+msgid ""
+"The borrower has been directed to the lender's onboarding system, so "
+"information cannot be requested from the borrower through Credere"
+msgstr ""
+"El prestatario ha sido dirigido al sistema de incorporación del "
+"prestamista, por lo que no se puede solicitar información al prestatario "
+"a través de Credere\""
+
+#: app/dependencies.py:126
 #, python-format
 msgid "Application status should not be %(status)s"
 msgstr "El estado de la aplicación no debe ser %(status)s"
 
-#: app/dependencies.py:130 app/dependencies.py:170
+#: app/dependencies.py:139 app/dependencies.py:179
 msgid "Application not found"
 msgstr "La aplicación no ha sido encontrada"
 
-#: app/dependencies.py:176
+#: app/dependencies.py:185
 msgid "Application lapsed"
 msgstr "La aplicación ha caducado"
 
@@ -92,47 +101,47 @@ msgstr ""
 msgid "Application Submission Complete"
 msgstr "Envío de aplicación completada"
 
-#: app/mail.py:75 app/mail.py:80
+#: app/mail.py:79 app/mail.py:84
 msgid "New application submission"
 msgstr "Nueva aplicación recibida"
 
-#: app/mail.py:85
+#: app/mail.py:89
 msgid "New message from a financial institution"
 msgstr "Nuevo mensaje de una institución financiera"
 
-#: app/mail.py:94
+#: app/mail.py:98
 msgid "Application updated"
 msgstr "Aplicación actualizada"
 
-#: app/mail.py:99
+#: app/mail.py:103
 msgid "Your credit application has been declined"
 msgstr "Tu solicitud de crédito ha sido rechazada"
 
-#: app/mail.py:113
+#: app/mail.py:117
 msgid "Your credit application has been approved"
 msgstr "Tu solicitud de crédito ha sido aprobada"
 
-#: app/mail.py:122
+#: app/mail.py:126
 msgid "New overdue application"
 msgstr "Nueva solicitud vencida"
 
-#: app/mail.py:131
+#: app/mail.py:135
 msgid "Alternative credit option"
 msgstr "Opción de crédito alternativa"
 
-#: app/mail.py:142
+#: app/mail.py:146
 msgid "Confirm email address change"
 msgstr "Confirmar cambio de dirección de correo electrónico"
 
-#: app/mail.py:238
+#: app/mail.py:242
 msgid "Welcome"
 msgstr "Bienvenido/a"
 
-#: app/mail.py:264
+#: app/mail.py:268
 msgid "Reset password"
 msgstr "Restablecer contraseña"
 
-#: app/mail.py:287
+#: app/mail.py:291
 msgid "You have credit applications that need processing"
 msgstr "Tienes solicitudes de crédito que necesitan procesamiento"
 
@@ -170,7 +179,7 @@ msgstr ""
 
 #: app/models.py:149
 msgid "SIGNED_CONTRACT"
-msgstr "Contrato firmado"
+msgstr "Contrato firmado o evidencia visual del mismo"
 
 #: app/models.py:150
 msgid "SHAREHOLDER_COMPOSITION"
@@ -377,23 +386,23 @@ msgstr ""
 msgid "File is too large"
 msgstr "El archivo es muy grande"
 
-#: app/routers/applications.py:110
+#: app/routers/applications.py:108
 msgid "Some borrower data field are not verified"
 msgstr "Algunos campos de datos de la empresa no fueron verificados"
 
-#: app/routers/applications.py:118
+#: app/routers/applications.py:115
 msgid "Some documents are not verified"
 msgstr "Algunos documentos no fueron verificados"
 
-#: app/routers/applications.py:256
+#: app/routers/applications.py:253
 msgid "Award not found"
 msgstr "La adjudicación no ha sido encontrada"
 
-#: app/routers/applications.py:301
+#: app/routers/applications.py:298
 msgid "Borrower not found"
 msgstr "La empresa no ha sido encontrada"
 
-#: app/routers/applications.py:310
+#: app/routers/applications.py:307
 msgid "This column cannot be updated"
 msgstr "Esta columna no puede ser actualizada"
 
@@ -405,11 +414,11 @@ msgstr "Detalles de la aplicación"
 msgid "Previous Public Sector Contracts"
 msgstr "Contratos anteriores con el sector público"
 
-#: app/routers/downloads.py:148 app/utils/tables.py:200
+#: app/routers/downloads.py:148 app/utils/tables.py:196
 msgid "Legal Name"
 msgstr "Nombre legal"
 
-#: app/routers/downloads.py:149 app/utils/tables.py:208
+#: app/routers/downloads.py:149 app/utils/tables.py:204
 msgid "National Tax ID"
 msgstr "Identificación fiscal nacional"
 
@@ -417,15 +426,15 @@ msgstr "Identificación fiscal nacional"
 msgid "Email Address"
 msgstr "Dirección de correo electrónico"
 
-#: app/routers/downloads.py:151 app/utils/tables.py:167
+#: app/routers/downloads.py:151 app/utils/tables.py:163
 msgid "Buyer Name"
 msgstr "Nombre de la entidad compradora"
 
-#: app/routers/downloads.py:152 app/utils/tables.py:151
+#: app/routers/downloads.py:152 app/utils/tables.py:147
 msgid "Award Value Currency & Amount"
 msgstr "Monto y moneda de la adjudicación"
 
-#: app/routers/downloads.py:153 app/utils/tables.py:50
+#: app/routers/downloads.py:153 app/utils/tables.py:52
 msgid "Amount requested"
 msgstr "Monto solicitado"
 
@@ -503,7 +512,7 @@ msgstr "No se ha seleccionado la entidad financiera"
 msgid "Cannot upload document at this stage"
 msgstr "No se pueden subir documentos en esta etapa"
 
-#: app/routers/guest/applications.py:716
+#: app/routers/guest/applications.py:683
 msgid "A new application has already been created from this one"
 msgstr "Una nueva aplicación ya ha sido creada desde esta"
 
@@ -519,125 +528,120 @@ msgstr "La aplicación no tiene la confirmación de correo pendiente"
 msgid "Not authorized to modify this application"
 msgstr "No autorizado a modificar la aplicación en esta etapa"
 
-#: app/utils/tables.py:42
+#: app/utils/tables.py:44
 msgid "Financing Options"
 msgstr "Opciones crediticias"
 
-#: app/utils/tables.py:43 app/utils/tables.py:128 app/utils/tables.py:197
-#: app/utils/tables.py:243
+#: app/utils/tables.py:45 app/utils/tables.py:124 app/utils/tables.py:193
+#: app/utils/tables.py:239
 msgid "Data"
 msgstr "Datos"
 
-#: app/utils/tables.py:46
+#: app/utils/tables.py:48
 msgid "Lender"
 msgstr "Entidad financiera"
 
-#: app/utils/tables.py:58 app/utils/tables.py:82
+#: app/utils/tables.py:60 app/utils/tables.py:84
 msgid "Type"
 msgstr "Tipo"
 
-#: app/utils/tables.py:59
+#: app/utils/tables.py:61
 msgid "Loan"
 msgstr "Préstamo"
 
-#: app/utils/tables.py:64
+#: app/utils/tables.py:66
 msgid "Payment start date"
 msgstr "Fecha de inicio de pago"
 
-#: app/utils/tables.py:70
+#: app/utils/tables.py:72
 msgid "Repayment terms"
 msgstr "Periodo de pago"
 
-#: app/utils/tables.py:71
+#: app/utils/tables.py:73
 #, python-format
 msgid "%(repayment_years)s year(s), %(repayment_months)s month(s)"
 msgstr "%(repayment_years)s año(s), %(repayment_months)s mes(es)"
 
-#: app/utils/tables.py:83
+#: app/utils/tables.py:85
 msgid "Credit Line"
 msgstr "Línea de crédito"
 
-#: app/utils/tables.py:90
-msgid "Contract amount"
-msgstr "Monto del contrato"
-
-#: app/utils/tables.py:96
+#: app/utils/tables.py:92
 msgid "Credit amount"
 msgstr "Monto del crédito"
 
-#: app/utils/tables.py:127
+#: app/utils/tables.py:123
 msgid "Award Data"
 msgstr "Datos de la adjudicación"
 
-#: app/utils/tables.py:131
+#: app/utils/tables.py:127
 msgid "View data in SECOP II"
 msgstr "Ver datos en SECOP II"
 
-#: app/utils/tables.py:135
+#: app/utils/tables.py:131
 msgid "Award Title"
 msgstr "Título de la adjudicación"
 
-#: app/utils/tables.py:139
+#: app/utils/tables.py:135
 msgid "Contracting Process ID"
 msgstr "Identificador del proceso de contratación"
 
-#: app/utils/tables.py:143
+#: app/utils/tables.py:139
 msgid "Award Description"
 msgstr "Descripción de la adjudicación"
 
-#: app/utils/tables.py:147
+#: app/utils/tables.py:143
 msgid "Award Date"
 msgstr "Fecha de la adjudicación"
 
-#: app/utils/tables.py:155
+#: app/utils/tables.py:151
 msgid "Contract Start Date"
 msgstr "Fecha de inicio del contrato"
 
-#: app/utils/tables.py:159
+#: app/utils/tables.py:155
 msgid "Contract End Date"
 msgstr "Fecha de fin del contrato"
 
-#: app/utils/tables.py:163
+#: app/utils/tables.py:159
 msgid "Payment Method"
 msgstr "Método de pago"
 
-#: app/utils/tables.py:174
+#: app/utils/tables.py:170
 msgid "Procurement Method"
 msgstr "Método de contratación"
 
-#: app/utils/tables.py:178
+#: app/utils/tables.py:174
 msgid "Contract Type"
 msgstr "Tipo de contrato"
 
-#: app/utils/tables.py:196
+#: app/utils/tables.py:192
 msgid "MSME Data"
 msgstr "Datos de la empresa"
 
-#: app/utils/tables.py:204
+#: app/utils/tables.py:200
 msgid "Address"
 msgstr "Dirección"
 
-#: app/utils/tables.py:212
+#: app/utils/tables.py:208
 msgid "Registration Type"
 msgstr "Tipo de registro"
 
-#: app/utils/tables.py:216
+#: app/utils/tables.py:212
 msgid "Size"
 msgstr "Tamaño"
 
-#: app/utils/tables.py:220
+#: app/utils/tables.py:216
 msgid "Sector"
 msgstr "Sector"
 
-#: app/utils/tables.py:224
+#: app/utils/tables.py:220
 msgid "Annual Revenue"
 msgstr "Valor estimado de facturación anual de su empresa"
 
-#: app/utils/tables.py:228
+#: app/utils/tables.py:224
 msgid "Business Email"
 msgstr "Correo institucional"
 
-#: app/utils/tables.py:243
+#: app/utils/tables.py:239
 msgid "MSME Documents"
 msgstr "Documentos de la empresa"
-

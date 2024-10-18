@@ -363,9 +363,9 @@ class LenderBase(SQLModel):
     #:
     #: .. seealso:: :attr:`~app.settings.Settings.progress_to_remind_started_applications`
     sla_days: int | None
-    #: Additional HTML content to include in a :attr:`app.models.MessageType.APPROVED_APPLICATION` message, if the
-    #: "additional_comments" key in the application's :attr:`app.models.Application.lender_approved_data` isn't set.
-    default_pre_approval_message: str = Field(default="")
+    #: A URL pointing to the lender's own onboarding system. If set, a custom email is sent to the borrower after
+    #: the application is submitted, indicating that the process should continue in the lender's system.
+    external_onboarding_url: str = Field(default="")
 
 
 class Lender(LenderBase, ActiveRecordMixin, table=True):
