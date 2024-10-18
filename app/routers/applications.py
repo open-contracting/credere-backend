@@ -96,7 +96,7 @@ async def approve_application(
     :return: The approved application with its associated relations.
     """
     with rollback_on_error(session):
-        # If the lender has an external onboarding system the fields and documents verification is not required-
+        # If the lender has an external onboarding system, the fields and documents verification is not required.
         if not application.lender.external_onboarding_url:
             # Check if all keys present in an instance of UpdateDataField exist and have truthy values in
             # the application's `secop_data_verification`.
@@ -117,7 +117,7 @@ async def approve_application(
         if not payload.disbursed_final_amount:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_("The disbursed final amount information is required for approving the application"),
+                detail=_("The disbursed final amount is required"),
             )
 
         # Approve the application.
@@ -451,7 +451,9 @@ async def email_borrower(
     user: models.User = Depends(dependencies.get_user),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.FI,), statuses=(models.ApplicationStatus.STARTED,)
+            roles=(models.UserType.FI,),
+            scopes=(dependencies.ApplicationScope.NATIVE,),
+            statuses=(models.ApplicationStatus.STARTED,),
         )
     ),
 ) -> Any:
@@ -465,14 +467,6 @@ async def email_borrower(
     :raises HTTPException: If there's an error in sending the email to the borrower.
     """
     with rollback_on_error(session):
-        if application.lender.external_onboarding_url:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_(
-                    "The lender has an external onboarding system so no information can be requested from the "
-                    "borrower through Credere"
-                ),
-            )
         application.status = models.ApplicationStatus.INFORMATION_REQUESTED
         application.information_requested_at = datetime.now(application.created_at.tzinfo)
         application.pending_documents = True
