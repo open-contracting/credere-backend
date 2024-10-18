@@ -310,14 +310,11 @@ def test_approve_application_with_external_onboarding(
     lender.external_onboarding_url = "https://onboarding.org"
     session.commit()
 
-    payload = {
-        "compliant_checks_completed": True,
-        "compliant_checks_passed": True,
-        "disbursed_final_amount": 0,
-    }
     # lender tries to approve the application without verifying fields and documents and final amount
+    payload = {"compliant_checks_completed": True, "compliant_checks_passed": True, "disbursed_final_amount": 0}
     response = client.post(f"/applications/{appid}/approve-application", json=payload, headers=lender_header)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert isinstance(response.json()["detail"], list)  # Pydantic errors are lists of dicts, not str
 
     # disbursed_final_amount is set, but documents and fields verifications are not required
     payload["disbursed_final_amount"] = 1000
