@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-18 12:54-0300\n"
+"POT-Creation-Date: 2024-10-18 14:28-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -68,8 +68,9 @@ msgid ""
 "The borrower has been directed to the lender's onboarding system, so "
 "information cannot be requested from the borrower through Credere"
 msgstr ""
-"El prestatario ha sido dirigido al sistema de incorporación del prestamista, "
-"por lo que no se puede solicitar información al prestatario a través de Credere""
+"El prestatario ha sido dirigido al sistema de incorporación del "
+"prestamista, por lo que no se puede solicitar información al prestatario "
+"a través de Credere\""
 
 #: app/dependencies.py:126
 #, python-format
@@ -393,15 +394,19 @@ msgstr "Algunos campos de datos de la empresa no fueron verificados"
 msgid "Some documents are not verified"
 msgstr "Algunos documentos no fueron verificados"
 
-#: app/routers/applications.py:253
+#: app/routers/applications.py:121
+msgid "The disbursed final amount is required"
+msgstr "Favor indicar el monto final desembolsado"
+
+#: app/routers/applications.py:259
 msgid "Award not found"
 msgstr "La adjudicación no ha sido encontrada"
 
-#: app/routers/applications.py:298
+#: app/routers/applications.py:304
 msgid "Borrower not found"
 msgstr "La empresa no ha sido encontrada"
 
-#: app/routers/applications.py:307
+#: app/routers/applications.py:313
 msgid "This column cannot be updated"
 msgstr "Esta columna no puede ser actualizada"
 
@@ -644,3 +649,4 @@ msgstr "Correo institucional"
 #: app/utils/tables.py:239
 msgid "MSME Documents"
 msgstr "Documentos de la empresa"
+
