@@ -285,14 +285,7 @@ def test_approve_application_cycle(
 
 
 def test_approve_application_with_external_onboarding(
-    reset_database,
-    client,
-    session,
-    admin_header,
-    lender_header,
-    unauthorized_lender_header,
-    accepted_application,
-    lender,
+    reset_database, client, session, lender_header, accepted_application, lender
 ):
     appid = accepted_application.id
 
