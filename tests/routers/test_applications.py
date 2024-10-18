@@ -46,7 +46,6 @@ def test_approve_application_cycle(
     approve_payload = {
         "compliant_checks_completed": True,
         "compliant_checks_passed": True,
-        "additional_comments": "test comments",
         "disbursed_final_amount": 10000,
     }
 
