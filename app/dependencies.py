@@ -19,6 +19,7 @@ USER_CAN_EDIT_AWARD_BORROWER_DATA = (
 
 class ApplicationScope(Enum):
     UNEXPIRED = "UNEXPIRED"
+    NATIVE = "NATIVE"
 
 
 def get_aws_client() -> Generator[aws.Client, None, None]:
@@ -110,6 +111,14 @@ def raise_if_unauthorized(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("Application expired"),
             )
+    if ApplicationScope.NATIVE in scopes and application.lender.external_onboarding_url:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=_(
+                "The borrower has been directed to the lender's onboarding system, "
+                "so information cannot be requested from the borrower through Credere"
+            ),
+        )
 
     if statuses and application.status not in statuses:
         raise HTTPException(
