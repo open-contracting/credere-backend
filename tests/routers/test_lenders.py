@@ -175,7 +175,6 @@ def test_update_lender(client, admin_header, lender_header, lender):
 
     response = client.put(f"/lenders/{lender.id}", json={"sla_days": "not_valid_value"}, headers=admin_header)
     data = response.json()
-    data["detail"][0].pop("url")  # changes with each Pydantic version
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert data == {
