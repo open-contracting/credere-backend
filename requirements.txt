@@ -8,6 +8,7 @@ anyio==3.7.1
     # via
     #   httpcore
     #   starlette
+    #   watchfiles
 babel==2.16.0
     # via -r requirements.in
 boto3==1.26.136
@@ -36,11 +37,15 @@ cryptography==43.0.1
 dnspython==2.6.1
     # via email-validator
 email-validator==2.2.0
-    # via -r requirements.in
-fastapi==0.109.2
+    # via
+    #   -r requirements.in
+    #   fastapi
+fastapi==0.115.3
     # via
     #   -r requirements.in
     #   sentry-sdk
+fastapi-cli==0.0.5
+    # via fastapi
 greenlet==3.0.3
     # via sqlalchemy
 h11==0.14.0
@@ -49,14 +54,22 @@ h11==0.14.0
     #   uvicorn
 httpcore==0.17.2
     # via httpx
+httptools==0.6.4
+    # via uvicorn
 httpx==0.24.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   fastapi
 idna==3.7
     # via
     #   anyio
     #   email-validator
     #   httpx
     #   requests
+itsdangerous==2.2.0
+    # via fastapi
+jinja2==3.1.4
+    # via fastapi
 jmespath==1.0.1
     # via
     #   boto3
@@ -66,7 +79,9 @@ mako==1.2.4
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.2
-    # via mako
+    # via
+    #   jinja2
+    #   mako
 mdurl==0.1.2
     # via markdown-it-py
 minify-html==0.15.0
@@ -76,7 +91,9 @@ mypy-boto3-cognito-idp==1.29.0
 mypy-boto3-ses==1.29.0
     # via -r requirements.in
 orjson==3.10.7
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   fastapi
 pillow==10.3.0
     # via reportlab
 psycopg2==2.9.6
@@ -87,12 +104,17 @@ pydantic==2.8.2
     # via
     #   -r requirements.in
     #   fastapi
+    #   pydantic-extra-types
     #   pydantic-settings
     #   sqlmodel
 pydantic-core==2.20.1
     # via pydantic
+pydantic-extra-types==2.9.0
+    # via fastapi
 pydantic-settings==2.1.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   fastapi
 pygments==2.18.0
     # via rich
 pyjwt==2.8.0
@@ -100,9 +122,17 @@ pyjwt==2.8.0
 python-dateutil==2.8.2
     # via botocore
 python-dotenv==1.0.0
-    # via pydantic-settings
+    # via
+    #   pydantic-settings
+    #   uvicorn
 python-multipart==0.0.7
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   fastapi
+pyyaml==6.0.2
+    # via
+    #   fastapi
+    #   uvicorn
 reportlab==4.0.4
     # via -r requirements.in
 requests==2.32.3
@@ -131,12 +161,14 @@ sqlalchemy==2.0.23
     #   sqlmodel
 sqlmodel==0.0.21
     # via -r requirements.in
-starlette==0.36.3
+starlette==0.41.0
     # via
     #   -r requirements.in
     #   fastapi
 typer==0.12.4
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   fastapi-cli
 typing-extensions==4.8.0
     # via
     #   alembic
@@ -147,10 +179,21 @@ typing-extensions==4.8.0
     #   pydantic-core
     #   sqlalchemy
     #   typer
+ujson==5.10.0
+    # via fastapi
 urllib3==1.26.19
     # via
     #   botocore
     #   requests
     #   sentry-sdk
 uvicorn==0.22.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   fastapi
+    #   fastapi-cli
+uvloop==0.21.0
+    # via uvicorn
+watchfiles==0.24.0
+    # via uvicorn
+websockets==13.1
+    # via uvicorn

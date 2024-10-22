@@ -3,7 +3,7 @@ babel
 boto3
 click
 email-validator
-fastapi
+fastapi[all]
 httpx
 minify-html
 mypy-boto3-cognito-idp
