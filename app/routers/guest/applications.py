@@ -720,22 +720,20 @@ async def find_alternative_credit_option(
         )
 
 
-@router.post(
-    "/applications/access-external-onboarding",
+@router.get(
+    "/applications/uuid/{uuid}/access-external-onboarding",
     tags=[util.Tags.applications],
 )
 async def access_external_onboarding(
-    payload: parsers.ApplicationBase,
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.SUBMITTED,))
+        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,))
     ),
 ) -> RedirectResponse:
     """
     Set the application borrower_accessed_external_onboarding_at and redirects to
     lender.external_onboarding_system_url.
 
-    :param payload: The payload containing the UUID of the submitted application.
     :param session
     :param application
     :return: A redirect to the lender.external_onboarding_system_url.
@@ -753,7 +751,6 @@ async def access_external_onboarding(
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.MSME_ACCESSED_EXTERNAL_ONBOARDING,
-            data=jsonable_encoder(payload, exclude_unset=True),
             application_id=application.id,
         )
 
