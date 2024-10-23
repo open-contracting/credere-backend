@@ -194,8 +194,7 @@ class ApplicationStatus(StrEnum):
     #:
     #: (``/applications/{id}/start``)
     STARTED = i("STARTED")
-    #: Lender rejects the application, after the borrower either submits its application, updates a document,
-    #: or uploads its contract and final contract amount.
+    #: Lender rejects the application, after the borrower either submits its application or updates a document.
     #:
     #: (``/applications/{id}/reject-application``)
     REJECTED = i("REJECTED")
@@ -263,7 +262,7 @@ class MessageType(StrEnum):
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     #: Remind the administrators about overdue applications.
     #:
-    #: STARTED | CONTRACT_UPLOADED (:typer:`python-m-app-sla-overdue-applications`)
+    #: STARTED (:typer:`python-m-app-sla-overdue-applications`)
     OVERDUE_APPLICATION = "OVERDUE_APPLICATION"
     #: Send the borrower a URL to continue the copied application.
     #:
@@ -300,6 +299,7 @@ class ApplicationActionType(StrEnum):
     MSME_CONFIRM_EMAIL = "MSME_CONFIRM_EMAIL"
     MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED = "MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED"
     MSME_RETRY_APPLICATION = "MSME_RETRY_APPLICATION"
+    MSME_ACCESSED_EXTERNAL_ONBOARDING = "MSME_ACCESSED_EXTERNAL_ONBOARDING"
     DATA_VALIDATION_UPDATE = "DATA_VALIDATION_UPDATE"
     BORROWER_DOCUMENT_VERIFIED = "BORROWER_DOCUMENT_VERIFIED"
     APPLICATION_COPIED_FROM = "APPLICATION_COPIED_FROM"
@@ -625,6 +625,11 @@ class ApplicationBase(SQLModel):
 
     #: The time at which the application transitioned from :attr:`~app.models.ApplicationStatus.SUBMITTED`.
     borrower_submitted_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
+
+    #: The time at which the borrower clicked :attr:`~app.models.Lender.external_onboarding_url`.
+    #:
+    #: .. seealso:: :meth:`app.models.Lender.external_onboarding_url`
+    borrower_accessed_external_onboarding_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
 
     #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.STARTED`,
     #: from :attr:`~app.models.ApplicationStatus.SUBMITTED`.
@@ -1035,7 +1040,6 @@ class UserBase(SQLModel):
     #:
     #: - :attr:`~app.models.MessageType.NEW_APPLICATION_FI`
     #: - :attr:`~app.models.MessageType.BORROWER_DOCUMENT_UPDATED`
-    #: - :attr:`~app.models.MessageType.CONTRACT_UPLOAD_CONFIRMATION_TO_FI`
     #: - :attr:`~app.models.MessageType.OVERDUE_APPLICATION`
     notification_preferences: dict[str, bool] = Field(default_factory=dict, sa_type=JSON)
     #: The name by which the user is addressed in emails and identified in application action histories.

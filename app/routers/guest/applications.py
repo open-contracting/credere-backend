@@ -717,3 +717,34 @@ async def find_alternative_credit_option(
             borrower=new_application.borrower,
             award=new_application.award,
         )
+
+
+@router.post(
+    "/applications/track-access-to-external-onboarding",
+    tags=[util.Tags.applications],
+)
+async def track_access_to_external_onboarding(
+    payload: parsers.ApplicationBase,
+    session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.SUBMITTED,))
+    ),
+) -> serializers.ApplicationResponse:
+    with rollback_on_error(session):
+        application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_ACCESSED_EXTERNAL_ONBOARDING,
+            data=jsonable_encoder(payload, exclude_unset=True),
+            application_id=application.id,
+        )
+
+        session.commit()
+        return serializers.ApplicationResponse(
+            application=cast(models.ApplicationRead, application),
+            borrower=application.borrower,
+            award=application.award,
+            lender=application.lender,
+            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
+        )
