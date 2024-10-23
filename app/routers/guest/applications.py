@@ -331,7 +331,6 @@ async def rollback_select_credit_product(
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPLICATION_ROLLBACK_SELECT_PRODUCT,
-            data={},
             application_id=application.id,
         )
 
@@ -479,7 +478,6 @@ async def rollback_confirm_credit_product(
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPLICATION_ROLLBACK_CONFIRM_CREDIT_PRODUCT,
-            data={},
             application_id=application.id,
         )
 
