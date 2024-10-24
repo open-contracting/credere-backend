@@ -299,7 +299,7 @@ class ApplicationActionType(StrEnum):
     MSME_CONFIRM_EMAIL = "MSME_CONFIRM_EMAIL"
     MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED = "MSME_UPLOAD_ADDITIONAL_DOCUMENT_COMPLETED"
     MSME_RETRY_APPLICATION = "MSME_RETRY_APPLICATION"
-    MSME_ACCESSED_EXTERNAL_ONBOARDING = "MSME_ACCESSED_EXTERNAL_ONBOARDING"
+    MSME_ACCESS_EXTERNAL_ONBOARDING = "MSME_ACCESS_EXTERNAL_ONBOARDING"
     DATA_VALIDATION_UPDATE = "DATA_VALIDATION_UPDATE"
     BORROWER_DOCUMENT_VERIFIED = "BORROWER_DOCUMENT_VERIFIED"
     APPLICATION_COPIED_FROM = "APPLICATION_COPIED_FROM"
@@ -628,7 +628,7 @@ class ApplicationBase(SQLModel):
 
     #: The time at which the borrower clicked :attr:`~app.models.Lender.external_onboarding_url`.
     #:
-    #: .. seealso:: :meth:`app.models.Lender.external_onboarding_url`
+    #: .. seealso:: :attr:`app.models.Lender.external_onboarding_url`
     borrower_accessed_external_onboarding_at: datetime | None = Field(sa_column=Column(DateTime(timezone=True)))
 
     #: The time at which the application transitioned to :attr:`~app.models.ApplicationStatus.STARTED`,

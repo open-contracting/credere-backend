@@ -729,26 +729,21 @@ async def access_external_onboarding(
     ),
 ) -> RedirectResponse:
     """
-    Set the application borrower_accessed_external_onboarding_at and redirects to
-    lender.external_onboarding_system_url.
-
-    :param session
-    :param application
     :return: A redirect to the lender.external_onboarding_system_url.
     :raise: HTTPException if the application has a lender without an external_onboarding_system_url.
     """
     with rollback_on_error(session):
         if not application.lender.external_onboarding_url:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=_("The selected lender has not an external onboarding URL set"),
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=_("The lender has no external onboarding URL"),
             )
 
         application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
 
         models.ApplicationAction.create(
             session,
-            type=models.ApplicationActionType.MSME_ACCESSED_EXTERNAL_ONBOARDING,
+            type=models.ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
             application_id=application.id,
         )
 

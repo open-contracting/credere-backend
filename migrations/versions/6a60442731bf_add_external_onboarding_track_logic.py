@@ -25,7 +25,7 @@ def upgrade() -> None:
     with op.get_context().autocommit_block():
         op.execute(
             """
-          ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'MSME_ACCESSED_EXTERNAL_ONBOARDING'
+          ALTER TYPE application_action_type ADD VALUE IF NOT EXISTS 'MSME_ACCESS_EXTERNAL_ONBOARDING'
       """
         )
 
