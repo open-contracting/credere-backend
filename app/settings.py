@@ -134,6 +134,8 @@ class Settings(BaseSettings):
 
     #: The base URL of Credere.
     frontend_url: str = "http://localhost:3000"  # also for CORS
+    backend_url: str = "http://localhost:8000"
+
     #: The language of the email templates to use.
     email_template_lang: str = "es"
     #: The base URL of Credere's images directory (can be a CDN URL).
