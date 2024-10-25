@@ -5,6 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Up
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session, joinedload
 from sqlmodel import col
+from starlette.responses import RedirectResponse
 
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
@@ -330,7 +331,6 @@ async def rollback_select_credit_product(
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPLICATION_ROLLBACK_SELECT_PRODUCT,
-            data={},
             application_id=application.id,
         )
 
@@ -478,7 +478,6 @@ async def rollback_confirm_credit_product(
         models.ApplicationAction.create(
             session,
             type=models.ApplicationActionType.APPLICATION_ROLLBACK_CONFIRM_CREDIT_PRODUCT,
-            data={},
             application_id=application.id,
         )
 
@@ -717,3 +716,36 @@ async def find_alternative_credit_option(
             borrower=new_application.borrower,
             award=new_application.award,
         )
+
+
+@router.get(
+    "/applications/uuid/{uuid}/access-external-onboarding",
+    tags=[util.Tags.applications],
+)
+async def access_external_onboarding(
+    session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,))
+    ),
+) -> RedirectResponse:
+    """
+    :return: A redirect to the lender.external_onboarding_system_url.
+    :raise: HTTPException if the application has a lender without an external_onboarding_system_url.
+    """
+    with rollback_on_error(session):
+        if not application.lender.external_onboarding_url:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=_("The lender has no external onboarding URL"),
+            )
+
+        application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
+            application_id=application.id,
+        )
+
+        session.commit()
+        return RedirectResponse(application.lender.external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)

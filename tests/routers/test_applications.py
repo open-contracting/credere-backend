@@ -159,6 +159,11 @@ def test_approve_application_cycle(
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("SUBMITTED"))}
 
+    # borrower tries to access a non-existing external onboarding system
+    response = client.get(f"/applications/uuid/{pending_application.uuid}/access-external-onboarding")
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json() == {"detail": _("The lender has no external onboarding URL")}
+
     # different lender user tries to start the application
     response = client.post(f"/applications/{appid}/start", headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -289,6 +294,9 @@ def test_approve_application_with_external_onboarding(
 ):
     appid = accepted_application.id
 
+    lender.external_onboarding_url = "https://example.com"
+    session.commit()
+
     client.post(
         "/applications/select-credit-product",
         json={
@@ -302,13 +310,18 @@ def test_approve_application_with_external_onboarding(
     client.post("/applications/confirm-credit-product", json={"uuid": accepted_application.uuid})
     client.post("/applications/submit", json={"uuid": accepted_application.uuid})
 
+    # borrower access external onboarding system
+    # We must set follow_redirects=False https://github.com/fastapi/fastapi/issues/790
+    response = client.get(
+        f"/applications/uuid/{accepted_application.uuid}/access-external-onboarding", follow_redirects=False
+    )
+    assert response.status_code == status.HTTP_303_SEE_OTHER
+    assert response.headers["location"] == lender.external_onboarding_url
+
     # The lender user starts application
     response = client.post(f"/applications/{appid}/start", headers=lender_header)
     assert_ok(response)
     assert response.json()["status"] == models.ApplicationStatus.STARTED
-
-    lender.external_onboarding_url = "https://onboarding.org"
-    session.commit()
 
     # lender tries to approve the application without verifying fields and documents and final amount
     payload = {"compliant_checks_completed": True, "compliant_checks_passed": True, "disbursed_final_amount": 0}

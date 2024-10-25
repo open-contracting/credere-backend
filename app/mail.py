@@ -71,7 +71,9 @@ def send(
             }
 
             if application.lender.external_onboarding_url:
-                parameters["EXTERNAL_ONBOARDING_URL"] = application.lender.external_onboarding_url
+                parameters["EXTERNAL_ONBOARDING_URL"] = (
+                    f"{app_settings.backend_url}/applications/uuid/{application.uuid}/access-external-onboarding"
+                )
                 template_name = "submission_completed_external_onboarding"
 
         case MessageType.NEW_APPLICATION_OCP:
