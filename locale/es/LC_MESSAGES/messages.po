@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-18 16:39-0300\n"
+"POT-Creation-Date: 2024-10-25 11:37-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -101,47 +101,47 @@ msgstr ""
 msgid "Application Submission Complete"
 msgstr "Envío de aplicación completada"
 
-#: app/mail.py:79 app/mail.py:84
+#: app/mail.py:81 app/mail.py:86
 msgid "New application submission"
 msgstr "Nueva aplicación recibida"
 
-#: app/mail.py:89
+#: app/mail.py:91
 msgid "New message from a financial institution"
 msgstr "Nuevo mensaje de una institución financiera"
 
-#: app/mail.py:98
+#: app/mail.py:100
 msgid "Application updated"
 msgstr "Aplicación actualizada"
 
-#: app/mail.py:103
+#: app/mail.py:105
 msgid "Your credit application has been declined"
 msgstr "Tu solicitud de crédito ha sido rechazada"
 
-#: app/mail.py:117
+#: app/mail.py:119
 msgid "Your credit application has been approved"
 msgstr "Tu solicitud de crédito ha sido aprobada"
 
-#: app/mail.py:126
+#: app/mail.py:128
 msgid "New overdue application"
 msgstr "Nueva solicitud vencida"
 
-#: app/mail.py:135
+#: app/mail.py:137
 msgid "Alternative credit option"
 msgstr "Opción de crédito alternativa"
 
-#: app/mail.py:146
+#: app/mail.py:148
 msgid "Confirm email address change"
 msgstr "Confirmar cambio de dirección de correo electrónico"
 
-#: app/mail.py:242
+#: app/mail.py:244
 msgid "Welcome"
 msgstr "Bienvenido/a"
 
-#: app/mail.py:268
+#: app/mail.py:270
 msgid "Reset password"
 msgstr "Restablecer contraseña"
 
-#: app/mail.py:291
+#: app/mail.py:293
 msgid "You have credit applications that need processing"
 msgstr "Tienes solicitudes de crédito que necesitan procesamiento"
 
@@ -232,19 +232,19 @@ msgstr "Enviado"
 msgid "STARTED"
 msgstr "Empezado"
 
-#: app/models.py:201
+#: app/models.py:200
 msgid "REJECTED"
 msgstr "Rechazado"
 
-#: app/models.py:205
+#: app/models.py:204
 msgid "INFORMATION_REQUESTED"
 msgstr "Información solicitada"
 
-#: app/models.py:209
+#: app/models.py:208
 msgid "LAPSED"
 msgstr "Caducado"
 
-#: app/models.py:213
+#: app/models.py:212
 msgid "APPROVED"
 msgstr "Aprobado"
 
@@ -495,26 +495,30 @@ msgstr "Usuario deslogueado correctamente"
 msgid "An email with a reset link was sent to end user"
 msgstr "Se envió un correo con el enlace de reseteo de contraseña."
 
-#: app/routers/guest/applications.py:318 app/routers/guest/applications.py:368
-#: app/routers/guest/applications.py:457 app/routers/guest/applications.py:522
+#: app/routers/guest/applications.py:319 app/routers/guest/applications.py:368
+#: app/routers/guest/applications.py:457 app/routers/guest/applications.py:521
 msgid "Credit product not selected"
 msgstr "El producto crediticio no fue seleccionado"
 
-#: app/routers/guest/applications.py:324
+#: app/routers/guest/applications.py:325
 msgid "Cannot rollback at this stage"
 msgstr "No se puede retroceder en esta etapa"
 
-#: app/routers/guest/applications.py:528
+#: app/routers/guest/applications.py:527
 msgid "Lender not selected"
 msgstr "No se ha seleccionado la entidad financiera"
 
-#: app/routers/guest/applications.py:579
+#: app/routers/guest/applications.py:578
 msgid "Cannot upload document at this stage"
 msgstr "No se pueden subir documentos en esta etapa"
 
-#: app/routers/guest/applications.py:683
+#: app/routers/guest/applications.py:682
 msgid "A new application has already been created from this one"
 msgstr "Una nueva aplicación ya ha sido creada desde esta"
+
+#: app/routers/guest/applications.py:739
+msgid "The lender has no external onboarding URL"
+msgstr "El prestamista no tiene configurada una URL de onboarding externo"
 
 #: app/routers/guest/emails.py:34
 msgid "New email is not valid"
