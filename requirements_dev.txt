@@ -127,7 +127,7 @@ mdurl==0.1.2
     #   markdown-it-py
 minify-html==0.15.0
     # via -r requirements.txt
-moto==5.0.14
+moto[cognitoidp]==5.0.14
     # via -r requirements_dev.in
 mypy==1.11.1
     # via -r requirements_dev.in
@@ -296,7 +296,7 @@ urllib3==1.26.19
     #   requests
     #   responses
     #   sentry-sdk
-uvicorn==0.22.0
+uvicorn[standard]==0.22.0
     # via
     #   -r requirements.txt
     #   fastapi-cli
@@ -312,7 +312,7 @@ websockets==13.1
     # via
     #   -r requirements.txt
     #   uvicorn
-werkzeug==3.0.3
+werkzeug==3.0.6
     # via moto
 xmltodict==0.13.0
     # via moto
