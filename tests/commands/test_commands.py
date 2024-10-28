@@ -32,7 +32,8 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
         assert_success(
             result,
             f"Sending {call_count} BORROWER_PENDING_APPLICATION_REMINDER...\n"
-            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER...\n",
         )
 
     # If run a second time, reminder is not sent.
@@ -41,7 +42,9 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
 
         assert_success(
             result,
-            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER...\n",
         )
 
 
@@ -68,7 +71,8 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
         assert_success(
             result,
             "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
-            f"Sending {call_count} BORROWER_PENDING_SUBMIT_REMINDER...\n",
+            f"Sending {call_count} BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER...\n",
         )
 
     # If run a second time, reminder is not sent.
@@ -77,7 +81,9 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
 
         assert_success(
             result,
-            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER...\n",
         )
 
 
