@@ -87,6 +87,36 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
         )
 
 
+def test_send_reminders_external_onboarding(session, mock_send_templated_email, accepted_application, lender):
+    call_count = 1
+    accepted_application.status = models.ApplicationStatus.SUBMITTED
+    accepted_application.borrower_submitted_at = datetime.now(accepted_application.created_at.tzinfo)
+    lender.external_onboarding_url = "https://example.com"
+    accepted_application.lender = lender
+    session.commit()
+
+    with assert_change(mock_send_templated_email, "call_count", call_count):
+        result = runner.invoke(__main__.app, ["send-reminders"])
+
+        assert_success(
+            result,
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            f"Sending {call_count} BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER...\n",
+        )
+
+    # If run a second time, reminder is not sent.
+    with assert_change(mock_send_templated_email, "call_count", 0):
+        result = runner.invoke(__main__.app, ["send-reminders"])
+
+        assert_success(
+            result,
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER...\n",
+        )
+
+
 @pytest.mark.parametrize(("seconds", "lapsed"), [(negative_offset, True), (positive_offset, False)])
 def test_set_lapsed_applications(session, pending_application, seconds, lapsed):
     pending_application.created_at = (
