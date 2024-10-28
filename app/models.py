@@ -991,7 +991,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         self.overdued_at = None
         self.lender_approved_data = lender_approved_data
 
-    def stage_as_borrower_accesed_external_onboarding_system(self, session: Session) -> None:
+    def stage_as_borrower_accessed_external_onboarding_system(self, session: Session) -> None:
         self.borrower_accessed_external_onboarding_at = datetime.now(self.created_at.tzinfo)
 
         ApplicationAction.create(

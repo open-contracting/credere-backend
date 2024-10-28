@@ -740,7 +740,7 @@ async def access_external_onboarding(
                 detail=_("The lender has no external onboarding URL"),
             )
 
-        application.stage_as_borrower_accesed_external_onboarding_system(session)
+        application.stage_as_borrower_accessed_external_onboarding_system(session)
 
         return RedirectResponse(application.lender.external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)
 
@@ -767,7 +767,7 @@ async def accessed_external_onboarding(
                 detail=_("The lender has no external onboarding URL"),
             )
 
-        application.stage_as_borrower_accesed_external_onboarding_system(session)
+        application.stage_as_borrower_accessed_external_onboarding_system(session)
 
         return RedirectResponse(
             f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed"
