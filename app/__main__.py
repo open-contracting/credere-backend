@@ -162,7 +162,10 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
 
 @app.command()
 def send_reminders() -> None:
-    """Send reminders to borrowers about PENDING and ACCEPTED applications."""
+    """
+    Send reminders to borrowers about PENDING, ACCEPTED and SUBMITTED (for lenders with an external onboarding step)
+    applications.
+    """
     with contextmanager(get_db)() as session:
         pending_introduction_reminder = (
             models.Application.pending_introduction_reminder(session)
@@ -191,6 +194,25 @@ def send_reminders() -> None:
             print(f"Sending {len(pending_submission_reminder)} BORROWER_PENDING_SUBMIT_REMINDER...")
         for application in pending_submission_reminder:
             mail.send(session, aws.ses_client, models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER, application)
+
+            session.commit()
+
+        pending_external_onboarding_reminder = (
+            models.Application.pending_external_onboarding_reminder(session)
+            .options(
+                joinedload(models.Application.borrower),
+                joinedload(models.Application.award),
+            )
+            .all()
+        )
+        if not state["quiet"]:
+            print(
+                f"Sending {len(pending_external_onboarding_reminder)} BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER..."
+            )
+        for application in pending_external_onboarding_reminder:
+            mail.send(
+                session, aws.ses_client, models.MessageType.BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER, application
+            )
 
             session.commit()
 

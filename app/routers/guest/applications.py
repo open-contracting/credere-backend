@@ -10,6 +10,7 @@ from starlette.responses import RedirectResponse
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.i18n import _
+from app.settings import app_settings
 
 router = APIRouter()
 
@@ -725,7 +726,7 @@ async def find_alternative_credit_option(
 async def access_external_onboarding(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,))
+        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,)),
     ),
 ) -> RedirectResponse:
     """
@@ -739,13 +740,35 @@ async def access_external_onboarding(
                 detail=_("The lender has no external onboarding URL"),
             )
 
-        application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
+        application.stage_as_borrower_accesed_external_onboarding_system(session)
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
-            application_id=application.id,
-        )
-
-        session.commit()
         return RedirectResponse(application.lender.external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.get(
+    "/applications/uuid/{uuid}/accessed-external-onboarding",
+    tags=[util.Tags.applications],
+)
+async def accessed_external_onboarding(
+    session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,)),
+    ),
+) -> RedirectResponse:
+    """
+    For when the borrower reports they've already started the onboarding process in the lender's system.
+    :return: A redirect to the front end external-onboarding-completed page.
+    :raise: HTTPException if the application has a lender without an external_onboarding_system_url.
+    """
+    with rollback_on_error(session):
+        if not application.lender.external_onboarding_url:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=_("The lender has no external onboarding URL"),
+            )
+
+        application.stage_as_borrower_accesed_external_onboarding_system(session)
+
+        return RedirectResponse(
+            f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed"
+        )

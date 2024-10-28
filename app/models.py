@@ -232,6 +232,10 @@ class MessageType(StrEnum):
     #:
     #: ACCEPTED (:typer:`python-m-app-send-reminders`)
     BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
+    #: Remind the borrower to start the external onboarding process with the lender, if applies.
+    #:
+    #: SUBMITTED (:typer:`python-m-app-send-reminders`)
+    BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER = "BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER"
     #: Confirm receipt of the application.
     #:
     #: ACCEPTED → SUBMITTED (``/applications/submit``)
@@ -751,31 +755,70 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
+    def pending_external_onboarding_reminder(cls, session: Session) -> "Query[Self]":
+        """
+        Return query for SUBMITTED applications to lenders with external onboarding systems and whose borrower hasn't
+        already received a reminder to start the external onboarding process.
+
+        .. seealso:: :typer:`python-m-app-send-reminders`
+        """
+        return (
+            session.query(cls)
+            .filter(
+                cls.status == ApplicationStatus.SUBMITTED,
+                col(Lender.external_onboarding_url) != "",
+                col(cls.borrower_accessed_external_onboarding_at).is_(None),
+                col(cls.id).notin_(
+                    Message.application_by_type(MessageType.BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER)
+                ),
+            )
+            .join(Lender, cls.lender_id == Lender.id)
+        )
+
+    @classmethod
     def lapseable(cls, session: Session) -> "Query[Self]":
         """
         Return a query for :meth:`~app.models.Application.unarchived` applications that have been waiting for the
-        borrower to respond (PENDING, ACCEPTED, INFORMATION_REQUESTED) for
-        :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
+        borrower to respond (PENDING, ACCEPTED, SUBMITTED (to a lender with external_onboarding_url set)
+        INFORMATION_REQUESTED) for :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
 
         .. seealso:: :typer:`python-m-app-update-applications-to-lapsed`
         """
         delta = timedelta(days=app_settings.days_to_change_to_lapsed)
 
-        return cls.unarchived(session).filter(
-            or_(
-                and_(
-                    cls.status == ApplicationStatus.PENDING,
-                    col(cls.created_at) + delta < datetime.now(),
+        return (
+            cls.unarchived(session)
+            .filter(
+                or_(
+                    and_(
+                        cls.status == ApplicationStatus.PENDING,
+                        col(cls.created_at) + delta < datetime.now(),
+                    ),
+                    and_(
+                        cls.status == ApplicationStatus.ACCEPTED,
+                        col(cls.borrower_accepted_at) + delta < datetime.now(),
+                    ),
+                    and_(
+                        cls.status == ApplicationStatus.SUBMITTED,
+                        col(Message.created_at) + delta < datetime.now(),
+                        col(Lender.external_onboarding_url) != "",
+                        col(cls.borrower_accessed_external_onboarding_at).is_(None),
+                    ),
+                    and_(
+                        cls.status == ApplicationStatus.INFORMATION_REQUESTED,
+                        col(cls.information_requested_at) + delta < datetime.now(),
+                    ),
                 ),
+            )
+            .join(
+                Message,
                 and_(
-                    cls.status == ApplicationStatus.ACCEPTED,
-                    col(cls.borrower_accepted_at) + delta < datetime.now(),
+                    cls.id == Message.application_id,
+                    Message.type == MessageType.BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER,
                 ),
-                and_(
-                    cls.status == ApplicationStatus.INFORMATION_REQUESTED,
-                    col(cls.information_requested_at) + delta < datetime.now(),
-                ),
-            ),
+                isouter=True,
+            )
+            .join(Lender, cls.lender_id == Lender.id, isouter=True)
         )
 
     @classmethod
@@ -947,6 +990,17 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         self.disbursed_final_amount = disbursed_final_amount
         self.overdued_at = None
         self.lender_approved_data = lender_approved_data
+
+    def stage_as_borrower_accesed_external_onboarding_system(self, session: Session) -> None:
+        self.borrower_accessed_external_onboarding_at = datetime.now(self.created_at.tzinfo)
+
+        ApplicationAction.create(
+            session,
+            type=ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
+            application_id=self.id,
+        )
+
+        session.commit()
 
 
 class BorrowerDocumentBase(SQLModel):

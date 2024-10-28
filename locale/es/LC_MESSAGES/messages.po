@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-25 11:37-0300\n"
+"POT-Creation-Date: 2024-10-28 17:14-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -85,11 +85,11 @@ msgstr "La aplicación no ha sido encontrada"
 msgid "Application lapsed"
 msgstr "La aplicación ha caducado"
 
-#: app/mail.py:45
+#: app/mail.py:49
 msgid "Opportunity to access MSME credit for being awarded a public contract"
 msgstr "Oportunidad de acceso a crédito por ser adjudicatario de contrato estatal"
 
-#: app/mail.py:56
+#: app/mail.py:60
 msgid ""
 "Reminder - Opportunity to access MSME credit for being awarded a public "
 "contract"
@@ -97,51 +97,55 @@ msgstr ""
 "Recordatorio - Oportunidad de acceso a crédito por ser adjudicatario de "
 "contrato estatal"
 
-#: app/mail.py:67
+#: app/mail.py:71
+msgid "Reminder about your credit application"
+msgstr "Recordatorio sobre tu solicitud de crédito"
+
+#: app/mail.py:81
 msgid "Application Submission Complete"
 msgstr "Envío de aplicación completada"
 
-#: app/mail.py:81 app/mail.py:86
+#: app/mail.py:93 app/mail.py:98
 msgid "New application submission"
 msgstr "Nueva aplicación recibida"
 
-#: app/mail.py:91
+#: app/mail.py:103
 msgid "New message from a financial institution"
 msgstr "Nuevo mensaje de una institución financiera"
 
-#: app/mail.py:100
+#: app/mail.py:112
 msgid "Application updated"
 msgstr "Aplicación actualizada"
 
-#: app/mail.py:105
+#: app/mail.py:117
 msgid "Your credit application has been declined"
 msgstr "Tu solicitud de crédito ha sido rechazada"
 
-#: app/mail.py:119
+#: app/mail.py:131
 msgid "Your credit application has been approved"
 msgstr "Tu solicitud de crédito ha sido aprobada"
 
-#: app/mail.py:128
+#: app/mail.py:140
 msgid "New overdue application"
 msgstr "Nueva solicitud vencida"
 
-#: app/mail.py:137
+#: app/mail.py:149
 msgid "Alternative credit option"
 msgstr "Opción de crédito alternativa"
 
-#: app/mail.py:148
+#: app/mail.py:160
 msgid "Confirm email address change"
 msgstr "Confirmar cambio de dirección de correo electrónico"
 
-#: app/mail.py:244
+#: app/mail.py:256
 msgid "Welcome"
 msgstr "Bienvenido/a"
 
-#: app/mail.py:270
+#: app/mail.py:282
 msgid "Reset password"
 msgstr "Restablecer contraseña"
 
-#: app/mail.py:293
+#: app/mail.py:305
 msgid "You have credit applications that need processing"
 msgstr "Tienes solicitudes de crédito que necesitan procesamiento"
 
@@ -248,126 +252,126 @@ msgstr "Caducado"
 msgid "APPROVED"
 msgstr "Aprobado"
 
-#: app/models.py:312
+#: app/models.py:316
 msgid "NOT_INFORMED"
 msgstr "No informado"
 
-#: app/models.py:313
+#: app/models.py:317
 msgid "MICRO"
 msgstr "0 a 10"
 
-#: app/models.py:314
+#: app/models.py:318
 msgid "SMALL"
 msgstr "11 a 50"
 
-#: app/models.py:315
+#: app/models.py:319
 msgid "MEDIUM"
 msgstr "51 a 200"
 
-#: app/models.py:316
+#: app/models.py:320
 msgid "BIG"
 msgstr "+ 200"
 
-#: app/models.py:320
+#: app/models.py:324
 msgid "agricultura"
 msgstr "Agricultura, ganadería, caza, silvicultura y pesca"
 
-#: app/models.py:321
+#: app/models.py:325
 msgid "minas"
 msgstr "Explotación de minas y canteras"
 
-#: app/models.py:322
+#: app/models.py:326
 msgid "manufactura"
 msgstr "Industrias manufactureras"
 
-#: app/models.py:323
+#: app/models.py:327
 msgid "electricidad"
 msgstr "Suministro de electricidad, gas, vapor y aire acondicionado"
 
-#: app/models.py:324
+#: app/models.py:328
 msgid "agua"
 msgstr ""
 "Distribución de agua; evacuación y tratamiento de aguas residuales, "
 "gestión de desechos y actividades de saneamiento ambiental"
 
-#: app/models.py:325
+#: app/models.py:329
 msgid "construccion"
 msgstr "Construcción"
 
-#: app/models.py:326
+#: app/models.py:330
 msgid "transporte"
 msgstr "Transporte y almacenamiento"
 
-#: app/models.py:327
+#: app/models.py:331
 msgid "alojamiento"
 msgstr "Alojamiento y servicios de comida"
 
-#: app/models.py:328
+#: app/models.py:332
 msgid "comunicaciones"
 msgstr "Información y comunicaciones"
 
-#: app/models.py:329
+#: app/models.py:333
 msgid "actividades_financieras"
 msgstr "Actividades financieras y de seguros"
 
-#: app/models.py:330
+#: app/models.py:334
 msgid "actividades_inmobiliarias"
 msgstr "Actividades inmobiliarias"
 
-#: app/models.py:331
+#: app/models.py:335
 msgid "actividades_profesionales"
 msgstr "Actividades profesionales, científicas y técnicas"
 
-#: app/models.py:332
+#: app/models.py:336
 msgid "actividades_servicios_administrativos"
 msgstr "Actividades de servicios administrativos y de apoyo"
 
-#: app/models.py:333
+#: app/models.py:337
 msgid "administracion_publica"
 msgstr ""
 "Administración pública y defensa; planes de seguridad social de "
 "afiliación obligatoria"
 
-#: app/models.py:334
+#: app/models.py:338
 msgid "educacion"
 msgstr "Educación"
 
-#: app/models.py:335
+#: app/models.py:339
 msgid "atencion_salud"
 msgstr "Actividades de atención de la salud humana y de asistencia social"
 
-#: app/models.py:336
+#: app/models.py:340
 msgid "actividades_artisticas"
 msgstr "Actividades artísticas, de entretenimiento y recreación"
 
-#: app/models.py:337
+#: app/models.py:341
 msgid "otras_actividades"
 msgstr "Otras actividades de servicios"
 
-#: app/models.py:338
+#: app/models.py:342
 msgid "actividades_hogares"
 msgstr ""
 "Actividades de los hogares individuales en calidad de empleadores; "
 "actividades no diferenciadas de los hogares individuales como productores"
 " de bienes y servicios para uso propio"
 
-#: app/models.py:339
+#: app/models.py:343
 msgid "actividades_organizaciones_extraterritoriales"
 msgstr "Actividades de organizaciones y entidades extraterritoriales"
 
-#: app/models.py:343
+#: app/models.py:347
 msgid "LOAN"
 msgstr "Préstamo"
 
-#: app/models.py:344
+#: app/models.py:348
 msgid "CREDIT_LINE"
 msgstr "Línea de crédito"
 
-#: app/models.py:348
+#: app/models.py:352
 msgid "NATURAL_PERSON"
 msgstr "Persona natural"
 
-#: app/models.py:349
+#: app/models.py:353
 msgid "LEGAL_PERSON"
 msgstr "Persona jurídica"
 
@@ -450,7 +454,7 @@ msgstr "Etapa"
 msgid "Lender with that name already exists"
 msgstr "Ya existe un entidad financiera con ese nombre"
 
-#: app/routers/guest/applications.py:375 app/routers/guest/applications.py:464
+#: app/routers/guest/applications.py:376 app/routers/guest/applications.py:465
 #: app/routers/lenders.py:191
 msgid "Credit product not found"
 msgstr "Producto crediticio no encontrado"
@@ -495,28 +499,28 @@ msgstr "Usuario deslogueado correctamente"
 msgid "An email with a reset link was sent to end user"
 msgstr "Se envió un correo con el enlace de reseteo de contraseña."
 
-#: app/routers/guest/applications.py:319 app/routers/guest/applications.py:368
-#: app/routers/guest/applications.py:457 app/routers/guest/applications.py:521
+#: app/routers/guest/applications.py:320 app/routers/guest/applications.py:369
+#: app/routers/guest/applications.py:458 app/routers/guest/applications.py:522
 msgid "Credit product not selected"
 msgstr "El producto crediticio no fue seleccionado"
 
-#: app/routers/guest/applications.py:325
+#: app/routers/guest/applications.py:326
 msgid "Cannot rollback at this stage"
 msgstr "No se puede retroceder en esta etapa"
 
-#: app/routers/guest/applications.py:527
+#: app/routers/guest/applications.py:528
 msgid "Lender not selected"
 msgstr "No se ha seleccionado la entidad financiera"
 
-#: app/routers/guest/applications.py:578
+#: app/routers/guest/applications.py:579
 msgid "Cannot upload document at this stage"
 msgstr "No se pueden subir documentos en esta etapa"
 
-#: app/routers/guest/applications.py:682
+#: app/routers/guest/applications.py:683
 msgid "A new application has already been created from this one"
 msgstr "Una nueva aplicación ya ha sido creada desde esta"
 
-#: app/routers/guest/applications.py:739
+#: app/routers/guest/applications.py:741
 msgid "The lender has no external onboarding URL"
 msgstr "El prestamista no tiene configurada una URL de onboarding externo"
 
@@ -649,3 +653,4 @@ msgstr "Correo institucional"
 #: app/utils/tables.py:239
 msgid "MSME Documents"
 msgstr "Documentos de la empresa"
+
