@@ -245,7 +245,7 @@ Then, `update <https://ocp-software-handbook.readthedocs.io/en/latest/services/p
 
 .. code-block:: bash
 
-   java -jar schemaspy.jar -t pgsql -dp postgresql.jar -host localhost -db credere_backend -o schemaspy -norows -I '(django|auth).*'
+   java -jar schemaspy.jar -t pgsql -dp postgresql.jar -o schemaspy -norows -I '(django|auth).*' -host localhost -db credere_backend -u MYUSER
    mv schemaspy/diagrams/orphans/orphans.png docs/_static/
    mv schemaspy/diagrams/summary/relationships.real.large.png docs/_static/
 
