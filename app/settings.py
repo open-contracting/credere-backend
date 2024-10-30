@@ -104,6 +104,13 @@ class Settings(BaseSettings):
     #:
     #: .. seealso:: :meth:`app.models.Application.lapseable`
     days_to_change_to_lapsed: int = 14
+    #: The number of days for which to remind the borrower to start the external onboarding process with the lender.
+    #:
+    #: .. seealso::
+    #:
+    #     -   :attr:`app.models.Application.borrower_accessed_external_onboarding_at`
+    #:    -  :attr:`app.models.Application.pending_external_onboarding_reminder`
+    days_to_remind_external_onboarding: int = 1
     #: The number of days after the application reaches a final state, after which the application is archived.
     #:
     #: .. seealso:: :meth:`app.models.Application.archivable`

@@ -20,7 +20,6 @@ from app import models
 from app.db import get_db, handle_skipped_award
 from app.exceptions import SkippedAwardError
 from app.i18n import _
-from app.models import ApplicationAction, ApplicationActionType
 from app.settings import app_settings
 from app.sources import colombia as data_access
 
@@ -272,9 +271,9 @@ def set_application_as_borrower_accessed_external_onboarding_system(
 ) -> None:
     application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
 
-    ApplicationAction.create(
+    models.ApplicationAction.create(
         session,
-        type=ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
+        type=models.ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
         application_id=application.id,
     )
 

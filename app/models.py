@@ -757,7 +757,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_external_onboarding_reminder(cls, session: Session) -> "Query[Self]":
         """
-        Return a query for SUBMITTED applications in which the lender uses external onboarding, and whose borrower
+        Return a query for SUBMITTED applications in which the lender uses external onboarding, whose submission date
+        is within :attr:`~app.settings.Settings.days_to_remind_external_onboarding` days from now, and whose borrower
         hasn't already received a reminder to start external onboarding.
 
         .. seealso:: :typer:`python-m-app-send-reminders`
@@ -768,6 +769,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 cls.status == ApplicationStatus.SUBMITTED,
                 col(Lender.external_onboarding_url) != "",
                 col(cls.borrower_accessed_external_onboarding_at).is_(None),
+                col(cls.borrower_submitted_at)
+                <= datetime.now() + timedelta(days=app_settings.days_to_remind_external_onboarding),
                 col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER)),
             )
             .join(Lender, cls.lender_id == Lender.id)
