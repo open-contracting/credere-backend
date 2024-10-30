@@ -188,10 +188,7 @@ def send_reminders() -> None:
 @app.command()
 def sync_applications_with_external_onboarding() -> None:
     with contextmanager(get_db)() as session:
-        external_onbarding_applications = models.Application.with_external_onbarding_by_status(
-            session, models.ApplicationStatus.STARTED
-        )
-        for application in external_onbarding_applications:
+        for application in models.Application.pending_external_onboarding(session, models.ApplicationStatus.STARTED):
             mail.send(session, aws.ses_client, models.MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER, application)
 
             session.commit()
