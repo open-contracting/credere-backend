@@ -20,7 +20,7 @@ def upgrade() -> None:
     with op.get_context().autocommit_block():
         op.execute(
             """
-          ALTER TYPE message_type ADD VALUE IF NOT EXISTS 'BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER'
+          ALTER TYPE message_type ADD VALUE IF NOT EXISTS 'BORROWER_EXTERNAL_ONBOARDING_REMINDER'
       """
         )
 

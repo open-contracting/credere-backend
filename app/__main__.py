@@ -170,7 +170,7 @@ def send_reminders() -> None:
         for method, message_type in (
             ("pending_introduction_reminder", "BORROWER_PENDING_APPLICATION_REMINDER"),
             ("pending_submission_reminder", "BORROWER_PENDING_SUBMIT_REMINDER"),
-            ("pending_external_onboarding_reminder", "BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER"),
+            ("pending_external_onboarding_reminder", "BORROWER_EXTERNAL_ONBOARDING_REMINDER"),
         ):
             reminders = (
                 getattr(models.Application, method)(session)

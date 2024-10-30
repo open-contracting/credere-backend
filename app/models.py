@@ -235,7 +235,7 @@ class MessageType(StrEnum):
     #: Remind the borrower to start the external onboarding process with the lender, if applies.
     #:
     #: SUBMITTED (:typer:`python-m-app-send-reminders`)
-    BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER = "BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER"
+    BORROWER_EXTERNAL_ONBOARDING_REMINDER = "BORROWER_EXTERNAL_ONBOARDING_REMINDER"
     #: Confirm receipt of the application.
     #:
     #: ACCEPTED → SUBMITTED (``/applications/submit``)
@@ -768,9 +768,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 cls.status == ApplicationStatus.SUBMITTED,
                 col(Lender.external_onboarding_url) != "",
                 col(cls.borrower_accessed_external_onboarding_at).is_(None),
-                col(cls.id).notin_(
-                    Message.application_by_type(MessageType.BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER)
-                ),
+                col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER)),
             )
             .join(Lender, cls.lender_id == Lender.id)
         )
@@ -814,7 +812,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 Message,
                 and_(
                     cls.id == Message.application_id,
-                    Message.type == MessageType.BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER,
+                    Message.type == MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER,
                 ),
                 isouter=True,
             )

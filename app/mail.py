@@ -64,7 +64,7 @@ def send(
                 "REMOVE_ME_URL": f"{base_application_url}/decline",
             }
 
-        case MessageType.BORROWER_PENDING_EXTERNAL_ONBOARDING_REMINDER:
+        case MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER:
             recipients = [[application.primary_email]]
             subject = _("Reminder about your credit application")
             parameters = {
