@@ -87,15 +87,8 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
         )
 
 
-def test_send_reminders_external_onboarding(session, mock_send_templated_email, accepted_application, lender):
-    call_count = 1
-    accepted_application.status = models.ApplicationStatus.SUBMITTED
-    accepted_application.borrower_submitted_at = datetime.now(accepted_application.created_at.tzinfo)
-    lender.external_onboarding_url = "https://example.com"
-    accepted_application.lender = lender
-    session.commit()
-
-    with assert_change(mock_send_templated_email, "call_count", call_count):
+def test_send_reminders_external_onboarding(mock_send_templated_email, submitted_application_external_onboarding):
+    with assert_change(mock_send_templated_email, "call_count", 1):
         result = runner.invoke(__main__.app, ["send-reminders"])
 
         assert_success(

@@ -141,14 +141,33 @@ def client(app: FastAPI, engine, aws_client) -> Generator[TestClient, Any, None]
 
 
 @pytest.fixture
-def lender(session):
+def lender_payload():
+    return {
+        "email_group": "test@example.com",
+        "type": "Some Type",
+        "sla_days": 7,
+        "status": "Active",
+    }
+
+
+@pytest.fixture
+def lender(session, lender_payload):
     instance = models.Lender.create(
         session,
+        **lender_payload,
         name=str(uuid.uuid4()),
-        email_group="test@example.com",
-        type="Some Type",
-        sla_days=7,
-        status="Active",
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def lender_external_onboarding(session, lender_payload):
+    instance = models.Lender.create(
+        session,
+        **lender_payload,
+        name=str(uuid.uuid4()),
+        external_onboarding_url="https://example.com",
     )
     session.commit()
     return instance
@@ -242,6 +261,29 @@ def credit_product(session, lender):
 
 
 @pytest.fixture
+def credit_product_external_onboarding(session, lender_external_onboarding):
+    instance = models.CreditProduct.create(
+        session,
+        borrower_size=models.BorrowerSize.SMALL,
+        lower_limit=5000.00,
+        upper_limit=500000.00,
+        type=models.CreditType.LOAN,
+        required_document_types={
+            "INCORPORATION_DOCUMENT": True,
+        },
+        # Descriptive
+        interest_rate=3.75,
+        other_fees_total_amount=1000,
+        other_fees_description="Other test fees",
+        more_info_url="www.moreinfo.test",
+        # Relationships
+        lender=lender_external_onboarding,
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
 def award(session):
     instance = models.Award.create(
         session,
@@ -322,7 +364,6 @@ def application_payload(application_uuid, award, borrower):
         "borrower_declined_preferences_data": {},
         "borrower_declined_data": {},
         "borrower_accepted_at": None,
-        "borrower_submitted_at": None,
         "lender_started_at": None,
         "lender_rejected_at": None,
         "lender_rejected_data": {},
@@ -379,6 +420,22 @@ def accepted_application(session, application_payload, credit_product):
         **application_payload,
         status=models.ApplicationStatus.ACCEPTED,
         credit_product_id=credit_product.id,
+    )
+    session.commit()
+    return instance
+
+
+@pytest.fixture
+def submitted_application_external_onboarding(
+    session, application_payload, credit_product_external_onboarding, lender_external_onboarding
+):
+    instance = models.Application.create(
+        session,
+        **application_payload,
+        status=models.ApplicationStatus.SUBMITTED,
+        credit_product_id=credit_product_external_onboarding.id,
+        lender_id=lender_external_onboarding.id,
+        borrower_submitted_at=datetime.utcnow(),
     )
     session.commit()
     return instance
