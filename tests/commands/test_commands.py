@@ -32,7 +32,8 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
         assert_success(
             result,
             f"Sending {call_count} BORROWER_PENDING_APPLICATION_REMINDER...\n"
-            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_EXTERNAL_ONBOARDING_REMINDER...\n",
         )
 
     # If run a second time, reminder is not sent.
@@ -41,7 +42,9 @@ def test_send_reminders_intro(session, mock_send_templated_email, pending_applic
 
         assert_success(
             result,
-            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_EXTERNAL_ONBOARDING_REMINDER...\n",
         )
 
 
@@ -68,7 +71,8 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
         assert_success(
             result,
             "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
-            f"Sending {call_count} BORROWER_PENDING_SUBMIT_REMINDER...\n",
+            f"Sending {call_count} BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_EXTERNAL_ONBOARDING_REMINDER...\n",
         )
 
     # If run a second time, reminder is not sent.
@@ -77,7 +81,50 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
 
         assert_success(
             result,
-            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\nSending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n",
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_EXTERNAL_ONBOARDING_REMINDER...\n",
+        )
+
+
+@pytest.mark.parametrize(
+    ("seconds", "call_count"),
+    [
+        (negative_offset, 0),
+        (positive_offset, 1),
+        (app_settings.reminder_days_before_lapsed_for_external_onboarding * 86_400 + negative_offset, 1),
+        (app_settings.reminder_days_before_lapsed_for_external_onboarding * 86_400 + positive_offset, 0),
+    ],
+)
+def test_send_reminders_external_onboarding(
+    session, mock_send_templated_email, submitted_application_external_onboarding, seconds, call_count
+):
+    submitted_application_external_onboarding.borrower_submitted_at = (
+        datetime.now(submitted_application_external_onboarding.tz)
+        - timedelta(days=app_settings.days_to_change_to_lapsed)
+        + timedelta(seconds=seconds)
+    )
+    session.commit()
+
+    with assert_change(mock_send_templated_email, "call_count", call_count):
+        result = runner.invoke(__main__.app, ["send-reminders"])
+
+        assert_success(
+            result,
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            f"Sending {call_count} BORROWER_EXTERNAL_ONBOARDING_REMINDER...\n",
+        )
+
+    # If run a second time, reminder is not sent.
+    with assert_change(mock_send_templated_email, "call_count", 0):
+        result = runner.invoke(__main__.app, ["send-reminders"])
+
+        assert_success(
+            result,
+            "Sending 0 BORROWER_PENDING_APPLICATION_REMINDER...\n"
+            "Sending 0 BORROWER_PENDING_SUBMIT_REMINDER...\n"
+            "Sending 0 BORROWER_EXTERNAL_ONBOARDING_REMINDER...\n",
         )
 
 

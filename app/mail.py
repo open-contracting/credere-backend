@@ -32,6 +32,8 @@ def send(
 
     base_application_url = f"{app_settings.frontend_url}/application/{quote(application.uuid)}"
 
+    base_backend_application_url = f"{app_settings.backend_url}/applications/uuid/{quote(application.uuid)}"
+
     # This match statement must set `recipients`, `subject` and `parameters`.
     #
     # `recipients` is a list of lists. Each sublist is a `ToAddresses` parameter for an email message.
@@ -62,18 +64,26 @@ def send(
                 "REMOVE_ME_URL": f"{base_application_url}/decline",
             }
 
+        case MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER:
+            recipients = [[application.primary_email]]
+            subject = _("Reminder about your credit application")
+            parameters = {
+                "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "LENDER_NAME": application.lender.name,
+                "EXTERNAL_ONBOARDING_URL": f"{base_backend_application_url}/access-external-onboarding",
+                "EXTERNAL_ONBOARDING_DONE_URL": f"{base_backend_application_url}/accessed-external-onboarding",
+            }
+
         case MessageType.SUBMISSION_COMPLETED:
             recipients = [[application.primary_email]]
             subject = _("Application Submission Complete")
             parameters = {
-                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "LENDER_NAME": application.lender.name,
             }
 
             if application.lender.external_onboarding_url:
-                parameters["EXTERNAL_ONBOARDING_URL"] = (
-                    f"{app_settings.backend_url}/applications/uuid/{application.uuid}/access-external-onboarding"
-                )
+                parameters["EXTERNAL_ONBOARDING_URL"] = f"{base_backend_application_url}/access-external-onboarding"
                 template_name = "submission_completed_external_onboarding"
 
         case MessageType.NEW_APPLICATION_OCP:
@@ -104,8 +114,8 @@ def send(
             recipients = [[application.primary_email]]
             subject = _("Your credit application has been declined")
             parameters = {
-                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "LENDER_NAME": application.lender.name,
             }
 
             if send_kwargs["options"]:
@@ -118,8 +128,8 @@ def send(
             recipients = [[application.primary_email]]
             subject = _("Your credit application has been approved")
             parameters = {
-                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "LENDER_NAME": application.lender.name,
                 "LENDER_EMAIL": application.lender.email_group,
             }
 
@@ -147,8 +157,8 @@ def send(
             ]
             subject = _("Confirm email address change")
             parameters = {
-                "NEW_MAIL": send_kwargs["new_email"],
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "NEW_MAIL": send_kwargs["new_email"],
                 "CONFIRM_EMAIL_CHANGE_URL": (
                     f"{base_application_url}/change-primary-email"
                     f"?token={quote(send_kwargs['confirmation_email_token'])}"

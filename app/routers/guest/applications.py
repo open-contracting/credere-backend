@@ -725,27 +725,30 @@ async def find_alternative_credit_option(
 async def access_external_onboarding(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,))
+        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,)),
     ),
 ) -> RedirectResponse:
     """
-    :return: A redirect to the lender.external_onboarding_system_url.
-    :raise: HTTPException if the application has a lender without an external_onboarding_system_url.
+    :return: A redirect to the lender.external_onboarding_url.
+    :raise: HTTPException if the application has a lender without an external_onboarding_url.
     """
-    with rollback_on_error(session):
-        if not application.lender.external_onboarding_url:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_("The lender has no external onboarding URL"),
-            )
+    return util.handle_external_onboarding(session, application, forward=True)
 
-        application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
 
-        models.ApplicationAction.create(
-            session,
-            type=models.ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
-            application_id=application.id,
-        )
+@router.get(
+    "/applications/uuid/{uuid}/accessed-external-onboarding",
+    tags=[util.Tags.applications],
+)
+async def accessed_external_onboarding(
+    session: Session = Depends(get_db),
+    application: models.Application = Depends(
+        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,)),
+    ),
+) -> RedirectResponse:
+    """
+    Report having started external onboarding.
 
-        session.commit()
-        return RedirectResponse(application.lender.external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)
+    :return: A redirect to the frontend's external-onboarding-completed page.
+    :raise: HTTPException if the application has a lender without an external_onboarding_url.
+    """
+    return util.handle_external_onboarding(session, application)

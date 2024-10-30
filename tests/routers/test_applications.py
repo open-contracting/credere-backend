@@ -5,6 +5,7 @@ from fastapi import status
 
 from app import models, util
 from app.i18n import _
+from app.settings import app_settings
 from tests import BASEDIR, MockResponse, assert_ok, load_json_file
 
 
@@ -164,6 +165,11 @@ def test_approve_application_cycle(
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert response.json() == {"detail": _("The lender has no external onboarding URL")}
 
+    # borrower tries to access a non-existing external onboarding system
+    response = client.get(f"/applications/uuid/{pending_application.uuid}/accessed-external-onboarding")
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json() == {"detail": _("The lender has no external onboarding URL")}
+
     # different lender user tries to start the application
     response = client.post(f"/applications/{appid}/start", headers=unauthorized_lender_header)
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -317,6 +323,24 @@ def test_approve_application_with_external_onboarding(
     )
     assert response.status_code == status.HTTP_303_SEE_OTHER
     assert response.headers["location"] == lender.external_onboarding_url
+
+    # borrower access external onboarding system again
+    response = client.get(
+        f"/applications/uuid/{accepted_application.uuid}/access-external-onboarding", follow_redirects=False
+    )
+    assert response.status_code == status.HTTP_303_SEE_OTHER
+    assert response.headers["location"] == (
+        f"{app_settings.frontend_url}/application/{accepted_application.uuid}/external-onboarding-completed"
+    )
+
+    # borrower indicates that it has accessed external onboarding system
+    response = client.get(
+        f"/applications/uuid/{accepted_application.uuid}/accessed-external-onboarding", follow_redirects=False
+    )
+    assert response.status_code == status.HTTP_303_SEE_OTHER
+    assert response.headers["location"] == (
+        f"{app_settings.frontend_url}/application/{accepted_application.uuid}/external-onboarding-completed"
+    )
 
     # The lender user starts application
     response = client.post(f"/applications/{appid}/start", headers=lender_header)

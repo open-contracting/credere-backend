@@ -232,6 +232,10 @@ class MessageType(StrEnum):
     #:
     #: ACCEPTED (:typer:`python-m-app-send-reminders`)
     BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
+    #: Remind the borrower to start external onboarding.
+    #:
+    #: SUBMITTED (:typer:`python-m-app-send-reminders`)
+    BORROWER_EXTERNAL_ONBOARDING_REMINDER = "BORROWER_EXTERNAL_ONBOARDING_REMINDER"
     #: Confirm receipt of the application.
     #:
     #: ACCEPTED → SUBMITTED (``/applications/submit``)
@@ -735,7 +739,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
         """
-        Return query for ACCEPTED applications whose lapsed date is within
+        Return a query for ACCEPTED applications whose lapsed date is within
         :attr:`~app.settings.Settings.reminder_days_before_lapsed` days from now, and whose borrower hasn't already
         received a reminder to submit.
 
@@ -751,31 +755,83 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
+    def pending_external_onboarding_reminder(cls, session: Session) -> "Query[Self]":
+        """
+        Return a query for SUBMITTED applications in which the lender uses external onboarding, whose lapsed date is
+        within :attr:`~app.settings.Settings.reminder_days_before_lapsed_for_external_onboarding` days from now, and
+        whose borrower hasn't already received a reminder to start external onboarding.
+
+        .. seealso:: :typer:`python-m-app-send-reminders`
+        """
+        lapsed_at = col(cls.borrower_submitted_at) + timedelta(days=app_settings.days_to_change_to_lapsed)
+        days = app_settings.reminder_days_before_lapsed_for_external_onboarding
+
+        return cls.pending_external_onboarding(session, ApplicationStatus.SUBMITTED).filter(
+            datetime.now() < lapsed_at,
+            lapsed_at <= datetime.now() + timedelta(days=days),
+            col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER)),
+        )
+
+    @classmethod
+    def pending_external_onboarding(cls, session: Session, status: ApplicationStatus) -> "Query[Self]":
+        """
+        Return a query for applications with the provided status, in which the lender uses external onboarding, and
+        whose borrower hasn't already started external onboarding.
+        """
+        return (
+            session.query(cls)
+            .filter(
+                cls.status == status,
+                col(Lender.external_onboarding_url) != "",
+                col(cls.borrower_accessed_external_onboarding_at).is_(None),
+            )
+            .join(Lender, cls.lender_id == Lender.id)
+        )
+
+    @classmethod
     def lapseable(cls, session: Session) -> "Query[Self]":
         """
         Return a query for :meth:`~app.models.Application.unarchived` applications that have been waiting for the
-        borrower to respond (PENDING, ACCEPTED, INFORMATION_REQUESTED) for
-        :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
+        borrower to respond for :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
 
         .. seealso:: :typer:`python-m-app-update-applications-to-lapsed`
         """
         delta = timedelta(days=app_settings.days_to_change_to_lapsed)
 
-        return cls.unarchived(session).filter(
-            or_(
-                and_(
-                    cls.status == ApplicationStatus.PENDING,
-                    col(cls.created_at) + delta < datetime.now(),
+        return (
+            cls.unarchived(session)
+            .filter(
+                or_(
+                    and_(
+                        cls.status == ApplicationStatus.PENDING,
+                        col(cls.created_at) + delta < datetime.now(),
+                    ),
+                    and_(
+                        cls.status == ApplicationStatus.ACCEPTED,
+                        col(cls.borrower_accepted_at) + delta < datetime.now(),
+                    ),
+                    and_(
+                        cls.status == ApplicationStatus.SUBMITTED,
+                        # col(cls.borrower_submitted_at) + delta < datetime.now(),  # noqa: ERA001 # also remove join
+                        col(Message.created_at) + delta < datetime.now(),
+                        col(Lender.external_onboarding_url) != "",
+                        col(cls.borrower_accessed_external_onboarding_at).is_(None),
+                    ),
+                    and_(
+                        cls.status == ApplicationStatus.INFORMATION_REQUESTED,
+                        col(cls.information_requested_at) + delta < datetime.now(),
+                    ),
                 ),
+            )
+            .join(
+                Message,
                 and_(
-                    cls.status == ApplicationStatus.ACCEPTED,
-                    col(cls.borrower_accepted_at) + delta < datetime.now(),
+                    cls.id == Message.application_id,
+                    Message.type == MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER,
                 ),
-                and_(
-                    cls.status == ApplicationStatus.INFORMATION_REQUESTED,
-                    col(cls.information_requested_at) + delta < datetime.now(),
-                ),
-            ),
+                isouter=True,
+            )
+            .join(Lender, cls.lender_id == Lender.id, isouter=True)
         )
 
     @classmethod

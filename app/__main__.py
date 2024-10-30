@@ -162,35 +162,34 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
 
 @app.command()
 def send_reminders() -> None:
-    """Send reminders to borrowers about PENDING and ACCEPTED applications."""
+    """Remind borrowers to accept or decline invitations, submit applications and start external onboarding."""
     with contextmanager(get_db)() as session:
-        pending_introduction_reminder = (
-            models.Application.pending_introduction_reminder(session)
-            .options(
-                joinedload(models.Application.borrower),
-                joinedload(models.Application.award),
+        for method, message_type in (
+            ("pending_introduction_reminder", "BORROWER_PENDING_APPLICATION_REMINDER"),
+            ("pending_submission_reminder", "BORROWER_PENDING_SUBMIT_REMINDER"),
+            ("pending_external_onboarding_reminder", "BORROWER_EXTERNAL_ONBOARDING_REMINDER"),
+        ):
+            reminders = (
+                getattr(models.Application, method)(session)
+                .options(
+                    joinedload(models.Application.borrower),
+                    joinedload(models.Application.award),
+                )
+                .all()
             )
-            .all()
-        )
-        if not state["quiet"]:
-            print(f"Sending {len(pending_introduction_reminder)} BORROWER_PENDING_APPLICATION_REMINDER...")
-        for application in pending_introduction_reminder:
-            mail.send(session, aws.ses_client, models.MessageType.BORROWER_PENDING_APPLICATION_REMINDER, application)
+            if not state["quiet"]:
+                print(f"Sending {len(reminders)} {message_type}...")
+            for application in reminders:
+                mail.send(session, aws.ses_client, getattr(models.MessageType, message_type), application)
 
-            session.commit()
+                session.commit()
 
-        pending_submission_reminder = (
-            models.Application.pending_submission_reminder(session)
-            .options(
-                joinedload(models.Application.borrower),
-                joinedload(models.Application.award),
-            )
-            .all()
-        )
-        if not state["quiet"]:
-            print(f"Sending {len(pending_submission_reminder)} BORROWER_PENDING_SUBMIT_REMINDER...")
-        for application in pending_submission_reminder:
-            mail.send(session, aws.ses_client, models.MessageType.BORROWER_PENDING_SUBMIT_REMINDER, application)
+
+@app.command()
+def sync_applications_with_external_onboarding() -> None:
+    with contextmanager(get_db)() as session:
+        for application in models.Application.pending_external_onboarding(session, models.ApplicationStatus.STARTED):
+            mail.send(session, aws.ses_client, models.MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER, application)
 
             session.commit()
 
