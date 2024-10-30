@@ -740,6 +740,11 @@ async def access_external_onboarding(
                 detail=_("The lender has no external onboarding URL"),
             )
 
+        if application.borrower_accessed_external_onboarding_at:
+            return RedirectResponse(
+                f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed"
+            )
+
         application.stage_as_borrower_accessed_external_onboarding_system(session)
 
         return RedirectResponse(application.lender.external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)
@@ -766,6 +771,11 @@ async def accessed_external_onboarding(
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=_("The lender has no external onboarding URL"),
+            )
+
+        if application.borrower_accessed_external_onboarding_at:
+            return RedirectResponse(
+                f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed"
             )
 
         application.stage_as_borrower_accessed_external_onboarding_system(session)
