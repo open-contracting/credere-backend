@@ -267,7 +267,7 @@ def create_or_update_borrower_document(
     )
 
 
-def stage_application_as_borrower_accessed_external_onboarding_system(
+def set_application_as_borrower_accessed_external_onboarding_system(
     application: models.Application, session: Session
 ) -> None:
     application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
