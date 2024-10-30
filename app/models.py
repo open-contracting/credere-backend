@@ -763,17 +763,15 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
         .. seealso:: :typer:`python-m-app-send-reminders`
         """
-        # lapsed_at = col(cls.borrower_submitted_at) + timedelta(days=app_settings.days_to_change_to_lapsed)  # noqa: ERA001, E501
-        # days = app_settings.reminder_days_before_lapsed_for_external_onboarding  # noqa: ERA001
-        remind_at = col(cls.borrower_submitted_at) + timedelta(days=1)
+        lapsed_at = col(cls.borrower_submitted_at) + timedelta(days=app_settings.days_to_change_to_lapsed)
+        days = app_settings.reminder_days_before_lapsed_for_external_onboarding
 
         return (
             session.query(cls)
             .filter(
                 cls.status == ApplicationStatus.SUBMITTED,
-                # datetime.now() < lapsed_at,  # noqa: ERA001
-                # lapsed_at <= datetime.now() + timedelta(days=days),  # noqa: ERA001
-                remind_at <= datetime.now(),
+                datetime.now() < lapsed_at,
+                lapsed_at <= datetime.now() + timedelta(days=days),
                 col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER)),
                 col(Lender.external_onboarding_url) != "",
                 col(cls.borrower_accessed_external_onboarding_at).is_(None),

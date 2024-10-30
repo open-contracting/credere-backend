@@ -90,12 +90,10 @@ def test_send_reminders_submit(session, mock_send_templated_email, accepted_appl
 @pytest.mark.parametrize(
     ("seconds", "call_count"),
     [
-        # (negative_offset, 0),  # noqa: ERA001
-        # (positive_offset, 1),  # noqa: ERA001
-        # (app_settings.reminder_days_before_lapsed_for_external_onboarding * 86_400 + negative_offset, 1),  # noqa: ERA001, E501
-        # (app_settings.reminder_days_before_lapsed_for_external_onboarding * 86_400 + positive_offset, 0),  # noqa: ERA001, E501
-        (86_400 + negative_offset, 0),
-        (86_400 + positive_offset, 1),
+        (negative_offset, 0),
+        (positive_offset, 1),
+        (app_settings.reminder_days_before_lapsed_for_external_onboarding * 86_400 + negative_offset, 1),
+        (app_settings.reminder_days_before_lapsed_for_external_onboarding * 86_400 + positive_offset, 0),
     ],
 )
 def test_send_reminders_external_onboarding(
@@ -103,9 +101,8 @@ def test_send_reminders_external_onboarding(
 ):
     submitted_application_external_onboarding.borrower_submitted_at = (
         datetime.now(submitted_application_external_onboarding.tz)
-        # - timedelta(days=app_settings.days_to_change_to_lapsed)  # noqa: ERA001
-        # + timedelta(seconds=seconds)  # noqa: ERA001
-        - timedelta(seconds=seconds)
+        - timedelta(days=app_settings.days_to_change_to_lapsed)
+        + timedelta(seconds=seconds)
     )
     session.commit()
 
