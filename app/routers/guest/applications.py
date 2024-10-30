@@ -740,15 +740,15 @@ async def access_external_onboarding(
                 detail=_("The lender has no external onboarding URL"),
             )
 
-        if application.borrower_accessed_external_onboarding_at:
-            return RedirectResponse(
-                f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
+        if not application.borrower_accessed_external_onboarding_at:
+            util.set_borrower_accessed_external_onboarding(application, session)
 
-        util.set_borrower_accessed_external_onboarding(application, session)
+            return RedirectResponse(application.lender.external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)
 
-        return RedirectResponse(application.lender.external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
 
 
 @router.get(
@@ -774,13 +774,8 @@ async def accessed_external_onboarding(
                 detail=_("The lender has no external onboarding URL"),
             )
 
-        if application.borrower_accessed_external_onboarding_at:
-            return RedirectResponse(
-                f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-
-        util.set_borrower_accessed_external_onboarding(application, session)
+        if not application.borrower_accessed_external_onboarding_at:
+            util.set_borrower_accessed_external_onboarding(application, session)
 
         return RedirectResponse(
             f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
