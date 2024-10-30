@@ -763,14 +763,14 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
         .. seealso:: :typer:`python-m-app-send-reminders`
         """
+        remind_at = col(cls.borrower_submitted_at) + timedelta(days=app_settings.days_to_remind_external_onboarding)
         return (
             session.query(cls)
             .filter(
                 cls.status == ApplicationStatus.SUBMITTED,
                 col(Lender.external_onboarding_url) != "",
                 col(cls.borrower_accessed_external_onboarding_at).is_(None),
-                col(cls.borrower_submitted_at)
-                <= datetime.now() + timedelta(days=app_settings.days_to_remind_external_onboarding),
+                remind_at <= datetime.now(),
                 col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER)),
             )
             .join(Lender, cls.lender_id == Lender.id)
