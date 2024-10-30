@@ -15,9 +15,10 @@ from email_validator import EmailNotValidError, validate_email
 from fastapi import File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlmodel import col
+from starlette.responses import RedirectResponse
 
 from app import models
-from app.db import get_db, handle_skipped_award
+from app.db import get_db, handle_skipped_award, rollback_on_error
 from app.exceptions import SkippedAwardError
 from app.i18n import _
 from app.settings import app_settings
@@ -266,13 +267,33 @@ def create_or_update_borrower_document(
     )
 
 
-def set_borrower_accessed_external_onboarding(application: models.Application, session: Session) -> None:
-    application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
+def handle_external_onboarding(
+    session: Session, application: models.Application, *, forward: bool = False
+) -> RedirectResponse:
+    with rollback_on_error(session):
+        external_onboarding_url = application.lender.external_onboarding_url
 
-    models.ApplicationAction.create(
-        session,
-        type=models.ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
-        application_id=application.id,
-    )
+        if not external_onboarding_url:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=_("The lender has no external onboarding URL"),
+            )
 
-    session.commit()
+        if not application.borrower_accessed_external_onboarding_at:
+            application.borrower_accessed_external_onboarding_at = datetime.now(application.created_at.tzinfo)
+
+            models.ApplicationAction.create(
+                session,
+                type=models.ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
+                application_id=application.id,
+            )
+
+            session.commit()
+
+            if forward:
+                return RedirectResponse(external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)
+
+        return RedirectResponse(
+            f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )

@@ -10,7 +10,6 @@ from starlette.responses import RedirectResponse
 from app import aws, dependencies, mail, models, parsers, serializers, util
 from app.db import get_db, rollback_on_error
 from app.i18n import _
-from app.settings import app_settings
 
 router = APIRouter()
 
@@ -733,22 +732,7 @@ async def access_external_onboarding(
     :return: A redirect to the lender.external_onboarding_url.
     :raise: HTTPException if the application has a lender without an external_onboarding_url.
     """
-    with rollback_on_error(session):
-        if not application.lender.external_onboarding_url:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_("The lender has no external onboarding URL"),
-            )
-
-        if not application.borrower_accessed_external_onboarding_at:
-            util.set_borrower_accessed_external_onboarding(application, session)
-
-            return RedirectResponse(application.lender.external_onboarding_url, status_code=status.HTTP_303_SEE_OTHER)
-
-        return RedirectResponse(
-            f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
+    return util.handle_external_onboarding(session, application, forward=True)
 
 
 @router.get(
@@ -767,17 +751,4 @@ async def accessed_external_onboarding(
     :return: A redirect to the frontend's external-onboarding-completed page.
     :raise: HTTPException if the application has a lender without an external_onboarding_url.
     """
-    with rollback_on_error(session):
-        if not application.lender.external_onboarding_url:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=_("The lender has no external onboarding URL"),
-            )
-
-        if not application.borrower_accessed_external_onboarding_at:
-            util.set_borrower_accessed_external_onboarding(application, session)
-
-        return RedirectResponse(
-            f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
+    return util.handle_external_onboarding(session, application)
