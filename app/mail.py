@@ -78,8 +78,8 @@ def send(
             recipients = [[application.primary_email]]
             subject = _("Application Submission Complete")
             parameters = {
-                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "LENDER_NAME": application.lender.name,
             }
 
             if application.lender.external_onboarding_url:
@@ -114,8 +114,8 @@ def send(
             recipients = [[application.primary_email]]
             subject = _("Your credit application has been declined")
             parameters = {
-                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "LENDER_NAME": application.lender.name,
             }
 
             if send_kwargs["options"]:
@@ -128,8 +128,8 @@ def send(
             recipients = [[application.primary_email]]
             subject = _("Your credit application has been approved")
             parameters = {
-                "LENDER_NAME": application.lender.name,
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "LENDER_NAME": application.lender.name,
                 "LENDER_EMAIL": application.lender.email_group,
             }
 
@@ -157,8 +157,8 @@ def send(
             ]
             subject = _("Confirm email address change")
             parameters = {
-                "NEW_MAIL": send_kwargs["new_email"],
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "NEW_MAIL": send_kwargs["new_email"],
                 "CONFIRM_EMAIL_CHANGE_URL": (
                     f"{base_application_url}/change-primary-email"
                     f"?token={quote(send_kwargs['confirmation_email_token'])}"
