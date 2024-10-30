@@ -186,6 +186,18 @@ def send_reminders() -> None:
 
 
 @app.command()
+def sync_applications_with_external_onboarding() -> None:
+    with contextmanager(get_db)() as session:
+        external_onbarding_applications = models.Application.with_external_onbarding_by_status(
+            session, models.ApplicationStatus.STARTED
+        )
+        for application in external_onbarding_applications:
+            mail.send(session, aws.ses_client, models.MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER, application)
+
+            session.commit()
+
+
+@app.command()
 def update_applications_to_lapsed() -> None:
     """Lapse applications that have been waiting for the borrower to respond for some time."""
     with contextmanager(get_db)() as session, rollback_on_error(session):

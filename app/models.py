@@ -782,6 +782,17 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         )
 
     @classmethod
+    def with_external_onbarding_by_status(cls, session: Session, status: ApplicationStatus) -> "Query[Self]":
+        return (
+            session.query(cls)
+            .filter(
+                cls.status == status,
+                col(Lender.external_onboarding_url) != "",
+            )
+            .join(Lender, cls.lender_id == Lender.id)
+        )
+
+    @classmethod
     def lapseable(cls, session: Session) -> "Query[Self]":
         """
         Return a query for :meth:`~app.models.Application.unarchived` applications that have been waiting for the
