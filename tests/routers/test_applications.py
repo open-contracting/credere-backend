@@ -328,7 +328,7 @@ def test_approve_application_with_external_onboarding(
     response = client.get(
         f"/applications/uuid/{accepted_application.uuid}/access-external-onboarding", follow_redirects=False
     )
-    assert response.status_code == status.HTTP_307_TEMPORARY_REDIRECT
+    assert response.status_code == status.HTTP_303_SEE_OTHER
     assert response.headers["location"] == (
         f"{app_settings.frontend_url}/application/{accepted_application.uuid}/external-onboarding-completed"
     )
@@ -337,7 +337,7 @@ def test_approve_application_with_external_onboarding(
     response = client.get(
         f"/applications/uuid/{accepted_application.uuid}/accessed-external-onboarding", follow_redirects=False
     )
-    assert response.status_code == status.HTTP_307_TEMPORARY_REDIRECT
+    assert response.status_code == status.HTTP_303_SEE_OTHER
     assert response.headers["location"] == (
         f"{app_settings.frontend_url}/application/{accepted_application.uuid}/external-onboarding-completed"
     )

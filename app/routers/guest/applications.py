@@ -742,7 +742,8 @@ async def access_external_onboarding(
 
         if application.borrower_accessed_external_onboarding_at:
             return RedirectResponse(
-                f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed"
+                f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
+                status_code=status.HTTP_303_SEE_OTHER,
             )
 
         util.stage_application_as_borrower_accessed_external_onboarding_system(application, session)
@@ -775,11 +776,13 @@ async def accessed_external_onboarding(
 
         if application.borrower_accessed_external_onboarding_at:
             return RedirectResponse(
-                f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed"
+                f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
+                status_code=status.HTTP_303_SEE_OTHER,
             )
 
         util.stage_application_as_borrower_accessed_external_onboarding_system(application, session)
 
         return RedirectResponse(
-            f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed"
+            f"{app_settings.frontend_url}/application/{application.uuid}/external-onboarding-completed",
+            status_code=status.HTTP_303_SEE_OTHER,
         )
