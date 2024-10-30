@@ -232,7 +232,7 @@ class MessageType(StrEnum):
     #:
     #: ACCEPTED (:typer:`python-m-app-send-reminders`)
     BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
-    #: Remind the borrower to start the external onboarding process with the lender, if applies.
+    #: Remind the borrower to start external onboarding.
     #:
     #: SUBMITTED (:typer:`python-m-app-send-reminders`)
     BORROWER_EXTERNAL_ONBOARDING_REMINDER = "BORROWER_EXTERNAL_ONBOARDING_REMINDER"
@@ -739,7 +739,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_submission_reminder(cls, session: Session) -> "Query[Self]":
         """
-        Return query for ACCEPTED applications whose lapsed date is within
+        Return a query for ACCEPTED applications whose lapsed date is within
         :attr:`~app.settings.Settings.reminder_days_before_lapsed` days from now, and whose borrower hasn't already
         received a reminder to submit.
 
@@ -757,8 +757,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     @classmethod
     def pending_external_onboarding_reminder(cls, session: Session) -> "Query[Self]":
         """
-        Return query for SUBMITTED applications to lenders with external onboarding systems and whose borrower hasn't
-        already received a reminder to start the external onboarding process.
+        Return a query for SUBMITTED applications in which the lender uses external onboarding, and whose borrower
+        hasn't already received a reminder to start external onboarding.
 
         .. seealso:: :typer:`python-m-app-send-reminders`
         """
@@ -777,8 +777,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
     def lapseable(cls, session: Session) -> "Query[Self]":
         """
         Return a query for :meth:`~app.models.Application.unarchived` applications that have been waiting for the
-        borrower to respond (PENDING, ACCEPTED, SUBMITTED (to a lender with external_onboarding_url set)
-        INFORMATION_REQUESTED) for :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
+        borrower to respond for :attr:`~app.settings.Settings.days_to_change_to_lapsed` days.
 
         .. seealso:: :typer:`python-m-app-update-applications-to-lapsed`
         """

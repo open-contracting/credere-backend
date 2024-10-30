@@ -162,10 +162,7 @@ def fetch_award_by_id_and_supplier(award_id: str, supplier_id: str) -> None:
 
 @app.command()
 def send_reminders() -> None:
-    """
-    Send reminders to borrowers about PENDING, ACCEPTED and SUBMITTED (for lenders with an external onboarding step)
-    applications.
-    """
+    """Remind borrowers to accept or decline invitations, submit applications and start external onboarding."""
     with contextmanager(get_db)() as session:
         for method, message_type in (
             ("pending_introduction_reminder", "BORROWER_PENDING_APPLICATION_REMINDER"),

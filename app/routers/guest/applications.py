@@ -730,8 +730,8 @@ async def access_external_onboarding(
     ),
 ) -> RedirectResponse:
     """
-    :return: A redirect to the lender.external_onboarding_system_url.
-    :raise: HTTPException if the application has a lender without an external_onboarding_system_url.
+    :return: A redirect to the lender.external_onboarding_url.
+    :raise: HTTPException if the application has a lender without an external_onboarding_url.
     """
     with rollback_on_error(session):
         if not application.lender.external_onboarding_url:
@@ -756,9 +756,10 @@ async def accessed_external_onboarding(
     ),
 ) -> RedirectResponse:
     """
-    For when the borrower reports they've already started the onboarding process in the lender's system.
-    :return: A redirect to the front end external-onboarding-completed page.
-    :raise: HTTPException if the application has a lender without an external_onboarding_system_url.
+    Report having started external onboarding.
+
+    :return: A redirect to the frontend's external-onboarding-completed page.
+    :raise: HTTPException if the application has a lender without an external_onboarding_url.
     """
     with rollback_on_error(session):
         if not application.lender.external_onboarding_url:
