@@ -988,17 +988,6 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         self.overdued_at = None
         self.lender_approved_data = lender_approved_data
 
-    def stage_as_borrower_accessed_external_onboarding_system(self, session: Session) -> None:
-        self.borrower_accessed_external_onboarding_at = datetime.now(self.created_at.tzinfo)
-
-        ApplicationAction.create(
-            session,
-            type=ApplicationActionType.MSME_ACCESS_EXTERNAL_ONBOARDING,
-            application_id=self.id,
-        )
-
-        session.commit()
-
 
 class BorrowerDocumentBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
