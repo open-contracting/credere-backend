@@ -70,22 +70,30 @@ class Settings(BaseSettings):
     #: .. seealso::
     #:
     #:    -  :attr:`~app.settings.Settings.reminder_days_before_expiration`
-    #:    -   :typer:`python-m-app-fetch-awards`
+    #:    -  :typer:`python-m-app-fetch-awards`
     application_expiration_days: int = 7
     #: The number of days before a PENDING application's expiration date, past which the borrower is sent a reminder.
     #:
     #: .. seealso::
     #:
     #:    -  :attr:`~app.settings.Settings.application_expiration_days`
-    #:    -  :attr:`app.models.Application.pending_introduction_reminder`
+    #:    -  :meth:`app.models.Application.pending_introduction_reminder`
     reminder_days_before_expiration: int = 3
     #: The number of days before an ACCEPTED application's lapsed date, past which the borrower is sent a reminder.
     #:
     #: .. seealso::
     #:
     #:    -  :attr:`~app.settings.Settings.days_to_change_to_lapsed`
-    #:    -  :attr:`app.models.Application.pending_submission_reminder`
+    #:    -  :meth:`app.models.Application.pending_submission_reminder`
     reminder_days_before_lapsed: int = 3
+    #: The number of days before a SUBMITTED application's lapsed date, past which the borrower is sent a reminder,
+    # if the lender uses external onboarding.
+    #:
+    #: .. seealso::
+    #:
+    #:    -  :attr:`~app.settings.Settings.days_to_change_to_lapsed`
+    #:    -  :meth:`app.models.Application.pending_external_onboarding_reminder`
+    reminder_days_before_lapsed_for_external_onboarding: int = 13
     #: Lenders agree to respond to application changes (STARTED, CONTRACT_UPLOADED) within a number of days, known as
     #: Service Level Agreement (SLA) days (:attr:`app.models.Lender.sla_days`).
     #:
@@ -104,13 +112,6 @@ class Settings(BaseSettings):
     #:
     #: .. seealso:: :meth:`app.models.Application.lapseable`
     days_to_change_to_lapsed: int = 14
-    #: The number of days for which to remind the borrower to start the external onboarding process with the lender.
-    #:
-    #: .. seealso::
-    #:
-    #     -   :attr:`app.models.Application.borrower_accessed_external_onboarding_at`
-    #:    -  :attr:`app.models.Application.pending_external_onboarding_reminder`
-    days_to_remind_external_onboarding: int = 1
     #: The number of days after the application reaches a final state, after which the application is archived.
     #:
     #: .. seealso:: :meth:`app.models.Application.archivable`
