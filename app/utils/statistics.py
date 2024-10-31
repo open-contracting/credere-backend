@@ -74,7 +74,7 @@ def get_general_statistics(
     :param lender_id: The ID of the lender for filtering applications. (default: None)
     :return: A dictionary containing the general statistics about applications.
     """
-    base_query = _get_base_query(session.query(Application), start_date, end_date, lender_id)
+    base_query = _get_base_query(session.query(Application.id), start_date, end_date, lender_id)
 
     application_received_count = base_query.filter(col(Application.borrower_submitted_at).isnot(None)).count()
 
@@ -83,7 +83,7 @@ def get_general_statistics(
     ).count()
 
     column = Application.borrower_accepted_at if lender_id is None else Application.borrower_submitted_at
-    application_submitted_count = session.query(Application).filter(col(column).isnot(None)).count()
+    application_submitted_count = session.query(Application.id).filter(col(column).isnot(None)).count()
     if application_submitted_count:
         proportion_of_submitted_out_of_opt_in = round(
             (application_received_count / application_submitted_count) * 100, 2
@@ -148,9 +148,9 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
     def _rejected_reason(reason: str) -> StatisticData:
         return StatisticData(
             name=reason,
-            value=base_applications_declined.filter(
-                text(f"(borrower_declined_preferences_data->>'{reason}')::boolean is True")
-            ).count(),
+            value=base_application.filter(declined)
+            .filter(text(f"(borrower_declined_preferences_data->>'{reason}')::boolean is True"))
+            .count(),
         )
 
     # Filters
@@ -169,8 +169,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
 
     # Base queries
 
-    base_application = session.query(Application)
-    base_applications_declined = base_application.filter(declined)
+    base_application = session.query(Application.id)
 
     base_borrower_distinct = session.query(func.count(distinct(Borrower.id))).join(Application)
     base_borrower_group = session.query(Borrower.id).join(Application).group_by(Borrower.id)
@@ -188,7 +187,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         "applications_created": applications_count,
         "accepted_count": accepted_count,
         "accepted_percentage": round((accepted_count / applications_count * 100), 2) if applications_count else 0,
-        "unique_businesses_contacted_by_credere": session.query(Borrower).count(),
+        "unique_businesses_contacted_by_credere": session.query(Borrower.id).count(),
         "accepted_count_unique": base_borrower_group.filter(accepted).count(),
         "approved_count": base_application.filter(approved).count(),
         "total_credit_disbursed": _scalar_or_zero(
@@ -247,7 +246,7 @@ def get_borrower_opt_in_stats(session: Session) -> dict[str, Any]:
         #
         # MSMEs statistics
         #
-        "unique_smes_contacted_by_credere": session.query(Borrower).filter(col(Borrower.is_msme).is_(True)).count(),
+        "unique_smes_contacted_by_credere": session.query(Borrower.id).filter(col(Borrower.is_msme).is_(True)).count(),
         "sector_statistics": [
             StatisticData(name=name, value=value)
             for name, value in (
