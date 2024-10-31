@@ -266,21 +266,23 @@ Application status transitions
 
 ..
    https://play.d2lang.com
+   https://pincel.app/tools/svg-to-png
    α -> PENDING: Credere sends an invitation to the borrower
    PENDING -> LAPSED: borrower doesn't accept or decline the invitation
    PENDING -> DECLINED: borrower declines the invitation
    PENDING -> ACCEPTED: borrower accepts the invitation
    ACCEPTED -> LAPSED: borrower doesn't submit the application
    ACCEPTED -> SUBMITTED: borrower submits the application
-   SUBMITTED -> LAPSED: borrower doesn't start external onboarding {class: onboarding}
+   SUBMITTED -> LAPSED: borrower doesn't start external onboarding {class: external}
    SUBMITTED -> STARTED: lender starts application review
-   STARTED -> INFORMATION_REQUESTED: lender requests the borrower to update a document
+   STARTED -> INFORMATION_REQUESTED: lender requests\nthe borrower to update a document {class: native}
    STARTED -> REJECTED: lender rejects the application
    STARTED -> APPROVED: lender approves the application
-   INFORMATION_REQUESTED -> LAPSED: borrower doesn't submit the information requested
-   INFORMATION_REQUESTED -> STARTED: borrower updates the document
+   INFORMATION_REQUESTED -> LAPSED: borrower doesn't submit the information requested {class: native}
+   INFORMATION_REQUESTED -> STARTED: borrower updates the document {class: native}
    classes: {
-     onboarding.style.stroke: red
+     native.style.stroke: maroon
+     external.style.stroke: red
    }
 
 .. _erd:
