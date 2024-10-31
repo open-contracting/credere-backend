@@ -262,7 +262,7 @@ Application status transitions
 ------------------------------
 
 .. image:: /_static/state-machine.png
-   :target: /_images/state-machine.png
+   :target: ../_images/state-machine.png
 
 ..
    https://play.d2lang.com
@@ -291,7 +291,7 @@ Entity relationship diagram
 ---------------------------
 
 .. image:: /_static/relationships.real.large.png
-   :target: /_images/relationships.real.large.png
+   :target: ../_images/relationships.real.large.png
 
 .. image:: /_static/orphans.png
-   :target: /_images/orphans.png
+   :target: ../_images/orphans.png
