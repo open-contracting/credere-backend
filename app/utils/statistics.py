@@ -82,10 +82,11 @@ def get_general_statistics(
         Application.status == ApplicationStatus.APPROVED
     ).count()
 
-    if application_received_count:
-        column = Application.borrower_accepted_at if lender_id is None else Application.borrower_submitted_at
+    column = Application.borrower_accepted_at if lender_id is None else Application.borrower_submitted_at
+    application_submitted_count = session.query(Application).filter(col(column).isnot(None)).count()
+    if application_submitted_count:
         proportion_of_submitted_out_of_opt_in = round(
-            (application_received_count / session.query(Application).filter(col(column).isnot(None)).count()) * 100, 2
+            (application_received_count / application_submitted_count) * 100, 2
         )
     else:
         proportion_of_submitted_out_of_opt_in = 0.0
