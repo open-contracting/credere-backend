@@ -187,8 +187,16 @@ def send_reminders() -> None:
 
 @app.command()
 def sync_applications_with_external_onboarding() -> None:
+    """
+    Email borrowers who have selected a lender with an external onboarding system to remind them to start the
+    onboarding process.
+
+    Use this command
+    """
     with contextmanager(get_db)() as session:
-        for application in models.Application.pending_external_onboarding(session, models.ApplicationStatus.STARTED):
+        for application in models.Application.pending_external_onboarding(
+            session, (models.ApplicationStatus.STARTED,)
+        ):
             mail.send(session, aws.ses_client, models.MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER, application)
 
             session.commit()
