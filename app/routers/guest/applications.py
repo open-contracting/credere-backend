@@ -725,7 +725,12 @@ async def find_alternative_credit_option(
 async def access_external_onboarding(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,)),
+        dependencies.get_scoped_application_as_guest_via_uuid(
+            statuses=(
+                models.ApplicationStatus.SUBMITTED,
+                models.ApplicationStatus.STARTED,
+            )
+        ),
     ),
 ) -> RedirectResponse:
     """
@@ -742,7 +747,12 @@ async def access_external_onboarding(
 async def accessed_external_onboarding(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_uuid(statuses=(models.ApplicationStatus.SUBMITTED,)),
+        dependencies.get_scoped_application_as_guest_via_uuid(
+            statuses=(
+                models.ApplicationStatus.SUBMITTED,
+                models.ApplicationStatus.STARTED,
+            )
+        ),
     ),
 ) -> RedirectResponse:
     """
