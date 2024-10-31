@@ -256,6 +256,33 @@ Update email templates
 
 -  `Premailer <https://premailer.dialect.ca>`__
 
+.. _state-machine:
+
+Application status transitions
+------------------------------
+
+.. image:: /_static/state-machine.png
+   :target: /_images/state-machine.png
+
+..
+   https://play.d2lang.com
+   α -> PENDING: Credere sends an invitation to the borrower
+   PENDING -> LAPSED: borrower doesn't accept or decline the invitation
+   PENDING -> DECLINED: borrower declines the invitation
+   PENDING -> ACCEPTED: borrower accepts the invitation
+   ACCEPTED -> LAPSED: borrower doesn't submit the application
+   ACCEPTED -> SUBMITTED: borrower submits the application
+   SUBMITTED -> LAPSED: borrower doesn't start external onboarding {class: onboarding}
+   SUBMITTED -> STARTED: lender starts application review
+   STARTED -> INFORMATION_REQUESTED: lender requests the borrower to update a document
+   STARTED -> REJECTED: lender rejects the application
+   STARTED -> APPROVED: lender approves the application
+   INFORMATION_REQUESTED -> LAPSED: borrower doesn't submit the information requested
+   INFORMATION_REQUESTED -> STARTED: borrower updates the document
+   classes: {
+     onboarding.style.stroke: red
+   }
+
 .. _erd:
 
 Entity relationship diagram

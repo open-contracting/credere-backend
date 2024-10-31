@@ -159,19 +159,7 @@ class ApplicationStatus(StrEnum):
     """
     An application status.
 
-    The different workflows are:
-
-    -  PENDING → LAPSED
-    -  PENDING → DECLINED
-    -  PENDING → ACCEPTED → LAPSED
-    -  PENDING → ACCEPTED → SUBMITTED → STARTED (→ …)
-
-    And then, from STARTED:
-
-    -  → INFORMATION_REQUESTED → LAPSED
-    -  → INFORMATION_REQUESTED → STARTED (→ …)
-    -  → REJECTED
-    -  → APPROVED
+    .. seealso:: :ref:`state-machine`
     """
 
     #: Credere sends an invitation to the borrower.
@@ -190,7 +178,7 @@ class ApplicationStatus(StrEnum):
     #:
     #: (``/applications/submit``)
     SUBMITTED = i("SUBMITTED")
-    #: Lender start reviewing the application.
+    #: Lender starts application review.
     #:
     #: (``/applications/{id}/start``)
     STARTED = i("STARTED")
@@ -202,11 +190,12 @@ class ApplicationStatus(StrEnum):
     #:
     #: (``/applications/email-sme/{id}``)
     INFORMATION_REQUESTED = i("INFORMATION_REQUESTED")
-    #: Borrower doesn't accept or decline the invitation, or doesn't submit the application or information requested.
+    #: Borrower doesn't accept or decline the invitation, doesn't submit the application or information requested, or
+    #: doesn't start external onboarding while the lender hasn't started application review.
     #:
     #: (:typer:`python-m-app-update-applications-to-lapsed`)
     LAPSED = i("LAPSED")
-    #: Lender approves the application, and sets the final credit disbursed.
+    #: Lender approves the application.
     #:
     #: (``/applications/{id}/approve-application``)
     APPROVED = i("APPROVED")
