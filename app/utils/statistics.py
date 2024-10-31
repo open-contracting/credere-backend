@@ -98,7 +98,7 @@ def get_general_statistics(
             Application.status == ApplicationStatus.INFORMATION_REQUESTED
         ).count(),
         "applications_in_progress_count": base_query.filter(
-            col(Application.status).in_([ApplicationStatus.STARTED, ApplicationStatus.INFORMATION_REQUESTED])
+            col(Application.status).in_((ApplicationStatus.STARTED, ApplicationStatus.INFORMATION_REQUESTED))
         ).count(),
         "applications_with_credit_disbursed_count": applications_with_credit_disbursed_count,
         "average_amount_requested": _scalar_or_zero(

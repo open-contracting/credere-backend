@@ -400,7 +400,7 @@ async def confirm_credit_product(
             for document in session.query(models.BorrowerDocument).filter(
                 models.BorrowerDocument.application_id == latest_application_id,
                 col(models.BorrowerDocument.type).in_(
-                    [key for key, value in application.credit_product.required_document_types.items() if value]
+                    tuple(key for key, value in application.credit_product.required_document_types.items() if value)
                 ),
             ):
                 application.borrower_documents.append(
