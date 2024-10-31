@@ -15,7 +15,7 @@ async def get_settings_by_domain() -> dict[str, list[dict[str, str]]]:
     Get the keys and localized descriptions of constants.
 
     A constant can be:
-
+    - ApplicationStatus
     - BorrowerDocumentType
     - BorrowerSector
     - BorrowerSize
@@ -25,6 +25,7 @@ async def get_settings_by_domain() -> dict[str, list[dict[str, str]]]:
     """
     constants = {}
     for domain in (
+        "ApplicationStatus",
         "BorrowerDocumentType",
         "BorrowerSector",
         "BorrowerSize",
