@@ -726,10 +726,7 @@ async def access_external_onboarding(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_uuid(
-            statuses=(
-                models.ApplicationStatus.SUBMITTED,
-                models.ApplicationStatus.STARTED,
-            )
+            statuses=(models.ApplicationStatus.SUBMITTED, models.ApplicationStatus.STARTED)
         ),
     ),
 ) -> RedirectResponse:
@@ -748,10 +745,7 @@ async def accessed_external_onboarding(
     session: Session = Depends(get_db),
     application: models.Application = Depends(
         dependencies.get_scoped_application_as_guest_via_uuid(
-            statuses=(
-                models.ApplicationStatus.SUBMITTED,
-                models.ApplicationStatus.STARTED,
-            )
+            statuses=(models.ApplicationStatus.SUBMITTED, models.ApplicationStatus.STARTED)
         ),
     ),
 ) -> RedirectResponse:
