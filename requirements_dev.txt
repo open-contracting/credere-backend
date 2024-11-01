@@ -127,7 +127,7 @@ mdurl==0.1.2
     #   markdown-it-py
 minify-html==0.15.0
     # via -r requirements.txt
-moto[cognitoidp]==5.0.14
+moto==5.0.14
     # via -r requirements_dev.in
 mypy==1.11.1
     # via -r requirements_dev.in
@@ -159,14 +159,14 @@ pycparser==2.21
     # via
     #   -r requirements.txt
     #   cffi
-pydantic==2.8.2
+pydantic==2.9.2
     # via
     #   -r requirements.txt
     #   fastapi
     #   pydantic-extra-types
     #   pydantic-settings
     #   sqlmodel
-pydantic-core==2.20.1
+pydantic-core==2.23.4
     # via
     #   -r requirements.txt
     #   pydantic
@@ -296,7 +296,7 @@ urllib3==1.26.19
     #   requests
     #   responses
     #   sentry-sdk
-uvicorn[standard]==0.22.0
+uvicorn==0.22.0
     # via
     #   -r requirements.txt
     #   fastapi-cli

@@ -100,14 +100,14 @@ psycopg2==2.9.6
     # via sqlalchemy
 pycparser==2.21
     # via cffi
-pydantic==2.8.2
+pydantic==2.9.2
     # via
     #   -r requirements.in
     #   fastapi
     #   pydantic-extra-types
     #   pydantic-settings
     #   sqlmodel
-pydantic-core==2.20.1
+pydantic-core==2.23.4
     # via pydantic
 pydantic-extra-types==2.9.0
     # via fastapi
