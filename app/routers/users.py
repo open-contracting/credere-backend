@@ -43,6 +43,9 @@ async def create_user(
             )
 
             user = models.User.create_from_object(session, payload)
+            if payload.lender_id:
+                user.lender = models.Lender.get(session, payload.lender_id)
+
             user.external_id = response["User"]["Username"]
 
             session.commit()
