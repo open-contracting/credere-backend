@@ -97,23 +97,6 @@ class ActiveRecordMixin:
         session.flush()
         return obj
 
-    @classmethod
-    def create_from_object(cls, session: Session, obj: Self) -> Self:
-        """
-        Insert a new instance into the database.
-
-        If the model has a ``missing_data`` field, indicate which fields are missing in the instance.
-
-        :param session: The database session.
-        :param data: The initial instance data.
-        :return: The inserted instance.
-        """
-        # https://github.com/fastapi/sqlmodel/issues/348
-        obj = cls.model_validate(obj)  # type: ignore[attr-defined]
-        session.add(obj)
-        session.flush()
-        return obj
-
     def update(self, session: Session, **data: Any) -> Self:
         """
         Update an existing instance in the database.
