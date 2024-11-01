@@ -223,7 +223,7 @@ class MessageType(StrEnum):
     BORROWER_PENDING_SUBMIT_REMINDER = "BORROWER_PENDING_SUBMIT_REMINDER"
     #: Remind the borrower to start external onboarding.
     #:
-    #: SUBMITTED (:typer:`python-m-app-send-reminders`)
+    #: SUBMITTED, STARTED (:typer:`python-m-app-send-reminders`)
     BORROWER_EXTERNAL_ONBOARDING_REMINDER = "BORROWER_EXTERNAL_ONBOARDING_REMINDER"
     #: Confirm receipt of the application.
     #:
@@ -755,23 +755,14 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
         lapsed_at = col(cls.borrower_submitted_at) + timedelta(days=app_settings.days_to_change_to_lapsed)
         days = app_settings.reminder_days_before_lapsed_for_external_onboarding
 
-        return cls.pending_external_onboarding(session, ApplicationStatus.SUBMITTED).filter(
-            datetime.now() < lapsed_at,
-            lapsed_at <= datetime.now() + timedelta(days=days),
-            col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER)),
-        )
-
-    @classmethod
-    def pending_external_onboarding(cls, session: Session, status: ApplicationStatus) -> "Query[Self]":
-        """
-        Return a query for applications with the provided status, in which the lender uses external onboarding, and
-        whose borrower hasn't already started external onboarding.
-        """
         return (
             session.query(cls)
             .filter(
-                cls.status == status,
-                col(Lender.external_onboarding_url) != "",
+                col(cls.status).in_((ApplicationStatus.SUBMITTED, ApplicationStatus.STARTED)),
+                datetime.now() < lapsed_at,
+                lapsed_at <= datetime.now() + timedelta(days=days),
+                col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER)),
+                Lender.external_onboarding_url != "",
                 col(cls.borrower_accessed_external_onboarding_at).is_(None),
             )
             .join(Lender, cls.lender_id == Lender.id)
@@ -803,7 +794,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                         cls.status == ApplicationStatus.SUBMITTED,
                         # col(cls.borrower_submitted_at) + delta < datetime.now(),  # noqa: ERA001 # also remove join
                         col(Message.created_at) + delta < datetime.now(),
-                        col(Lender.external_onboarding_url) != "",
+                        Lender.external_onboarding_url != "",
                         col(cls.borrower_accessed_external_onboarding_at).is_(None),
                     ),
                     and_(

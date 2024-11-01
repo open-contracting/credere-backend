@@ -134,7 +134,7 @@ def get_modified_data_fields(session: Session, application: models.Application) 
         .filter(
             models.ApplicationAction.application_id == application.id,
             col(models.ApplicationAction.type).in_(
-                [models.ApplicationActionType.AWARD_UPDATE, models.ApplicationActionType.BORROWER_UPDATE]
+                (models.ApplicationActionType.AWARD_UPDATE, models.ApplicationActionType.BORROWER_UPDATE)
             ),
         )
     ):
