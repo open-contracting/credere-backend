@@ -1,6 +1,7 @@
 import datetime
 import uuid
 
+import pytest
 from fastapi import status
 
 from app.i18n import _
@@ -13,10 +14,14 @@ def test_get_me(client, admin_header):
     assert response.json()["user"]["name"] == "OCP Test User"
 
 
-def test_create_and_get_user(client, admin_header, lender_header, user_payload):
-    response = client.post("/users", json=user_payload, headers=admin_header)
+@pytest.mark.parametrize("with_lender", [True, False])
+def test_create_and_get_user(client, admin_header, lender_header, user_payload, lender, with_lender):
+    lender_id = lender.id if with_lender else None
+
+    response = client.post("/users", json=user_payload | {"lender_id": lender_id}, headers=admin_header)
     assert_ok(response)
     assert response.json()["name"] == user_payload["name"]
+    assert response.json()["lender_id"] == lender_id
 
     # fetch second user since the first one is the OCP user created for headers
     response = client.get("/users/2", headers=admin_header)

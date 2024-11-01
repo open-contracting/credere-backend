@@ -17,7 +17,7 @@ router = APIRouter()
     tags=[util.Tags.users],
 )
 async def create_user(
-    payload: models.User,
+    payload: models.UserBase,
     session: Session = Depends(get_db),
     client: aws.Client = Depends(dependencies.get_aws_client),
     admin: models.User = Depends(dependencies.get_admin_user),
@@ -42,9 +42,7 @@ async def create_user(
                 UserAttributes=[{"Name": "email", "Value": payload.email}],
             )
 
-            user = models.User.create_from_object(session, payload)
-            if payload.lender_id:
-                user.lender = models.Lender.get(session, payload.lender_id)
+            user = models.User.create(session, **payload.model_dump())
 
             user.external_id = response["User"]["Username"]
 
