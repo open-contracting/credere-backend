@@ -111,44 +111,43 @@ class Client:
         match challenge_name:
             case "NEW_PASSWORD_REQUIRED":
                 return self.cognito.respond_to_auth_challenge(
+                    Session=session,
                     ClientId=app_settings.cognito_client_id,
                     ChallengeName=challenge_name,
                     ChallengeResponses={
                         "USERNAME": username,
-                        "NEW_PASSWORD": new_password,
                         "SECRET_HASH": secret_hash,
+                        "NEW_PASSWORD": new_password,
                     },
-                    Session=session,
                 )
             case "MFA_SETUP":
                 associate_response = self.cognito.associate_software_token(Session=session)
 
                 verify_response = self.cognito.verify_software_token(
-                    AccessToken=associate_response["SecretCode"],
                     Session=associate_response["Session"],
                     UserCode=mfa_code,
                 )
 
                 return self.cognito.respond_to_auth_challenge(
+                    Session=verify_response["Session"],
                     ClientId=app_settings.cognito_client_id,
                     ChallengeName=challenge_name,
                     ChallengeResponses={
                         "USERNAME": username,
-                        "NEW_PASSWORD": new_password,
                         "SECRET_HASH": secret_hash,
+                        "NEW_PASSWORD": new_password,
                     },
-                    Session=verify_response["Session"],
                 )
             case "SOFTWARE_TOKEN_MFA":
                 return self.cognito.respond_to_auth_challenge(
+                    Session=session,
                     ClientId=app_settings.cognito_client_id,
                     ChallengeName=challenge_name,
                     ChallengeResponses={
                         "USERNAME": username,
-                        "SOFTWARE_TOKEN_MFA_CODE": mfa_code,
                         "SECRET_HASH": secret_hash,
+                        "SOFTWARE_TOKEN_MFA_CODE": mfa_code,
                     },
-                    Session=session,
                 )
             case _:
                 raise HTTPException(

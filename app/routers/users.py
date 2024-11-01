@@ -112,17 +112,10 @@ def setup_mfa(
     payload: parsers.SetupMFA,
     client: aws.Client = Depends(dependencies.get_aws_client),
 ) -> serializers.ResponseBase:
-    """
-    Set up multi-factor authentication (MFA) for the user.
-
-    This endpoint allows users to set up MFA using a software token. It verifies the software
-    token with the provided secret, session, and temporary password.
-    """
+    """Set up multi-factor authentication (MFA) for the user."""
     try:
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/verify_software_token.html
-        client.cognito.verify_software_token(
-            AccessToken=payload.secret, Session=payload.session, UserCode=payload.temp_password
-        )
+        client.cognito.verify_software_token(Session=payload.session, UserCode=payload.temp_password)
     except client.cognito.exceptions.NotAuthorizedException:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
