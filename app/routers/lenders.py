@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -20,8 +20,8 @@ router = APIRouter()
 )
 async def create_lender(
     payload: models.LenderCreate,
-    admin: models.User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> models.Lender:
     """
     Create a new lender.
@@ -57,8 +57,8 @@ async def create_lender(
 async def create_credit_products(
     lender_id: int,
     payload: models.CreditProduct,
-    admin: models.User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> models.CreditProduct:
     """
     Create a new credit product for a specific lender.
@@ -83,7 +83,7 @@ async def create_credit_products(
 )
 async def get_lender(
     lender_id: int,
-    session: Session = Depends(get_db),
+    session: Annotated[Session, Depends(get_db)],
 ) -> Any:
     """
     Retrieve a lender by its ID.
@@ -102,8 +102,8 @@ async def get_lender(
 async def update_lender(
     lender_id: int,
     payload: models.LenderBase,
-    admin: models.User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> models.Lender:
     """
     Update an existing lender.
@@ -132,7 +132,7 @@ async def update_lender(
     tags=[util.Tags.lenders],
 )
 async def get_lenders_list(
-    session: Session = Depends(get_db),
+    session: Annotated[Session, Depends(get_db)],
 ) -> serializers.LenderListResponse:
     """
     Get the list of all lenders.
@@ -170,7 +170,7 @@ async def get_procurement_categories_from_source() -> list[str]:
 )
 async def get_credit_product(
     credit_product_id: int,
-    session: Session = Depends(get_db),
+    session: Annotated[Session, Depends(get_db)],
 ) -> Any:
     """
     Retrieve a credit product by its ID, including its associated lender information.
@@ -201,8 +201,8 @@ async def get_credit_product(
 async def update_credit_products(
     credit_product_id: int,
     payload: models.CreditProduct,
-    admin: models.User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> models.CreditProduct:
     """
     Update an existing credit product.

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 import app.utils.statistics as statistics_utils
@@ -17,12 +18,12 @@ router = APIRouter()
     tags=[util.Tags.statistics],
 )
 async def get_admin_statistics_by_lender(
-    initial_date: str | None = None,
-    final_date: str | None = None,
-    lender_id: int | None = None,
-    custom_range: StatisticRange | None = None,
-    admin: User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    initial_date: Annotated[str | None, Query(default=None)],
+    final_date: Annotated[str | None, Query(default=None)],
+    lender_id: Annotated[int | None, Query(default=None)],
+    custom_range: Annotated[StatisticRange | None, Query(default=None)],
+    admin: Annotated[User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> serializers.StatisticResponse:
     """
     Retrieve OCP statistics by lender.
@@ -62,8 +63,8 @@ async def get_admin_statistics_by_lender(
     tags=[util.Tags.statistics],
 )
 async def get_admin_statistics_opt_in(
-    admin: User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    admin: Annotated[User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> serializers.StatisticOptInResponse:
     """
     Retrieve OCP statistics for borrower opt-in.
@@ -83,8 +84,8 @@ async def get_admin_statistics_opt_in(
     tags=[util.Tags.statistics],
 )
 async def get_lender_statistics(
-    session: Session = Depends(get_db),
-    user: User = Depends(dependencies.get_user),
+    session: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(dependencies.get_user)],
 ) -> serializers.StatisticResponse:
     """
     Retrieve statistics for a lender.

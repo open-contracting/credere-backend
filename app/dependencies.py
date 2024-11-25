@@ -1,7 +1,7 @@
 from collections.abc import Callable, Generator
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import Depends, Form, HTTPException, Request, status
 from sqlalchemy.orm import Session, defaultload, joinedload
@@ -30,7 +30,9 @@ async def get_auth_credentials(request: Request) -> auth.JWTAuthorizationCredent
     return await auth.JWTAuthorization()(request)
 
 
-async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depends(get_auth_credentials)) -> Any:
+async def get_current_user(
+    credentials: Annotated[auth.JWTAuthorizationCredentials, Depends(get_auth_credentials)],
+) -> Any:
     """
     Extract the username of the current user from the provided JWT credentials.
 
@@ -47,7 +49,9 @@ async def get_current_user(credentials: auth.JWTAuthorizationCredentials = Depen
         ) from None
 
 
-async def get_user(username: str = Depends(get_current_user), session: Session = Depends(get_db)) -> models.User:
+async def get_user(
+    username: Annotated[str, Depends(get_current_user)], session: Annotated[Session, Depends(get_db)]
+) -> models.User:
     """
     Retrieve the user from the database using the username extracted from the provided JWT credentials.
 
@@ -65,7 +69,7 @@ async def get_user(username: str = Depends(get_current_user), session: Session =
     return user
 
 
-async def get_admin_user(user: models.User = Depends(get_user)) -> models.User:
+async def get_admin_user(user: Annotated[models.User, Depends(get_user)]) -> models.User:
     if not user.is_admin():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -127,7 +131,7 @@ def raise_if_unauthorized(
         )
 
 
-def get_application_as_user(id: int, session: Session = Depends(get_db)) -> models.Application:
+def get_application_as_user(id: int, session: Annotated[Session, Depends(get_db)]) -> models.Application:
     application = (
         models.Application.filter_by(session, "id", id)
         .options(joinedload(models.Application.borrower), joinedload(models.Application.award))
@@ -149,7 +153,8 @@ def get_scoped_application_as_user(
     statuses: tuple[models.ApplicationStatus, ...] = (),
 ) -> Callable[[models.Application, models.User], models.Application]:
     def inner(
-        application: models.Application = Depends(get_application_as_user), user: models.User = Depends(get_user)
+        application: Annotated[models.Application, Depends(get_application_as_user)],
+        user: Annotated[models.User, Depends(get_user)],
     ) -> models.Application:
         raise_if_unauthorized(application, user, roles=roles, scopes=scopes, statuses=statuses)
         return application
@@ -193,7 +198,7 @@ def _get_scoped_application_as_guest_inner(
     scopes: tuple[ApplicationScope, ...] = (),
     statuses: tuple[models.ApplicationStatus, ...] = (),
 ) -> Callable[[models.Application], models.Application]:
-    def inner(application: models.Application = Depends(depends)) -> models.Application:
+    def inner(application: Annotated[models.Application, Depends(depends)]) -> models.Application:
         raise_if_unauthorized(application, scopes=scopes, statuses=statuses)
         return application
 
@@ -201,16 +206,18 @@ def _get_scoped_application_as_guest_inner(
 
 
 def get_application_as_guest_via_payload(
-    payload: parsers.ApplicationBase, session: Session = Depends(get_db)
+    payload: parsers.ApplicationBase, session: Annotated[Session, Depends(get_db)]
 ) -> models.Application:
     return _get_application_as_guest_via_uuid(session, payload.uuid)
 
 
-def get_application_as_guest_via_uuid(uuid: str, session: Session = Depends(get_db)) -> models.Application:
+def get_application_as_guest_via_uuid(uuid: str, session: Annotated[Session, Depends(get_db)]) -> models.Application:
     return _get_application_as_guest_via_uuid(session, uuid)
 
 
-def get_application_as_guest_via_form(uuid: str = Form(...), session: Session = Depends(get_db)) -> models.Application:
+def get_application_as_guest_via_form(
+    uuid: Annotated[str, Form(...)], session: Annotated[Session, Depends(get_db)]
+) -> models.Application:
     return _get_application_as_guest_via_uuid(session, uuid)
 
 

@@ -1,7 +1,7 @@
 import csv
 import io
 import zipfile
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Response
 from reportlab.lib.pagesizes import letter
@@ -24,8 +24,8 @@ router = APIRouter()
 )
 async def get_borrower_document(
     document_id: int,
-    session: Session = Depends(get_db),
-    user: models.User = Depends(dependencies.get_user),
+    session: Annotated[Session, Depends(get_db)],
+    user: Annotated[models.User, Depends(dependencies.get_user)],
 ) -> Response:
     """
     Retrieve a borrower document by its ID and stream the file content as a response.
@@ -62,13 +62,16 @@ async def get_borrower_document(
 )
 async def download_application(
     lang: str,
-    session: Session = Depends(get_db),
-    user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.OCP, models.UserType.FI), scopes=(ApplicationScope.UNEXPIRED,)
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.OCP, models.UserType.FI), scopes=(ApplicationScope.UNEXPIRED,)
+            )
+        ),
+    ],
 ) -> Response:
     """
     Retrieve all documents related to an application and stream them as a zip file.
@@ -137,8 +140,8 @@ async def download_application(
 )
 async def export_applications(
     lang: str,
-    user: models.User = Depends(dependencies.get_user),
-    session: Session = Depends(get_db),
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> Response:
     stream = io.StringIO()
 

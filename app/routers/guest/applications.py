@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, cast
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
 from fastapi.encoders import jsonable_encoder
@@ -19,10 +19,13 @@ router = APIRouter()
     tags=[util.Tags.applications],
 )
 async def application_by_uuid(
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_uuid(scopes=(dependencies.ApplicationScope.UNEXPIRED,))
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_uuid(scopes=(dependencies.ApplicationScope.UNEXPIRED,))
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Retrieve an application by its UUID.
@@ -46,12 +49,15 @@ async def application_by_uuid(
 )
 async def decline(
     payload: parsers.ApplicationDeclinePayload,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(
+                scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
+            )
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Decline an application.
@@ -91,12 +97,15 @@ async def decline(
 )
 async def rollback_decline(
     payload: parsers.ApplicationBase,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(
+                scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
+            )
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Rollback the decline of an application.
@@ -130,12 +139,15 @@ async def rollback_decline(
 )
 async def decline_feedback(
     payload: parsers.ApplicationDeclineFeedbackPayload,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(
+                scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.DECLINED,)
+            )
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Provide feedback for a declined application.
@@ -165,12 +177,15 @@ async def decline_feedback(
 async def access_scheme(
     payload: parsers.ApplicationBase,
     background_tasks: BackgroundTasks,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(
+                scopes=(dependencies.ApplicationScope.UNEXPIRED,), statuses=(models.ApplicationStatus.PENDING,)
+            )
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Access the scheme for an application.
@@ -205,10 +220,13 @@ async def access_scheme(
 )
 async def credit_product_options(
     payload: parsers.ApplicationCreditOptions,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        ),
+    ],
 ) -> serializers.CreditProductListResponse:
     """
     Get the available credit product options for an application.
@@ -243,10 +261,13 @@ async def credit_product_options(
 )
 async def select_credit_product(
     payload: parsers.ApplicationSelectCreditProduct,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Select a credit product for an application.
@@ -299,10 +320,13 @@ async def select_credit_product(
 )
 async def rollback_select_credit_product(
     payload: parsers.ApplicationBase,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Rollback the selection of a credit product for an application.
@@ -348,10 +372,13 @@ async def rollback_select_credit_product(
 )
 async def confirm_credit_product(
     payload: parsers.ApplicationBase,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Confirm the selected credit product for an application.
@@ -437,10 +464,13 @@ async def confirm_credit_product(
 )
 async def rollback_confirm_credit_product(
     payload: parsers.ApplicationBase,
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Rollback the confirmation of the selected credit product for an application.
@@ -498,11 +528,14 @@ async def rollback_confirm_credit_product(
 )
 async def update_apps_send_notifications(
     payload: parsers.ApplicationBase,
-    session: Session = Depends(get_db),
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.ACCEPTED,))
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Change application status from "'ACCEPTED" to "SUBMITTED". Send a notification to OCP and lender user.
@@ -551,17 +584,20 @@ async def update_apps_send_notifications(
 )
 async def upload_document(
     file: UploadFile,
-    type: str = Form(...),
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_form(
-            statuses=(
-                models.ApplicationStatus.ACCEPTED,
-                models.ApplicationStatus.INFORMATION_REQUESTED,
-                models.ApplicationStatus.APPROVED,
+    type: Annotated[str, Form(...)],
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_form(
+                statuses=(
+                    models.ApplicationStatus.ACCEPTED,
+                    models.ApplicationStatus.INFORMATION_REQUESTED,
+                    models.ApplicationStatus.APPROVED,
+                )
             )
-        )
-    ),
+        ),
+    ],
 ) -> Any:
     """
     Upload a document for an application.
@@ -599,13 +635,16 @@ async def upload_document(
 )
 async def complete_information_request(
     payload: parsers.ApplicationBase,
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(
-            statuses=(models.ApplicationStatus.INFORMATION_REQUESTED,)
-        )
-    ),
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(
+                statuses=(models.ApplicationStatus.INFORMATION_REQUESTED,)
+            )
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Complete the information request for an application.
@@ -646,11 +685,14 @@ async def complete_information_request(
 )
 async def find_alternative_credit_option(
     payload: parsers.ApplicationBase,
-    session: Session = Depends(get_db),
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.REJECTED,))
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_payload(statuses=(models.ApplicationStatus.REJECTED,))
+        ),
+    ],
 ) -> serializers.ApplicationResponse:
     """
     Find an alternative credit option for a rejected application by copying it.
@@ -723,12 +765,15 @@ async def find_alternative_credit_option(
     tags=[util.Tags.applications],
 )
 async def access_external_onboarding(
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_uuid(
-            statuses=(models.ApplicationStatus.SUBMITTED, models.ApplicationStatus.STARTED)
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_uuid(
+                statuses=(models.ApplicationStatus.SUBMITTED, models.ApplicationStatus.STARTED)
+            ),
         ),
-    ),
+    ],
 ) -> RedirectResponse:
     """
     :return: A redirect to the lender.external_onboarding_url.
@@ -742,12 +787,15 @@ async def access_external_onboarding(
     tags=[util.Tags.applications],
 )
 async def accessed_external_onboarding(
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_guest_via_uuid(
-            statuses=(models.ApplicationStatus.SUBMITTED, models.ApplicationStatus.STARTED)
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_guest_via_uuid(
+                statuses=(models.ApplicationStatus.SUBMITTED, models.ApplicationStatus.STARTED)
+            ),
         ),
-    ),
+    ],
 ) -> RedirectResponse:
     """
     Report having started external onboarding.

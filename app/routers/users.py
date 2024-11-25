@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import IntegrityError
@@ -18,9 +20,9 @@ router = APIRouter()
 )
 async def create_user(
     payload: models.UserBase,
-    session: Session = Depends(get_db),
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    admin: models.User = Depends(dependencies.get_admin_user),
+    session: Annotated[Session, Depends(get_db)],
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
 ) -> models.User:
     """
     Create a new user in Cognito.
@@ -65,7 +67,7 @@ async def create_user(
 )
 def change_password(
     payload: parsers.BasicUser,
-    client: aws.Client = Depends(dependencies.get_aws_client),
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
 ) -> serializers.ChangePasswordResponse | serializers.ResponseBase:
     """
     Change user password.
@@ -111,7 +113,7 @@ def change_password(
 )
 def setup_mfa(
     payload: parsers.SetupMFA,
-    client: aws.Client = Depends(dependencies.get_aws_client),
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
 ) -> serializers.ResponseBase:
     """Set up multi-factor authentication (MFA) for the user."""
     try:
@@ -137,8 +139,8 @@ def setup_mfa(
 )
 def login(
     payload: parsers.BasicUser,
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    session: Session = Depends(get_db),
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> serializers.LoginResponse:
     """
     Authenticate the user with Multi-Factor Authentication (MFA) and generate access and refresh tokens.
@@ -198,7 +200,7 @@ def login(
 )
 async def logout(
     request: Request,
-    client: aws.Client = Depends(dependencies.get_aws_client),
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
 ) -> serializers.ResponseBase:
     """Logout the user from all devices in Cognito."""
     try:
@@ -220,8 +222,8 @@ async def logout(
     tags=[util.Tags.authentication],
 )
 def me(
-    username_from_token: str = Depends(dependencies.get_current_user),
-    session: Session = Depends(get_db),
+    username_from_token: Annotated[str, Depends(dependencies.get_current_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> serializers.UserResponse:
     """
     Get the details of the currently authenticated user.
@@ -240,7 +242,7 @@ def me(
 )
 def forgot_password(
     payload: parsers.ResetPassword,
-    client: aws.Client = Depends(dependencies.get_aws_client),
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
 ) -> serializers.ResponseBase:
     """
     Initiate the process of resetting a user's password.
@@ -269,8 +271,8 @@ def forgot_password(
 )
 async def get_user(
     user_id: int,
-    admin: models.User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> models.User:
     """
     Retrieve information about a user.
@@ -285,12 +287,12 @@ async def get_user(
     tags=[util.Tags.users],
 )
 async def get_all_users(
-    page: int = Query(0, ge=0),
-    page_size: int = Query(10, gt=0),
-    sort_field: str = Query("created_at"),
-    sort_order: SortOrder = Query("asc"),
-    admin: models.User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    page: Annotated[int, Query(default=0, ge=0)],
+    page_size: Annotated[int, Query(default=10, gt=0)],
+    sort_field: Annotated[str, Query(default="created_at")],
+    sort_order: Annotated[SortOrder, Query(default="asc")],
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> serializers.UserListResponse:
     """
     Retrieve a list of users.
@@ -324,8 +326,8 @@ async def get_all_users(
 async def update_user(
     user_id: int,
     payload: models.User,
-    admin: models.User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> models.User:
     """
     Update a user's information.

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, cast
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
@@ -21,15 +21,18 @@ router = APIRouter()
 )
 async def reject_application(
     payload: parsers.LenderRejectedApplication,
-    session: Session = Depends(get_db),
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.FI,),
-            statuses=(models.ApplicationStatus.STARTED,),
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.FI,),
+                statuses=(models.ApplicationStatus.STARTED,),
+            )
+        ),
+    ],
 ) -> Any:
     """
     Reject an application.
@@ -77,15 +80,18 @@ async def reject_application(
 )
 async def approve_application(
     payload: parsers.LenderApprovedData,
-    session: Session = Depends(get_db),
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.FI,),
-            statuses=(models.ApplicationStatus.STARTED,),
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.FI,),
+                statuses=(models.ApplicationStatus.STARTED,),
+            )
+        ),
+    ],
 ) -> Any:
     """
     Approve an application.
@@ -140,17 +146,20 @@ async def approve_application(
 )
 async def verify_data_field(
     payload: parsers.UpdateDataField,
-    session: Session = Depends(get_db),
-    user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.FI,),
-            statuses=(
-                models.ApplicationStatus.STARTED,
-                models.ApplicationStatus.INFORMATION_REQUESTED,
-            ),
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.FI,),
+                statuses=(
+                    models.ApplicationStatus.STARTED,
+                    models.ApplicationStatus.INFORMATION_REQUESTED,
+                ),
+            )
+        ),
+    ],
 ) -> Any:
     """
     Verify and update a data field in an application.
@@ -190,8 +199,8 @@ async def verify_data_field(
 async def verify_document(
     document_id: int,
     payload: parsers.VerifyBorrowerDocument,
-    session: Session = Depends(get_db),
-    user: models.User = Depends(dependencies.get_user),
+    session: Annotated[Session, Depends(get_db)],
+    user: Annotated[models.User, Depends(dependencies.get_user)],
 ) -> Any:
     """
     Verify a borrower document in an application.
@@ -231,14 +240,17 @@ async def verify_document(
 async def update_application_award(
     id: int,
     payload: parsers.AwardUpdate,
-    user: models.User = Depends(dependencies.get_user),
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.OCP, models.UserType.FI),
-            statuses=dependencies.USER_CAN_EDIT_AWARD_BORROWER_DATA,
-        )
-    ),
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.OCP, models.UserType.FI),
+                statuses=dependencies.USER_CAN_EDIT_AWARD_BORROWER_DATA,
+            )
+        ),
+    ],
 ) -> Any:
     """
     Update the award details of an application.
@@ -276,14 +288,17 @@ async def update_application_award(
 async def update_application_borrower(
     id: int,
     payload: parsers.BorrowerUpdate,
-    user: models.User = Depends(dependencies.get_user),
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.OCP, models.UserType.FI),
-            statuses=dependencies.USER_CAN_EDIT_AWARD_BORROWER_DATA,
-        )
-    ),
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.OCP, models.UserType.FI),
+                statuses=dependencies.USER_CAN_EDIT_AWARD_BORROWER_DATA,
+            )
+        ),
+    ],
 ) -> Any:
     """
     Update the borrower details of an application.
@@ -325,13 +340,13 @@ async def update_application_borrower(
     tags=[util.Tags.applications],
 )
 async def get_applications_list(
-    page: int = Query(0, ge=0),
-    page_size: int = Query(10, gt=0),
-    sort_field: str = Query("application.borrower_submitted_at"),
-    sort_order: SortOrder = Query("asc"),
-    search_value: str = "",
-    admin: models.User = Depends(dependencies.get_admin_user),
-    session: Session = Depends(get_db),
+    page: Annotated[int, Query(default=0, ge=0)],
+    page_size: Annotated[int, Query(default=10, gt=0)],
+    sort_field: Annotated[str, Query(default="application.borrower_submitted_at")],
+    sort_order: Annotated[SortOrder, Query(default="asc")],
+    search_value: Annotated[str, Query(default="")],
+    admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> serializers.ApplicationListResponse:
     """Get a paginated list of submitted applications for administrative purposes."""
     applications_query = models.Application.submitted_search(
@@ -355,13 +370,13 @@ async def get_applications_list(
     tags=[util.Tags.applications],
 )
 async def get_applications(
-    page: int = Query(0, ge=0),
-    page_size: int = Query(10, gt=0),
-    sort_field: str = Query("application.borrower_submitted_at"),
-    sort_order: SortOrder = Query("asc"),
-    search_value: str = "",
-    user: models.User = Depends(dependencies.get_user),
-    session: Session = Depends(get_db),
+    page: Annotated[int, Query(default=0, ge=0)],
+    page_size: Annotated[int, Query(default=10, gt=0)],
+    sort_field: Annotated[str, Query(default="application.borrower_submitted_at")],
+    sort_order: Annotated[SortOrder, Query(default="asc")],
+    search_value: Annotated[str, Query(default="")],
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    session: Annotated[Session, Depends(get_db)],
 ) -> serializers.ApplicationListResponse:
     """Get a paginated list of submitted applications for a specific lender user."""
     applications_query = models.Application.submitted_search(
@@ -386,11 +401,12 @@ async def get_applications(
     response_model=models.ApplicationWithRelations,
 )
 async def get_application(
-    user: models.User = Depends(dependencies.get_user),
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(roles=(models.UserType.OCP, models.UserType.FI))
-    ),
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(dependencies.get_scoped_application_as_user(roles=(models.UserType.OCP, models.UserType.FI))),
+    ],
 ) -> Any:
     """
     Retrieve an application by its ID.
@@ -408,14 +424,17 @@ async def get_application(
 )
 async def start_application(
     id: int,
-    user: models.User = Depends(dependencies.get_user),
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.FI,),
-            statuses=(models.ApplicationStatus.SUBMITTED,),
-        )
-    ),
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.FI,),
+                statuses=(models.ApplicationStatus.SUBMITTED,),
+            )
+        ),
+    ],
 ) -> Any:
     """
     Start an application.
@@ -441,16 +460,19 @@ async def start_application(
 )
 async def email_borrower(
     payload: parsers.ApplicationEmailBorrower,
-    session: Session = Depends(get_db),
-    client: aws.Client = Depends(dependencies.get_aws_client),
-    user: models.User = Depends(dependencies.get_user),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(
-            roles=(models.UserType.FI,),
-            scopes=(dependencies.ApplicationScope.NATIVE,),
-            statuses=(models.ApplicationStatus.STARTED,),
-        )
-    ),
+    session: Annotated[Session, Depends(get_db)],
+    client: Annotated[aws.Client, Depends(dependencies.get_aws_client)],
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.FI,),
+                scopes=(dependencies.ApplicationScope.NATIVE,),
+                statuses=(models.ApplicationStatus.STARTED,),
+            )
+        ),
+    ],
 ) -> Any:
     """
     Send an email to the borrower and update the application status.
@@ -492,11 +514,12 @@ async def email_borrower(
     tags=[util.Tags.applications],
 )
 async def previous_contracts(
-    user: models.User = Depends(dependencies.get_user),
-    session: Session = Depends(get_db),
-    application: models.Application = Depends(
-        dependencies.get_scoped_application_as_user(roles=(models.UserType.OCP, models.UserType.FI))
-    ),
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(dependencies.get_scoped_application_as_user(roles=(models.UserType.OCP, models.UserType.FI))),
+    ],
 ) -> list[models.Award]:
     """
     Get the previous awards associated with an application.
