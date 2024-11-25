@@ -287,12 +287,12 @@ async def get_user(
     tags=[util.Tags.users],
 )
 async def get_all_users(
-    page: Annotated[int, Query(default=0, ge=0)],
-    page_size: Annotated[int, Query(default=10, gt=0)],
-    sort_field: Annotated[str, Query(default="created_at")],
-    sort_order: Annotated[SortOrder, Query(default="asc")],
     admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
     session: Annotated[Session, Depends(get_db)],
+    page: Annotated[int, Query(ge=0)] = 0,
+    page_size: Annotated[int, Query(gt=0)] = 10,
+    sort_field: Annotated[str, Query()] = "created_at",
+    sort_order: Annotated[SortOrder, Query()] = SortOrder.ASC,
 ) -> serializers.UserListResponse:
     """
     Retrieve a list of users.

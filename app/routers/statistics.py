@@ -18,12 +18,12 @@ router = APIRouter()
     tags=[util.Tags.statistics],
 )
 async def get_admin_statistics_by_lender(
-    initial_date: Annotated[str | None, Query(default=None)],
-    final_date: Annotated[str | None, Query(default=None)],
-    lender_id: Annotated[int | None, Query(default=None)],
-    custom_range: Annotated[StatisticRange | None, Query(default=None)],
     admin: Annotated[User, Depends(dependencies.get_admin_user)],
     session: Annotated[Session, Depends(get_db)],
+    initial_date: Annotated[str | None, Query()] = None,
+    final_date: Annotated[str | None, Query()] = None,
+    lender_id: Annotated[int | None, Query()] = None,
+    custom_range: Annotated[StatisticRange | None, Query()] = None,
 ) -> serializers.StatisticResponse:
     """
     Retrieve OCP statistics by lender.

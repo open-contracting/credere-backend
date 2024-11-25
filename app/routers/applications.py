@@ -340,13 +340,13 @@ async def update_application_borrower(
     tags=[util.Tags.applications],
 )
 async def get_applications_list(
-    page: Annotated[int, Query(default=0, ge=0)],
-    page_size: Annotated[int, Query(default=10, gt=0)],
-    sort_field: Annotated[str, Query(default="application.borrower_submitted_at")],
-    sort_order: Annotated[SortOrder, Query(default="asc")],
-    search_value: Annotated[str, Query(default="")],
     admin: Annotated[models.User, Depends(dependencies.get_admin_user)],
     session: Annotated[Session, Depends(get_db)],
+    page: Annotated[int, Query(ge=0)] = 0,
+    page_size: Annotated[int, Query(gt=0)] = 10,
+    sort_field: Annotated[str, Query()] = "application.borrower_submitted_at",
+    sort_order: Annotated[SortOrder, Query()] = SortOrder.ASC,
+    search_value: Annotated[str, Query()] = "",
 ) -> serializers.ApplicationListResponse:
     """Get a paginated list of submitted applications for administrative purposes."""
     applications_query = models.Application.submitted_search(
@@ -370,13 +370,13 @@ async def get_applications_list(
     tags=[util.Tags.applications],
 )
 async def get_applications(
-    page: Annotated[int, Query(default=0, ge=0)],
-    page_size: Annotated[int, Query(default=10, gt=0)],
-    sort_field: Annotated[str, Query(default="application.borrower_submitted_at")],
-    sort_order: Annotated[SortOrder, Query(default="asc")],
-    search_value: Annotated[str, Query(default="")],
     user: Annotated[models.User, Depends(dependencies.get_user)],
     session: Annotated[Session, Depends(get_db)],
+    page: Annotated[int, Query(ge=0)] = 0,
+    page_size: Annotated[int, Query(gt=0)] = 10,
+    sort_field: Annotated[str, Query()] = "application.borrower_submitted_at",
+    sort_order: Annotated[SortOrder, Query()] = SortOrder.ASC,
+    search_value: Annotated[str, Query()] = "",
 ) -> serializers.ApplicationListResponse:
     """Get a paginated list of submitted applications for a specific lender user."""
     applications_query = models.Application.submitted_search(
