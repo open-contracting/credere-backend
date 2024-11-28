@@ -528,3 +528,46 @@ async def previous_contracts(
     :raise: HTTPException if the user is not authorized to access the application.
     """
     return application.previous_awards(session)
+
+
+@router.post(
+    "/applications/{id}/lapse",
+    tags=[util.Tags.applications],
+    response_model=models.ApplicationWithRelations,
+)
+async def lapse_application(
+    id: int,
+    user: Annotated[models.User, Depends(dependencies.get_user)],
+    session: Annotated[Session, Depends(get_db)],
+    application: Annotated[
+        models.Application,
+        Depends(
+            dependencies.get_scoped_application_as_user(
+                roles=(models.UserType.FI,),
+                statuses=(
+                    models.ApplicationStatus.SUBMITTED,
+                    models.ApplicationStatus.STARTED,
+                ),
+            )
+        ),
+    ],
+) -> Any:
+    """
+    :param id: The ID of the application to lapse.
+    :return: The lapsed application with its associated relations.
+    :raise: HTTPException if the user is not authorized to lapse the application.
+    """
+    with rollback_on_error(session):
+        application.status = models.ApplicationStatus.LAPSED
+        application.application_lapsed_at = datetime.now(application.created_at.tzinfo)
+
+        models.ApplicationAction.create(
+            session,
+            type=models.ApplicationActionType.FI_LAPSE_APPLICATION,
+            data=jsonable_encoder(application, exclude_unset=True),
+            application_id=application.id,
+            user_id=user.id,
+        )
+
+        session.commit()
+        return application
