@@ -278,6 +278,7 @@ Application status transitions
    STARTED -> INFORMATION_REQUESTED: lender requests\nthe borrower to update a document {class: native}
    STARTED -> REJECTED: lender rejects the application
    STARTED -> APPROVED: lender approves the application
+   STARTED -> LAPSED: lender lapses the application if the supplier is unresponsive during the review process
    INFORMATION_REQUESTED -> LAPSED: borrower doesn't submit the information requested {class: native}
    INFORMATION_REQUESTED -> STARTED: borrower updates the document {class: native}
    classes: {
