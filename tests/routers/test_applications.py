@@ -420,7 +420,7 @@ def test_lapse_application(client, session, lender_header, pending_application):
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("PENDING"))}
 
-    pending_application.status = models.ApplicationStatus.SUBMITTED
+    pending_application.status = models.ApplicationStatus.STARTED
     session.commit()
 
     response = client.post(f"/applications/{pending_application.id}/lapse", headers=lender_header)
