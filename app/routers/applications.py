@@ -543,8 +543,7 @@ async def lapse_application(
         models.Application,
         Depends(
             dependencies.get_scoped_application_as_user(
-                roles=(models.UserType.FI,),
-                statuses=(models.ApplicationStatus.STARTED,),
+                roles=(models.UserType.FI,), statuses=(models.ApplicationStatus.STARTED,)
             )
         ),
     ],

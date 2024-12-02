@@ -173,8 +173,9 @@ class ApplicationStatus(StrEnum):
     #:
     #: (``/applications/email-sme/{id}``)
     INFORMATION_REQUESTED = i("INFORMATION_REQUESTED")
-    #: Borrower doesn't accept or decline the invitation, doesn't submit the application or information requested, or
-    #: doesn't start external onboarding while the lender hasn't started application review.
+    #: Borrower doesn't accept or decline the invitation, doesn't submit the application or information requested,
+    #: doesn't start external onboarding while the lender hasn't started application review, or doesn't respond to
+    #: the lender externally.
     #:
     #: (:typer:`python-m-app-update-applications-to-lapsed`)
     LAPSED = i("LAPSED")
