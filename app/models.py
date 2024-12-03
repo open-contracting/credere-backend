@@ -173,8 +173,9 @@ class ApplicationStatus(StrEnum):
     #:
     #: (``/applications/email-sme/{id}``)
     INFORMATION_REQUESTED = i("INFORMATION_REQUESTED")
-    #: Borrower doesn't accept or decline the invitation, doesn't submit the application or information requested, or
-    #: doesn't start external onboarding while the lender hasn't started application review.
+    #: Borrower doesn't accept or decline the invitation, doesn't submit the application or information requested,
+    #: doesn't start external onboarding while the lender hasn't started application review, or doesn't respond to
+    #: the lender externally.
     #:
     #: (:typer:`python-m-app-update-applications-to-lapsed`)
     LAPSED = i("LAPSED")
@@ -267,6 +268,7 @@ class ApplicationActionType(StrEnum):
     OCP_DOWNLOAD_APPLICATION = "OCP_DOWNLOAD_APPLICATION"
     FI_START_APPLICATION = "FI_START_APPLICATION"
     FI_REQUEST_INFORMATION = "FI_REQUEST_INFORMATION"
+    FI_LAPSE_APPLICATION = "FI_LAPSE_APPLICATION"
     OCP_DOWNLOAD_DOCUMENT = "OCP_DOWNLOAD_DOCUMENT"
     APPROVED_APPLICATION = "APPROVED_APPLICATION"
     REJECTED_APPLICATION = "REJECTED_APPLICATION"

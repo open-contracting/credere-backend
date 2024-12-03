@@ -413,3 +413,16 @@ def test_get_applications(client, session, admin_header, lender_header, pending_
     response = client.post("/applications/access-scheme", json={"uuid": "123-456"})
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": _("Application not found")}
+
+
+def test_lapse_application(client, session, lender_header, pending_application):
+    response = client.post(f"/applications/{pending_application.id}/lapse", headers=lender_header)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("PENDING"))}
+
+    pending_application.status = models.ApplicationStatus.STARTED
+    session.commit()
+
+    response = client.post(f"/applications/{pending_application.id}/lapse", headers=lender_header)
+    assert_ok(response)
+    assert response.json()["status"] == models.ApplicationStatus.LAPSED
