@@ -1,78 +1,24 @@
 
-      <div style="color: rgba(0, 0, 0, 1);
-            font-size: 16px;
-            font-weight: 700;">Recuerda completar tu aplicación al crédito</div>
-      <div>
-        <p>Estimado/a, {{AWARD_SUPPLIER_NAME}}, </p>
-      </div>
-      <div>
-        <p>
-          Felicitaciones por ganar la adjudicación del contrato del sector público para {{TENDER_TITLE}} con {{BUYER_NAME}}.
+<div>
+    <p style="color: #1c1c1e; font-size: 18px; font-weight: 700; line-height: 27px;">Hola de nuevo {{AWARD_SUPPLIER_NAME}},</p>
+    <p style="color: #1c1c1e; font-size: 14px; line-height: 24px; word-wrap: break-word;">
+      Te queríamos recordar que tienes una solicitud de crédito en Credere con {{BUYER_NAME}} que todavía no has completado.
+    </p>
+    <p style="color: #1c1c1e; font-size: 14px; line-height: 24px; word-wrap: break-word;">
+        Para completarla, por favor accede a través del siguiente botón.
+    </p>
+
+    <div style="text-align: center; padding: 10px;">
+        <div style="padding: 8px 24px; border-radius: 100px; background: #d6e100; font-weight: bold; margin-left: auto; margin-right: auto; width: 50%;">
+            <a href="{{FIND_OUT_MORE_URL}}" style="text-decoration: none; color: #0a66c2;">
+                Continuar con mi aplicación
+            </a>
+        </div>
+    </div>
+    <div>
+        <p style="width: 552px; color: #1C1C1E; font-size: 14px; font-weight: 400; line-height: 18px; word-wrap: break-word">
+            Gracias y saludos desde el equipo de CREDERE
         </p>
-      </div>
-      <div>
-        <p>
-          Hemos notado que optaste por participar de las opciones a acceso al crédito, pero aún no terminaste de completar tu aplicación.
-        </p>
-      </div>
-      <div>
-        <p>
-          La aplicación solo estará abierta durante otros tres días, después de los cuales se eliminará el acceso a la aplicación por motivos de seguridad.
-        </p>
-      </div>
-      <div>
-        <p>
-          Para continuar, haz clic en "completar aplicación". La aplicación está disponible únicamente en línea y solo debería tomar unos minutos de tu tiempo.
-        </p>
-      </div>
-      <table width='100%' border='0' cellspacing='0' cellpadding='0'>
-        <tr>
-          <!-- // LEFT SPACER CELL *** MUST HAVE A BACKGROUND COLOUR -->
-          <td bgcolor='#EBEBEB' style='font-size:0px'>&zwnj;</td>
-          <!-- LEFT SPACER CELL // -->
-          <!-- // MAIN CONTENT CELL -->
-          <td align='center' width='600' bgcolor='#FFFFFF'>
-            <table width='100%' border='0' cellspacing='0' cellpadding='0'>
-              <tbody>
-                <!-- STACKING SECTION -->
-                <tr>
-                  <!-- WRAPPER DICTATING THE SPACE AROUND THE STACKING SECTION -->
-                  <td bgcolor='#FFFFFF' align='left'>
-                    <!-- TABLE HOLDING THE TABLE ROW -->
-                    <table border='0' cellspacing='0' cellpadding='0' align='left'>
-                      <!-- ROW HOLDING THE THREE CELLS -->
-                      <tr>
-                        <!-- LEFT CELL -->
-                        <td width='242' style='display: inline-block; margin-top: 20px'>
-                          <table border='0' cellspacing='0' cellpadding='0' align='left'>
-                            <tr>
-                              <td width='100%' valign='middle'>
-                                <a href='{{APPLY_FOR_CREDIT_URL}}'>
-                                  <img src='{{IMAGES_BASE_URL}}/es/applyForCredit.png' alt='link to apply for credit' style="width: 15rem;"/>
-                                </a>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                        <!-- SPACER CELL -->
-                        <td width='16px' style='display: inline-block;'>&nbsp;</td>
-                        <!-- RIGHT CELL -->
-                        <td width='242' style='display: inline-block; margin-top: 20px;'>
-                          <table border='0' cellspacing='0' cellpadding='0' align='left'>
-                            <tr>
-                              <td width='100%' valign=' middle'>
-                                <a href='{{REMOVE_ME_URL}}'>
-                                  <img src='{{IMAGES_BASE_URL}}/es/removeme.png' alt='link to remove me' style="width: 15rem;" />
-                                </a>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <!-- END OF STACKING SECTION -->
-              </tbody>
-            </table>
-            </table>
+    </div>
+</div>
+
