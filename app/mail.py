@@ -58,6 +58,7 @@ def send(
             subject = _("Reminder - Opportunity to access MSME credit for being awarded a public contract")
             parameters = {
                 "AWARD_SUPPLIER_NAME": application.borrower.legal_name,
+                "TENDER_TITLE": application.award.title,
                 "BUYER_NAME": application.award.buyer_name,
                 "APPLY_FOR_CREDIT_URL": f"{base_application_url}/intro",
                 "REMOVE_ME_URL": f"{base_application_url}/decline",
