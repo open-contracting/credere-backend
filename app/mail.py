@@ -208,7 +208,7 @@ def _send_email(
         logger.error("No email address provided!")  # ideally, it should be impossible for a lender to have no users
         return ""
 
-    # Read the HTML template and replace its parameters (like ``BUYER_NAME``).
+    # Read the HTML template and replace its parameters (like `BUYER_NAME`).
     parameters.setdefault("IMAGES_BASE_URL", app_settings.images_base_url)
     content = (BASE_TEMPLATES_PATH / f"{template_name}.{app_settings.email_template_lang}.html").read_text()
     for key, value in parameters.items():
