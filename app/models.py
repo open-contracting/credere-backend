@@ -777,8 +777,7 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                     ),
                     and_(
                         cls.status == ApplicationStatus.SUBMITTED,
-                        # col(cls.borrower_submitted_at) + delta < datetime.now(),  # noqa: ERA001 # also remove join
-                        col(Message.created_at) + delta < datetime.now(),
+                        col(cls.borrower_submitted_at) + delta < datetime.now(),
                         Lender.external_onboarding_url != "",
                         col(cls.borrower_accessed_external_onboarding_at).is_(None),
                     ),
@@ -787,14 +786,6 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                         col(cls.information_requested_at) + delta < datetime.now(),
                     ),
                 ),
-            )
-            .join(
-                Message,
-                and_(
-                    cls.id == Message.application_id,
-                    Message.type == MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER,
-                ),
-                isouter=True,
             )
             .join(Lender, cls.lender_id == Lender.id, isouter=True)
         )
