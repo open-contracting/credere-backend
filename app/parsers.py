@@ -21,7 +21,6 @@ class ResetPassword(BaseModel):
 class SetupMFA(BaseModel):
     temp_password: str
     session: str
-    secret: str | None = None
 
 
 class AwardUpdate(BaseModel):
