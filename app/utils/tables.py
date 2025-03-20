@@ -113,9 +113,7 @@ def create_award_table(award: models.Award, lang: str) -> Table:
         _format_currency(award.payment_method.get("valor_facturado", ""), award.award_currency)
     }\nValor Pendiente De Pago: {
         _format_currency(award.payment_method.get("valor_pendiente_de_pago", ""), award.award_currency)
-    }\nValor Pagado: {
-        _format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)
-    }\n"""
+    }\nValor Pagado: {_format_currency(award.payment_method.get("valor_pagado", ""), award.award_currency)}\n"""
 
     return create_table(
         [

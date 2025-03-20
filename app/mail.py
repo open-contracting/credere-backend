@@ -256,8 +256,7 @@ def send_new_user(ses: SESClient, *, name: str, username: str, temporary_passwor
         parameters={
             "USER": name,
             "LOGIN_URL": (
-                f"{app_settings.frontend_url}/create-password"
-                f"?key={quote(temporary_password)}&email={quote(username)}"
+                f"{app_settings.frontend_url}/create-password?key={quote(temporary_password)}&email={quote(username)}"
             ),
         },
     )
@@ -282,8 +281,7 @@ def send_reset_password(ses: SESClient, *, username: str, temporary_password: st
         parameters={
             "USER_ACCOUNT": username,
             "RESET_PASSWORD_URL": (
-                f"{app_settings.frontend_url}/create-password"
-                f"?key={quote(temporary_password)}&email={quote(username)}"
+                f"{app_settings.frontend_url}/create-password?key={quote(temporary_password)}&email={quote(username)}"
             ),
         },
     )
