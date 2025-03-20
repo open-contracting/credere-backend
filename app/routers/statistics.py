@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta  # noqa: A005
+from datetime import datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query

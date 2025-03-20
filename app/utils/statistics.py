@@ -1,4 +1,4 @@
-from collections.abc import Callable  # noqa: A005
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
