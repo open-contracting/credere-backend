@@ -34,11 +34,11 @@ async def application_by_uuid(
     :raise: HTTPException if the application is expired.
     """
     return serializers.ApplicationResponse(
-        application=cast(models.ApplicationRead, application),
+        application=cast("models.ApplicationRead", application),
         borrower=application.borrower,
         award=application.award,
         lender=application.lender,
-        documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
+        documents=cast("list[models.BorrowerDocumentBase]", application.borrower_documents),
         creditProduct=application.credit_product,
     )
 
@@ -85,7 +85,7 @@ async def decline(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -127,7 +127,7 @@ async def rollback_decline(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -164,7 +164,7 @@ async def decline_feedback(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -208,7 +208,7 @@ async def access_scheme(
         background_tasks.add_task(util.get_previous_awards_from_data_source, application.borrower_id)
 
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -305,11 +305,11 @@ async def select_credit_product(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
-            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
+            documents=cast("list[models.BorrowerDocumentBase]", application.borrower_documents),
             creditProduct=application.credit_product,
         )
 
@@ -360,7 +360,7 @@ async def rollback_select_credit_product(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
         )
@@ -449,11 +449,11 @@ async def confirm_credit_product(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
-            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
+            documents=cast("list[models.BorrowerDocumentBase]", application.borrower_documents),
             creditProduct=application.credit_product,
         )
 
@@ -513,11 +513,11 @@ async def rollback_confirm_credit_product(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
-            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
+            documents=cast("list[models.BorrowerDocumentBase]", application.borrower_documents),
             creditProduct=application.credit_product,
         )
 
@@ -570,7 +570,7 @@ async def update_apps_send_notifications(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
@@ -671,11 +671,11 @@ async def complete_information_request(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, application),
+            application=cast("models.ApplicationRead", application),
             borrower=application.borrower,
             award=application.award,
             lender=application.lender,
-            documents=cast(list[models.BorrowerDocumentBase], application.borrower_documents),
+            documents=cast("list[models.BorrowerDocumentBase]", application.borrower_documents),
         )
 
 
@@ -754,7 +754,7 @@ async def find_alternative_credit_option(
 
         session.commit()
         return serializers.ApplicationResponse(
-            application=cast(models.ApplicationRead, new_application),
+            application=cast("models.ApplicationRead", new_application),
             borrower=new_application.borrower,
             award=new_application.award,
         )
