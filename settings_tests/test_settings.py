@@ -8,7 +8,8 @@ import pytest
 def test_log_level(monkeypatch, capsys):
     monkeypatch.setenv("LOG_LEVEL", "WARNING")
 
-    from app.settings import app_settings  # noqa: F401
+    # Import settings after setting LOG_LEVEL.
+    from app.settings import app_settings  # noqa: F401, PLC0415
 
     logger = logging.getLogger(__name__)
     logger.info("a")
