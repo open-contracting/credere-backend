@@ -344,13 +344,7 @@ def cli_input_json(name: str, file: typer.FileText) -> None:
             "Template": {
                 "TemplateName": name,
                 "Subject": "{{SUBJECT}}",
-                "HtmlPart": minify_html.minify(
-                    file.read(),
-                    do_not_minify_doctype=True,
-                    ensure_spec_compliant_unquoted_attribute_values=True,
-                    keep_spaces_between_attributes=True,
-                    minify_css=True,
-                ),
+                "HtmlPart": minify_html.minify(file.read(), minify_css=True),
             }
         },
         sys.stdout,

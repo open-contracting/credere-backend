@@ -10,12 +10,13 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
 if TYPE_CHECKING:
-    from sentry_sdk._types import Event
+    from sentry_sdk._types import Event, Hint
 else:
     Event = dict[str, Any]
+    Hint = dict[str, Any]
 
 
-def sentry_filter_transactions(event: Event, hint: dict[str, Any]) -> Event | None:
+def sentry_filter_transactions(event: Event, hint: Hint) -> Event | None:
     """
     Filter transactions to be sent to Sentry.
 
@@ -25,7 +26,9 @@ def sentry_filter_transactions(event: Event, hint: dict[str, Any]) -> Event | No
     :param hint: A dictionary of extra data passed to the function.
     :return: The event data if it should be sent to Sentry, otherwise None.
     """
-    data_url = event["breadcrumbs"]["values"][0]["data"]["url"] or None
+    # The "values" type is under-specified, so we need to use type: ignore.
+    # https://github.com/getsentry/sentry-python/blob/65d31af4ff9b93cddf12d043fe9d631e3c6c85a4/sentry_sdk/_types.py#L166-L168
+    data_url = event["breadcrumbs"]["values"][0]["data"]["url"] or None  # type: ignore[index]
     if data_url and re.search(r"https://cognito-idp.*\.amazonaws\.com", data_url):
         return None
     return event
