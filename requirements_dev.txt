@@ -14,13 +14,13 @@ anyio==3.7.1
     #   watchfiles
 babel==2.16.0
     # via -r requirements.txt
-boto3==1.26.136
+boto3==1.38.43
     # via
     #   -r requirements.txt
     #   moto
 boto3-stubs==1.29.7
     # via -r requirements_dev.in
-botocore==1.29.136
+botocore==1.38.43
     # via
     #   -r requirements.txt
     #   -r requirements_dev.in
@@ -224,7 +224,7 @@ rich==13.7.1
     # via
     #   -r requirements.txt
     #   typer
-s3transfer==0.6.1
+s3transfer==0.13.0
     # via
     #   -r requirements.txt
     #   boto3
@@ -287,7 +287,7 @@ typing-extensions==4.8.0
     #   typer
 ujson==5.10.0
     # via -r requirements.txt
-urllib3==1.26.19
+urllib3==2.5.0
     # via
     #   -r requirements.txt
     #   botocore
