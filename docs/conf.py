@@ -54,7 +54,7 @@ autodoc_default_options = {
     "member-order": "bysource",
     "exclude-members": "model_computed_fields,model_config,model_fields",
 }
-autodoc_typehints = "description"
+# Do not set autodoc_typehints = "description", to avoid repetition of parameters and types.
 
 extlinks = {
     "issue": ("https://github.com/open-contracting/credere-backend/issues/%s", "#%s"),
