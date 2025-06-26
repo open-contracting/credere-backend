@@ -23,7 +23,7 @@ certifi==2024.7.4
     #   httpx
     #   requests
     #   sentry-sdk
-cffi==1.16.0
+cffi==1.17.1
     # via cryptography
 charset-normalizer==3.1.0
     # via requests
@@ -46,7 +46,7 @@ fastapi==0.115.5
     #   sentry-sdk
 fastapi-cli==0.0.5
     # via fastapi
-greenlet==3.0.3
+greenlet==3.2.3
     # via sqlalchemy
 h11==0.16.0
     # via
@@ -94,7 +94,7 @@ orjson==3.10.7
     # via
     #   -r requirements.in
     #   fastapi
-pillow==10.3.0
+pillow==11.2.1
     # via reportlab
 psycopg2==2.9.10
     # via sqlalchemy

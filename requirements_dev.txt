@@ -36,7 +36,7 @@ certifi==2024.7.4
     #   httpx
     #   requests
     #   sentry-sdk
-cffi==1.16.0
+cffi==1.17.1
     # via
     #   -r requirements.txt
     #   cryptography
@@ -66,7 +66,7 @@ fastapi==0.115.5
     # via -r requirements.txt
 fastapi-cli==0.0.5
     # via -r requirements.txt
-greenlet==3.0.3
+greenlet==3.2.3
     # via
     #   -r requirements.txt
     #   sqlalchemy
@@ -145,7 +145,7 @@ packaging==23.1
     # via pytest
 pandas-stubs==2.2.2.240807
     # via -r requirements_dev.in
-pillow==10.3.0
+pillow==11.2.1
     # via
     #   -r requirements.txt
     #   reportlab
