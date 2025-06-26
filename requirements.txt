@@ -96,9 +96,9 @@ orjson==3.10.7
     #   fastapi
 pillow==10.3.0
     # via reportlab
-psycopg2==2.9.6
+psycopg2==2.9.10
     # via sqlalchemy
-pycparser==2.21
+pycparser==2.22
     # via cffi
 pydantic==2.9.2
     # via
@@ -166,7 +166,7 @@ typer==0.12.4
     # via
     #   -r requirements.in
     #   fastapi-cli
-typing-extensions==4.8.0
+typing-extensions==4.14.0
     # via
     #   alembic
     #   fastapi

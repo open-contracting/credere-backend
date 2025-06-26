@@ -151,11 +151,11 @@ pillow==10.3.0
     #   reportlab
 pluggy==1.0.0
     # via pytest
-psycopg2==2.9.6
+psycopg2==2.9.10
     # via -r requirements.txt
 py-html-checker==0.5.0
     # via -r requirements_dev.in
-pycparser==2.21
+pycparser==2.22
     # via
     #   -r requirements.txt
     #   cffi
@@ -271,7 +271,7 @@ types-s3transfer==0.7.0
     # via boto3-stubs
 types-urllib3==1.26.25.14
     # via types-requests
-typing-extensions==4.8.0
+typing-extensions==4.14.0
     # via
     #   -r requirements.txt
     #   alembic
