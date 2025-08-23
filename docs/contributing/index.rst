@@ -191,10 +191,6 @@ Update translations
 
    Some messags are extracted from ``StrEnum`` classes. If Credere is deployed in English, we need to add an ``en`` locale to translate these. Otherwise, the translations will be database values like "MICRO", not "0 to 10".
 
-.. admonition:: Reference
-
-   The ``pybabel`` commands are from `Translate with Transifex <https://ocp-software-handbook.readthedocs.io/en/latest/python/i18n.html#translate-with-transifex>`__.
-
 Update API
 ~~~~~~~~~~
 
