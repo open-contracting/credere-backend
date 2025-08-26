@@ -159,14 +159,14 @@ pycparser==2.22
     # via
     #   -r requirements.txt
     #   cffi
-pydantic==2.9.2
+pydantic==2.11.7
     # via
     #   -r requirements.txt
     #   fastapi
     #   pydantic-extra-types
     #   pydantic-settings
     #   sqlmodel
-pydantic-core==2.23.4
+pydantic-core==2.33.2
     # via
     #   -r requirements.txt
     #   pydantic
@@ -285,6 +285,11 @@ typing-extensions==4.14.0
     #   sqlalchemy
     #   sqlalchemy2-stubs
     #   typer
+    #   typing-inspection
+typing-inspection==0.4.1
+    # via
+    #   -r requirements.txt
+    #   pydantic
 ujson==5.10.0
     # via -r requirements.txt
 urllib3==2.5.0
