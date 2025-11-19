@@ -2,6 +2,8 @@
 #    uv pip compile requirements.in -o requirements.txt
 alembic==1.16.5
     # via -r requirements.in
+annotated-doc==0.0.4
+    # via fastapi
 annotated-types==0.6.0
     # via pydantic
 anyio==3.7.1
@@ -42,7 +44,7 @@ email-validator==2.2.0
     #   -r requirements.in
     #   fastapi
     #   pydantic
-fastapi==0.116.1
+fastapi==0.121.3
     # via
     #   -r requirements.in
     #   sentry-sdk
@@ -173,7 +175,7 @@ sqlalchemy==2.0.41
     #   sqlmodel
 sqlmodel==0.0.21
     # via -r requirements.in
-starlette==0.47.3
+starlette==0.50.0
     # via
     #   -r requirements.in
     #   fastapi
