@@ -113,7 +113,7 @@ def validate_file(file: UploadFile = File(...)) -> tuple[bytes, str | None]:
     # Item "None" of "str | None" has no attribute "lower"
     if os.path.splitext(filename)[1].lower() not in ALLOWED_EXTENSIONS:  # type: ignore[type-var,union-attr]
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=_("Format not allowed. It must be a PNG, JPEG, PDF or ZIP file"),
         )
     new_file = file.file.read()
@@ -275,7 +275,7 @@ def handle_external_onboarding(
 
         if not external_onboarding_url:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("The lender has no external onboarding URL"),
             )
 

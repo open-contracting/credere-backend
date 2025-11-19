@@ -32,7 +32,7 @@ async def change_email(
         new_email = payload.new_email
         if not util.is_valid_email(new_email):
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("New email is not valid"),
             )
 
@@ -78,7 +78,7 @@ async def confirm_email(
     with rollback_on_error(session):
         if not application.pending_email_confirmation:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Application is not pending an email confirmation"),
             )
 

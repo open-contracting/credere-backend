@@ -110,14 +110,14 @@ async def approve_application(
             fields = list(parsers.UpdateDataField().model_dump().keys())
             if any(not app_secop_dict.get(key) for key in fields):
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail=_("Some borrower data field are not verified"),
                 )
 
             # Check all documents are verified.
             if any(not doc.verified for doc in application.borrower_documents):
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail=_("Some documents are not verified"),
                 )
 
@@ -318,7 +318,7 @@ async def update_application_borrower(
         for field in update_dict:
             if not application.borrower.missing_data[field]:
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail=_("This column cannot be updated"),
                 )
         application.borrower.update(session, **update_dict)

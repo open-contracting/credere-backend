@@ -112,12 +112,12 @@ def raise_if_unauthorized(
         expired_at = application.expired_at
         if expired_at and expired_at < datetime.now(expired_at.tzinfo):
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Application expired"),
             )
     if ApplicationScope.NATIVE in scopes and application.lender.external_onboarding_url:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=_(
                 "The borrower has been directed to the lender's onboarding system, "
                 "so information cannot be requested from the borrower through Credere"
@@ -126,7 +126,7 @@ def raise_if_unauthorized(
 
     if statuses and application.status not in statuses:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=_("Application status should not be %(status)s", status=_(application.status)),
         )
 
@@ -186,7 +186,7 @@ def _get_application_as_guest_via_uuid(session: Session, uuid: str) -> models.Ap
 
     if application.status == models.ApplicationStatus.LAPSED:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=_("Application lapsed"),
         )
 

@@ -339,13 +339,13 @@ async def rollback_select_credit_product(
     with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Credit product not selected"),
             )
 
         if application.lender_id:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Cannot rollback at this stage"),
             )
 
@@ -391,14 +391,14 @@ async def confirm_credit_product(
     with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Credit product not selected"),
             )
 
         credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
         if not credit_product:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Credit product not found"),
             )
 
@@ -483,14 +483,14 @@ async def rollback_confirm_credit_product(
     with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Credit product not selected"),
             )
 
         credit_product = models.CreditProduct.first_by(session, "id", application.credit_product_id)
         if not credit_product:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Credit product not found"),
             )
 
@@ -550,13 +550,13 @@ async def update_apps_send_notifications(
     with rollback_on_error(session):
         if not application.credit_product_id:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Credit product not selected"),
             )
 
         if not application.lender:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Lender not selected"),
             )
 
@@ -610,7 +610,7 @@ async def upload_document(
         new_file, filename = util.validate_file(file)
         if not application.pending_documents:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=_("Cannot upload document at this stage"),
             )
 

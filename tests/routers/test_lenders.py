@@ -176,7 +176,7 @@ def test_update_lender(client, admin_header, lender_header, lender):
     response = client.put(f"/lenders/{lender.id}", json={"sla_days": "not_valid_value"}, headers=admin_header)
     data = response.json()
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert data == {
         "detail": [
             {

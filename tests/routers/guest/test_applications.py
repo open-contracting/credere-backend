@@ -18,7 +18,7 @@ def test_application_declined(client, pending_application):
 
     response = client.post("/applications/access-scheme", json={"uuid": pending_application.uuid})
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("DECLINED"))}
 
 
@@ -34,7 +34,7 @@ def test_application_rollback_declined(client, session, declined_application):
 
     response = client.post("/applications/rollback-decline", json={"uuid": declined_application.uuid})
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert response.json() == {"detail": _("Application status should not be %(status)s", status=_("PENDING"))}
 
 
@@ -65,7 +65,7 @@ def test_access_expired_application(client, session, pending_application):
     # borrower tries to access expired application
     response = client.get(f"/applications/uuid/{pending_application.uuid}")
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert response.json() == {"detail": _("Application expired")}
 
 
