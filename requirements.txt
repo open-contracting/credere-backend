@@ -28,7 +28,9 @@ certifi==2024.7.4
 cffi==1.17.1
     # via cryptography
 charset-normalizer==3.1.0
-    # via requests
+    # via
+    #   reportlab
+    #   requests
 click==8.2.1
     # via
     #   -r requirements.in
@@ -141,7 +143,7 @@ pyyaml==6.0.2
     # via
     #   fastapi
     #   uvicorn
-reportlab==4.0.4
+reportlab==4.4.5
     # via -r requirements.in
 requests==2.32.4
     # via -r requirements.in
