@@ -91,7 +91,7 @@ markupsafe==2.1.2
     #   mako
 mdurl==0.1.2
     # via markdown-it-py
-minify-html==0.16.4
+minify-html==0.18.1
     # via -r requirements.in
 mypy-boto3-cognito-idp==1.29.0
     # via -r requirements.in

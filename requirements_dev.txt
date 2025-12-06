@@ -136,7 +136,7 @@ mdurl==0.1.2
     # via
     #   -r requirements.txt
     #   markdown-it-py
-minify-html==0.16.4
+minify-html==0.18.1
     # via -r requirements.txt
 moto==5.0.14
     # via -r requirements_dev.in
