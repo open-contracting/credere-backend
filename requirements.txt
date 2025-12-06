@@ -173,7 +173,7 @@ sqlalchemy==2.0.41
     #   -r requirements.in
     #   alembic
     #   sqlmodel
-sqlmodel==0.0.21
+sqlmodel==0.0.27
     # via -r requirements.in
 starlette==0.50.0
     # via

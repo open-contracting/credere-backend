@@ -148,7 +148,7 @@ mypy-boto3-ses==1.29.0
     # via -r requirements.txt
 mypy-extensions==1.0.0
     # via mypy
-numpy==1.26.0
+numpy==2.3.5
     # via pandas-stubs
 orjson==3.11.4
     # via -r requirements.txt
@@ -160,7 +160,7 @@ pillow==11.3.0
     # via
     #   -r requirements.txt
     #   reportlab
-pluggy==1.0.0
+pluggy==1.6.0
     # via pytest
 psycopg2==2.9.10
     # via -r requirements.txt
@@ -189,10 +189,11 @@ pydantic-settings==2.1.0
 pygments==2.18.0
     # via
     #   -r requirements.txt
+    #   pytest
     #   rich
 pyjwt==2.8.0
     # via -r requirements.txt
-pytest==7.3.1
+pytest==9.0.1
     # via
     #   -r requirements_dev.in
     #   pytest-mock
@@ -273,7 +274,7 @@ sqlalchemy==2.0.41
     #   sqlmodel
 sqlalchemy2-stubs==0.0.2a38
     # via -r requirements_dev.in
-sqlmodel==0.0.21
+sqlmodel==0.0.27
     # via -r requirements.txt
 starlette==0.50.0
     # via
