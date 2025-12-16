@@ -78,7 +78,7 @@ const theme = createTheme({
         },
       },
     },
-    // @ts-expect-error
+    // @ts-expect-error - @mui/x-date-pickers
     MuiPickersDay: {
       styleOverrides: {
         root: {
