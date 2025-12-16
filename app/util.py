@@ -220,7 +220,7 @@ def create_or_update_borrower_document(
     session: Session,
     filename: str | None,
     application: models.Application,
-    type: models.BorrowerDocumentType,
+    borrower_document_type: models.BorrowerDocumentType,
     file: bytes,
     *,
     verified: bool | None = False,
@@ -234,7 +234,7 @@ def create_or_update_borrower_document(
 
     :param filename: The name of the file to be added or updated.
     :param application: The application associated with the document.
-    :param type: The type of the document.
+    :param borrower_document_type: The type of the document.
     :param file: The file to be added or updated.
     :param verified: The verified status of the document. Defaults to False.
     :return: The newly created or updated BorrowerDocument.
@@ -243,7 +243,7 @@ def create_or_update_borrower_document(
         session.query(models.BorrowerDocument)
         .filter(
             models.BorrowerDocument.application_id == application.id,
-            models.BorrowerDocument.type == type,
+            models.BorrowerDocument.type == borrower_document_type,
         )
         .first()
     )
@@ -260,7 +260,7 @@ def create_or_update_borrower_document(
     return models.BorrowerDocument.create(
         session,
         application_id=application.id,
-        type=type,
+        type=borrower_document_type,
         file=file,
         name=filename,
         verified=verified,

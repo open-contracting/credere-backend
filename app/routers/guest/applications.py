@@ -584,7 +584,7 @@ async def update_apps_send_notifications(
 )
 async def upload_document(
     file: UploadFile,
-    type: Annotated[str, Form(...)],
+    borrower_document_type: Annotated[str, Form(..., alias="type")],
     session: Annotated[Session, Depends(get_db)],
     application: Annotated[
         models.Application,
@@ -603,7 +603,7 @@ async def upload_document(
     Upload a document for an application.
 
     :param file: The uploaded file.
-    :param type: The type of the document.
+    :param borrower_document_type: The type of the document.
     :return: The created or updated borrower document.
     """
     with rollback_on_error(session):
@@ -615,7 +615,7 @@ async def upload_document(
             )
 
         document = util.create_or_update_borrower_document(
-            session, filename, application, models.BorrowerDocumentType(type), new_file
+            session, filename, application, models.BorrowerDocumentType(borrower_document_type), new_file
         )
 
         models.ApplicationAction.create(
