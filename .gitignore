@@ -24,6 +24,11 @@ __pycache__
 # Environment
 .env
 
+# Frontend
+/frontend/dist
+/frontend/node_modules
+/frontend/storybook-static
+
 # Documentation
 /docs/_build
 /schemaspy

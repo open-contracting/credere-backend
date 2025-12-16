@@ -7,6 +7,6 @@ on:
       - completed
 jobs:
   docker:
-    uses: open-contracting/.github/.github/workflows/docker-single.yml@main
+    uses: open-contracting/.github/.github/workflows/docker-double.yml@main
     permissions:
       packages: write

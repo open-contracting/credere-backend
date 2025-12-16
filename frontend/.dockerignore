@@ -1,0 +1,28 @@
+# Dotfiles
+**/.*
+!.env.production
+
+# Docker
+**/Dockerfile*
+
+# Requirements
+**/requirements.in
+**/requirements_dev.in
+**/requirements_dev.txt
+
+# Documentation
+docs
+LICENSE
+README.md
+README.rst
+
+# Configuration
+pyproject.toml
+
+# Testing
+**/tests
+pytest.ini
+
+# Generated files
+**/node_modules
+**/dist

@@ -1,12 +1,53 @@
 :hide-toc:
 
-Frontend integration
-====================
+Frontend
+========
 
-.. seealso:: `Credere frontend <https://github.com/open-contracting/credere-frontend>`__
+Environment variables
+---------------------
+
+As the build system is Vite, the variables name should start with **VITE\_**
+
+For VS Code Intellisense to recognize the new variables, declare them in the file ``src/vite-env.d.ts``
+
+Commands
+--------
+
+Run development server:
+
+.. code:: bash
+
+   npx vite
+
+Build production files into ``dist`` directory:
+
+.. code:: bash
+
+   npx tsc && npx vite build
+
+Run server from the ``dist`` directory:
+
+.. code:: bash
+
+   npx vite preview
+
+Run a Storybook locally:
+
+.. code:: bash
+
+   npx storybook dev
+
+Build static app with a `Storybook’s content <https://storybook.js.org/docs/react/sharing/publish-storybook>`__:
+
+.. code:: bash
+
+   npx storybook build
+
+Backend integration
+-------------------
 
 Enumerations
-------------
+~~~~~~~~~~~~
 
 Credere frontend's ``src/constants/index.ts`` constants should match ``app.models`` enumerations.
 
@@ -35,7 +76,7 @@ Credere frontend's ``src/constants/index.ts`` constants should match ``app.model
      - STATISTICS_DATE_FILTER
 
 Schemas and models
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Credere frontend's ``src/schemas/`` schemas should match ``app.parsers``,  ``app.serializers`` and  ``app.models`` models.
 

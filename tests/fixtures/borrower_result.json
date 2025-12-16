@@ -14,7 +14,7 @@
   "legal_name": "Test Entity",
   "address": "Direccion: Test Address\nCiudad: Test City\nDepartamento: Test Department\n",
   "type": "Test Organization Type",
-  "source_data":   {
+  "source_data": {
     "codigo_entidad": "987654321",
     "nombre_entidad": "Test Entity",
     "nit_entidad": "987654321",

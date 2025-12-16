@@ -1,0 +1,131 @@
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@config "../tailwind.config.js";
+
+@source "../index.html";
+@source "./**/*.{js,ts,jsx,tsx}";
+@source "../.storybook/preview.tsx";
+
+@theme {
+  --color-grass: #d6e100; /* sync with secondary in src/mui-theme.tsx */
+  --color-background: #f2f2f2;
+  --color-darkest: #444444;
+  --color-gray: #4d4d54;
+  --color-soft-gray: #c4c4c4;
+  --color-light-gray: #eeeeee;
+  --color-secondary: #24b2a7;
+  --color-moody-blue: #6c75e1; /* sync with primary in src/mui-theme.tsx */
+  --color-red: #fb6045;
+  --color-dark-green: #17736b;
+  --color-field-border: #dadada;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+  --color-yellow: #ffbb28;
+
+  --font-sans:
+    "GT Eesti Pro", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+/* GT Eesti Pro Display has (plus Italic for each):
+https://www.grillitype.com/typeface/gt-eesti
+- UltraLight
+- Thin *
+- Light
+- Regular
+- Medium
+- Bold *
+- UltraBold */
+
+@font-face {
+  src:
+    url("/fonts/GTEestiProText-Regular.woff2") format("woff2"),
+    url("/fonts/GTEestiProText-Regular.otf") format("opentype");
+  font-family: "GT Eesti Pro Text";
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  src:
+    url("/fonts/GT-Eesti-Text-Bold-Trial.woff2") format("woff2"),
+    url("/fonts/GT-Eesti-Text-Bold-Trial.otf") format("opentype");
+  font-family: "GT Eesti Pro Text";
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  src:
+    url("/fonts/GT-Eesti-Text-Thin-Trial.woff2") format("woff2"),
+    url("/fonts/GT-Eesti-Text-Thin-Trial.otf") format("opentype");
+  font-family: "GT Eesti Pro Text";
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  src:
+    url("/fonts/GTEestiProDisplay-Regular.woff2") format("woff2"),
+    url("/fonts/GTEestiProDisplay-Regular.otf") format("opentype");
+  font-family: "GT Eesti Pro";
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  src:
+    url("/fonts/GTEestiProDisplay-Bold.woff2") format("woff2"),
+    url("/fonts/GTEestiProDisplay-Bold.otf") format("opentype");
+  font-family: "GT Eesti Pro";
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  src:
+    url("/fonts/GTEestiProDisplay-Thin.woff2") format("woff2"),
+    url("/fonts/GTEestiProDisplay-Thin.otf") format("opentype");
+  font-family: "GT Eesti Pro";
+  font-weight: 300;
+  font-display: swap;
+}
+
+body * {
+  font-family: "GT Eesti Pro", sans-serif;
+}
+
+body {
+  background-color: "bg-background";
+}
+
+.recharts-legend-item-text {
+  /* biome-ignore lint/complexity/noImportantStyles: open-contracting/credere-frontend@77cd896 */
+  color: var(--color-darkest) !important;
+}
+
+.recharts-default-legend {
+  /* biome-ignore lint/complexity/noImportantStyles: open-contracting/credere-frontend@77cd896 */
+  padding-top: 10px !important;
+}
