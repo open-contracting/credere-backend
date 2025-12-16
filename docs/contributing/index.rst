@@ -41,11 +41,15 @@ Setup
 
    To customize settings (for example, to use a different ``DATABASE_URL``), create a ``.env`` file based on the ``.env.example`` file.
 
+   Set ``AWS_*`` and ``COGNITO_*`` to be able to login and test the application.
+
 #. Run database migrations:
 
    .. code-block:: bash
 
       alembic upgrade head
+
+#. :ref:`cognito-admin` in the Cognito user pool for development.
 
 Repository structure
 --------------------
