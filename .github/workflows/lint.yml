@@ -11,3 +11,4 @@ jobs:
       # https://fastapi.tiangolo.com/tutorial/request-files/
       # babel and uvicorn are run as commands in a Dockerfile.
       standard-maintenance-scripts-ignore: babel,python-multipart,uvicorn
+      ocds-noindent: 'yes'
