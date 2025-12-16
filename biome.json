@@ -6,6 +6,9 @@
     "useIgnoreFile": true,
     "defaultBranch": "main"
   },
+  "files": {
+    "includes": ["**", "!email_templates"]
+  },
   "assist": {
     "actions": {
       "source": {
