@@ -1,7 +1,7 @@
 import { Box, Container, Toolbar, useMediaQuery } from "@mui/material";
 import MuiAppBar from "@mui/material/AppBar";
 import { useTranslation as useT } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import Text from "src/stories/text/Text";
 
 import OCPLogo from "../assets/ocp-logo.svg";

@@ -1,6 +1,6 @@
 import { Link as MUILink } from "@mui/material";
 import { useTranslation as useT } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import StepImageEN from "src/assets/pages/en/stage-one.svg";
 import StepImageES from "src/assets/pages/es/stage-one.svg";
 import useApplicationContext from "src/hooks/useSecureApplicationContext";

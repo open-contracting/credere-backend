@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Box, Container } from "@mui/material";
 import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation as useT } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import useSignIn from "src/hooks/useSignIn";
 import { type LoginInput, loginSchema } from "src/schemas/auth";
 import { Button } from "src/stories/button/Button";

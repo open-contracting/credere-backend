@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import type { ICreditProduct } from "../schemas/application";
 import LinkButton from "../stories/link-button/LinkButton";
 import { RenderSize, renderCreditProductType } from "../util";

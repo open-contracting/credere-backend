@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useTranslation as useT } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import NeedHelpComponent from "src/components/NeedHelpComponent";
 import FAQ_QUESTIONS from "src/constants/faq-questions";
 import FAQPageSection from "src/stories/faq/FAQPageSection";

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { renderUserType } from "src/util";
 import { getUsersFn } from "../api/private";
 import { PAGE_SIZES, QUERY_KEYS } from "../constants";

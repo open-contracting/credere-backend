@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router";
 import type { ZodType, z } from "zod";
 
 import { validation } from "../util/validation";

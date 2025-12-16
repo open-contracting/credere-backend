@@ -3,7 +3,7 @@ import dayjs, { type Dayjs } from "dayjs";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useTranslation as useT } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import useConstants from "src/hooks/useConstants";
 import Button from "src/stories/button/Button";
 import Title from "src/stories/title/Title";

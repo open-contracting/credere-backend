@@ -1,7 +1,7 @@
 import { type UseMutateFunction, useMutation } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
 import { useTranslation as useT } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { updatePasswordFn } from "../api/auth";
 import type { IUpdatePasswordResponse, UpdatePasswordPayload } from "../schemas/auth";

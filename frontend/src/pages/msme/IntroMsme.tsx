@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { useMemo } from "react";
 import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation as useT } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import FAQComponent from "src/components/FAQComponent";
 import useAccessScheme from "src/hooks/useAccessScheme";
 import useApplicationContext from "src/hooks/useApplicationContext";

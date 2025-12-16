@@ -5,7 +5,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation as useT } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { lenderSchema, type ProviderInput } from "src/schemas/OCPsettings";
 import Button from "src/stories/button/Button";
 import FormInput from "src/stories/form-input/FormInput";

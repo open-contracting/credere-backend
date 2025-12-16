@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation as useT } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Button } from "src/stories/button/Button";
 import Text from "src/stories/text/Text";
 import Title from "src/stories/title/Title";

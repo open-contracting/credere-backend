@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation as useT } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import ConfirmIcon from "src/assets/icons/confirm.svg";
 import EditIcon from "src/assets/icons/edit.svg";
 import useConstants from "src/hooks/useConstants";

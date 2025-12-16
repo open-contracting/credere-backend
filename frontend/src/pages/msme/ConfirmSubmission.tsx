@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Box } from "@mui/material";
 import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation as useT } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import useConstants from "src/hooks/useConstants";
 import Text from "src/stories/text/Text";
 import Title from "src/stories/title/Title";

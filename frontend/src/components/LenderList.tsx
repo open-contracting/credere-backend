@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { getLendersFn } from "../api/private";
 import { QUERY_KEYS } from "../constants";
 import type { ILender, ILenderListResponse } from "../schemas/application";
