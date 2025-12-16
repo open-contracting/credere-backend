@@ -12,7 +12,9 @@ import KeyIcon from "../../assets/icons/key.svg";
 import { getProperty } from "../../util";
 import { Text } from "../text/Text";
 
-export const Input = styled(_Input)`
+export const Input = styled(_Input, {
+  shouldForwardProp: (prop) => prop !== "notched",
+})`
   background-color: white;
   padding: 17px 18px;
   margin-bottom: 0.5rem;
