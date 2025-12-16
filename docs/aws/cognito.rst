@@ -65,7 +65,7 @@ Create a first admin user
    .. code-block:: none
 
       INSERT INTO public.credere_user (type, language, email, name, external_id)
-      VALUES ('OCP', 'es', 'local@example.com', 'Admin User', '550e8400-e29b-41d4-a716-446655440000');
+      VALUES ('OCP', 'es', 'jdoe@open-contracting.org', 'John Doe', '550e8400-e29b-41d4-a716-446655440000');
 
 #. Reset the user's password through the Credere frontend:
 
