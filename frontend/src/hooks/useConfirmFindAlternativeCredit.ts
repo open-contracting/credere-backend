@@ -1,7 +1,7 @@
 import { type UseMutateFunction, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
 import { useTranslation as useT } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { findAlternativeCreditOptionFn } from "../api/public";
 import { DISPATCH_ACTIONS, QUERY_KEYS } from "../constants";

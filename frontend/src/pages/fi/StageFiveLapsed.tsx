@@ -1,5 +1,5 @@
 import { useTranslation as useT } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import StepImageEN from "src/assets/pages/en/stage-five.svg";
 import StepImageES from "src/assets/pages/es/stage-five.svg";
 import useApplicationContext from "src/hooks/useSecureApplicationContext";

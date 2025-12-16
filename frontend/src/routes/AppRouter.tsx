@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router";
 import BaseLayout from "src/layout/BaseLayout";
 import PublicApplicationLayout from "src/layout/PublicApplicationLayout";
 import PublicPageLayout from "src/layout/PublicPageLayout";

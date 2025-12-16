@@ -1,4 +1,4 @@
-import { useRouteError } from "react-router-dom";
+import { useRouteError } from "react-router";
 
 import PageLayout from "../layout/PageLayout";
 import Text from "../stories/text/Text";

@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Box } from "@mui/material";
 import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation as useT } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import FAQComponent from "src/components/FAQComponent";
 import useApplicationContext from "src/hooks/useApplicationContext";
 import useDeclineApplication from "src/hooks/useDeclineApplication";

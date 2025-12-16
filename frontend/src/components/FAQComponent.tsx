@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation as useT } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import FAQ_QUESTIONS from "src/constants/faq-questions";
 import FAQPageSection from "src/stories/faq/FAQPageSection";
 

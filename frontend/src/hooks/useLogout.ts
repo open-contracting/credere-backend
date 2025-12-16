@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import { useTranslation as useT } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { logoutUserFn } from "../api/auth";
 import { resetAuthApi } from "../api/axios";

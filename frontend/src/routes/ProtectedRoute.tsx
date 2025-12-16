@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { useTranslation as useT } from "react-i18next";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 
 import type { USER_TYPES } from "../constants";
 import useUser from "../hooks/useUser";

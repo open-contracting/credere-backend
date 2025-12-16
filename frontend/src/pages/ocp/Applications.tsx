@@ -1,5 +1,5 @@
 import { useTranslation as useT } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import Button from "src/stories/button/Button";
 import Text from "src/stories/text/Text";
 import Title from "src/stories/title/Title";

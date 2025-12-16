@@ -3,7 +3,7 @@ import { Box, Dialog } from "@mui/material";
 import { useEffect, useState } from "react";
 import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation as useT } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import EmailIcon from "src/assets/icons/email.svg";
 import StepImageEN from "src/assets/pages/en/stage-two.svg";
 import StepImageES from "src/assets/pages/es/stage-two.svg";
