@@ -71,7 +71,7 @@ export interface HeadCell<T> {
   id: Extract<keyof T, string>;
   label: string;
   type?: DataCellType;
-  render?: (row: T, headCell: HeadCell<T>) => JSX.Element | string;
+  render?: (row: T, headCell: HeadCell<T>) => React.JSX.Element | string;
   sortable?: boolean;
   width?: number;
 }
@@ -189,7 +189,7 @@ export interface DataTableProps<T> {
   handleRequestSort?: (property: Extract<keyof T, string>, sortOrder: Order) => void;
   handleSearch?: (searchValue: string) => void;
   pagination?: HandlePagination;
-  actions?: (row: T, isLoading?: boolean) => JSX.Element;
+  actions?: (row: T, isLoading?: boolean) => React.JSX.Element;
   isLoading?: boolean;
 }
 
