@@ -116,10 +116,6 @@ body * {
   font-family: "GT Eesti Pro", sans-serif;
 }
 
-body {
-  background-color: "bg-background";
-}
-
 .recharts-legend-item-text {
   /* biome-ignore lint/complexity/noImportantStyles: open-contracting/credere-frontend@77cd896 */
   color: var(--color-darkest) !important;
