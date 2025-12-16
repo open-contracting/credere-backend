@@ -1,4 +1,4 @@
-import { Grid, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -272,16 +272,14 @@ export function DataTable<T>({
   return (
     <Box>
       {handleSearch && (
-        <Grid container className="pb-5 w-full" alignItems="center">
-          <Grid item className="w-full">
-            <TextField
-              className="w-full bg-background bg-white"
-              label={t("Search by business: name, email or identifier, or buyer name")}
-              onChange={onChangeSearchValue}
-              value={searchValue}
-            />
-          </Grid>
-        </Grid>
+        <Box className="pb-5 w-full">
+          <TextField
+            className="w-full bg-background bg-white"
+            label={t("Search by business: name, email or identifier, or buyer name")}
+            onChange={onChangeSearchValue}
+            value={searchValue}
+          />
+        </Box>
       )}
 
       <Paper elevation={0} square className="bg-background">
