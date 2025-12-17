@@ -27,12 +27,12 @@ export function DashboardItemContainer({
       <Box
         className={twMerge([
           color === "default" ? "border-moody-blue" : "border-red",
-          `px-6 py-4 flex flex-col justify-center border-solid border-2 overflow-hidden bg-white ${boxClassName}`,
+          `px-4 py-4 flex flex-col justify-center border-solid border-2 overflow-hidden bg-white ${boxClassName}`,
         ])}
         sx={{
           borderTopLeftRadius: "20px",
           width: "230px",
-          height: "110px",
+          height: "120px",
         }}
       >
         <Typography variant="h2" className={twMerge(`text-darkest text-[35px] font-medium mb-0 ${valueClassName}`)}>
