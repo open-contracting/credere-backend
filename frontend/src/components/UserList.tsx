@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation as useT } from "react-i18next";
 import { Link } from "react-router";
 import { renderUserType } from "src/util";
 import { getUsersFn } from "../api/private";
@@ -9,60 +10,66 @@ import { PAGE_SIZES, QUERY_KEYS } from "../constants";
 import { EXTENDED_USER_FROM, type IExtendedUser, type PaginationInput } from "../schemas/application";
 import type { IUser, IUsersListResponse } from "../schemas/auth";
 import LinkButton from "../stories/link-button/LinkButton";
-import { t } from "../util/i18n";
 import { DataTable, type HeadCell, type Order } from "./DataTable";
 
 type ExtendendUser = IUser & IExtendedUser;
 const UserDataTable = DataTable<ExtendendUser>;
 
-const headCells: HeadCell<ExtendendUser>[] = [
-  {
-    id: "name",
-    disablePadding: false,
-    label: t("Full Name"),
-    sortable: false,
-  },
-  {
-    id: "email",
-    disablePadding: false,
-    label: t("Email"),
-    sortable: true,
-  },
-  {
-    id: "type",
-    disablePadding: false,
-    label: t("Type"),
-    sortable: false,
-    render: (row: ExtendendUser) => renderUserType(row.type),
-  },
-  {
-    id: "lender_name",
-    disablePadding: false,
-    label: t("Lender"),
-    sortable: false,
-  },
-  {
-    id: "created_at",
-    type: "date",
-    disablePadding: false,
-    label: t("Created At"),
-    sortable: false,
-  },
-];
-
-const actions = (row: ExtendendUser) => (
-  <LinkButton
-    className="p-1 justify-start"
-    component={Link}
-    to={`/settings/user/${row.id}/edit`}
-    label={t("Edit")}
-    size="small"
-    noIcon
-  />
-);
-
 export function UserList() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useT();
+
+  const headCells: HeadCell<ExtendendUser>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        disablePadding: false,
+        label: t("Full Name"),
+        sortable: false,
+      },
+      {
+        id: "email",
+        disablePadding: false,
+        label: t("Email"),
+        sortable: true,
+      },
+      {
+        id: "type",
+        disablePadding: false,
+        label: t("Type"),
+        sortable: false,
+        render: (row: ExtendendUser) => renderUserType(row.type),
+      },
+      {
+        id: "lender_name",
+        disablePadding: false,
+        label: t("Lender"),
+        sortable: false,
+      },
+      {
+        id: "created_at",
+        type: "date",
+        disablePadding: false,
+        label: t("Created At"),
+        sortable: false,
+      },
+    ],
+    [t],
+  );
+
+  const actions = useMemo(
+    () => (row: ExtendendUser) => (
+      <LinkButton
+        className="p-1 justify-start"
+        component={Link}
+        to={`/settings/user/${row.id}/edit`}
+        label={t("Edit")}
+        size="small"
+        noIcon
+      />
+    ),
+    [t],
+  );
   const [payload, setPayload] = useState<PaginationInput>({
     page: 0,
     page_size: PAGE_SIZES[0],

@@ -1,54 +1,61 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation as useT } from "react-i18next";
 import { Link } from "react-router";
 import { getLendersFn } from "../api/private";
 import { QUERY_KEYS } from "../constants";
 import type { ILender, ILenderListResponse } from "../schemas/application";
 import LinkButton from "../stories/link-button/LinkButton";
 import { renderLenderType } from "../util";
-import { t } from "../util/i18n";
 import { DataTable, type HeadCell } from "./DataTable";
-
-const headCells: HeadCell<ILender>[] = [
-  {
-    id: "name",
-    disablePadding: false,
-    label: t("Credit Provider"),
-    sortable: false,
-  },
-  {
-    id: "created_at",
-    type: "date",
-    disablePadding: false,
-    label: t("Creation Date"),
-    sortable: false,
-  },
-  {
-    id: "type",
-    disablePadding: false,
-    label: t("Type"),
-    sortable: false,
-    render: (row: ILender) => renderLenderType(row.type),
-  },
-];
 
 const LenderDataTable = DataTable<ILender>;
 
-const actions = (row: ILender) => (
-  <LinkButton
-    className="p-1 justify-start"
-    component={Link}
-    to={`/settings/lender/${row.id}/edit`}
-    label={t("Edit")}
-    size="small"
-    noIcon
-  />
-);
-
 export function LenderList() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useT();
+
+  const headCells: HeadCell<ILender>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        disablePadding: false,
+        label: t("Credit Provider"),
+        sortable: false,
+      },
+      {
+        id: "created_at",
+        type: "date",
+        disablePadding: false,
+        label: t("Creation Date"),
+        sortable: false,
+      },
+      {
+        id: "type",
+        disablePadding: false,
+        label: t("Type"),
+        sortable: false,
+        render: (row: ILender) => renderLenderType(row.type),
+      },
+    ],
+    [t],
+  );
+
+  const actions = useMemo(
+    () => (row: ILender) => (
+      <LinkButton
+        className="p-1 justify-start"
+        component={Link}
+        to={`/settings/lender/${row.id}/edit`}
+        label={t("Edit")}
+        size="small"
+        noIcon
+      />
+    ),
+    [t],
+  );
 
   const [rows, setRows] = useState<ILender[]>([]);
 
