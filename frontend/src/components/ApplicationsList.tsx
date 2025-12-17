@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation as useT } from "react-i18next";
 import { Link } from "react-router";
 import { RenderStatus } from "src/util";
 import { getApplicationsFI, getApplicationsOCP } from "../api/private";
@@ -24,150 +25,10 @@ import {
   type PaginationInput,
 } from "../schemas/application";
 import LinkButton from "../stories/link-button/LinkButton";
-import { t } from "../util/i18n";
 import { DataTable, type HeadCell, type Order } from "./DataTable";
-
-const headCellsBase: HeadCell<IApplication & IExtendedApplication>[] = [
-  {
-    id: "borrower_name",
-    disablePadding: false,
-    label: t("Name of Company"),
-    sortable: true,
-  },
-  {
-    id: "buyer_name",
-    disablePadding: false,
-    label: t("Buyer"),
-    sortable: true,
-  },
-  {
-    id: "award_amount",
-    disablePadding: false,
-    label: t("Award amount"),
-    sortable: true,
-    type: "currency",
-  },
-  {
-    id: "amount_requested",
-    disablePadding: false,
-    label: t("Amount requested"),
-    sortable: true,
-    type: "currency",
-  },
-  {
-    id: "borrower_submitted_at",
-    type: "date",
-    disablePadding: false,
-    label: t("Submission Date"),
-    sortable: false,
-    width: 155,
-  },
-  {
-    id: "status",
-    type: "label",
-    disablePadding: false,
-    label: t("Stage"),
-    sortable: true,
-    render: (row: IApplication) => <RenderStatus status={row.status} />,
-  },
-];
-
-const headCellsOCP: HeadCell<IApplication & IExtendedApplication>[] = [
-  {
-    id: "lender_name",
-    disablePadding: false,
-    label: t("Credit Provider"),
-    sortable: true,
-    width: 174,
-  },
-];
 
 type ExtendendApplication = IApplication & IExtendedApplication;
 const ApplicationDataTable = DataTable<ExtendendApplication>;
-
-const actionsFIBase = (
-  row: ExtendendApplication,
-  isLoading: boolean,
-  onStartApplicationHandler: (id: number) => void,
-  onDownloadApplicationHandler: (id: number) => void,
-) => (
-  <Box className="flex flex-row">
-    {STARTED_STATUS.includes(row.status) && (
-      <LinkButton
-        className="p-1 justify-start"
-        component={Link}
-        disabled={isLoading}
-        to={`/applications/${row.id}/stage-one`}
-        label={t("Review")}
-        size="small"
-        noIcon
-      />
-    )}
-    {STARTED_STATUS.includes(row.status) && (
-      <LinkButton
-        className="p-1 justify-start"
-        component={Link}
-        disabled={isLoading}
-        to={`/applications/${row.id}/stage-five`}
-        label={t("Decide")}
-        size="small"
-        noIcon
-      />
-    )}
-    {NOT_STARTED_STATUS.includes(row.status) && (
-      <LinkButton
-        className="p-1 justify-start"
-        onClick={() => onStartApplicationHandler(row.id)}
-        label={t("Start")}
-        disabled={isLoading}
-        size="small"
-        noIcon
-      />
-    )}
-    {COMPLETED_STATUS.includes(row.status) && (
-      <LinkButton
-        className="p-1 justify-start"
-        component={Link}
-        to={`/applications/${row.id}/view`}
-        label={t("View")}
-        disabled={isLoading}
-        size="small"
-        noIcon
-      />
-    )}
-    <LinkButton
-      className="p-1 justify-start"
-      onClick={() => onDownloadApplicationHandler(row.id)}
-      label={t("Download")}
-      disabled={isLoading}
-      size="small"
-      noIcon
-    />
-  </Box>
-);
-
-const actionsOCP = (row: ExtendendApplication) => (
-  <Box className="flex flex-row">
-    <LinkButton
-      className="p-1 justify-start"
-      component={Link}
-      to={`/admin/applications/${row.id}/view`}
-      label={t("View")}
-      size="small"
-      noIcon
-    />
-    {!COMPLETED_STATUS.includes(row.status) && (
-      <LinkButton
-        className="p-1 justify-start"
-        component={Link}
-        to={`/admin/applications/${row.id}/update`}
-        label={t("Update")}
-        size="small"
-        noIcon
-      />
-    )}
-  </Box>
-);
 
 interface ApplicationListProps {
   type: USER_TYPES;
@@ -175,6 +36,7 @@ interface ApplicationListProps {
 
 export function ApplicationList({ type }: ApplicationListProps) {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useT();
   const { startApplicationMutation } = useStartApplication();
   const [idToDownload, setIdToDownload] = useState<number | undefined>();
 
@@ -256,9 +118,70 @@ export function ApplicationList({ type }: ApplicationListProps) {
     }
   }, [data]);
 
+  const headCellsBase: HeadCell<ExtendendApplication>[] = useMemo(
+    () => [
+      {
+        id: "borrower_name",
+        disablePadding: false,
+        label: t("Name of Company"),
+        sortable: true,
+      },
+      {
+        id: "buyer_name",
+        disablePadding: false,
+        label: t("Buyer"),
+        sortable: true,
+      },
+      {
+        id: "award_amount",
+        disablePadding: false,
+        label: t("Award amount"),
+        sortable: true,
+        type: "currency",
+      },
+      {
+        id: "amount_requested",
+        disablePadding: false,
+        label: t("Amount requested"),
+        sortable: true,
+        type: "currency",
+      },
+      {
+        id: "borrower_submitted_at",
+        type: "date",
+        disablePadding: false,
+        label: t("Submission Date"),
+        sortable: false,
+        width: 155,
+      },
+      {
+        id: "status",
+        type: "label",
+        disablePadding: false,
+        label: t("Stage"),
+        sortable: true,
+        render: (row: IApplication) => <RenderStatus status={row.status} />,
+      },
+    ],
+    [t],
+  );
+
+  const headCellsOCP: HeadCell<ExtendendApplication>[] = useMemo(
+    () => [
+      {
+        id: "lender_name",
+        disablePadding: false,
+        label: t("Credit Provider"),
+        sortable: true,
+        width: 174,
+      },
+    ],
+    [t],
+  );
+
   const headCells = useMemo(
     () => (type === USER_TYPES.OCP ? [...headCellsBase, ...headCellsOCP] : headCellsBase),
-    [type],
+    [type, headCellsBase, headCellsOCP],
   );
 
   const onStartApplicationHandler = useCallback(
@@ -292,6 +215,96 @@ export function ApplicationList({ type }: ApplicationListProps) {
       setIdToDownload(id);
     },
     [setIdToDownload],
+  );
+
+  const actionsFIBase = useCallback(
+    (
+      row: ExtendendApplication,
+      isLoading: boolean,
+      onStartApplicationHandler: (id: number) => void,
+      onDownloadApplicationHandler: (id: number) => void,
+    ) => (
+      <Box className="flex flex-row">
+        {STARTED_STATUS.includes(row.status) && (
+          <LinkButton
+            className="p-1 justify-start"
+            component={Link}
+            disabled={isLoading}
+            to={`/applications/${row.id}/stage-one`}
+            label={t("Review")}
+            size="small"
+            noIcon
+          />
+        )}
+        {STARTED_STATUS.includes(row.status) && (
+          <LinkButton
+            className="p-1 justify-start"
+            component={Link}
+            disabled={isLoading}
+            to={`/applications/${row.id}/stage-five`}
+            label={t("Decide")}
+            size="small"
+            noIcon
+          />
+        )}
+        {NOT_STARTED_STATUS.includes(row.status) && (
+          <LinkButton
+            className="p-1 justify-start"
+            onClick={() => onStartApplicationHandler(row.id)}
+            label={t("Start")}
+            disabled={isLoading}
+            size="small"
+            noIcon
+          />
+        )}
+        {COMPLETED_STATUS.includes(row.status) && (
+          <LinkButton
+            className="p-1 justify-start"
+            component={Link}
+            to={`/applications/${row.id}/view`}
+            label={t("View")}
+            disabled={isLoading}
+            size="small"
+            noIcon
+          />
+        )}
+        <LinkButton
+          className="p-1 justify-start"
+          onClick={() => onDownloadApplicationHandler(row.id)}
+          label={t("Download")}
+          disabled={isLoading}
+          size="small"
+          noIcon
+        />
+      </Box>
+    ),
+    [t],
+  );
+
+  const actionsOCP = useCallback(
+    (row: ExtendendApplication) => (
+      <Box className="flex flex-row">
+        <LinkButton
+          className="p-1 justify-start"
+          component={Link}
+          to={`/admin/applications/${row.id}/view`}
+          label={t("View")}
+          size="small"
+          noIcon
+        />
+        {!COMPLETED_STATUS.includes(row.status) && (
+          <LinkButton
+            className="p-1 justify-start"
+            component={Link}
+            to={`/admin/applications/${row.id}/update`}
+            label={t("Update")}
+            size="small"
+            noIcon
+          />
+        )}
+      </Box>
+    ),
+    [t],
   );
 
   const actionsFI = (row: ExtendendApplication, isLoading?: boolean) =>

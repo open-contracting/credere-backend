@@ -161,10 +161,10 @@ function DataTableHead<T>({
                 IconComponent={orderBy === headCell.id ? SorterDirection : Sorter}
                 onClick={createSortHandler(headCell.id)}
               >
-                {t(headCell.label)}
+                {headCell.label}
               </TableSortLabel>
             )}
-            {!headCell.sortable && <DataTableHeadLabel label={t(headCell.label)} />}
+            {!headCell.sortable && <DataTableHeadLabel label={headCell.label} />}
           </DataTableHeadCell>
         ))}
         {hasActions && (
@@ -298,7 +298,7 @@ export function DataTable<T>({
                   {headCells.map((headCell) => (
                     <DataTableCell key={`${String(`${row[headCell.id]}-${index}-${headCell.id}`)}`}>
                       {headCell.type === "label" && renderValue(row, headCell)}
-                      {headCell.type !== "date" && headCell.type !== "label" && t(`${renderValue(row, headCell)}`)}
+                      {headCell.type !== "date" && headCell.type !== "label" && renderValue(row, headCell)}
                       {headCell.type === "date" && formatDateFromString(String(row[headCell.id]))}
                     </DataTableCell>
                   ))}
