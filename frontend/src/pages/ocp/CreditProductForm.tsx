@@ -56,7 +56,7 @@ export function CreditProductForm({ creditProduct = null, lenderId }: CreditProd
     if (isSubmitSuccessful && !isError && !isLoading) {
       reset();
     }
-  }, [isSubmitSuccessful, isError, isLoading]);
+  }, [isSubmitSuccessful, isError, isLoading, reset]);
 
   const onSubmitHandler: SubmitHandler<CreditProductInput> = (values) => {
     if (creditProduct) {

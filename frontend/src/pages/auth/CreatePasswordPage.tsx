@@ -36,7 +36,7 @@ export function CreatePasswordPage() {
     if (isSubmitSuccessful) {
       reset();
     }
-  }, [isSubmitSuccessful]);
+  }, [isSubmitSuccessful, reset]);
 
   const onSubmitHandler: SubmitHandler<UpdatePasswordInput> = (values) => {
     // Executing the Mutation

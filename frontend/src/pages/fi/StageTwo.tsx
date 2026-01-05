@@ -67,7 +67,7 @@ export function StageTwo() {
       reset();
       setEmailSent(true);
     }
-  }, [isSubmitSuccessful, isError, isLoading]);
+  }, [isSubmitSuccessful, isError, isLoading, reset]);
 
   const onSubmitHandler: SubmitHandler<FormEmailInput> = (values) => {
     if (application?.id) {
