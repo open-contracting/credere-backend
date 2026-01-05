@@ -233,7 +233,7 @@ export function DataTable<T>({
     } else {
       setVisibleRows(rows);
     }
-  }, [order, orderBy, handleRequestSort, handleSearch, rows]);
+  }, [order, orderBy, handleRequestSort, rows]);
 
   const onRequestSort = (_event: React.MouseEvent<unknown>, property: Extract<keyof T, string>) => {
     const isAsc = orderBy === property && order === "asc";

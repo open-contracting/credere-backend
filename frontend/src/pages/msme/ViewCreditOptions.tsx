@@ -72,7 +72,6 @@ function ViewCreditOptions() {
 
   const debounceGetCreditProducts = useCallback(debounce(getCreditProductOptionsMutation, DEBOUNCE_TIME), [
     getCreditProductOptionsMutation,
-    debounce,
   ]);
 
   useEffect(() => {
