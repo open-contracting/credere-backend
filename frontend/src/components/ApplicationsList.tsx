@@ -116,7 +116,7 @@ export function ApplicationList({ type }: ApplicationListProps) {
       setRows(newRows);
       setTotalCount(data.count);
     }
-  }, [data]);
+  }, [data, t]);
 
   const headCellsBase: HeadCell<ExtendendApplication>[] = useMemo(
     () => [
@@ -208,7 +208,7 @@ export function ApplicationList({ type }: ApplicationListProps) {
       window.URL.revokeObjectURL(href);
       setIdToDownload(undefined);
     }
-  }, [downloadedApplication, idToDownload]);
+  }, [downloadedApplication, idToDownload, t]);
 
   const onDownloadApplicationHandler = useCallback((id: number) => {
     setIdToDownload(id);
