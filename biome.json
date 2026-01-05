@@ -17,10 +17,10 @@
     }
   },
   "formatter": {
-    "includes": ["**", "!docs/_static/**"],
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 119
+    "lineWidth": 119,
+    "includes": ["**", "!docs/_static/**"]
   },
   "css": {
     "parser": {
