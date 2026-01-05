@@ -25,7 +25,7 @@ export function StageFiveApproved() {
 
   const onDownloadApplicationHandler = useCallback(() => {
     setIdToDownload(application?.id);
-  }, [setIdToDownload, application?.id]);
+  }, [application?.id]);
 
   useEffect(() => {
     if (downloadedApplication) {

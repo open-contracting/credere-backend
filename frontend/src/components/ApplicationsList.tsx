@@ -210,12 +210,9 @@ export function ApplicationList({ type }: ApplicationListProps) {
     }
   }, [downloadedApplication, idToDownload]);
 
-  const onDownloadApplicationHandler = useCallback(
-    (id: number) => {
-      setIdToDownload(id);
-    },
-    [setIdToDownload],
-  );
+  const onDownloadApplicationHandler = useCallback((id: number) => {
+    setIdToDownload(id);
+  }, []);
 
   const actionsFIBase = useCallback(
     (

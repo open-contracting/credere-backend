@@ -38,7 +38,7 @@ function SelectLanguageComponent() {
     if (options && options.length > 0 && langContext.state.selected) {
       setValue(langContext.state.selected);
     }
-  }, [options, setValue]);
+  }, [options]);
 
   const onChange = (valueSelected: string) => {
     setValue(valueSelected);
