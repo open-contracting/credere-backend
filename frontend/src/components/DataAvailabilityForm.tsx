@@ -13,6 +13,7 @@ interface DataAvailabilityFormProps {
   name: string;
   value: string | number | null;
   type?: "currency" | "date-picker" | "date-field";
+  // biome-ignore lint/suspicious/noExplicitAny: value type depends on the field being updated
   updateValue: (value: any) => void;
   isLoading: boolean;
   readonly: boolean;

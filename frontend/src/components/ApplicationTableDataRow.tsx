@@ -13,6 +13,7 @@ export interface ApplicationTableDataRowProps {
   missingData: { [key: string]: boolean };
   type?: "currency" | "date-picker" | "date-field";
   preWhitespace?: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: formatter functions accept various types (string, number, objects) depending on the field
   formatter?: (value: any) => string;
   isLoading: boolean;
   readonly: boolean;
@@ -22,6 +23,7 @@ export interface ApplicationTableDataRowProps {
 export interface ApplicationTableAwardDataRowProps extends ApplicationTableDataRowProps {
   name: keyof IAward;
   award: IAward;
+  // biome-ignore lint/suspicious/noExplicitAny: value type depends on the field being updated
   updateValue?: (value: any, name: keyof IUpdateAward) => void;
 }
 
@@ -31,6 +33,7 @@ export interface ApplicationTableBorrowerDataRowProps extends ApplicationTableDa
   withoutVerify?: boolean;
   useTranslation?: boolean;
   verifiedData: { [key: string]: boolean };
+  // biome-ignore lint/suspicious/noExplicitAny: value type depends on the field being updated
   updateValue?: (value: any, name: keyof IUpdateBorrower) => void;
   verifyData?: (value: boolean, name: keyof IUpdateBorrower) => void;
 }

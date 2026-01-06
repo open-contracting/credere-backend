@@ -220,6 +220,7 @@ const getIcon = (type: string | undefined) => {
 };
 
 const TEXT_TYPES = ["text", "email", "password", "number"];
+// biome-ignore lint/suspicious/noExplicitAny: FieldErrorsImpl is a generic type from react-hook-form that requires any
 export type FieldErrorType = FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined;
 interface FormInputErrorProps {
   fieldError: FieldErrorType;
@@ -295,6 +296,7 @@ export function FormInput({
           )}
           {!inputCell && type === "currency" && (
             <Input
+              // biome-ignore lint/suspicious/noExplicitAny: NumericFormatCustom typing incompatibility with MUI Input component
               inputComponent={NumericFormatCustom as any}
               type={type}
               startAdornment={noIcon ? undefined : getIcon(type)}
@@ -420,6 +422,7 @@ export function FormInput({
           )}
           {inputCell && type === "currency" && (
             <InputFormCell
+              // biome-ignore lint/suspicious/noExplicitAny: NumericFormatCustom typing incompatibility with MUI Input component
               inputComponent={NumericFormatCustom as any}
               type={type}
               startAdornment={noIcon ? undefined : getIcon(type)}

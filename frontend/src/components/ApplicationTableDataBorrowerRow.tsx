@@ -68,6 +68,7 @@ export function ApplicationTableDataBorrowerRow({
             name={formLabel || label}
             value={value ? formattedValue : value}
             isLoading={isLoading}
+            // biome-ignore lint/suspicious/noExplicitAny: value type depends on the field being updated
             updateValue={(value: any) => updateValue(value, name as keyof IUpdateBorrower)}
           />
         </DataTableCell>

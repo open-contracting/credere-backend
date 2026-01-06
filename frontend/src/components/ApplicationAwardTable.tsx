@@ -24,6 +24,7 @@ export function ApplicationAwardTable({ application, readonly = false, className
 
   const { award } = application;
 
+  // biome-ignore lint/suspicious/noExplicitAny: value type depends on the field being updated
   const updateValue = (value: any, name: keyof IUpdateAward) => {
     const payload: IUpdateAward = {
       application_id: application.id,

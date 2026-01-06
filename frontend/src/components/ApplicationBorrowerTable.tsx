@@ -27,7 +27,8 @@ export function ApplicationBorrowerTable({
 
   const { borrower } = application;
 
-  const updateValue = (value: string, name: keyof IUpdateBorrower) => {
+  // biome-ignore lint/suspicious/noExplicitAny: value type depends on the field being updated
+  const updateValue = (value: any, name: keyof IUpdateBorrower) => {
     const payload: IUpdateBorrower = {
       application_id: application.id,
       [name]: value,
