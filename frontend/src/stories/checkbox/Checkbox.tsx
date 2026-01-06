@@ -30,7 +30,7 @@ export function Checkbox({
   const { t } = useT();
 
   const fieldError: FieldErrorType = getProperty(errors, name) as FieldErrorType;
-  const defaultValueForm = getProperty(defaultValues, name) || defaultValue;
+  const defaultValueForm = (getProperty(defaultValues, name) as boolean | undefined) || defaultValue;
   return (
     <Controller
       control={control}

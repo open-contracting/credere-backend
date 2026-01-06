@@ -86,17 +86,14 @@ export function RenderStatus({ status }: { status: string }) {
   return createElement("div", {}, findLabelByValue(status, constants?.ApplicationStatus || []));
 }
 
-export function getProperty(obj: any, propertyString: string): any {
-  if (!obj) {
-    return undefined;
-  }
+export function getProperty(obj: unknown, propertyString: string): unknown {
   const properties = propertyString.split(".");
   let result = obj;
 
   for (const property of properties) {
-    result = result[property];
-    if (result === undefined) {
-      // Property doesn't exist, handle the error or return a default value
+    if (result && typeof result === "object" && property in result) {
+      result = (result as Record<string, unknown>)[property];
+    } else {
       return undefined;
     }
   }

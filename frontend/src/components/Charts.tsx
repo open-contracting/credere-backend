@@ -26,11 +26,14 @@ const COLORS_TO_FILL = [
   "var(--color-yellow)",
 ];
 
-const labelFormatterBase = (_label: any, payload: any, labelMapper?: (label: any) => string) => {
-  if (labelMapper) {
-    return t(labelMapper(payload[0]?.payload.name));
+const labelFormatterBase = (_label: unknown, payload: unknown, labelMapper?: (label: string) => string) => {
+  if (!Array.isArray(payload) || !payload[0]?.payload?.name) {
+    return "";
   }
-  return t(payload[0]?.payload.name);
+  if (labelMapper) {
+    return t(labelMapper(payload[0].payload.name));
+  }
+  return t(payload[0].payload.name);
 };
 
 export function ChartPie({ data }: ChartsProps) {
