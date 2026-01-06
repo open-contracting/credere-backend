@@ -70,6 +70,8 @@ function ViewCreditOptions() {
     // formState: { touchedFields },
   } = methodsLoanForm;
 
+  /* biome-ignore lint/correctness/useExhaustiveDependencies: Unsure why Biome removes this dependency
+     but not startApplicationMutation in ApplicationsList.tsx */
   const debounceGetCreditProducts = useCallback(debounce(getCreditProductOptionsMutation, DEBOUNCE_TIME), [
     getCreditProductOptionsMutation,
   ]);
