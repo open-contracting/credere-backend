@@ -57,7 +57,7 @@ export function ChartBar({ data }: ChartsProps) {
       <BarChart width={140} data={data}>
         <Tooltip
           labelFormatter={labelFormatterBase}
-          formatter={(value: any) => [value, ""]}
+          formatter={(value: unknown) => [String(value), ""]}
           separator=""
           cursor={{ stroke: "var(--color-field-border)", strokeWidth: 0.5, fill: "transparent" }}
         />

@@ -119,7 +119,7 @@ export interface IAward {
   contractperiod_startdate: string;
   contractperiod_enddate: string;
   missing_data: { [key: string]: boolean };
-  payment_method: any;
+  payment_method: unknown;
   buyer_name: string;
   source_url: string;
   entity_code: string;
@@ -154,7 +154,7 @@ export interface IBorrower {
   missing_data: { [key: string]: boolean };
   created_at: string;
   updated_at: string;
-  declined_at?: any;
+  declined_at?: string | null;
 }
 
 export type IUpdateBorrower = Partial<
