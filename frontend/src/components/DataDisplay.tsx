@@ -5,7 +5,7 @@ import { useTranslation as useT } from "react-i18next";
 import Text from "../stories/text/Text";
 
 interface DataDisplayProps {
-  data: { [key: string]: any };
+  data: { [key: string]: unknown };
   className?: string;
 }
 
@@ -13,11 +13,14 @@ export function DataDisplay({ data, className = "" }: DataDisplayProps) {
   const { t } = useT();
 
   const formatValue = useCallback(
-    (value: any) => {
+    (value: unknown) => {
       if (typeof value === "boolean") {
         return value ? t("Yes") : t("No");
       }
-      return value.toString();
+      if (value === null || value === undefined) {
+        return "";
+      }
+      return String(value);
     },
     [t],
   );

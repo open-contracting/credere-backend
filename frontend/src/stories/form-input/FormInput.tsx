@@ -161,7 +161,7 @@ export const DatePicker = styled(MUIDatePicker)`
 `;
 
 interface CustomProps {
-  onChange: (...event: any[]) => void;
+  onChange: (value: string) => void;
 }
 
 const NumericFormatCustom = React.forwardRef<NumericFormatProps, CustomProps>((props, ref) => {

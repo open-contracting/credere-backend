@@ -11,7 +11,7 @@ interface MultipleChartsProps {
   series: ChartData[][];
   dataKeys: string[];
   seriesNames: string[];
-  labelMapper?: (label: any) => string;
+  labelMapper?: (label: string) => string;
 }
 
 const COLORS_TO_FILL = [
@@ -68,12 +68,12 @@ export function ChartMultipleBar({
   series,
   dataKeys,
   seriesNames,
-  labelMapper = (label: any) => label,
+  labelMapper = (label: string) => label,
 }: MultipleChartsProps) {
   const data = useMemo(() => {
-    const result: any = [];
+    const result: Array<{ name: string; [key: string]: string | number }> = [];
     dataKeys.forEach((key) => {
-      const dataItem: any = { name: key };
+      const dataItem: { name: string; [key: string]: string | number } = { name: key };
       series.forEach((serie, index) => {
         dataItem[`series${index + 1}`] = serie.find((item) => item.name === key)?.value || 0;
       });
@@ -97,7 +97,7 @@ export function ChartMultipleBar({
         ))}
         <Tooltip
           separator=" "
-          labelFormatter={(_label: any, payload: any) => labelFormatterBase(_label, payload, labelMapper)}
+          labelFormatter={(_label: unknown, payload: unknown) => labelFormatterBase(_label, payload, labelMapper)}
           cursor={{ stroke: "var(--color-field-border)", strokeWidth: 0.5, fill: "transparent" }}
         />
         <Legend />

@@ -69,7 +69,7 @@ export function CreditProductReview({ application, className = "" }: CreditProdu
               <TableRow>
                 <DataTableCell>{application.lender?.name}</DataTableCell>
                 <DataTableCell>
-                  {application.currency} {formatCurrency(application.amount_requested, application.currency)}
+                  {application.currency} {formatCurrency(application.amount_requested || 0, application.currency)}
                 </DataTableCell>
                 <DataTableCell>
                   {application.currency} {formatCurrency(application.award.award_amount, application.currency)}

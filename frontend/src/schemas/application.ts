@@ -226,6 +226,14 @@ export interface IModifiedDataFields {
   user_type: USER_TYPES;
 }
 
+export interface ICalculatorData {
+  borrower_size?: string;
+  amount_requested?: number;
+  repayment_years?: number;
+  repayment_months?: number;
+  payment_start_date?: string;
+}
+
 export interface IApplication {
   id: number;
   borrower: IBorrower;
@@ -238,30 +246,30 @@ export interface IApplication {
   award_borrowed_identifier: string;
   borrower_id: number;
   lender_id?: number;
-  amount_requested?: any;
+  amount_requested?: number | null;
   currency: string;
   repayment_months?: number;
   repayment_years?: number;
   payment_start_date?: string;
-  calculator_data: any;
+  calculator_data: ICalculatorData;
   pending_documents: boolean;
   pending_email_confirmation: boolean;
-  borrower_submitted_at?: any;
-  borrower_accepted_at?: any;
-  borrower_declined_at?: any;
-  borrower_declined_preferences_data: any;
-  borrower_declined_data: any;
-  lender_started_at?: any;
+  borrower_submitted_at?: string | null;
+  borrower_accepted_at?: string | null;
+  borrower_declined_at?: string | null;
+  borrower_declined_preferences_data: { [key: string]: unknown };
+  borrower_declined_data: { [key: string]: unknown };
+  lender_started_at?: string | null;
   secop_data_verification: { [key: string]: boolean };
-  lender_approved_at?: any;
-  lender_approved_data: any;
-  lender_rejected_data: any;
-  borrower_accessed_external_onboarding_at?: any;
-  completed_in_days?: any;
+  lender_approved_at?: string | null;
+  lender_approved_data: { [key: string]: unknown };
+  lender_rejected_data: { [key: string]: unknown };
+  borrower_accessed_external_onboarding_at?: string | null;
+  completed_in_days?: number | null;
   created_at: string;
   updated_at: string;
   expired_at: string;
-  archived_at?: any;
+  archived_at?: string | null;
   credit_product_id?: number;
   credit_product?: ICreditProduct;
   borrower_documents: IBorrowerDocument[];
