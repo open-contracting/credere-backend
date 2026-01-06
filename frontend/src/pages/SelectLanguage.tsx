@@ -35,7 +35,7 @@ function SelectLanguage() {
     if (langContext.state.selected) {
       setValue("lang", langContext.state.selected);
     }
-  }, [setValue]);
+  }, [setValue, langContext.state.selected]);
 
   const onSubmitHandler: SubmitHandler<LangInput> = (values) => {
     i18n.changeLanguage(values.lang);
