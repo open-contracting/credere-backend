@@ -20,7 +20,8 @@ export function ApplicationTableDataAwardRow({
   readonly,
   modifiedFields = undefined,
 }: ApplicationTableAwardDataRowProps) {
-  const value = award[name];
+  // biome-ignore lint/suspicious/noExplicitAny: award field types are heterogeneous (string, number, unknown)
+  const value = award[name] as any;
   const missing = missingData[name];
   const formattedValue = formatter ? formatter(value) : value;
 

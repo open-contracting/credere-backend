@@ -29,7 +29,8 @@ export function ApplicationTableDataBorrowerRow({
 }: ApplicationTableBorrowerDataRowProps) {
   const { t } = useT();
 
-  const value = borrower[name];
+  // biome-ignore lint/suspicious/noExplicitAny: borrower field types are heterogeneous (string, number, unknown)
+  const value = borrower[name] as any;
   const missing = missingData[name] === undefined ? true : missingData[name];
 
   const verified = verifiedData?.[name] || false;
