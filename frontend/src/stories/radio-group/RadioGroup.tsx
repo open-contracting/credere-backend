@@ -57,12 +57,12 @@ export function RadioGroup({
   }, [options]);
 
   const fieldError: FieldErrorType = getProperty(errors, name) as FieldErrorType;
-  const defultValueForm = getProperty(defaultValues, name) || defaultValue || "";
+  const defaultValueForm = getProperty(defaultValues, name) || defaultValue || "";
 
   return (
     <Controller
       control={control}
-      defaultValue={defultValueForm}
+      defaultValue={defaultValueForm}
       name={name}
       render={({ field }) => (
         <FormControl fullWidth sx={{ mb: 2 }} className={className} error={!!fieldError}>

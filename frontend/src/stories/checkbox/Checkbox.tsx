@@ -30,11 +30,11 @@ export function Checkbox({
   const { t } = useT();
 
   const fieldError: FieldErrorType = getProperty(errors, name) as FieldErrorType;
-  const defultValueForm = getProperty(defaultValues, name) || defaultValue;
+  const defaultValueForm = getProperty(defaultValues, name) || defaultValue;
   return (
     <Controller
       control={control}
-      defaultValue={defultValueForm}
+      defaultValue={defaultValueForm}
       name={name}
       render={({ field }) => (
         <FormControl fullWidth className={twMerge(`mb-2 ${fieldClassName}`)}>
@@ -46,7 +46,7 @@ export function Checkbox({
                 icon={<img src={NotChecked} alt="check-icon-empty" />}
                 checkedIcon={<img src={Checked} alt="check-icon-checked" />}
                 {...field}
-                defaultChecked={defultValueForm}
+                defaultChecked={defaultValueForm}
               />
             }
             label={
