@@ -72,7 +72,7 @@ function UploadDocuments() {
     if (application?.primary_email) {
       setValue("new_email", application?.primary_email);
     }
-  }, [application?.primary_email, setValue]);
+  }, [setValue, application?.primary_email]);
 
   const onSubmitHandler: SubmitHandler<FormChangeEmailInput> = (values) => {
     if (application) {

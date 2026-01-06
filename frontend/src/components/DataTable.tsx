@@ -9,8 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import * as React from "react";
-import { useEffect, useMemo } from "react";
+import { type ChangeEvent, type JSX, type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation as useT } from "react-i18next";
 import SorterIcon from "src/assets/icons/sorter.svg";
 import SorterDownIcon from "src/assets/icons/sorter-down.svg";
@@ -71,13 +70,13 @@ export interface HeadCell<T> {
   id: Extract<keyof T, string>;
   label: string;
   type?: DataCellType;
-  render?: (row: T, headCell: HeadCell<T>) => React.JSX.Element | string;
+  render?: (row: T, headCell: HeadCell<T>) => JSX.Element | string;
   sortable?: boolean;
   width?: number;
 }
 
 interface DataTableHeadProps<T> {
-  onRequestSort: (event: React.MouseEvent<unknown>, property: Extract<keyof T, string>) => void;
+  onRequestSort: (event: MouseEvent<unknown>, property: Extract<keyof T, string>) => void;
   order: Order | undefined;
   orderBy: string | undefined;
   headCells: HeadCell<T>[];
@@ -138,7 +137,7 @@ function DataTableHead<T>({
 }: DataTableHeadProps<T>) {
   const { t } = useT();
 
-  const createSortHandler = (property: Extract<keyof T, string>) => (event: React.MouseEvent<unknown>) => {
+  const createSortHandler = (property: Extract<keyof T, string>) => (event: MouseEvent<unknown>) => {
     onRequestSort(event, property);
   };
 
@@ -189,7 +188,7 @@ export interface DataTableProps<T> {
   handleRequestSort?: (property: Extract<keyof T, string>, sortOrder: Order) => void;
   handleSearch?: (searchValue: string) => void;
   pagination?: HandlePagination;
-  actions?: (row: T, isLoading?: boolean) => React.JSX.Element;
+  actions?: (row: T, isLoading?: boolean) => JSX.Element;
   isLoading?: boolean;
 }
 
@@ -216,12 +215,12 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const { t } = useT();
   const { formatDateFromString } = useLocalizedDateFormatter();
-  const [visibleRows, setVisibleRows] = React.useState<T[]>(rows);
-  const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<Extract<keyof T, string> | undefined>();
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(PAGE_SIZES[0]);
-  const [searchValue, setSearchQuery] = React.useState("");
+  const [visibleRows, setVisibleRows] = useState<T[]>(rows);
+  const [order, setOrder] = useState<Order>("asc");
+  const [orderBy, setOrderBy] = useState<Extract<keyof T, string> | undefined>();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(PAGE_SIZES[0]);
+  const [searchValue, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!handleRequestSort && orderBy) {
@@ -235,7 +234,7 @@ export function DataTable<T>({
     }
   }, [order, orderBy, handleRequestSort, rows]);
 
-  const onRequestSort = (_event: React.MouseEvent<unknown>, property: Extract<keyof T, string>) => {
+  const onRequestSort = (_event: MouseEvent<unknown>, property: Extract<keyof T, string>) => {
     const isAsc = orderBy === property && order === "asc";
     const newOrder = isAsc ? "desc" : "asc";
     setOrder(newOrder);
@@ -250,13 +249,13 @@ export function DataTable<T>({
     pagination?.handleChangePage(newPage, rowsPerPage);
   };
 
-  const onChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>) => {
     const newRowsPerPage = Number.parseInt(`${event.target.value}`, 10);
     setRowsPerPage(newRowsPerPage);
     setPage(0);
     pagination?.handleChangePage(0, newRowsPerPage);
   };
-  const onChangeSearchValue = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const onChangeSearchValue = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setSearchQuery(event.target.value);
     if (handleSearch) {
       handleSearch(event.target.value);
