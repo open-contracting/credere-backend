@@ -75,11 +75,13 @@ export function FileUploader({ className = "", loading, onAcceptedFile }: FileUp
       <div
         {...getRootProps({ className: `dropzone flex items-center justify-center ${className}` })}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         {!loading && (
           <label
             htmlFor="dropzone-file"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
             className="flex flex-col items-center justify-center w-full h-64 border border-field-border border-dashed rounded-lg cursor-pointer bg-white dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100"
           >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">

@@ -36,9 +36,6 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "a11y": {
-        "useKeyWithClickEvents": "off"
-      },
       "suspicious": {
         "noArrayIndexKey": "off",
         "noExplicitAny": "off"
