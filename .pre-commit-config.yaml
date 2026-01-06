@@ -47,4 +47,4 @@ repos:
     rev: v2.3.10
     hooks:
       - id: biome-check
-        additional_dependencies: ["@biomejs/biome@2.3.9"]
+        additional_dependencies: ["@biomejs/biome@2.3.11"]
