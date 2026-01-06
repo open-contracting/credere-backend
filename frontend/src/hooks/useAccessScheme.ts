@@ -14,7 +14,7 @@ type IUseAccesScheme = {
   isLoading: boolean;
 };
 
-export default function useAccesScheme(): IUseAccesScheme {
+export default function useAccessScheme(): IUseAccesScheme {
   const { t } = useT();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
