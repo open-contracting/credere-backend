@@ -156,7 +156,7 @@ export function ControlledSwitch({
     formState: { errors, defaultValues },
   } = useFormContext();
 
-  const fieldError: FieldErrorType = getProperty(errors, name);
+  const fieldError: FieldErrorType = getProperty(errors, name) as FieldErrorType;
   const defultValueForm = getProperty(defaultValues, name) || defaultValue;
   return (
     <Controller

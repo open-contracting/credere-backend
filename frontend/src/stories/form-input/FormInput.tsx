@@ -262,7 +262,7 @@ export function FormInput({
   } = useFormContext();
   const { t } = useT();
 
-  const fieldError: FieldErrorType = getProperty(errors, name);
+  const fieldError: FieldErrorType = getProperty(errors, name) as FieldErrorType;
   return (
     <Controller
       control={control}

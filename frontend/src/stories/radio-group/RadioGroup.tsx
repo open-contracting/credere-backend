@@ -56,7 +56,7 @@ export function RadioGroup({
     return options;
   }, [options]);
 
-  const fieldError: FieldErrorType = getProperty(errors, name);
+  const fieldError: FieldErrorType = getProperty(errors, name) as FieldErrorType;
   const defultValueForm = getProperty(defaultValues, name) || defaultValue || "";
 
   return (

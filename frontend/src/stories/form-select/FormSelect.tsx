@@ -50,7 +50,7 @@ export function FormSelect({
     return options;
   }, [options]);
 
-  const fieldError: FieldErrorType = getProperty(errors, name);
+  const fieldError: FieldErrorType = getProperty(errors, name) as FieldErrorType;
 
   return (
     <Controller
