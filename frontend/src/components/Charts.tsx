@@ -38,8 +38,8 @@ export function ChartPie({ data }: ChartsProps) {
     <ResponsiveContainer width="100%" height="100%">
       <PieChart width={400} height={400}>
         <Pie data={data} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
-          {data.map((_entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS_TO_FILL[index % COLORS_TO_FILL.length]} />
+          {data.map((entry, index) => (
+            <Cell key={entry.name} fill={COLORS_TO_FILL[index % COLORS_TO_FILL.length]} />
           ))}
         </Pie>
         <Tooltip separator=" " labelFormatter={labelFormatterBase} />
@@ -88,7 +88,7 @@ export function ChartMultipleBar({
       <BarChart width={140} data={data}>
         {series.map((_serie, index) => (
           <Bar
-            key={index}
+            key={`series${index + 1}`}
             dataKey={`series${index + 1}`}
             name={t(seriesNames[index])}
             fill={COLORS_TO_FILL[index]}
