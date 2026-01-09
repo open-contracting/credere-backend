@@ -1,5 +1,5 @@
 import sys
-from datetime import datetime, timedelta, tzinfo
+from datetime import UTC, datetime, timedelta, tzinfo
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Self
@@ -702,8 +702,9 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             session.query(cls)
             .filter(
                 cls.status == ApplicationStatus.PENDING,
-                datetime.now() < col(cls.expired_at),
-                col(cls.expired_at) <= datetime.now() + timedelta(days=app_settings.reminder_days_before_expiration),
+                datetime.now(UTC) < col(cls.expired_at),
+                col(cls.expired_at)
+                <= datetime.now(UTC) + timedelta(days=app_settings.reminder_days_before_expiration),
                 col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_APPLICATION_REMINDER)),
                 Borrower.status == BorrowerStatus.ACTIVE,
             )
@@ -723,8 +724,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
 
         return session.query(cls).filter(
             cls.status == ApplicationStatus.ACCEPTED,
-            datetime.now() < lapsed_at,
-            lapsed_at <= datetime.now() + timedelta(days=app_settings.reminder_days_before_lapsed),
+            datetime.now(UTC) < lapsed_at,
+            lapsed_at <= datetime.now(UTC) + timedelta(days=app_settings.reminder_days_before_lapsed),
             col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_PENDING_SUBMIT_REMINDER)),
         )
 
@@ -744,8 +745,8 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             session.query(cls)
             .filter(
                 col(cls.status).in_((ApplicationStatus.SUBMITTED, ApplicationStatus.STARTED)),
-                datetime.now() < lapsed_at,
-                lapsed_at <= datetime.now() + timedelta(days=days),
+                datetime.now(UTC) < lapsed_at,
+                lapsed_at <= datetime.now(UTC) + timedelta(days=days),
                 col(cls.id).notin_(Message.application_by_type(MessageType.BORROWER_EXTERNAL_ONBOARDING_REMINDER)),
                 Lender.external_onboarding_url != "",
                 col(cls.borrower_accessed_external_onboarding_at).is_(None),
@@ -769,21 +770,21 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
                 or_(
                     and_(
                         cls.status == ApplicationStatus.PENDING,
-                        col(cls.created_at) + delta < datetime.now(),
+                        col(cls.created_at) + delta < datetime.now(UTC),
                     ),
                     and_(
                         cls.status == ApplicationStatus.ACCEPTED,
-                        col(cls.borrower_accepted_at) + delta < datetime.now(),
+                        col(cls.borrower_accepted_at) + delta < datetime.now(UTC),
                     ),
                     and_(
                         cls.status == ApplicationStatus.SUBMITTED,
-                        col(cls.borrower_submitted_at) + delta < datetime.now(),
+                        col(cls.borrower_submitted_at) + delta < datetime.now(UTC),
                         Lender.external_onboarding_url != "",
                         col(cls.borrower_accessed_external_onboarding_at).is_(None),
                     ),
                     and_(
                         cls.status == ApplicationStatus.INFORMATION_REQUESTED,
-                        col(cls.information_requested_at) + delta < datetime.now(),
+                        col(cls.information_requested_at) + delta < datetime.now(UTC),
                     ),
                 ),
             )
@@ -865,19 +866,19 @@ class Application(ApplicationPrivate, ActiveRecordMixin, table=True):
             or_(
                 and_(
                     cls.status == ApplicationStatus.DECLINED,
-                    col(cls.borrower_declined_at) + delta < datetime.now(),
+                    col(cls.borrower_declined_at) + delta < datetime.now(UTC),
                 ),
                 and_(
                     cls.status == ApplicationStatus.REJECTED,
-                    col(cls.lender_rejected_at) + delta < datetime.now(),
+                    col(cls.lender_rejected_at) + delta < datetime.now(UTC),
                 ),
                 and_(
                     cls.status == ApplicationStatus.APPROVED,
-                    col(cls.lender_approved_at) + delta < datetime.now(),
+                    col(cls.lender_approved_at) + delta < datetime.now(UTC),
                 ),
                 and_(
                     cls.status == ApplicationStatus.LAPSED,
-                    col(cls.application_lapsed_at) + delta < datetime.now(),
+                    col(cls.application_lapsed_at) + delta < datetime.now(UTC),
                 ),
             ),
         )
