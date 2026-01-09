@@ -371,7 +371,7 @@ websockets==13.1
     # via
     #   -r requirements.txt
     #   uvicorn
-werkzeug==3.1.4
+werkzeug==3.1.5
     # via moto
 xmltodict==0.13.0
     # via moto
