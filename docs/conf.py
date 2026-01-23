@@ -49,6 +49,9 @@ html_js_files = [
 
 # -- Extension configuration -------------------------------------------------
 
+# "more than one target found for cross-reference 'type'"
+suppress_warnings = ["ref.python"]
+
 autodoc_default_options = {
     "members": None,
     "member-order": "bysource",
