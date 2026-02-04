@@ -10,7 +10,7 @@ from app.exceptions import SkippedAwardError
 from app.settings import app_settings
 
 # https://docs.sqlalchemy.org/en/20/orm/session_basics.html#using-a-sessionmaker
-engine = create_engine(app_settings.test_database_url if app_settings.test_database_url else app_settings.database_url)
+engine = create_engine(app_settings.test_database_url or app_settings.database_url)
 # https://docs.sqlalchemy.org/en/20/orm/session_api.html#sqlalchemy.orm.Session.__init__
 SessionLocal = sessionmaker(expire_on_commit=False, bind=engine)
 
