@@ -171,7 +171,7 @@ packaging==23.1
     # via pytest
 pandas-stubs==2.2.2.240807
     # via -r requirements_dev.in
-pillow==11.3.0
+pillow==12.1.1
     # via
     #   -r requirements.txt
     #   reportlab
