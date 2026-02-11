@@ -103,7 +103,7 @@ orjson==3.11.7
     # via
     #   -r requirements.in
     #   fastapi
-pillow==11.3.0
+pillow==12.1.1
     # via reportlab
 psycopg2==2.9.10
     # via sqlalchemy
