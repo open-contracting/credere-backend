@@ -201,7 +201,7 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-ujson==5.10.0
+ujson==5.12.0
     # via fastapi
 urllib3==2.6.3
     # via
