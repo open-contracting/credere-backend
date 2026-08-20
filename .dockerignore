@@ -1,5 +1,6 @@
 # Dotfiles
 **/.*
+!frontend/.env.production
 
 # Docker
 **/Dockerfile*
@@ -20,7 +21,7 @@ pyproject.toml
 
 # Testing
 **/tests
-pytest.ini
 
 # Generated files
 **/node_modules
+**/dist
